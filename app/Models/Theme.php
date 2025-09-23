@@ -8,12 +8,12 @@ use Illuminate\Database\Eloquent\Model;
 class Theme extends Model
 {
     use HasFactory;
+
     protected $fillable = [
         'name',
-        'variables',
-        'preview_image'
-    ];
-    protected $casts = [
-        'variables' => 'array'
+        'primary_color',
+        'secondary_color',
+        'background_color',
+        'font_family',
     ];
 }
