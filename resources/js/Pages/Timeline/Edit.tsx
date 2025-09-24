@@ -12,9 +12,10 @@ interface TimelineItem {
 
 interface Props {
     item: TimelineItem;
+    spaceId: number;
 }
 
-export default function TimelineEdit({ item }: Props) {
+export default function TimelineEdit({ item, spaceId }: Props) {
     const { data, setData, put, processing, errors } = useForm({
         title: item.title,
         description: item.description,
@@ -24,9 +25,9 @@ export default function TimelineEdit({ item }: Props) {
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        put(route("timeline.update", item.id), {
+        put(route("timeline.update", { spaceId, id: item.id }), {
             forceFormData: true,
-            onSuccess: () => router.visit(route("timeline.index")),
+            onSuccess: () => router.visit(route("timeline.index", { spaceId })),
         });
     };
 
@@ -172,7 +173,7 @@ export default function TimelineEdit({ item }: Props) {
                         {/* Submit Button */}
                         <div className="flex gap-3 pt-4">
                             <Link
-                                href={route("timeline.index")}
+                                href={route("timeline.index", { spaceId })}
                                 className="flex-1 px-6 py-3 border border-gray-300 text-gray-700 rounded-xl hover:bg-gray-50 transition text-center"
                             >
                                 Batal

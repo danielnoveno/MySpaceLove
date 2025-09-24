@@ -24,13 +24,12 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // Dashboard
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
-    // Timeline Routes
     Route::get('/timeline/{spaceId}', [LoveTimelineApiController::class, 'index'])->name('timeline.index');
-    Route::get('/timeline/create', [LoveTimelineApiController::class, 'create'])->name('timeline.create');
+    Route::get('/timeline/{spaceId}/create', [LoveTimelineApiController::class, 'create'])->name('timeline.create');
     Route::post('/timeline/{spaceId}', [LoveTimelineApiController::class, 'store'])->name('timeline.store');
-    Route::get('/timeline/{id}/edit', [LoveTimelineApiController::class, 'edit'])->name('timeline.edit');
-    Route::put('/timeline/{id}', [LoveTimelineApiController::class, 'update'])->name('timeline.update');
-    Route::delete('/timeline/{id}', [LoveTimelineApiController::class, 'destroy'])->name('timeline.destroy');
+    Route::get('/timeline/{spaceId}/{id}/edit', [LoveTimelineApiController::class, 'edit'])->name('timeline.edit');
+    Route::put('/timeline/{spaceId}/{id}', [LoveTimelineApiController::class, 'update'])->name('timeline.update');
+    Route::delete('/timeline/{spaceId}/{id}', [LoveTimelineApiController::class, 'destroy'])->name('timeline.destroy');
 
     // Daily Messages Routes
     Route::get('/daily-messages', [DailyMessageApiController::class, 'index'])->name('daily.index');

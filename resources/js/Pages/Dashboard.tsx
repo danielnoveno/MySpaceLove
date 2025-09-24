@@ -28,7 +28,7 @@ export default function Dashboard({ dashboardData }: Props) {
             icon: Calendar,
             label: "Tambah Momen",
             description: "Catat momen spesial",
-            href: route("timeline.create"),
+            href: route("timeline.create", { spaceId: 1 }),
             color: "from-pink-500 to-rose-500",
         },
         {

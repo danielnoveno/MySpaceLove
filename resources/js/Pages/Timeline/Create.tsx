@@ -3,7 +3,11 @@ import { Head, useForm, router, Link } from "@inertiajs/react";
 import { Calendar, ArrowLeft, Upload } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 
-export default function TimelineCreate() {
+interface Props {
+    spaceId: number;
+}
+
+export default function TimelineCreate({ spaceId }: Props) {
     const { data, setData, post, processing, errors } = useForm({
         title: "",
         description: "",
@@ -13,15 +17,14 @@ export default function TimelineCreate() {
 
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const [parallaxPos, setParallaxPos] = useState({ x: 0, y: 0 });
-    const [randomHearts] = useState(() => {
-        // bikin 40 hati kecil random
-        return Array.from({ length: 40 }, () => ({
+    const [randomHearts] = useState(() =>
+        Array.from({ length: 40 }, () => ({
             x: Math.random() * window.innerWidth,
             y: Math.random() * window.innerHeight,
             size: Math.random() * 14 + 8,
             opacity: Math.random() * 0.5 + 0.2,
-        }));
-    });
+        }))
+    );
 
     useEffect(() => {
         const canvas = canvasRef.current;
@@ -76,7 +79,6 @@ export default function TimelineCreate() {
         const animate = () => {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-            // animasi hearts mouse
             hearts.forEach((h, i) => {
                 h.x += h.dx;
                 h.y += h.dy;
@@ -100,7 +102,6 @@ export default function TimelineCreate() {
             for (let i = 0; i < 3; i++) {
                 createHeart(e.clientX, e.clientY);
             }
-            // update parallax position
             const centerX = window.innerWidth / 2;
             const centerY = window.innerHeight / 2;
             setParallaxPos({
@@ -122,9 +123,9 @@ export default function TimelineCreate() {
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        post(route("timeline.store"), {
+        post(route("timeline.store", { spaceId }), {
             forceFormData: true,
-            onSuccess: () => router.visit(route("timeline.index")),
+            onSuccess: () => router.visit(route("timeline.index", { spaceId })),
         });
     };
 
@@ -138,7 +139,7 @@ export default function TimelineCreate() {
             header={
                 <div className="flex items-center gap-4">
                     <Link
-                        href={route("timeline.index")}
+                        href={route("timeline.index", { spaceId })}
                         className="p-2 hover:bg-gray-100 rounded-lg transition"
                     >
                         <ArrowLeft className="w-5 h-5" />
@@ -157,13 +158,11 @@ export default function TimelineCreate() {
             <Head title="Tambah Momen" />
 
             <div className="relative min-h-screen bg-gradient-to-br from-pink-50 via-white to-rose-50 py-10 px-4 sm:px-6 lg:px-8 overflow-hidden">
-                {/* Canvas animasi hati */}
                 <canvas
                     ref={canvasRef}
                     className="absolute inset-0 w-full h-full pointer-events-none"
                 />
 
-                {/* Layer hearts kecil random */}
                 <div className="absolute inset-0 overflow-hidden pointer-events-none">
                     {randomHearts.map((h, idx) => (
                         <div
@@ -185,7 +184,6 @@ export default function TimelineCreate() {
                     ))}
                 </div>
 
-                {/* Layer Parallax Hearts besar */}
                 <div
                     className="absolute inset-0 flex justify-center items-center pointer-events-none text-6xl opacity-20 select-none"
                     style={{
@@ -196,7 +194,6 @@ export default function TimelineCreate() {
                     ❤️ 💕 💖 💘 💓
                 </div>
 
-                {/* Form */}
                 <div className="relative max-w-4xl mx-auto">
                     <form
                         onSubmit={handleSubmit}
@@ -304,7 +301,7 @@ export default function TimelineCreate() {
                             {/* Submit Button */}
                             <div className="flex flex-col sm:flex-row gap-4 pt-6">
                                 <Link
-                                    href={route("timeline.index")}
+                                    href={route("timeline.index", { spaceId })}
                                     className="flex-1 px-6 py-4 border border-gray-300 text-gray-700 rounded-xl hover:bg-gray-50 transition text-center font-medium"
                                 >
                                     Batal

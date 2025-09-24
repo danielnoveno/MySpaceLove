@@ -20,46 +20,55 @@ class LoveTimelineApiController extends Controller
         $timelines = $space->timelines()->orderBy('date')->get();
 
         return Inertia::render('Timeline/Index', [
-            'timelines' => $timelines
+            'timelines' => $timelines,
+            'spaceId' => $spaceId,
         ]);
     }
 
-    public function create()
-    {
-        $user = Auth::user();
-        $spaces = $user->spaces;
-
-        return Inertia::render('Timeline/Create', [
-            'spaces' => $spaces
-        ]);
-    }
-
-    public function store(Request $r, $spaceId)
+    public function create($spaceId)
     {
         $space = Space::findOrFail($spaceId);
         $this->authorizeSpace($space);
 
-        $data = $r->validate([
+        return Inertia::render('Timeline/Create', [
+            'spaceId' => $space->id,
+            'space'   => $space,
+        ]);
+    }
+
+    public function store(Request $request, $spaceId)
+    {
+        $request->validate([
             'title' => 'required|string|max:255',
             'description' => 'nullable|string',
-            'date'  => 'required|date',
-            'media' => 'nullable|file|mimes:jpg,jpeg,png,gif,mp4,mov|max:20480'
+            'date' => 'required|date',
+            'media' => 'nullable|file|mimes:jpg,jpeg,png,mp4|max:10240',
         ]);
 
-        $path = null;
-        if ($r->hasFile('media')) {
-            $path = $r->file('media')->store("spaces/{$space->slug}/timeline", 'public');
+        $timeline = new LoveTimeline();
+        $timeline->space_id = $spaceId;
+        $timeline->title = $request->title;
+        $timeline->description = $request->description;
+        $timeline->date = $request->date;
+
+        if ($request->hasFile('media')) {
+            $timeline->media_path = $request->file('media')->store("spaces/{$spaceId}/timeline", 'public');
         }
 
-        $item = LoveTimeline::create([
-            'space_id' => $space->id,
-            'title' => $data['title'],
-            'description' => $data['description'] ?? null,
-            'date' => $data['date'],
-            'media_path' => $path
-        ]);
+        $timeline->save();
 
-        return response()->json($item, 201);
+        return redirect()->route('timeline.index', $spaceId)
+            ->with('success', 'Timeline berhasil ditambahkan!');
+    }
+
+    public function edit($spaceId, $id)
+    {
+        $item = LoveTimeline::where('space_id', $spaceId)->findOrFail($id);
+
+        return Inertia::render('Timeline/Edit', [
+            'item' => $item,
+            'spaceId' => $spaceId,
+        ]);
     }
 
     public function update(Request $r, $spaceId, $id)

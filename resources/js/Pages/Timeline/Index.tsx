@@ -12,9 +12,10 @@ interface TimelineItem {
 
 interface Props {
     timelines: TimelineItem[];
+    spaceId: number;
 }
 
-export default function TimelineIndex({ timelines }: Props) {
+export default function TimelineIndex({ timelines, spaceId }: Props) {
     const formatDate = (dateString: string) => {
         return new Date(dateString).toLocaleDateString("id-ID", {
             year: "numeric",
@@ -32,7 +33,7 @@ export default function TimelineIndex({ timelines }: Props) {
                         Love Timeline
                     </h2>
                     <Link
-                        href={route("timeline.create")}
+                        href={route("timeline.create", { spaceId })}
                         className="bg-gradient-to-r from-pink-500 to-purple-600 hover:from-pink-600 hover:to-purple-700 text-white px-4 py-2 rounded-lg shadow-lg transition-all duration-300 flex items-center gap-2"
                     >
                         <Plus className="w-4 h-4" />
@@ -43,7 +44,7 @@ export default function TimelineIndex({ timelines }: Props) {
         >
             <Head title="Love Timeline" />
 
-            <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 mt-8">
                 {timelines.length === 0 ? (
                     <div className="text-center py-12">
                         <div className="bg-white rounded-2xl shadow-sm p-8 max-w-md mx-auto">
@@ -92,10 +93,10 @@ export default function TimelineIndex({ timelines }: Props) {
                                         </p>
                                         <div className="flex justify-between items-center">
                                             <Link
-                                                href={route(
-                                                    "timeline.edit",
-                                                    item.id
-                                                )}
+                                                href={route("timeline.edit", {
+                                                    spaceId,
+                                                    id: item.id,
+                                                })}
                                                 className="text-pink-600 hover:text-pink-700 flex items-center gap-1 text-sm font-medium"
                                             >
                                                 <Edit className="w-4 h-4" />
