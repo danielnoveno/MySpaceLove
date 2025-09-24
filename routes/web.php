@@ -28,7 +28,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/timeline/{spaceId}/create', [LoveTimelineApiController::class, 'create'])->name('timeline.create');
     Route::post('/timeline/{spaceId}', [LoveTimelineApiController::class, 'store'])->name('timeline.store');
     Route::get('/timeline/{spaceId}/{id}/edit', [LoveTimelineApiController::class, 'edit'])->name('timeline.edit');
-    Route::put('/timeline/{spaceId}/{id}', [LoveTimelineApiController::class, 'update'])->name('timeline.update');
+    // Route::put('/timeline/{spaceId}/{id}', [LoveTimelineApiController::class, 'update'])->name('timeline.update');
+    Route::post('/timeline/{spaceId}/{id}', [LoveTimelineApiController::class, 'update'])->name('timeline.update');
     Route::delete('/timeline/{spaceId}/{id}', [LoveTimelineApiController::class, 'destroy'])->name('timeline.destroy');
 
     // Daily Messages Routes

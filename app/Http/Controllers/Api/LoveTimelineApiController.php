@@ -73,6 +73,8 @@ class LoveTimelineApiController extends Controller
 
     public function update(Request $r, $spaceId, $id)
     {
+        // dd($r->all(), $r->getContent());
+
         $space = Space::findOrFail($spaceId);
         $this->authorizeSpace($space);
 
@@ -89,8 +91,9 @@ class LoveTimelineApiController extends Controller
             $item->media_path = $r->file('media')->store("spaces/{$space->slug}/timeline", 'public');
         }
 
-        $item->update($r->only(['title', 'description', 'date']));
-        return response()->json($item);
+        $item->update($data);
+        return redirect()->route('timeline.index', $spaceId)
+            ->with('success', 'Timeline berhasil diperbarui!');
     }
 
     public function destroy($spaceId, $id)
