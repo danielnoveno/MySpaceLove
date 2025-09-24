@@ -25,9 +25,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
     // Timeline Routes
-    Route::get('/timeline', [LoveTimelineApiController::class, 'index'])->name('timeline.index');
+    Route::get('/timeline/{spaceId}', [LoveTimelineApiController::class, 'index'])->name('timeline.index');
     Route::get('/timeline/create', [LoveTimelineApiController::class, 'create'])->name('timeline.create');
-    Route::post('/timeline', [LoveTimelineApiController::class, 'store'])->name('timeline.store');
+    Route::post('/timeline/{spaceId}', [LoveTimelineApiController::class, 'store'])->name('timeline.store');
     Route::get('/timeline/{id}/edit', [LoveTimelineApiController::class, 'edit'])->name('timeline.edit');
     Route::put('/timeline/{id}', [LoveTimelineApiController::class, 'update'])->name('timeline.update');
     Route::delete('/timeline/{id}', [LoveTimelineApiController::class, 'destroy'])->name('timeline.destroy');

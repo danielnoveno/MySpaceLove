@@ -16,7 +16,12 @@ class LoveTimelineApiController extends Controller
     {
         $space = Space::findOrFail($spaceId);
         $this->authorizeSpace($space);
-        return $space->timelines()->orderBy('date')->get();
+
+        $timelines = $space->timelines()->orderBy('date')->get();
+
+        return Inertia::render('Timeline/Index', [
+            'timelines' => $timelines
+        ]);
     }
 
     public function create()
