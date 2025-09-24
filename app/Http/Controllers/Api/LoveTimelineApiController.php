@@ -8,6 +8,7 @@ use App\Models\Space;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
+use Inertia\Inertia;
 
 class LoveTimelineApiController extends Controller
 {
@@ -16,6 +17,16 @@ class LoveTimelineApiController extends Controller
         $space = Space::findOrFail($spaceId);
         $this->authorizeSpace($space);
         return $space->timelines()->orderBy('date')->get();
+    }
+
+    public function create()
+    {
+        $user = Auth::user();
+        $spaces = $user->spaces;
+
+        return Inertia::render('Timeline/Create', [
+            'spaces' => $spaces
+        ]);
     }
 
     public function store(Request $r, $spaceId)
