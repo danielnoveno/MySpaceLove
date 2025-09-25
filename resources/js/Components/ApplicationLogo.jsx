@@ -1,10 +1,11 @@
 export default function ApplicationLogo(props) {
     return (
-        <svg
-            {...props}
-            viewBox="0 0 316 316"
-            xmlns="http://www.w3.org/2000/svg"
-        >
+        <a href={route("dashboard")}>
+            <svg
+                {...props}
+                viewBox="0 0 316 316"
+                xmlns="http://www.w3.org/2000/svg"
+            >
             {/* Versi 2: Hati dengan gradien dan efek 3D */}
             <defs>
                 <linearGradient
@@ -30,5 +31,6 @@ export default function ApplicationLogo(props) {
                 d="M140 80C120 70 90 60 80 90C70 120 110 150 140 170C170 150 210 120 200 90C190 60 160 70 140 80Z"
             />
         </svg>
+        </a>
     );
 }

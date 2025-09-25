@@ -35,7 +35,7 @@ export default function Dashboard({ dashboardData }: Props) {
             icon: Image,
             label: "Upload Foto",
             description: "Simpan kenangan",
-            href: route("gallery.create"),
+            href: route("gallery.create", { spaceId: 1 }),
             color: "from-blue-500 to-cyan-500",
         },
         {
@@ -49,7 +49,7 @@ export default function Dashboard({ dashboardData }: Props) {
             icon: BookOpen,
             label: "Tulis Journal",
             description: "Ekspresikan perasaan",
-            href: route("journal.create"),
+            href: route("gallery.create", { spaceId: 1 }),
             color: "from-green-500 to-emerald-500",
         },
     ];

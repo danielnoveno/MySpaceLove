@@ -5,9 +5,11 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\MediaGallery;
 use App\Models\Space;
+use Doctrine\DBAL\Schema\Index;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
+use Inertia\Inertia;
 
 class MediaGalleryApiController extends Controller
 {
@@ -15,7 +17,23 @@ class MediaGalleryApiController extends Controller
     {
         $space = Space::findOrFail($spaceId);
         $this->authorizeSpace($space);
-        return MediaGallery::where('space_id', $space->id)->latest()->get();
+
+        $gallery = MediaGallery::where('space_id', $space->id)->latest()->get();
+        return Inertia::render('MediaGallery/Index', [
+            'items' => $gallery,
+            'spaceId' => $spaceId,
+        ]);
+    }
+
+    public function create($spaceId)
+    {
+        $space = Space::findOrFail($spaceId);
+        $this->authorizeSpace($space);
+
+        return Inertia::render('MediaGallery/Create', [
+            'spaceId' => $space->id,
+            'space'   => $space,
+        ]);
     }
 
     public function store(Request $r, $spaceId)
@@ -38,7 +56,17 @@ class MediaGalleryApiController extends Controller
             'type'     => $r->file('file')->getClientMimeType()
         ]);
 
-        return response()->json($media, 201);
+        return Inertia::location(route('media-gallery.index', ['spaceId' => $spaceId]));
+    }
+
+    public function edit($spaceId, $id)
+    {
+        $item = MediaGallery::where('space_id', $spaceId)->findOrFail($id);
+
+        return Inertia::render('MediaGallery/Edit', [
+            'item' => $item,
+            'spaceId' => $spaceId,
+        ]);
     }
 
     public function update(Request $r, $spaceId, $id)

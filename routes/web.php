@@ -1,5 +1,7 @@
 <?php
 
+require __DIR__ . '/auth.php';
+
 use App\Http\Controllers\Api\CountdownApiController;
 use App\Http\Controllers\Api\DailyMessageApiController;
 use App\Http\Controllers\Api\DocApiController;
@@ -14,6 +16,10 @@ use App\Http\Controllers\DashboardController;
 use Illuminate\Support\Facades\Route;
 
 Route::post('/logout', [AuthenticatedSessionController::class, 'destroy'])->name('logout');
+
+Route::get('/', function () {
+    return redirect('/login');
+});
 
 Route::middleware(['auth', 'verified'])->group(function () {
     // Profile Routes
@@ -45,12 +51,12 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::delete('/countdowns/{id}', [CountdownApiController::class, 'destroy'])->name('countdown.destroy');
 
     // Journal Routes
-    Route::get('/journals', [LoveJournalApiController::class, 'index'])->name('journal.index');
-    Route::get('/journals/create', [LoveJournalApiController::class, 'create'])->name('journal.create');
-    Route::post('/journals', [LoveJournalApiController::class, 'store'])->name('journal.store');
-    Route::get('/journals/{id}/edit', [LoveJournalApiController::class, 'edit'])->name('journal.edit');
-    Route::put('/journals/{id}', [LoveJournalApiController::class, 'update'])->name('journal.update');
-    Route::delete('/journals/{id}', [LoveJournalApiController::class, 'destroy'])->name('journal.destroy');
+    Route::get('/journals/{spaceId}', [LoveJournalApiController::class, 'index'])->name('journal.index');
+    Route::get('/journals/{spaceId}/create', [LoveJournalApiController::class, 'create'])->name('journal.create');
+    Route::post('/journals/{spaceId}', [LoveJournalApiController::class, 'store'])->name('journal.store');
+    Route::get('/journals/{spaceId}/{id}/edit', [LoveJournalApiController::class, 'edit'])->name('journal.edit');
+    Route::put('/journals/{spaceId}/{id}', [LoveJournalApiController::class, 'update'])->name('journal.update');
+    Route::delete('/journals/{spaceId}/{id}', [LoveJournalApiController::class, 'destroy'])->name('journal.destroy');
 
     // Surprise Notes Routes
     Route::get('/surprise-notes', [SurpriseNoteApiController::class, 'index'])->name('notes.index');
@@ -61,10 +67,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::delete('/surprise-notes/{id}', [SurpriseNoteApiController::class, 'destroy'])->name('notes.destroy');
 
     // Media Gallery Routes
-    Route::get('/gallery', [MediaGalleryApiController::class, 'index'])->name('gallery.index');
-    Route::get('/gallery/create', [MediaGalleryApiController::class, 'create'])->name('gallery.create');
-    Route::post('/gallery', [MediaGalleryApiController::class, 'store'])->name('gallery.store');
-    Route::delete('/gallery/{id}', [MediaGalleryApiController::class, 'destroy'])->name('gallery.destroy');
+    Route::get('/gallery/{spaceId}', [MediaGalleryApiController::class, 'index'])->name('gallery.index');
+    Route::get('/gallery/{spaceId}/create', [MediaGalleryApiController::class, 'create'])->name('gallery.create');
+    Route::post('/gallery/{spaceId}', [MediaGalleryApiController::class, 'store'])->name('gallery.store');
+    Route::get('/gallery/{spaceId}/{id}/edit', [MediaGalleryApiController::class, 'edit'])->name('gallery.edit');
+    Route::delete('/gallery/{spaceId}/{id}', [MediaGalleryApiController::class, 'destroy'])->name('gallery.destroy');
 
     // Wishlist Routes
     Route::get('/wishlist', [WishlistApiController::class, 'index'])->name('wishlist.index');
