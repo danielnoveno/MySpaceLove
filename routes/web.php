@@ -71,8 +71,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/gallery/{spaceId}/create', [MediaGalleryApiController::class, 'create'])->name('gallery.create');
     Route::post('/gallery/{spaceId}', [MediaGalleryApiController::class, 'store'])->name('gallery.store');
     Route::get('/gallery/{spaceId}/{id}/edit', [MediaGalleryApiController::class, 'edit'])->name('gallery.edit');
+    Route::post('/gallery/{spaceId}/{id}', [MediaGalleryApiController::class, 'update'])->name('gallery.update');
     Route::delete('/gallery/{spaceId}/{id}', [MediaGalleryApiController::class, 'destroy'])->name('gallery.destroy');
-
     // Wishlist Routes
     Route::get('/wishlist', [WishlistApiController::class, 'index'])->name('wishlist.index');
     Route::get('/wishlist/create', [WishlistApiController::class, 'create'])->name('wishlist.create');

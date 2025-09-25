@@ -88,7 +88,7 @@ class MediaGalleryApiController extends Controller
         }
 
         $media->update(['title' => $data['title'] ?? $media->title, 'file_path' => $media->file_path]);
-        return response()->json($media);
+        return Inertia::location(route('gallery.index', ['spaceId' => $spaceId]));
     }
 
     public function destroy($spaceId, $id)
