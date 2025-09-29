@@ -20,9 +20,10 @@ interface DashboardData {
 
 interface Props {
     dashboardData: DashboardData;
+    spaceId: number;
 }
 
-export default function Dashboard({ dashboardData }: Props) {
+export default function Dashboard({ dashboardData, spaceId }: Props) {
     const quickActions = [
         {
             icon: Calendar,
@@ -42,7 +43,7 @@ export default function Dashboard({ dashboardData }: Props) {
             icon: MessageSquare,
             label: "Pesan Harian",
             description: "Lihat pesan cinta",
-            href: route("daily.index"),
+            href: route("daily.index", { spaceId: 1 }),
             color: "from-purple-500 to-indigo-500",
         },
         {
@@ -229,7 +230,7 @@ export default function Dashboard({ dashboardData }: Props) {
                                 ))}
                         </div>
                         <Link
-                            href={route("daily.index")}
+                            href={route("daily.index", { spaceId: spaceId })}
                             className="block text-center mt-4 text-purple-600 hover:text-purple-700 font-medium"
                         >
                             Lihat Semua →

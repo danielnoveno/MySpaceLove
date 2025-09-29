@@ -6,15 +6,31 @@ interface FormData {
     message: string;
 }
 
-export default function DailyMessageEdit({ msg }: { msg: any }) {
+interface Props {
+    item: FormData;
+    spaceId: number;
+}
+
+export default function DailyMessageEdit({
+    dailyMessage,
+    spaceId,
+}: {
+    dailyMessage: any;
+    spaceId: number;
+}) {
     const { data, setData, put, processing, errors } = useForm<FormData>({
-        date: msg.date || "",
-        message: msg.message || "",
+        date: dailyMessage?.date || "",
+        message: dailyMessage?.message || "",
     });
 
     function submit(e: React.FormEvent) {
         e.preventDefault();
-        put(route("daily.update", msg.id));
+        if (dailyMessage) {
+            // put(route("daily.update", dailyMessage.id));
+            put(
+                route("daily.update", { id: dailyMessage.id, spaceId: spaceId })
+            );
+        }
     }
 
     return (
@@ -27,7 +43,7 @@ export default function DailyMessageEdit({ msg }: { msg: any }) {
         >
             <Head title="Edit Pesan Harian" />
 
-            <div className="p-6 max-w-xl mx-auto bg-white shadow-md rounded-xl space-y-6">
+            <div className="p-6 max-w-xl mx-auto bg-white shadow-md rounded-xl space-y-6 mt-8">
                 <form onSubmit={submit}>
                     <div>
                         <label className="block text-gray-700 font-medium">

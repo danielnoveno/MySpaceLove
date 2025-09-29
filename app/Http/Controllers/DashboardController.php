@@ -57,6 +57,7 @@ class DashboardController extends Controller
 
         return Inertia::render('Dashboard', [
             'dashboardData' => $dashboardData,
+            'spaceId' => $space->id,
         ]);
     }
 }

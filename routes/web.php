@@ -39,8 +39,12 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::delete('/timeline/{spaceId}/{id}', [LoveTimelineApiController::class, 'destroy'])->name('timeline.destroy');
 
     // Daily Messages Routes
-    Route::get('/daily-messages', [DailyMessageApiController::class, 'index'])->name('daily.index');
-    Route::post('/daily-messages/regenerate', [DailyMessageApiController::class, 'regenerate'])->name('daily.regenerate');
+    Route::get('/daily-messages/{spaceId}', [DailyMessageApiController::class, 'index'])->name('daily.index');
+    Route::get('/daily-messages/{spaceId}/create', [DailyMessageApiController::class, 'create'])->name('daily.create');
+    Route::post('/daily-messages/{spaceId}', [DailyMessageApiController::class, 'store'])->name('daily.store');
+    Route::get('/daily-messages/{spaceId}/{id}/edit', [DailyMessageApiController::class, 'edit'])->name('daily.edit');
+    Route::put('/daily-messages/{spaceId}/{id}', [DailyMessageApiController::class, 'update'])->name('daily.update');
+    Route::post('/daily-messages/{spaceId}/regenerate', [DailyMessageApiController::class, 'regenerate'])->name('daily.regenerate');
 
     // Countdown Routes
     Route::get('/countdowns', [CountdownApiController::class, 'index'])->name('countdown.index');

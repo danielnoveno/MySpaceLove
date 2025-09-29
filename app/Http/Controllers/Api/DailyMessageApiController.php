@@ -1,16 +1,28 @@
 <?php
 
+
 namespace App\Http\Controllers\Api;
 
+use Illuminate\Support\Facades\Log;
 use App\Http\Controllers\Controller;
 use App\Models\DailyMessage;
 use App\Models\Space;
+use App\Services\DailyMessageGenerator;
+use Gemini;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Http;
+use Inertia\Inertia;
 
 class DailyMessageApiController extends Controller
 {
+    private $dailyMessageGenerator;
+
+    public function __construct(DailyMessageGenerator $dailyMessageGenerator)
+    {
+        $this->dailyMessageGenerator = $dailyMessageGenerator;
+    }
+
     public function index($spaceId)
     {
         $space = Space::findOrFail($spaceId);
@@ -21,29 +33,7 @@ class DailyMessageApiController extends Controller
 
         if (!$message) {
             // generate from Gemini (stub) - adjust endpoint/format to actual Gemini response
-            $apiKey = env('GEMINI_API_KEY');
-            try {
-                $prompt = "Buat pesan cinta singkat 1-2 kalimat untuk pasangan LDR yang hangat dan menyemangati.";
-                $resp = Http::withHeaders([
-                    'Authorization' => 'Bearer ' . $apiKey,
-                    'Content-Type'  => 'application/json',
-                ])->post('https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=' . $apiKey, [
-                    // adapt payload to actual Gemini API shape
-                    'prompt' => $prompt
-                ]);
-
-                // Attempt to extract text (adapt based on real response)
-                $text = $resp->json('candidates.0.content.parts.0.text')
-                    ?? $resp->json('candidates.0.output')
-                    ?? $resp->json('output_text')
-                    ?? null;
-            } catch (\Exception $e) {
-                $text = null;
-            }
-
-            if (!$text) {
-                $text = "Hai sayang, semoga harimu cerah dan penuh semangat 💖";
-            }
+            $text = $this->dailyMessageGenerator->generate();
 
             $message = DailyMessage::create([
                 'space_id' => $space->id,
@@ -51,9 +41,30 @@ class DailyMessageApiController extends Controller
                 'message' => $text,
                 'generated_by' => 'ai'
             ]);
+
+            $messages = DailyMessage::where('space_id', $space->id)->latest()->get();
+            return Inertia::render('DailyMessages/Index', [
+                'messages' => $messages,
+                'spaceId' => $spaceId,
+            ]);
         }
 
-        return response()->json($message);
+        $messages = DailyMessage::where('space_id', $space->id)->latest()->get();
+        return Inertia::render('DailyMessages/Index', [
+            'messages' => $messages,
+            'spaceId' => $spaceId,
+        ]);
+    }
+
+    public function create($spaceId)
+    {
+        $space = Space::findOrFail($spaceId);
+        $this->authorizeSpace($space);
+
+        return Inertia::render('DailyMessages/Create', [
+            'spaceId' => $space->id,
+            'space'   => $space,
+        ]);
     }
 
     public function store(Request $r, $spaceId)
@@ -71,7 +82,7 @@ class DailyMessageApiController extends Controller
             ['message' => $data['message'], 'generated_by' => 'manual']
         );
 
-        return response()->json($dm, 201);
+        return redirect(route('daily.index', ['spaceId' => $spaceId]));
     }
 
     public function regenerate($spaceId)
@@ -79,13 +90,67 @@ class DailyMessageApiController extends Controller
         $space = Space::findOrFail($spaceId);
         $this->authorizeSpace($space);
 
-        $today = now()->toDateString();
-        DailyMessage::where('space_id', $space->id)->where('date', $today)->delete();
-        return $this->index($spaceId);
+        $data = request()->validate([
+            'date' => 'required|date',
+        ]);
+        $date = date('Y-m-d', strtotime($data['date']));
+
+        DailyMessage::where('space_id', $space->id)
+            ->where('date', $date)
+            ->delete();
+
+        $text = $this->dailyMessageGenerator->generate();
+
+        if (!$text) {
+            return redirect()->route('daily.index', $spaceId)
+                ->with('error', 'Gagal generate pesan AI');
+        }
+
+        DailyMessage::create([
+            'space_id'     => $space->id,
+            'date'         => $date,
+            'message'      => $text,
+            'generated_by' => 'ai'
+        ]);
+
+        return redirect()->route('daily.index', $spaceId)
+            ->with('success', 'Pesan AI berhasil digenerate ulang!');
     }
 
     private function authorizeSpace(Space $space)
     {
         if (!$space->hasMember(Auth::id())) abort(403);
+    }
+
+    public function update(Request $request, $spaceId, $id)
+    {
+        $space = Space::findOrFail($spaceId);
+        $this->authorizeSpace($space);
+
+        $data = $request->validate([
+            'date' => 'required|date',
+            'message' => 'required|string',
+        ]);
+
+        $dailyMessage = DailyMessage::findOrFail($id);
+
+        $dailyMessage->update($data);
+
+        // return redirect(route('daily.edit', ['spaceId' => $spaceId, 'id' => $id]));
+        return redirect()->route('daily.index', $spaceId)
+            ->with('success', 'Daily Message berhasil diperbarui!');
+    }
+
+    public function edit($spaceId, $id)
+    {
+        $space = Space::findOrFail($spaceId);
+        $this->authorizeSpace($space);
+
+        $dailyMessage = DailyMessage::findOrFail($id);
+
+        return Inertia::render('DailyMessages/Edit', [
+            'spaceId' => $space->id,
+            'dailyMessage' => $dailyMessage,
+        ]);
     }
 }
