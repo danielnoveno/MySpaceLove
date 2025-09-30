@@ -1,7 +1,7 @@
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout";
 import { Head, Link, router } from "@inertiajs/react";
 
-export default function CountdownIndex({ items }: { items: any[] }) {
+export default function CountdownIndex({ items, spaceId }: { items: any[]; spaceId: string }) {
     return (
         <AuthenticatedLayout
             header={
@@ -18,7 +18,7 @@ export default function CountdownIndex({ items }: { items: any[] }) {
                         Hitung Mundur Kita ⏳
                     </h3>
                     <Link
-                        href={route("countdown.create")}
+                        href={route("countdown.create", { spaceId })}
                         className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg shadow-md transition duration-200"
                     >
                         + Tambah Event
@@ -36,34 +36,60 @@ export default function CountdownIndex({ items }: { items: any[] }) {
                                 key={item.id}
                                 className="p-4 bg-white shadow-md rounded-xl border border-gray-100 hover:shadow-xl transition duration-200"
                             >
+                                {item.image ? (
+                                    <img
+                                        src={`/storage/${item.image}`}
+                                        alt={item.event_name}
+                                        className="w-full h-48 object-cover rounded-lg mb-4"
+                                    />
+                                ) : (
+                                    <div className="w-full h-48 bg-gray-200 rounded-lg mb-4 flex items-center justify-center">
+                                        <span className="text-gray-500">No Image</span>
+                                    </div>
+                                )}
                                 <h4 className="font-semibold text-gray-800">
                                     {item.event_name}
                                 </h4>
                                 <p className="text-sm text-gray-500">
                                     {item.event_date}
                                 </p>
-                                <div className="flex gap-2 mt-4">
-                                    <Link
-                                        href={route("countdown.edit", item.id)}
-                                        className="px-3 py-1 text-sm rounded-lg bg-yellow-500 hover:bg-yellow-600 text-white transition"
-                                    >
-                                        Edit
-                                    </Link>
-                                    <button
-                                        onClick={() =>
-                                            confirm("Yakin hapus?") &&
-                                            router.delete(
-                                                route(
-                                                    "countdown.destroy",
-                                                    item.id
-                                                )
-                                            )
-                                        }
-                                        className="px-3 py-1 text-sm rounded-lg bg-red-500 hover:bg-red-600 text-white transition"
-                                    >
-                                        Hapus
-                                    </button>
-                                </div>
+                               <div className="mt-4">
+                                   <p className="text-sm text-gray-600">{item.description}</p>
+                               </div>
+                               {item.activities && item.activities.length > 0 && (
+                                   <div className="mt-4">
+                                       <h5 className="font-semibold text-gray-700">Aktivitas:</h5>
+                                       <ul className="list-disc list-inside mt-2 text-sm text-gray-600">
+                                           {item.activities.map((activity: string, index: number) => (
+                                               <li key={index}>{activity}</li>
+                                           ))}
+                                       </ul>
+                                   </div>
+                               )}
+                               <div className="flex gap-2 mt-4">
+                                   {item.id && (
+                                       <Link
+                                           href={route("countdown.edit", { spaceId, id: item.id })}
+                                           className="px-3 py-1 text-sm rounded-lg bg-yellow-500 hover:bg-yellow-600 text-white transition"
+                                       >
+                                           Edit
+                                       </Link>
+                                   )}
+                                   <button
+                                       onClick={() =>
+                                           confirm("Yakin hapus?") &&
+                                           router.delete(
+                                               route(
+                                                   "countdown.destroy",
+                                                   { spaceId, id: item.id }
+                                               )
+                                           )
+                                       }
+                                       className="px-3 py-1 text-sm rounded-lg bg-red-500 hover:bg-red-600 text-white transition"
+                                   >
+                                       Hapus
+                                   </button>
+                               </div>
                             </div>
                         ))}
                     </div>

@@ -1,21 +1,26 @@
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout";
 import { Head, useForm } from "@inertiajs/react";
 
-export default function JournalEdit({ item }: { item: {
-    id: number;
-    title: string;
-    content: string;
-    mood: string;
-} }) {
+interface Props {
+    journal: {
+        id: number;
+        title: string;
+        content: string;
+        mood: string;
+    };
+    spaceId: number;
+}
+
+export default function JournalEdit({ journal, spaceId }: Props) {
     const { data, setData, put, processing, errors } = useForm({
-        title: item.title || "",
-        content: item.content || "",
-        mood: item.mood || "",
+        title: journal.title || "",
+        content: journal.content || "",
+        mood: journal.mood || "",
     });
 
     function submit(e: React.FormEvent) {
         e.preventDefault();
-        put(route("journal.update", item.id));
+        put(route("journal.update", {spaceId: spaceId, id: journal.id}));
     }
 
     return (

@@ -43,7 +43,7 @@ class DailyMessageGenerator
                 "requirements" => [
                     "length" => "20-50 sentences",
                     "style" => $selectedStyle,
-                    "language" => "Mix of natural Bahasa Indonesia",
+                    "language" => "Mix of natural English",
                     "tone" => "warm, genuine, personal, avoid clichés",
                     "emoji" => "Add 5-7 appropriate emojis",
                     "avoid" => [

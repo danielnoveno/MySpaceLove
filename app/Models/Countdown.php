@@ -11,7 +11,14 @@ class Countdown extends Model
     protected $fillable = [
         'space_id',
         'event_name',
-        'event_date'
+        'event_date',
+        'description',
+        'activities',
+        'image'
+    ];
+
+    protected $casts = [
+        'activities' => 'array',
     ];
     public function space()
     {

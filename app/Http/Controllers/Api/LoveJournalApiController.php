@@ -7,6 +7,7 @@ use App\Models\LoveJournal;
 use App\Models\Space;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Inertia\Inertia;
 
 class LoveJournalApiController extends Controller
 {
@@ -14,7 +15,14 @@ class LoveJournalApiController extends Controller
     {
         $space = Space::findOrFail($spaceId);
         $this->authorizeSpace($space);
-        return LoveJournal::where('space_id', $space->id)->latest()->get();
+        // return LoveJournal::where('space_id', $space->id)->latest()->get();
+
+        $journals = LoveJournal::where('space_id', $space->id)->latest()->get();
+
+        return Inertia::render('Journals/Index', [
+            'items' => $journals,
+            'spaceId' => $spaceId,
+        ]);
     }
 
     public function store(Request $r, $spaceId)
@@ -27,7 +35,7 @@ class LoveJournalApiController extends Controller
         $data['user_id'] = Auth::id();
 
         $journal = LoveJournal::create($data);
-        return response()->json($journal, 201);
+        return Inertia::location(route('journal.index', ['spaceId' => $spaceId]));
     }
 
     public function update(Request $r, $spaceId, $id)
@@ -41,7 +49,7 @@ class LoveJournalApiController extends Controller
 
         $data = $r->validate(['title' => 'required|string|max:255', 'content' => 'required|string', 'mood' => 'nullable|in:happy,sad,miss,excited']);
         $journal->update($data);
-        return $journal;
+        return Inertia::location(route('journal.index', ['spaceId' => $spaceId]));
     }
 
     public function destroy($spaceId, $id)
@@ -52,6 +60,28 @@ class LoveJournalApiController extends Controller
         if ($journal->user_id !== Auth::id()) abort(403);
         $journal->delete();
         return response()->json(['message' => 'deleted']);
+    }
+
+    public function create($spaceId)
+    {
+        $space = Space::findOrFail($spaceId);
+        $this->authorizeSpace($space);
+        return Inertia::render('Journals/Create', [
+            'spaceId' => $space->id,
+            'space'   => $space,
+        ]);
+    }
+
+    public function edit($spaceId, $id)
+    {
+        $space = Space::findOrFail($spaceId);
+        $this->authorizeSpace($space);
+        $journal = LoveJournal::where('space_id', $space->id)->findOrFail($id);
+
+        return Inertia::render('Journals/Edit', [
+            'journal' => $journal,
+            'spaceId' => $spaceId,
+        ]);
     }
 
     private function authorizeSpace(Space $space)

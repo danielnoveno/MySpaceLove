@@ -37,11 +37,16 @@ class DashboardController extends Controller
         $upcomingEvents = Countdown::where('space_id', $space->id)
             ->where('event_date', '>=', now())
             ->orderBy('event_date')
-            ->get()
-            ->map(function ($event) {
-                $event->days_left = now()->diffInDays($event->event_date, false);
-                return $event;
-            });
+            ->get();
+
+        $upcomingEvents = $upcomingEvents->map(function ($event) {
+            $event->days_left = now()->diffInDays($event->event_date);
+            return $event;
+        })->where('days_left', '>=', 0);
+
+        if ($upcomingEvents->isEmpty()) {
+            $upcomingEvents = collect([]);
+        }
 
         $recentMessages = DailyMessage::where('space_id', $space->id)
             ->orderBy('date', 'desc')

@@ -47,12 +47,12 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/daily-messages/{spaceId}/regenerate', [DailyMessageApiController::class, 'regenerate'])->name('daily.regenerate');
 
     // Countdown Routes
-    Route::get('/countdowns', [CountdownApiController::class, 'index'])->name('countdown.index');
-    Route::get('/countdowns/create', [CountdownApiController::class, 'create'])->name('countdown.create');
-    Route::post('/countdowns', [CountdownApiController::class, 'store'])->name('countdown.store');
-    Route::get('/countdowns/{id}/edit', [CountdownApiController::class, 'edit'])->name('countdown.edit');
-    Route::put('/countdowns/{id}', [CountdownApiController::class, 'update'])->name('countdown.update');
-    Route::delete('/countdowns/{id}', [CountdownApiController::class, 'destroy'])->name('countdown.destroy');
+    Route::get('/countdowns/{spaceId}', [CountdownApiController::class, 'index'])->name('countdown.index');
+    Route::get('/countdowns/{spaceId}/create', [CountdownApiController::class, 'create'])->name('countdown.create');
+    Route::post('/countdowns/{spaceId}', [CountdownApiController::class, 'store'])->name('countdown.store');
+    Route::get('/countdowns/{spaceId}/{id}/edit', [CountdownApiController::class, 'edit'])->name('countdown.edit');
+    Route::post('/countdowns/{spaceId}/{id}', [CountdownApiController::class, 'update'])->name('countdown.update');
+    Route::delete('/countdowns/{spaceId}/{id}', [CountdownApiController::class, 'destroy'])->name('countdown.destroy');
 
     // Journal Routes
     Route::get('/journals/{spaceId}', [LoveJournalApiController::class, 'index'])->name('journal.index');

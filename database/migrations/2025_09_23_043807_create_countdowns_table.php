@@ -13,6 +13,8 @@ class CreateCountdownsTable extends Migration
             $table->foreignId('space_id')->constrained('spaces')->cascadeOnDelete();
             $table->string('event_name');
             $table->date('event_date');
+            $table->text('description')->nullable();
+            $table->json('activities')->nullable();
             $table->timestamps();
         });
     }

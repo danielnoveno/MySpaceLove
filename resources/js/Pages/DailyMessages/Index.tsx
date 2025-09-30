@@ -112,7 +112,7 @@ export default function DailyMessageIndex({
             <Head title="Daily Message" />
 
             <div className="p-6 space-y-6 max-w-8xl mx-auto">
-                <div className="flex justify-between items-center">
+                <div className="p-4 flex justify-between items-center">
                     <h3 className="text-lg font-bold text-pink-700">
                         Pesan Harian Kita 💌
                     </h3>

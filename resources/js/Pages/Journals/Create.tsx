@@ -1,7 +1,11 @@
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout";
 import { Head, useForm } from "@inertiajs/react";
 
-export default function JournalCreate() {
+interface Props {
+    spaceId: number;
+}
+
+export default function JournalCreate({ spaceId }: Props) {
     const { data, setData, post, processing, errors } = useForm({
         title: "",
         content: "",
@@ -10,7 +14,7 @@ export default function JournalCreate() {
 
     function submit(e: React.FormEvent) {
         e.preventDefault();
-        post(route("journal.store"));
+        post(route("journal.store", { spaceId: spaceId }));
     }
 
     return (
