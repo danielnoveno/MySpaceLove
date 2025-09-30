@@ -106,15 +106,14 @@ class DailyMessageApiController extends Controller
                 ->with('error', 'Gagal generate pesan AI');
         }
 
-        DailyMessage::create([
+        $dailyMessage = DailyMessage::create([
             'space_id'     => $space->id,
             'date'         => $date,
             'message'      => $text,
             'generated_by' => 'ai'
         ]);
 
-        return redirect()->route('daily.index', $spaceId)
-            ->with('success', 'Pesan AI berhasil digenerate ulang!');
+        return response()->json(['message' => $dailyMessage]);
     }
 
     private function authorizeSpace(Space $space)

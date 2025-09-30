@@ -62,7 +62,7 @@ export default function DailyMessageIndex({
                                 {/* <p className="text-sm text-gray-500">
                                     Sumber: {msg.generated_by.toUpperCase()}
                                 </p> */}
-                                {/* <div className="flex gap-2 mt-4">
+                                <div className="flex gap-2 mt-4">
                                     <Link
                                         href={route("daily.edit", {
                                             spaceId: spaceId,
@@ -85,7 +85,7 @@ export default function DailyMessageIndex({
                                     >
                                         Regenerate AI
                                     </button>
-                                </div> */}
+                                </div>
                             </div>
                         ))}
                     </div>

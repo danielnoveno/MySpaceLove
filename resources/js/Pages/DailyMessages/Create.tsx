@@ -60,7 +60,7 @@ export default function DailyMessageCreate({ spaceId }: Props) {
                 { headers: { "Content-Type": "application/json" } }
             );
 
-            const aiMessage = resp.data.message?.message;
+            const aiMessage = resp.data.message.message;
             if (aiMessage) {
                 setData("message", aiMessage);
             } else {

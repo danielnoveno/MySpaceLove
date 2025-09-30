@@ -76,7 +76,7 @@ export default function Dashboard({ dashboardData, spaceId }: Props) {
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-8">
                 {/* Stats Grid */}
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-                    <div className="bg-gradient-to-br from-pink-50 to-rose-50 rounded-2xl p-6 border border-pink-100">
+                    <Link href={route("timeline.index", { spaceId: spaceId })} className="bg-gradient-to-br from-pink-50 to-rose-50 rounded-2xl p-6 border border-pink-100 block transition-all duration-300 hover:scale-105 hover:shadow-md">
                         <div className="flex items-center gap-3">
                             <div className="p-3 bg-pink-100 rounded-xl">
                                 <Calendar className="w-6 h-6 text-pink-600" />
@@ -90,9 +90,9 @@ export default function Dashboard({ dashboardData, spaceId }: Props) {
                                 </p>
                             </div>
                         </div>
-                    </div>
+                    </Link>
 
-                    <div className="bg-gradient-to-br from-blue-50 to-cyan-50 rounded-2xl p-6 border border-blue-100">
+                    <Link href={route("gallery.index", { spaceId: spaceId })} className="bg-gradient-to-br from-blue-50 to-cyan-50 rounded-2xl p-6 border border-blue-100 block transition-all duration-300 hover:scale-105 hover:shadow-md">
                         <div className="flex items-center gap-3">
                             <div className="p-3 bg-blue-100 rounded-xl">
                                 <Image className="w-6 h-6 text-blue-600" />
@@ -106,9 +106,9 @@ export default function Dashboard({ dashboardData, spaceId }: Props) {
                                 </p>
                             </div>
                         </div>
-                    </div>
+                    </Link>
 
-                    <div className="bg-gradient-to-br from-purple-50 to-indigo-50 rounded-2xl p-6 border border-purple-100">
+                    <Link href={route("daily.index", { spaceId: spaceId })} className="bg-gradient-to-br from-purple-50 to-indigo-50 rounded-2xl p-6 border border-purple-100 block transition-all duration-300 hover:scale-105 hover:shadow-md">
                         <div className="flex items-center gap-3">
                             <div className="p-3 bg-purple-100 rounded-xl">
                                 <MessageSquare className="w-6 h-6 text-purple-600" />
@@ -122,9 +122,9 @@ export default function Dashboard({ dashboardData, spaceId }: Props) {
                                 </p>
                             </div>
                         </div>
-                    </div>
+                    </Link>
 
-                    <div className="bg-gradient-to-br from-orange-50 to-red-50 rounded-2xl p-6 border border-orange-100">
+                    <Link href={route("countdown.index", { spaceId: spaceId })} className="bg-gradient-to-br from-orange-50 to-red-50 rounded-2xl p-6 border border-orange-100 block transition-all duration-300 hover:scale-105 hover:shadow-md">
                         <div className="flex items-center gap-3">
                             <div className="p-3 bg-orange-100 rounded-xl">
                                 <Clock className="w-6 h-6 text-orange-600" />
@@ -138,7 +138,7 @@ export default function Dashboard({ dashboardData, spaceId }: Props) {
                                 </p>
                             </div>
                         </div>
-                    </div>
+                    </Link>
                 </div>
 
                 {/* Quick Actions */}
