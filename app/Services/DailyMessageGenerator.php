@@ -7,12 +7,12 @@ use Illuminate\Support\Facades\Log;
 
 class DailyMessageGenerator
 {
-    public function generate(): string
+    public function generate(?string $existingMessage = null, ?string $mood = null): ?string
     {
-        return $this->generateGeminiMessage();
+        return $this->generateGeminiMessage($existingMessage, $mood);
     }
 
-    private function generateGeminiMessage()
+    private function generateGeminiMessage(?string $existingMessage = null, ?string $mood = null)
     {
         $apiKey = env('GEMINI_API_KEY');
         if (!$apiKey) {
@@ -43,7 +43,7 @@ class DailyMessageGenerator
                 "requirements" => [
                     "length" => "20-50 sentences",
                     "style" => $selectedStyle,
-                    "language" => "Mix of natural Bahasa Indonesia and/or English",
+                    "language" => "Mix of natural Bahasa Indonesia",
                     "tone" => "warm, genuine, personal, avoid clichés",
                     "emoji" => "Add 5-7 appropriate emojis",
                     "avoid" => [
@@ -80,6 +80,16 @@ class DailyMessageGenerator
                 ],
                 "output" => "Write one brand new message different from all examples. Directly output the message only without intro."
             ];
+
+            // --- Dynamic Prompt Modification ---
+            if ($existingMessage) {
+                $promptData['task'] = "Improvise, rewrite, or enhance this existing romantic message. Make it better, more poetic, or change the style.";
+                $promptData['original_message'] = $existingMessage;
+            }
+
+            if ($mood) {
+                $promptData['requirements']['user_mood'] = "Incorporate this mood or feeling into the message: '{$mood}'";
+            }
 
             $promptJson = json_encode($promptData, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
 

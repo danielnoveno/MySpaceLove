@@ -23,36 +23,50 @@ class DailyMessageApiController extends Controller
         $this->dailyMessageGenerator = $dailyMessageGenerator;
     }
 
-    public function index($spaceId)
+    public function index(Request $request, $spaceId)
     {
         $space = Space::findOrFail($spaceId);
         $this->authorizeSpace($space);
 
-        $today = now()->toDateString();
-        $message = DailyMessage::where('space_id', $space->id)->where('date', $today)->first();
+        $search = $request->input('search');
+        $date = $request->input('date');
 
-        if (!$message) {
-            // generate from Gemini (stub) - adjust endpoint/format to actual Gemini response
-            $text = $this->dailyMessageGenerator->generate();
+        $query = DailyMessage::where('space_id', $space->id);
 
-            $message = DailyMessage::create([
-                'space_id' => $space->id,
-                'date' => $today,
-                'message' => $text,
-                'generated_by' => 'ai'
-            ]);
-
-            $messages = DailyMessage::where('space_id', $space->id)->latest()->get();
-            return Inertia::render('DailyMessages/Index', [
-                'messages' => $messages,
-                'spaceId' => $spaceId,
-            ]);
+        if ($search) {
+            $query->where('message', 'like', '%' . $search . '%');
         }
 
-        $messages = DailyMessage::where('space_id', $space->id)->latest()->get();
+        if ($date) {
+            $query->whereDate('date', $date);
+        }
+
+        $messages = $query->latest()->get();
+
+        // If no messages are found and no search/date filters are applied, generate a message for today
+        if ($messages->isEmpty() && !$search && !$date) {
+            $today = now()->toDateString();
+            $message = DailyMessage::where('space_id', $space->id)->where('date', $today)->first();
+
+            if (!$message) {
+                $text = $this->dailyMessageGenerator->generate();
+                DailyMessage::create([
+                    'space_id' => $space->id,
+                    'date' => $today,
+                    'message' => $text,
+                    'generated_by' => 'ai'
+                ]);
+                $messages = DailyMessage::where('space_id', $space->id)->latest()->get();
+            }
+        }
+
         return Inertia::render('DailyMessages/Index', [
             'messages' => $messages,
             'spaceId' => $spaceId,
+            'filters' => [
+                'search' => $search,
+                'date' => $date,
+            ],
         ]);
     }
 
@@ -92,6 +106,8 @@ class DailyMessageApiController extends Controller
 
         $data = request()->validate([
             'date' => 'required|date',
+            'message' => 'nullable|string', // Pesan yang ada untuk improvisasi
+            'mood' => 'nullable|string',    // Mood atau prompt tambahan
         ]);
         $date = date('Y-m-d', strtotime($data['date']));
 
@@ -99,7 +115,11 @@ class DailyMessageApiController extends Controller
             ->where('date', $date)
             ->delete();
 
-        $text = $this->dailyMessageGenerator->generate();
+        // Teruskan pesan dan mood ke generator
+        $existingMessage = $data['message'] ?? null;
+        $mood = $data['mood'] ?? null;
+
+        $text = $this->dailyMessageGenerator->generate($existingMessage, $mood);
 
         if (!$text) {
             return redirect()->route('daily.index', $spaceId)
@@ -113,7 +133,12 @@ class DailyMessageApiController extends Controller
             'generated_by' => 'ai'
         ]);
 
-        return response()->json(['message' => $dailyMessage]);
+        if (request()->has('json')) {
+            return response()->json(['message' => $dailyMessage]);
+        }
+
+        return redirect()->route('daily.index', $spaceId)
+            ->with('success', 'Pesan Harian berhasil di-regenerate!');
     }
 
     private function authorizeSpace(Space $space)

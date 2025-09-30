@@ -27,6 +27,8 @@
         "vite": "^7.0.4"
     },
     "dependencies": {
-        "lucide-react": "^0.544.0"
+        "lucide-react": "^0.544.0",
+        "react-spring": "^10.0.3",
+        "react-use-gesture": "^9.1.3"
     }
 }

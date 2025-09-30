@@ -26,6 +26,7 @@ export default function DailyMessageCreate({ spaceId }: Props) {
     });
 
     const [loadingAI, setLoadingAI] = useState(false);
+    const [mood, setMood] = useState(""); // State untuk mood
 
     // Setup default CSRF token axios
     useEffect(() => {
@@ -53,10 +54,28 @@ export default function DailyMessageCreate({ spaceId }: Props) {
         }
 
         setLoadingAI(true);
+
+        // Tentukan apakah ini generate baru atau improvisasi
+        const isImprovisation = data.message.trim().length > 0;
+
         try {
+            const payload: { date: string; message?: string; mood?: string } = {
+                date: data.date,
+            };
+
+            // Jika improvisasi, kirim pesan yang ada
+            if (isImprovisation) {
+                payload.message = data.message;
+            }
+
+            // Jika ada mood, tambahkan ke payload
+            if (mood.trim().length > 0) {
+                payload.mood = mood;
+            }
+
             const resp = await axios.post(
-                `/daily-messages/${spaceId}/regenerate`,
-                { date: data.date },
+                `/daily-messages/${spaceId}/regenerate?json=true`,
+                payload,
                 { headers: { "Content-Type": "application/json" } }
             );
 
@@ -123,6 +142,20 @@ export default function DailyMessageCreate({ spaceId }: Props) {
                         )}
                     </div>
 
+                    <div className="mt-4">
+                        <label className="block text-gray-700 font-medium">
+                            Mood atau Prompt Tambahan (Opsional)
+                        </label>
+                        <input
+                            type="text"
+                            value={mood}
+                            onChange={(e) => setMood(e.target.value)}
+                            placeholder="Contoh: Sedang merasa romantis hari ini"
+                            className="mt-1 w-full border-gray-300 rounded-lg shadow-sm focus:border-pink-500 focus:ring-pink-500 transition"
+                        />
+                    </div>
+
+
                     <div className="flex gap-4 mt-6">
                         <button
                             type="button"
@@ -130,7 +163,11 @@ export default function DailyMessageCreate({ spaceId }: Props) {
                             disabled={loadingAI}
                             className="flex-1 bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg shadow-md transition duration-200"
                         >
-                            {loadingAI ? "Menghasilkan AI..." : "Generate AI"}
+                            {loadingAI
+                                ? "Memproses..."
+                                : data.message
+                                ? "Improvisasi Pesan"
+                                : "Generate Pesan AI"}
                         </button>
 
                         <button
