@@ -39,14 +39,14 @@ class DashboardController extends Controller
             ->orderBy('event_date')
             ->get();
 
-        $upcomingEvents = $upcomingEvents->map(function ($event) {
-            $event->days_left = now()->diffInDays($event->event_date);
-            return $event;
-        })->where('days_left', '>=', 0);
+        // $upcomingEvents = $upcomingEvents->map(function ($event) {
+        //     $event->days_left = now()->diffInDays($event->event_date);
+        //     return $event;
+        // })->where('days_left', '>=', 0);
 
-        if ($upcomingEvents->isEmpty()) {
-            $upcomingEvents = collect([]);
-        }
+        // if ($upcomingEvents->isEmpty()) {
+        //     $upcomingEvents = collect([]);
+        // }
 
         $recentMessages = DailyMessage::where('space_id', $space->id)
             ->orderBy('date', 'desc')

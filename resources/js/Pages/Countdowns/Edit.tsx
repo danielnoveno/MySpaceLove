@@ -23,7 +23,6 @@ export default function CountdownEdit({
         description: countdown?.description || "",
         activities: countdown?.activities || [],
         image: null,
-        _method: 'put',
     });
 
     const handleActivityChange = (index: number, value: string) => {

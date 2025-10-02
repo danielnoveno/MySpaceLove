@@ -188,10 +188,9 @@ export default function Dashboard({ dashboardData, spaceId }: Props) {
                             <Calendar className="w-5 h-5 text-orange-500" />
                             Event Mendatang
                         </h2>
-                        <div className="space-y-3">
-                            {dashboardData.upcomingEvents
-                                .slice(0, 3)
-                                .map((event, index) => (
+                        <div className="space-y-3 max-h-60 overflow-y-auto pr-2">
+                            {dashboardData.upcomingEvents.map(
+                                (event, index) => (
                                     <div
                                         key={index}
                                         className="flex items-center gap-3 p-3 bg-orange-50 rounded-lg"
@@ -208,7 +207,8 @@ export default function Dashboard({ dashboardData, spaceId }: Props) {
                                             </p>
                                         </div>
                                     </div>
-                                ))}
+                                )
+                            )}
                         </div>
                         <Link
                             href={route("countdown.index", {
@@ -226,10 +226,9 @@ export default function Dashboard({ dashboardData, spaceId }: Props) {
                             <MessageSquare className="w-5 h-5 text-purple-500" />
                             Pesan Terbaru
                         </h2>
-                        <div className="space-y-3">
-                            {dashboardData.recentMessages
-                                .slice(0, 3)
-                                .map((message, index) => (
+                        <div className="space-y-3 max-h-60 overflow-y-auto pr-2">
+                            {dashboardData.recentMessages.map(
+                                (message, index) => (
                                     <div
                                         key={index}
                                         className="p-3 bg-purple-50 rounded-lg"
@@ -237,11 +236,12 @@ export default function Dashboard({ dashboardData, spaceId }: Props) {
                                         <p className="text-gray-900 line-clamp-2">
                                             "{message.message}"
                                         </p>
-                                        <p className="text-sm text-gray-600 mt-1">
+                                        <p className="text-sm text-gray-600 mt-3">
                                             {message.date}
                                         </p>
                                     </div>
-                                ))}
+                                )
+                            )}
                         </div>
                         <Link
                             href={route("daily.index", { spaceId: spaceId })}
