@@ -8,8 +8,8 @@ import markerIcon from "leaflet/dist/images/marker-icon.png";
 import markerShadow from "leaflet/dist/images/marker-shadow.png";
 
 type SharePageProps = {
-    latitude?: string | null;
-    longitude?: string | null;
+    latitude?: string | number | null;
+    longitude?: string | number | null;
 };
 
 const isBrowser = typeof window !== "undefined";
@@ -29,16 +29,49 @@ const Share = ({ latitude, longitude }: SharePageProps) => {
         setIsClient(true);
     }, []);
 
+    const parseCoordinate = (value: string | number | null | undefined) => {
+        if (value === null || value === undefined) {
+            return null;
+        }
+
+        const numericValue =
+            typeof value === "number" ? value : Number.parseFloat(value);
+
+        return Number.isFinite(numericValue) ? numericValue : null;
+    };
+
     const parsedLatitude = useMemo(() => {
-        if (!latitude) return null;
-        const value = Number.parseFloat(latitude);
-        return Number.isFinite(value) ? value : null;
+        const directValue = parseCoordinate(latitude);
+        if (directValue !== null) {
+            return directValue;
+        }
+
+        if (isBrowser) {
+            const fromQuery = new URLSearchParams(window.location.search).get(
+                "lat",
+            );
+
+            return parseCoordinate(fromQuery);
+        }
+
+        return null;
     }, [latitude]);
 
     const parsedLongitude = useMemo(() => {
-        if (!longitude) return null;
-        const value = Number.parseFloat(longitude);
-        return Number.isFinite(value) ? value : null;
+        const directValue = parseCoordinate(longitude);
+        if (directValue !== null) {
+            return directValue;
+        }
+
+        if (isBrowser) {
+            const fromQuery = new URLSearchParams(window.location.search).get(
+                "lng",
+            );
+
+            return parseCoordinate(fromQuery);
+        }
+
+        return null;
     }, [longitude]);
 
     const hasCoordinates =
