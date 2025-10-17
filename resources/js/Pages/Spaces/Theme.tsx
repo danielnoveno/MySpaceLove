@@ -8,7 +8,9 @@ export default function SpaceTheme({
     themes: any[];
     currentTheme: any;
 }) {
-    const { data, setData, put, processing, errors } = useForm({
+    const { data, setData, put, processing, errors } = useForm<{
+        theme_id: number | string;
+    }>({
         theme_id: currentTheme.id || "",
     });
 

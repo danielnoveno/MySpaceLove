@@ -13,33 +13,29 @@ use Inertia\Inertia;
 
 class CountdownApiController extends Controller
 {
-    public function index($spaceId)
+    public function index(Space $space)
     {
-        $space = Space::findOrFail($spaceId);
         $this->authorizeSpace($space);
 
         $countdowns = Countdown::where('space_id', $space->id)->latest()->get();
 
         return Inertia::render('Countdowns/Index', [
             'items' => $countdowns,
-            'spaceId' => $spaceId,
+            'space' => $this->spacePayload($space),
         ]);
     }
 
-    public function create($spaceId)
+    public function create(Space $space)
     {
-        $space = Space::findOrFail($spaceId);
         $this->authorizeSpace($space);
 
         return Inertia::render('Countdowns/Create', [
-            'spaceId' => $space->id,
-            'space'   => $space,
+            'space' => $this->spacePayload($space),
         ]);
     }
 
-    public function store(Request $r, $spaceId)
+    public function store(Request $r, Space $space)
     {
-        $space = Space::findOrFail($spaceId);
         $this->authorizeSpace($space);
         $data = $r->validate([
             'event_name' => 'required|string|max:255',
@@ -57,26 +53,23 @@ class CountdownApiController extends Controller
 
         Countdown::create($data);
 
-        return Inertia::location(route('countdown.index', ['spaceId' => $spaceId]));
+        return Inertia::location(route('countdown.index', ['space' => $space->slug]));
     }
 
-    public function edit($spaceId, $id)
+    public function edit(Space $space, $id)
     {
-        $space = Space::findOrFail($spaceId);
         $this->authorizeSpace($space);
 
         $countdown = Countdown::where('space_id', $space->id)->findOrFail($id);
 
         return Inertia::render('Countdowns/Edit', [
             'countdown' => $countdown,
-            'spaceId'   => $space->id,
-            'space'     => $space,
+            'space' => $this->spacePayload($space),
         ]);
     }
 
-    public function update(Request $r, $spaceId, $id)
+    public function update(Request $r, Space $space, $id)
     {
-        $space = Space::findOrFail($spaceId);
         $this->authorizeSpace($space);
         $count = Countdown::where('space_id', $space->id)->findOrFail($id);
         $data = $r->validate([
@@ -93,12 +86,11 @@ class CountdownApiController extends Controller
         }
 
         $count->update($data);
-        return Inertia::location(route('countdown.index', ['spaceId' => $spaceId]));
+        return Inertia::location(route('countdown.index', ['space' => $space->slug]));
     }
 
-    public function destroy($spaceId, $id)
+    public function destroy(Space $space, $id)
     {
-        $space = Space::findOrFail($spaceId);
         $this->authorizeSpace($space);
         $count = Countdown::where('space_id', $space->id)->findOrFail($id);
         $count->delete();
@@ -108,5 +100,14 @@ class CountdownApiController extends Controller
     private function authorizeSpace(Space $space)
     {
         if (!$space->hasMember(Auth::id())) abort(403);
+    }
+
+    private function spacePayload(Space $space): array
+    {
+        return [
+            'id' => $space->id,
+            'slug' => $space->slug,
+            'title' => $space->title,
+        ];
     }
 }

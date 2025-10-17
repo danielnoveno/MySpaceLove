@@ -12,31 +12,28 @@ use Inertia\Inertia;
 
 class LoveTimelineApiController extends Controller
 {
-    public function index($spaceId)
+    public function index(Space $space)
     {
-        $space = Space::findOrFail($spaceId);
         $this->authorizeSpace($space);
 
         $timelines = $space->timelines()->orderBy('date')->get();
 
         return Inertia::render('Timeline/Index', [
             'timelines' => $timelines,
-            'spaceId' => $spaceId,
+            'space' => $this->spacePayload($space),
         ]);
     }
 
-    public function create($spaceId)
+    public function create(Space $space)
     {
-        $space = Space::findOrFail($spaceId);
         $this->authorizeSpace($space);
 
         return Inertia::render('Timeline/Create', [
-            'spaceId' => $space->id,
-            'space'   => $space,
+            'space' => $this->spacePayload($space),
         ]);
     }
 
-    public function store(Request $request, $spaceId)
+    public function store(Request $request, Space $space)
     {
         $request->validate([
             'title' => 'required|string|max:255',
@@ -47,7 +44,7 @@ class LoveTimelineApiController extends Controller
         ]);
 
         $timeline = new LoveTimeline();
-        $timeline->space_id = $spaceId;
+        $timeline->space_id = $space->id;
         $timeline->title = $request->title;
         $timeline->description = $request->description;
         $timeline->date = $request->date;
@@ -55,7 +52,7 @@ class LoveTimelineApiController extends Controller
         $paths = [];
         if ($request->hasFile('media')) {
             foreach ($request->file('media') as $file) {
-                $paths[] = $file->store("spaces/{$spaceId}/timeline", 'public');
+                $paths[] = $file->store("spaces/{$space->id}/timeline", 'public');
             }
         }
 
@@ -63,23 +60,24 @@ class LoveTimelineApiController extends Controller
         $timeline->save();
 
         return redirect()
-            ->route('timeline.index', $spaceId)
+            ->route('timeline.index', ['space' => $space->slug])
             ->with('success', 'Timeline berhasil ditambahkan!');
     }
 
-    public function edit($spaceId, $id)
+    public function edit(Space $space, $id)
     {
-        $item = LoveTimeline::where('space_id', $spaceId)->findOrFail($id);
+        $this->authorizeSpace($space);
+
+        $item = LoveTimeline::where('space_id', $space->id)->findOrFail($id);
 
         return Inertia::render('Timeline/Edit', [
             'item' => $item,
-            'spaceId' => $spaceId,
+            'space' => $this->spacePayload($space),
         ]);
     }
 
-    public function update(Request $r, $spaceId, $id)
+    public function update(Request $r, Space $space, $id)
     {
-        $space = Space::findOrFail($spaceId);
         $this->authorizeSpace($space);
 
         $item = LoveTimeline::where('space_id', $space->id)->findOrFail($id);
@@ -100,7 +98,7 @@ class LoveTimelineApiController extends Controller
             }
             $paths = [];
             foreach ($r->file('media') as $file) {
-                $paths[] = $file->store("spaces/{$spaceId}/timeline", 'public');
+                $paths[] = $file->store("spaces/{$space->id}/timeline", 'public');
             }
         }
 
@@ -111,13 +109,12 @@ class LoveTimelineApiController extends Controller
             'media_paths' => $paths,
         ]);
 
-        return redirect()->route('timeline.index', $spaceId)
+        return redirect()->route('timeline.index', ['space' => $space->slug])
             ->with('success', 'Timeline berhasil diperbarui!');
     }
 
-    public function destroy($spaceId, $id)
+    public function destroy(Space $space, $id)
     {
-        $space = Space::findOrFail($spaceId);
         $this->authorizeSpace($space);
 
         $item = LoveTimeline::where('space_id', $space->id)->findOrFail($id);
@@ -129,5 +126,14 @@ class LoveTimelineApiController extends Controller
     private function authorizeSpace(Space $space)
     {
         if (!$space->hasMember(Auth::id())) abort(403);
+    }
+
+    private function spacePayload(Space $space): array
+    {
+        return [
+            'id' => $space->id,
+            'slug' => $space->slug,
+            'title' => $space->title,
+        ];
     }
 }

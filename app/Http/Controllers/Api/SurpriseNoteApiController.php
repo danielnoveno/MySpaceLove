@@ -10,18 +10,16 @@ use Illuminate\Support\Facades\Auth;
 
 class SurpriseNoteApiController extends Controller
 {
-    public function index($spaceId)
+    public function index(Space $space)
     {
-        $space = Space::findOrFail($spaceId);
         $this->authorizeSpace($space);
 
         // show notes; front-end will check unlock_date
         return SurpriseNote::where('space_id', $space->id)->latest()->get();
     }
 
-    public function store(Request $r, $spaceId)
+    public function store(Request $r, Space $space)
     {
-        $space = Space::findOrFail($spaceId);
         $this->authorizeSpace($space);
 
         $data = $r->validate(['title' => 'nullable|string|max:255', 'message' => 'required|string', 'unlock_date' => 'required|date']);
@@ -32,9 +30,8 @@ class SurpriseNoteApiController extends Controller
         return response()->json($note, 201);
     }
 
-    public function update(Request $r, $spaceId, $id)
+    public function update(Request $r, Space $space, $id)
     {
-        $space = Space::findOrFail($spaceId);
         $this->authorizeSpace($space);
 
         $note = SurpriseNote::where('space_id', $space->id)->findOrFail($id);
@@ -45,9 +42,8 @@ class SurpriseNoteApiController extends Controller
         return $note;
     }
 
-    public function destroy($spaceId, $id)
+    public function destroy(Space $space, $id)
     {
-        $space = Space::findOrFail($spaceId);
         $this->authorizeSpace($space);
         $note = SurpriseNote::where('space_id', $space->id)->findOrFail($id);
         if ($note->user_id !== Auth::id()) abort(403);

@@ -1,11 +1,17 @@
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout";
 import { Head, useForm } from "@inertiajs/react";
+import { useCurrentSpace } from "@/hooks/useCurrentSpace";
 
-interface Props {
-    spaceId: number;
-}
+export default function JournalCreate() {
+    const currentSpace = useCurrentSpace();
 
-export default function JournalCreate({ spaceId }: Props) {
+    if (!currentSpace) {
+        return null;
+    }
+
+    const spaceSlug = currentSpace.slug;
+    const spaceTitle = currentSpace.title;
+
     const { data, setData, post, processing, errors } = useForm({
         title: "",
         content: "",
@@ -14,7 +20,7 @@ export default function JournalCreate({ spaceId }: Props) {
 
     function submit(e: React.FormEvent) {
         e.preventDefault();
-        post(route("journal.store", { spaceId: spaceId }));
+        post(route("journal.store", { space: spaceSlug }));
     }
 
     return (
@@ -25,7 +31,7 @@ export default function JournalCreate({ spaceId }: Props) {
                 </h2>
             }
         >
-            <Head title="Tambah Jurnal" />
+            <Head title={`Tambah Jurnal - ${spaceTitle}`} />
 
             <div className="p-6 max-w-xl mx-auto bg-white shadow-md rounded-xl space-y-6">
                 <form onSubmit={submit}>

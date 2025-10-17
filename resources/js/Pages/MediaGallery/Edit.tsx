@@ -2,6 +2,7 @@ import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout";
 import { Head, useForm, Link } from "@inertiajs/react";
 import { ArrowLeft, Upload, Image } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
+import { useCurrentSpace } from "@/hooks/useCurrentSpace";
 
 interface MediaGalleryItem {
     id: number;
@@ -11,12 +12,22 @@ interface MediaGalleryItem {
 }
 
 export default function GalleryEdit({ item }: { item: MediaGalleryItem }) {
+    const currentSpace = useCurrentSpace();
+
+    if (!currentSpace) {
+        return null;
+    }
+
+    const spaceSlug = currentSpace.slug;
+    const spaceTitle = currentSpace.title;
     const { data, setData, post, processing, errors } = useForm<{
         title: string;
         file: File | null;
+        _method: string;
     }>({
         title: item.title || "",
         file: null,
+        _method: "PUT",
     });
 
     const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -46,7 +57,7 @@ export default function GalleryEdit({ item }: { item: MediaGalleryItem }) {
 
     function submit(e: React.FormEvent) {
         e.preventDefault();
-        post(route("gallery.update", {spaceId: item.space_id, id: item.id}), {
+        post(route("gallery.update", { space: spaceSlug, id: item.id }), {
             forceFormData: true,
         });
     }
@@ -147,7 +158,7 @@ export default function GalleryEdit({ item }: { item: MediaGalleryItem }) {
             header={
                 <div className="flex items-center gap-4">
                     <Link
-                        href={route("gallery.index", { spaceId: item.space_id })}
+                        href={route("gallery.index", { space: spaceSlug })}
                         className="p-2 hover:bg-gray-100 rounded-lg transition"
                     >
                         <ArrowLeft className="w-5 h-5" />
@@ -157,13 +168,13 @@ export default function GalleryEdit({ item }: { item: MediaGalleryItem }) {
                             Edit Galeri
                         </h1>
                         <p className="text-gray-600">
-                            Perbarui foto atau video galeri kamu
+                            Perbarui foto atau video untuk {spaceTitle}
                         </p>
                     </div>
                 </div>
             }
         >
-            <Head title="Edit Galeri" />
+            <Head title={`Edit Galeri - ${spaceTitle}`} />
 
             <div className="relative min-h-screen bg-gradient-to-br from-green-50 via-white to-emerald-50 py-10 px-4 sm:px-6 lg:px-8 overflow-hidden">
                 <canvas
@@ -289,7 +300,7 @@ export default function GalleryEdit({ item }: { item: MediaGalleryItem }) {
                         {/* Submit Button */}
                         <div className="flex flex-col sm:flex-row gap-4 pt-6">
                             <Link
-                                href={route("gallery.index", { spaceId: item.space_id })}
+                                href={route("gallery.index", { space: spaceSlug })}
                                 className="flex-1 px-6 py-4 border border-gray-300 text-gray-700 rounded-xl hover:bg-gray-50 transition text-center font-medium"
                             >
                                 Batal
