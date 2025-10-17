@@ -1,6 +1,7 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\LocationController;
 use App\Http\Controllers\Api\{
     SpaceApiController,
     LoveTimelineApiController,
@@ -41,6 +42,13 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/daily/create-room', [DailyApiController::class, 'createRoom']);
     Route::get('/daily/rooms', [DailyApiController::class, 'listRooms']);
     Route::delete('/daily/rooms/{name}', [DailyApiController::class, 'deleteRoom']);
+
+    Route::prefix('location')->group(function () {
+        Route::post('update', [LocationController::class, 'update']);
+        Route::delete('', [LocationController::class, 'destroy']);
+        Route::post('share', [LocationController::class, 'share']);
+        Route::get('{user}', [LocationController::class, 'show'])->whereNumber('user');
+    });
 });
 
 Route::post('/daily/create-room', [DailyApiController::class, 'createRoom']);

@@ -15,6 +15,7 @@ use App\Http\Controllers\Api\WishlistApiController;
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\ChatController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\LocationController;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Response;
 use Illuminate\Support\Facades\Route;
@@ -26,6 +27,8 @@ Route::get('/', function () {
     return redirect('/login');
 });
 
+Route::get('/location', [LocationController::class, 'publicShare'])->name('location.public');
+
 Route::middleware(['auth', 'verified'])->group(function () {
     // Profile Routes
     Route::get('/profile/edit', [App\Http\Controllers\ProfileController::class, 'edit'])->name('profile.edit');
@@ -34,6 +37,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     // Dashboard
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+
+    Route::get('/location/map', [LocationController::class, 'index'])->name('location.map');
 
     Route::get('/timeline/{spaceId}', [LoveTimelineApiController::class, 'index'])->name('timeline.index');
     Route::get('/timeline/{spaceId}/create', [LoveTimelineApiController::class, 'create'])->name('timeline.create');
