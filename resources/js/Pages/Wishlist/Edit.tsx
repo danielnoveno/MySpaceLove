@@ -2,7 +2,13 @@ import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout";
 import { Head, useForm } from "@inertiajs/react";
 
 export default function WishlistEdit({ item }: { item: any }) {
-    const { data, setData, put, processing, errors } = useForm({
+    const { data, setData, put, processing, errors } = useForm<{
+        title: string;
+        description: string;
+        location: string;
+        status: string;
+        notes: string;
+    }>({
         title: item.title || "",
         description: item.description || "",
         location: item.location || "",

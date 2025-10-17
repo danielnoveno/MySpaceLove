@@ -14,6 +14,7 @@ use App\Http\Controllers\Api\{
     DocApiController,
     ThemeController
 };
+use App\Http\Controllers\LocationController;
 
 Route::middleware('auth:sanctum')->group(function () {
     Route::apiResource('spaces', SpaceApiController::class);
@@ -41,6 +42,11 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/daily/create-room', [DailyApiController::class, 'createRoom']);
     Route::get('/daily/rooms', [DailyApiController::class, 'listRooms']);
     Route::delete('/daily/rooms/{name}', [DailyApiController::class, 'deleteRoom']);
+
+    Route::post('location/update', [LocationController::class, 'update']);
+    Route::get('location/{user}', [LocationController::class, 'show']);
+    Route::post('location/share', [LocationController::class, 'share']);
+    Route::delete('location', [LocationController::class, 'destroy']);
 });
 
 Route::post('/daily/create-room', [DailyApiController::class, 'createRoom']);
