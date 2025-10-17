@@ -1,7 +1,16 @@
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout";
 import { Head, useForm } from "@inertiajs/react";
+import { useCurrentSpace } from "@/hooks/useCurrentSpace";
 
-export default function CountdownCreate({ spaceId }: { spaceId: string }) {
+export default function CountdownCreate() {
+    const currentSpace = useCurrentSpace();
+
+    if (!currentSpace) {
+        return null;
+    }
+
+    const spaceSlug = currentSpace.slug;
+    const spaceTitle = currentSpace.title;
     const { data, setData, post, processing, errors } = useForm({
         event_name: "",
         event_date: "",
@@ -27,7 +36,7 @@ export default function CountdownCreate({ spaceId }: { spaceId: string }) {
 
     function submit(e: React.FormEvent) {
         e.preventDefault();
-        post(route("countdown.store", { spaceId }), {
+        post(route("countdown.store", { space: spaceSlug }), {
             forceFormData: true,
         });
     }
@@ -40,7 +49,7 @@ export default function CountdownCreate({ spaceId }: { spaceId: string }) {
                 </h2>
             }
         >
-            <Head title="Tambah Countdown" />
+            <Head title={`Tambah Countdown - ${spaceTitle}`} />
 
             <div className="p-6 max-w-xl mx-auto bg-white shadow-md rounded-xl space-y-6">
                 <form onSubmit={submit}>

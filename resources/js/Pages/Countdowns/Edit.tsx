@@ -1,5 +1,6 @@
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout";
 import { Head, useForm } from "@inertiajs/react";
+import { useCurrentSpace } from "@/hooks/useCurrentSpace";
 
 interface FormData {
     event_name: string;
@@ -15,6 +16,14 @@ export default function CountdownEdit({
 }: {
     countdown: any | undefined;
 }) {
+    const currentSpace = useCurrentSpace();
+
+    if (!currentSpace) {
+        return null;
+    }
+
+    const spaceSlug = currentSpace.slug;
+    const spaceTitle = currentSpace.title;
     const { data, setData, post, processing, errors } = useForm<FormData>({
         event_name: countdown?.event_name || "",
         event_date: countdown?.event_date
@@ -42,9 +51,15 @@ export default function CountdownEdit({
 
     function submit(e: React.FormEvent) {
         e.preventDefault();
-        post(route("countdown.update", { spaceId: countdown.space_id, id: countdown.id }), {
-            forceFormData: true,
-        });
+        post(
+            route("countdown.update", {
+                space: spaceSlug,
+                id: countdown.id,
+            }),
+            {
+                forceFormData: true,
+            },
+        );
     }
 
     return (
@@ -55,7 +70,7 @@ export default function CountdownEdit({
                 </h2>
             }
         >
-            <Head title="Edit Countdown" />
+            <Head title={`Edit Countdown - ${spaceTitle}`} />
 
             <div className="p-6 max-w-xl mx-auto bg-white shadow-md rounded-xl space-y-6">
                 <form onSubmit={submit}>

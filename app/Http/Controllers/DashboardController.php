@@ -9,27 +9,28 @@ use App\Models\Countdown;
 use App\Models\DailyMessage;
 use App\Models\Space;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Http\RedirectResponse;
+use Inertia\Response;
 
 class DashboardController extends Controller
 {
-    public function index()
+    public function redirect(): RedirectResponse
     {
         $space = Space::where(function ($query) {
             $query->where('user_one_id', Auth::id())
                 ->orWhere('user_two_id', Auth::id());
-        })->first();
+        })->oldest()->first();
 
         if (!$space) {
-            $dashboardData = [
-                'timelineCount' => 0,
-                'galleryCount' => 0,
-                'upcomingEvents' => [],
-                'recentMessages' => [],
-            ];
-            return Inertia::render('Dashboard', [
-                'dashboardData' => $dashboardData,
-            ]);
+            return redirect()->route('spaces.index');
         }
+
+        return redirect()->route('spaces.dashboard', ['space' => $space->slug]);
+    }
+
+    public function show(Space $space): Response
+    {
+        $this->authorizeSpace($space);
 
         $timelineCount = LoveTimeline::where('space_id', $space->id)->count();
         $galleryCount = MediaGallery::where('space_id', $space->id)->count();
@@ -62,7 +63,18 @@ class DashboardController extends Controller
 
         return Inertia::render('Dashboard', [
             'dashboardData' => $dashboardData,
-            'spaceId' => $space->id,
+            'spaceContext' => [
+                'id' => $space->id,
+                'slug' => $space->slug,
+                'title' => $space->title,
+            ],
         ]);
+    }
+
+    private function authorizeSpace(Space $space): void
+    {
+        if (!$space->hasMember(Auth::id())) {
+            abort(403);
+        }
     }
 }

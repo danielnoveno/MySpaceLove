@@ -1,95 +1,133 @@
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout";
 import { Head, Link, router } from "@inertiajs/react";
+import { useCurrentSpace } from "@/hooks/useCurrentSpace";
 
-export default function CountdownIndex({ items, spaceId }: { items: any[]; spaceId: string }) {
+interface CountdownItem {
+    id: number;
+    event_name: string;
+    event_date: string;
+    description?: string;
+    activities?: string[];
+    image?: string | null;
+}
+
+interface Props {
+    items: CountdownItem[];
+}
+
+export default function CountdownIndex({ items }: Props) {
+    const currentSpace = useCurrentSpace();
+
+    if (!currentSpace) {
+        return null;
+    }
+
+    const spaceSlug = currentSpace.slug;
+    const spaceTitle = currentSpace.title;
+
+    const deleteCountdown = (id: number) => {
+        if (
+            confirm(
+                "Yakin ingin menghapus countdown ini? Aksi ini tidak dapat dibatalkan.",
+            )
+        ) {
+            router.delete(
+                route("countdown.destroy", { space: spaceSlug, id }),
+            );
+        }
+    };
+
     return (
         <AuthenticatedLayout
             header={
-                <h2 className="font-semibold text-xl text-gray-800">
+                <h2 className="text-xl font-semibold text-gray-800">
                     Countdown
                 </h2>
             }
         >
-            <Head title="Countdown" />
+            <Head title={`Countdown - ${spaceTitle}`} />
 
-            <div className="p-6 space-y-6 max-w-6xl mx-auto">
-                <div className="flex justify-between items-center">
-                    <h3 className="text-lg font-bold text-purple-700">
-                        Hitung Mundur Kita ⏳
+            <div className="mx-auto max-w-6xl space-y-6 p-6">
+                <div className="flex items-center justify-between">
+                    <h3 className="text-lg font-semibold text-purple-700">
+                        Hitung Mundur Kita 💞
                     </h3>
                     <Link
-                        href={route("countdown.create", { spaceId })}
-                        className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg shadow-md transition duration-200"
+                        href={route("countdown.create", { space: spaceSlug })}
+                        className="rounded-full bg-purple-600 px-4 py-2 text-sm font-medium text-white shadow transition hover:bg-purple-700"
                     >
                         + Tambah Event
                     </Link>
                 </div>
 
                 {items.length === 0 ? (
-                    <p className="text-gray-500 text-center py-8">
-                        Belum ada event countdown. Tambahkan sekarang! ✨
+                    <p className="rounded-3xl border border-dashed border-purple-200 bg-purple-50 py-10 text-center text-sm text-purple-600">
+                        Belum ada event countdown. Tambahkan momen spesial
+                        kalian!
                     </p>
                 ) : (
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
                         {items.map((item) => (
                             <div
                                 key={item.id}
-                                className="p-4 bg-white shadow-md rounded-xl border border-gray-100 hover:shadow-xl transition duration-200"
+                                className="rounded-3xl border border-gray-100 bg-white p-4 shadow-sm transition hover:shadow-lg"
                             >
                                 {item.image ? (
                                     <img
                                         src={`/storage/${item.image}`}
                                         alt={item.event_name}
-                                        className="w-full h-48 object-cover rounded-lg mb-4"
+                                        className="mb-4 h-48 w-full rounded-2xl object-cover"
                                     />
                                 ) : (
-                                    <div className="w-full h-48 bg-gray-200 rounded-lg mb-4 flex items-center justify-center">
-                                        <span className="text-gray-500">No Image</span>
+                                    <div className="mb-4 flex h-48 w-full items-center justify-center rounded-2xl bg-gray-100 text-sm text-gray-400">
+                                        Tidak ada gambar
                                     </div>
                                 )}
-                                <h4 className="font-semibold text-gray-800">
+                                <h4 className="text-lg font-semibold text-gray-900">
                                     {item.event_name}
                                 </h4>
                                 <p className="text-sm text-gray-500">
                                     {item.event_date}
                                 </p>
-                               <div className="mt-4">
-                                   <p className="text-sm text-gray-600">{item.description}</p>
-                               </div>
-                               {item.activities && item.activities.length > 0 && (
-                                   <div className="mt-4">
-                                       <h5 className="font-semibold text-gray-700">Aktivitas:</h5>
-                                       <ul className="list-disc list-inside mt-2 text-sm text-gray-600">
-                                           {item.activities.map((activity: string, index: number) => (
-                                               <li key={index}>{activity}</li>
-                                           ))}
-                                       </ul>
-                                   </div>
-                               )}
-                               <div className="flex gap-2 mt-4">
-                                   {item.id && (
-                                       <Link
-                                           href={route("countdown.edit", { spaceId, id: item.id })}
-                                           className="px-3 py-1 text-sm rounded-lg bg-yellow-500 hover:bg-yellow-600 text-white transition"
-                                       >
-                                           Edit
-                                       </Link>
-                                   )}
-                                   <button
-                                       onClick={() =>
-                                           confirm("Yakin hapus?") &&
-                                           router.delete(
-                                               route(
-                                                   "countdown.destroy",
-                                                   { spaceId, id: item.id }
-                                               )
-                                           )
-                                       }
-                                       className="px-3 py-1 text-sm rounded-lg bg-red-500 hover:bg-red-600 text-white transition"
-                                   >
-                                       Hapus
-                                   </button>
-                               </div>
+                                {item.description && (
+                                    <p className="mt-3 text-sm text-gray-600">
+                                        {item.description}
+                                    </p>
+                                )}
+                                {item.activities &&
+                                    item.activities.length > 0 && (
+                                        <div className="mt-4 rounded-2xl bg-purple-50 p-3">
+                                            <h5 className="text-sm font-semibold text-purple-600">
+                                                Rencana Aktivitas
+                                            </h5>
+                                            <ul className="mt-2 list-disc space-y-1 pl-4 text-xs text-purple-600">
+                                                {item.activities.map(
+                                                    (activity, index) => (
+                                                        <li key={index}>
+                                                            {activity}
+                                                        </li>
+                                                    ),
+                                                )}
+                                            </ul>
+                                        </div>
+                                    )}
+                                <div className="mt-4 flex gap-2">
+                                    <Link
+                                        href={route("countdown.edit", {
+                                            space: spaceSlug,
+                                            id: item.id,
+                                        })}
+                                        className="rounded-full bg-yellow-500 px-3 py-1 text-xs font-medium text-white transition hover:bg-yellow-600"
+                                    >
+                                        Edit
+                                    </Link>
+                                    <button
+                                        onClick={() => deleteCountdown(item.id)}
+                                        className="rounded-full bg-red-500 px-3 py-1 text-xs font-medium text-white transition hover:bg-red-600"
+                                    >
+                                        Hapus
+                                    </button>
+                                </div>
                             </div>
                         ))}
                     </div>

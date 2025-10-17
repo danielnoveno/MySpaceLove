@@ -14,10 +14,10 @@ use Inertia\Response;
 
 class LocationController extends Controller
 {
-    public function index(Request $request): Response
+    public function index(Request $request, Space $space): Response
     {
         $user = $request->user();
-        $partner = $user ? $this->findPartner($user) : null;
+        $partner = $user ? $this->findPartner($user, $space) : null;
 
         $userLocation = $user?->location;
         $partnerLocation = $partner?->location;
@@ -34,15 +34,20 @@ class LocationController extends Controller
                 'updated_at' => optional($userLocation->updated_at)->toIso8601String(),
             ] : null,
             'partnerLocation' => $partnerLocation ? [
-                'latitude' => $partnerLocation->latitude,
-                'longitude' => $partnerLocation->longitude,
-                'updated_at' => optional($partnerLocation->updated_at)->toIso8601String(),
-            ] : null,
-            'shareBaseUrl' => rtrim(config('app.url'), '/') . '/location',
+                    'latitude' => $partnerLocation->latitude,
+                    'longitude' => $partnerLocation->longitude,
+                    'updated_at' => optional($partnerLocation->updated_at)->toIso8601String(),
+                ] : null,
+            'shareBaseUrl' => rtrim(config('app.url'), '/') . '/location/' . $space->slug,
+            'space' => [
+                'id' => $space->id,
+                'slug' => $space->slug,
+                'title' => $space->title,
+            ],
         ]);
     }
 
-    public function publicView(Request $request): Response
+    public function publicView(Request $request, Space $space): Response
     {
         $latitude = $request->query('lat');
         $longitude = $request->query('lng');
@@ -50,6 +55,11 @@ class LocationController extends Controller
         return Inertia::render('Location/Share', [
             'latitude' => $latitude,
             'longitude' => $longitude,
+            'space' => [
+                'id' => $space->id,
+                'slug' => $space->slug,
+                'title' => $space->title,
+            ],
         ]);
     }
 
@@ -109,7 +119,7 @@ class LocationController extends Controller
         ]);
     }
 
-    public function share(Request $request): JsonResponse
+    public function share(Request $request, Space $space): JsonResponse
     {
         $data = $request->validate([
             'latitude' => ['required', 'numeric', 'between:-90,90'],
@@ -118,7 +128,7 @@ class LocationController extends Controller
         ]);
 
         $user = $request->user();
-        $partner = $this->findPartner($user);
+        $partner = $this->findPartner($user, $space);
 
         if (!$partner) {
             return response()->json([
@@ -148,9 +158,9 @@ class LocationController extends Controller
         ]);
     }
 
-    private function findPartner(User $user): ?User
+    private function findPartner(User $user, ?Space $specificSpace = null): ?User
     {
-        $space = Space::where(function ($query) use ($user) {
+        $space = $specificSpace ?? Space::where(function ($query) use ($user) {
             $query->where('user_one_id', $user->id)
                 ->orWhere('user_two_id', $user->id);
         })->first();
@@ -166,9 +176,9 @@ class LocationController extends Controller
         return $partnerId ? User::find($partnerId) : null;
     }
 
-    private function arePartners(User $viewer, User $target): bool
+    private function arePartners(User $viewer, User $target, ?Space $space = null): bool
     {
-        $partner = $this->findPartner($viewer);
+        $partner = $this->findPartner($viewer, $space);
 
         return $partner?->id === $target->id;
     }

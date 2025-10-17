@@ -2,12 +2,18 @@ import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout";
 import { Head, useForm, router, Link } from "@inertiajs/react";
 import { Calendar, ArrowLeft, Upload, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
+import { useCurrentSpace } from "@/hooks/useCurrentSpace";
 
-interface Props {
-    spaceId: number;
-}
+export default function TimelineCreate() {
+    const currentSpace = useCurrentSpace();
 
-export default function TimelineCreate({ spaceId }: Props) {
+    if (!currentSpace) {
+        return null;
+    }
+
+    const spaceSlug = currentSpace.slug;
+    const spaceTitle = currentSpace.title;
+
     const { data, setData, post, processing, errors, clearErrors } = useForm({
         title: "",
         description: "",
@@ -116,9 +122,10 @@ export default function TimelineCreate({ spaceId }: Props) {
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         clearErrors();
-        post(route("timeline.store", { spaceId }), {
+        post(route("timeline.store", { space: spaceSlug }), {
             forceFormData: true,
-            onSuccess: () => router.visit(route("timeline.index", { spaceId })),
+            onSuccess: () =>
+                router.visit(route("timeline.index", { space: spaceSlug })),
         });
     };
 
@@ -158,7 +165,7 @@ export default function TimelineCreate({ spaceId }: Props) {
             header={
                 <div className="flex items-center gap-4">
                     <Link
-                        href={route("timeline.index", { spaceId })}
+                        href={route("timeline.index", { space: spaceSlug })}
                         className="p-2 hover:bg-gray-100 rounded-lg transition"
                     >
                         <ArrowLeft className="w-5 h-5" />
@@ -168,7 +175,7 @@ export default function TimelineCreate({ spaceId }: Props) {
                             Tambah Momen Spesial
                         </h1>
                         <p className="text-gray-600">
-                            Catat kenangan indah bersama pasangan
+                            Catat kenangan indah untuk space {spaceTitle}
                         </p>
                     </div>
                 </div>
@@ -318,7 +325,9 @@ export default function TimelineCreate({ spaceId }: Props) {
                             {/* Submit Button */}
                             <div className="flex flex-col sm:flex-row gap-4 pt-6">
                                 <Link
-                                    href={route("timeline.index", { spaceId })}
+                                    href={route("timeline.index", {
+                                        space: spaceSlug,
+                                    })}
                                     className="flex-1 px-6 py-4 border border-gray-300 text-gray-700 rounded-xl hover:bg-gray-50 transition text-center font-medium"
                                 >
                                     Batal

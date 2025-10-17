@@ -23,9 +23,8 @@ class DailyMessageApiController extends Controller
         $this->dailyMessageGenerator = $dailyMessageGenerator;
     }
 
-    public function index(Request $request, $spaceId)
+    public function index(Request $request, Space $space)
     {
-        $space = Space::findOrFail($spaceId);
         $this->authorizeSpace($space);
 
         $search = $request->input('search');
@@ -49,7 +48,8 @@ class DailyMessageApiController extends Controller
             $message = DailyMessage::where('space_id', $space->id)->where('date', $today)->first();
 
             if (!$message) {
-                $text = $this->dailyMessageGenerator->generate();
+                [$fromName, $partnerName] = $this->resolveNamePair($space);
+                $text = $this->dailyMessageGenerator->generate(null, null, $fromName, $partnerName);
                 DailyMessage::create([
                     'space_id' => $space->id,
                     'date' => $today,
@@ -69,7 +69,7 @@ class DailyMessageApiController extends Controller
         } else {
             return Inertia::render('DailyMessages/Index', [
                 'messages' => $messages,
-                'spaceId' => $spaceId,
+                'space' => $this->spacePayload($space),
                 'filters' => [
                     'search' => $search,
                     'date' => $date,
@@ -78,20 +78,17 @@ class DailyMessageApiController extends Controller
         }
     }
 
-    public function create($spaceId)
+    public function create(Space $space)
     {
-        $space = Space::findOrFail($spaceId);
         $this->authorizeSpace($space);
 
         return Inertia::render('DailyMessages/Create', [
-            'spaceId' => $space->id,
-            'space'   => $space,
+            'space' => $this->spacePayload($space),
         ]);
     }
 
-    public function store(Request $r, $spaceId)
+    public function store(Request $r, Space $space)
     {
-        $space = Space::findOrFail($spaceId);
         $this->authorizeSpace($space);
 
         $data = $r->validate([
@@ -104,11 +101,11 @@ class DailyMessageApiController extends Controller
             ['message' => $data['message'], 'generated_by' => 'manual']
         );
 
-        return redirect(route('daily.index', ['spaceId' => $spaceId]));
+        return redirect(route('daily.index', ['space' => $space->slug]));
     }
-   public function regenerate($spaceId)
+
+   public function regenerate(Space $space)
     {
-        $space = Space::findOrFail($spaceId);
         $this->authorizeSpace($space);
 
         // Hapus pesan harian yang ada untuk hari ini
@@ -118,7 +115,8 @@ class DailyMessageApiController extends Controller
             ->delete();
 
         // Generate pesan baru
-        $text = $this->dailyMessageGenerator->generate();
+        [$fromName, $partnerName] = $this->resolveNamePair($space);
+        $text = $this->dailyMessageGenerator->generate(null, null, $fromName, $partnerName);
 
         if (!$text) {
             return response()->json(['error' => 'Gagal generate pesan AI'], 500);
@@ -134,9 +132,8 @@ class DailyMessageApiController extends Controller
         return response()->json(['message' => $dailyMessage]);
     }
 
-    public function getTodayMessage($spaceId)
+    public function getTodayMessage(Space $space)
     {
-        $space = Space::findOrFail($spaceId);
         $this->authorizeSpace($space);
 
         $today = now()->toDateString();
@@ -154,9 +151,39 @@ class DailyMessageApiController extends Controller
         if (!$space->hasMember(Auth::id())) abort(403);
     }
 
-    public function update(Request $request, $spaceId, $id)
+    private function resolveNamePair(Space $space): array
     {
-        $space = Space::findOrFail($spaceId);
+        $space->loadMissing(['userOne', 'userTwo']);
+
+        $currentUser = Auth::user();
+        $fromName = $currentUser?->name;
+        $partnerName = null;
+
+        if ($currentUser) {
+            if ($space->user_one_id === $currentUser->id) {
+                $partnerName = optional($space->userTwo)->name;
+            } elseif ($space->user_two_id === $currentUser->id) {
+                $partnerName = optional($space->userOne)->name;
+            }
+        }
+
+        if (!$fromName && $space->userOne) {
+            $fromName = $space->userOne->name;
+        }
+
+        if (!$partnerName) {
+            if ($space->userOne && $space->userOne->name !== $fromName) {
+                $partnerName = $space->userOne->name;
+            } elseif ($space->userTwo && $space->userTwo->name !== $fromName) {
+                $partnerName = $space->userTwo->name;
+            }
+        }
+
+        return [$fromName, $partnerName];
+    }
+
+    public function update(Request $request, Space $space, $id)
+    {
         $this->authorizeSpace($space);
 
         $data = $request->validate([
@@ -164,25 +191,32 @@ class DailyMessageApiController extends Controller
             'message' => 'required|string',
         ]);
 
-        $dailyMessage = DailyMessage::findOrFail($id);
+        $dailyMessage = DailyMessage::where('space_id', $space->id)->findOrFail($id);
 
         $dailyMessage->update($data);
 
-        // return redirect(route('daily.edit', ['spaceId' => $spaceId, 'id' => $id]));
-        return redirect()->route('daily.index', $spaceId)
+        return redirect()->route('daily.index', ['space' => $space->slug])
             ->with('success', 'Daily Message berhasil diperbarui!');
     }
 
-    public function edit($spaceId, $id)
+    public function edit(Space $space, $id)
     {
-        $space = Space::findOrFail($spaceId);
         $this->authorizeSpace($space);
 
-        $dailyMessage = DailyMessage::findOrFail($id);
+        $dailyMessage = DailyMessage::where('space_id', $space->id)->findOrFail($id);
 
         return Inertia::render('DailyMessages/Edit', [
-            'spaceId' => $space->id,
+            'space' => $this->spacePayload($space),
             'dailyMessage' => $dailyMessage,
         ]);
+    }
+
+    private function spacePayload(Space $space): array
+    {
+        return [
+            'id' => $space->id,
+            'slug' => $space->slug,
+            'title' => $space->title,
+        ];
     }
 }

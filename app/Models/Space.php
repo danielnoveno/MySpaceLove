@@ -19,6 +19,11 @@ class Space extends Model
         'bio'
     ];
 
+    public function getRouteKeyName(): string
+    {
+        return 'slug';
+    }
+
     public function userOne()
     {
         return $this->belongsTo(User::class, 'user_one_id');

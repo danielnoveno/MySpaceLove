@@ -8,6 +8,7 @@ import {
     Draggable,
     DropResult,
 } from "react-beautiful-dnd";
+import { useCurrentSpace } from "@/hooks/useCurrentSpace";
 
 interface TimelineItem {
     id: number;
@@ -17,12 +18,15 @@ interface TimelineItem {
     media_paths: string[];
 }
 
-interface Props {
-    item: TimelineItem;
-    spaceId: number;
-}
+export default function TimelineEdit({ item }: { item: TimelineItem }) {
+    const currentSpace = useCurrentSpace();
 
-export default function TimelineEdit({ item, spaceId }: Props) {
+    if (!currentSpace) {
+        return null;
+    }
+
+    const spaceSlug = currentSpace.slug;
+    const spaceTitle = currentSpace.title;
     const { data, setData, post, processing, errors } = useForm({
         title: item.title,
         description: item.description,
@@ -154,9 +158,10 @@ export default function TimelineEdit({ item, spaceId }: Props) {
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        post(route("timeline.update", { spaceId, id: item.id }), {
+        post(route("timeline.update", { space: spaceSlug, id: item.id }), {
             forceFormData: true,
-            onSuccess: () => router.visit(route("timeline.index", { spaceId })),
+            onSuccess: () =>
+                router.visit(route("timeline.index", { space: spaceSlug })),
         });
     };
 
@@ -165,7 +170,7 @@ export default function TimelineEdit({ item, spaceId }: Props) {
             header={
                 <div className="flex items-center gap-4">
                     <Link
-                        href={route("timeline.index", { spaceId })}
+                        href={route("timeline.index", { space: spaceSlug })}
                         className="p-2 hover:bg-gray-100 rounded-lg transition"
                     >
                         <ArrowLeft className="w-5 h-5" />
@@ -175,7 +180,8 @@ export default function TimelineEdit({ item, spaceId }: Props) {
                             Edit Momen Spesial
                         </h1>
                         <p className="text-gray-600">
-                            Perbarui kenangan dan atur urutannya
+                            Perbarui kenangan dan atur urutannya di{" "}
+                            {spaceTitle}
                         </p>
                     </div>
                 </div>
@@ -332,7 +338,9 @@ export default function TimelineEdit({ item, spaceId }: Props) {
                         {/* Buttons */}
                         <div className="flex flex-col sm:flex-row gap-4 pt-6">
                             <Link
-                                href={route("timeline.index", { spaceId })}
+                                href={route("timeline.index", {
+                                    space: spaceSlug,
+                                })}
                                 className="flex-1 px-6 py-4 border border-gray-300 text-gray-700 rounded-xl hover:bg-gray-50 text-center"
                             >
                                 Batal

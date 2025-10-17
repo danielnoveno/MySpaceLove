@@ -2,12 +2,17 @@ import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout";
 import { Head, useForm, router, Link } from "@inertiajs/react";
 import { ArrowLeft, Upload } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
+import { useCurrentSpace } from "@/hooks/useCurrentSpace";
 
-interface Props {
-    spaceId: number;
-}
+export default function GalleryCreate() {
+    const currentSpace = useCurrentSpace();
 
-export default function GalleryCreate({ spaceId }: Props) {
+    if (!currentSpace) {
+        return null;
+    }
+
+    const spaceSlug = currentSpace.slug;
+    const spaceTitle = currentSpace.title;
     const { data, setData, post, processing, errors } = useForm({
         title: "",
         file: null as File | null,
@@ -121,9 +126,10 @@ export default function GalleryCreate({ spaceId }: Props) {
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        post(route("gallery.store", { spaceId }), {
+        post(route("gallery.store", { space: spaceSlug }), {
             forceFormData: true,
-            onSuccess: () => router.visit(route("gallery.index", { spaceId })),
+            onSuccess: () =>
+                router.visit(route("gallery.index", { space: spaceSlug })),
         });
     };
 
@@ -136,7 +142,7 @@ export default function GalleryCreate({ spaceId }: Props) {
             header={
                 <div className="flex items-center gap-4">
                     <Link
-                        href={route("gallery.index", { spaceId })}
+                        href={route("gallery.index", { space: spaceSlug })}
                         className="p-2 hover:bg-gray-100 rounded-lg transition"
                     >
                         <ArrowLeft className="w-5 h-5" />
@@ -146,13 +152,13 @@ export default function GalleryCreate({ spaceId }: Props) {
                             Upload Galeri
                         </h1>
                         <p className="text-gray-600">
-                            Tambahkan foto atau video ke galeri
+                            Tambahkan foto atau video ke galeri {spaceTitle}
                         </p>
                     </div>
                 </div>
             }
         >
-            <Head title="Upload Galeri" />
+            <Head title={`Upload Galeri - ${spaceTitle}`} />
 
             <div className="relative min-h-screen bg-gradient-to-br from-emerald-50 via-white to-green-50 py-10 px-4 sm:px-6 lg:px-8 overflow-hidden">
                 <canvas
@@ -252,7 +258,9 @@ export default function GalleryCreate({ spaceId }: Props) {
                         {/* Buttons */}
                         <div className="flex flex-col sm:flex-row gap-4 pt-6">
                             <Link
-                                href={route("gallery.index", { spaceId })}
+                                href={route("gallery.index", {
+                                    space: spaceSlug,
+                                })}
                                 className="flex-1 px-6 py-4 border border-gray-300 text-gray-700 rounded-xl hover:bg-gray-50 transition text-center font-medium"
                             >
                                 Batal

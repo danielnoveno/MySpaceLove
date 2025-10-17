@@ -3,10 +3,10 @@
 namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
-use App\Models\Location;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Str;
 
 class User extends Authenticatable
 {
@@ -22,6 +22,8 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
+        'username',
+        'partner_code',
     ];
 
     /**
@@ -55,5 +57,34 @@ class User extends Authenticatable
     public function spaces()
     {
         return $this->hasMany(Space::class, 'user_one_id');
+    }
+
+    public static function generateUniqueUsername(string $seed): string
+    {
+        $base = Str::slug($seed, '_');
+
+        if ($base === '' || $base === null) {
+            $base = 'user';
+        }
+
+        $base = Str::lower($base);
+        $username = $base;
+        $suffix = 1;
+
+        while (static::where('username', $username)->exists()) {
+            $username = $base . '_' . $suffix;
+            $suffix++;
+        }
+
+        return $username;
+    }
+
+    public static function generatePartnerCode(int $length = 8): string
+    {
+        do {
+            $code = Str::upper(Str::random($length));
+        } while (static::where('partner_code', $code)->exists());
+
+        return $code;
     }
 }

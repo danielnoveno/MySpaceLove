@@ -3,11 +3,18 @@ import { Head } from "@inertiajs/react";
 import axios from "axios";
 import L, { type LatLngExpression } from "leaflet";
 import "leaflet/dist/leaflet.css";
-import markerIcon2x from "leaflet/dist/images/marker-icon-2x.png";
-import markerIcon from "leaflet/dist/images/marker-icon.png";
-import markerShadow from "leaflet/dist/images/marker-shadow.png";
-import { MapContainer, Marker, Popup, TileLayer } from "react-leaflet";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import markerIcon2x from "leaflet/dist/images/marker-icon-2x.png?inline";
+import markerIcon from "leaflet/dist/images/marker-icon.png?inline";
+import markerShadow from "leaflet/dist/images/marker-shadow.png?inline";
+import { MapContainer, Marker, Popup, TileLayer, useMap } from "react-leaflet";
+import {
+    FormEvent,
+    useCallback,
+    useEffect,
+    useMemo,
+    useRef,
+    useState,
+} from "react";
 
 type LocationPoint = {
     latitude: number;
@@ -49,6 +56,16 @@ L.Icon.Default.mergeOptions({
     iconUrl: markerIcon,
     shadowUrl: markerShadow,
 });
+
+function MapCenterUpdater({ center }: { center: LatLngExpression }) {
+    const map = useMap();
+
+    useEffect(() => {
+        map.setView(center);
+    }, [center, map]);
+
+    return null;
+}
 
 function calculateDistance(
     lat1: number,
@@ -113,6 +130,14 @@ export default function MapView({
     const [notification, setNotification] = useState<NotificationState | null>(
         null,
     );
+    const [partner, setPartner] = useState<Partner | null>(initialPartner);
+    const [isConnectingPartner, setIsConnectingPartner] = useState(false);
+    const [showPartnerForm, setShowPartnerForm] = useState(false);
+    const [partnerNameInput, setPartnerNameInput] = useState("");
+    const [partnerEmailInput, setPartnerEmailInput] = useState("");
+    const [generatedPassword, setGeneratedPassword] = useState<string | null>(
+        null,
+    );
 
     const notificationTimeout = useRef<number>();
 
@@ -135,8 +160,6 @@ export default function MapView({
             setNotification(null);
         }, 4000);
     }, []);
-
-    const partner = initialPartner;
 
     const fetchPartnerLocation = useCallback(
         async (silent = false) => {
@@ -168,6 +191,68 @@ export default function MapView({
             }
         },
         [partner, showNotification],
+    );
+
+    const handleConnectPartner = useCallback(
+        async (event: FormEvent<HTMLFormElement>) => {
+            event.preventDefault();
+            setGeneratedPassword(null);
+            setIsConnectingPartner(true);
+
+            try {
+                const response = await axios.post("/api/spaces/connect-partner", {
+                    partner_name: partnerNameInput,
+                    partner_email: partnerEmailInput,
+                });
+
+                const responsePartner = response.data.partner as Partner;
+                setPartner(responsePartner);
+                setGeneratedPassword(
+                    response.data.temporary_password ?? null,
+                );
+                showNotification("Pasangan berhasil terhubung ??", "success");
+                setShowPartnerForm(false);
+                setPartnerNameInput("");
+                setPartnerEmailInput("");
+                await fetchPartnerLocation(true);
+            } catch (error) {
+                console.error("Failed to connect partner", error);
+                let message = "Gagal menghubungkan pasangan.";
+                if (axios.isAxiosError(error)) {
+                    const errorData = error.response?.data as {
+                        message?: unknown;
+                        errors?: Record<string, string[]>;
+                    };
+
+                    const firstValidationError = errorData?.errors
+                        ? (Object.values(errorData.errors)
+                              .flat()
+                              .find((item) => typeof item === "string") as
+                              | string
+                              | undefined)
+                        : undefined;
+
+                    if (firstValidationError) {
+                        message = firstValidationError;
+                    } else if (
+                        typeof errorData?.message === "string" &&
+                        errorData.message.trim() !== ""
+                    ) {
+                        message = errorData.message;
+                    }
+                }
+
+                showNotification(message, "error");
+            } finally {
+                setIsConnectingPartner(false);
+            }
+        },
+        [
+            fetchPartnerLocation,
+            partnerEmailInput,
+            partnerNameInput,
+            showNotification,
+        ],
     );
 
     const persistLocation = useCallback(
@@ -420,12 +505,102 @@ export default function MapView({
                                 </p>
                             </>
                         ) : (
-                            <p className="text-sm text-gray-600">
-                                Hubungkan pasanganmu untuk mulai berbagi.
-                            </p>
+                            <div className="space-y-3">
+                                <p className="text-sm text-gray-600">
+                                    Hubungkan pasanganmu untuk mulai berbagi.
+                                </p>
+                                {showPartnerForm ? (
+                                    <form
+                                        className="space-y-3 rounded-xl border border-violet-100 bg-violet-50 p-3"
+                                        onSubmit={handleConnectPartner}
+                                    >
+                                        <div className="space-y-1">
+                                            <label className="text-xs font-semibold uppercase tracking-wide text-gray-600">
+                                                Nama Pasangan
+                                            </label>
+                                            <input
+                                                value={partnerNameInput}
+                                                onChange={(event) =>
+                                                    setPartnerNameInput(
+                                                        event.target.value,
+                                                    )
+                                                }
+                                                required
+                                                className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-purple-500 focus:ring-purple-500"
+                                                placeholder="Misal: Hana"
+                                            />
+                                        </div>
+                                        <div className="space-y-1">
+                                            <label className="text-xs font-semibold uppercase tracking-wide text-gray-600">
+                                                Email Pasangan
+                                            </label>
+                                            <input
+                                                type="email"
+                                                value={partnerEmailInput}
+                                                onChange={(event) =>
+                                                    setPartnerEmailInput(
+                                                        event.target.value,
+                                                    )
+                                                }
+                                                required
+                                                className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-purple-500 focus:ring-purple-500"
+                                                placeholder="pasangan@email.com"
+                                            />
+                                        </div>
+                                        <div className="flex items-center gap-2">
+                                            <button
+                                                type="submit"
+                                                disabled={isConnectingPartner}
+                                                className="inline-flex items-center justify-center rounded-full bg-purple-500 px-4 py-2 text-sm font-medium text-white shadow transition hover:bg-purple-600 disabled:cursor-not-allowed disabled:bg-purple-300"
+                                            >
+                                                {isConnectingPartner
+                                                    ? "Menghubungkan..."
+                                                    : "Simpan Pasangan"}
+                                            </button>
+                                            <button
+                                                type="button"
+                                                onClick={() => {
+                                                    setShowPartnerForm(false);
+                                                    setPartnerNameInput("");
+                                                    setPartnerEmailInput("");
+                                                }}
+                                                className="inline-flex items-center justify-center rounded-full bg-white px-4 py-2 text-sm font-medium text-gray-600 shadow-sm transition hover:bg-gray-50"
+                                            >
+                                                Batal
+                                            </button>
+                                        </div>
+                                    </form>
+                                ) : (
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowPartnerForm(true)}
+                                        className="inline-flex items-center gap-2 rounded-full bg-purple-100 px-4 py-2 text-sm font-medium text-purple-600 transition hover:bg-purple-200"
+                                    >
+                                        Hubungkan Pasangan
+                                    </button>
+                                )}
+                            </div>
                         )}
                     </div>
                 </div>
+
+                {generatedPassword && partner && (
+                    <div className="rounded-2xl border border-yellow-200 bg-yellow-50 px-4 py-3 text-sm text-yellow-800 shadow-sm">
+                        <p className="font-semibold">
+                            Akun pasangan berhasil dibuat.
+                        </p>
+                        <p className="mt-1">
+                            Bagikan kredensial ini ke pasanganmu untuk login:
+                            <br />
+                            <span className="font-semibold">Email:</span>{" "}
+                            {partner.email}{" "}
+                            <span className="font-semibold">Password:</span>{" "}
+                            <span className="font-mono tracking-wide">
+                                {generatedPassword}
+                            </span>
+                        </p>
+                    </div>
+                )}
 
                 {distanceKm !== null && (
                     <div className="rounded-2xl bg-gradient-to-r from-pink-500 to-purple-500 px-6 py-4 text-white shadow-lg">
@@ -444,6 +619,7 @@ export default function MapView({
                                 className="h-full w-full"
                                 scrollWheelZoom
                             >
+                                <MapCenterUpdater center={mapCenter} />
                                 <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
                                 {userLocation && (
                                     <Marker
@@ -500,7 +676,7 @@ export default function MapView({
                     </button>
                     <button
                         onClick={handleShareLocation}
-                        disabled={isSharing || !partner}
+                        disabled={isSharing}
                         className="inline-flex items-center gap-2 rounded-full bg-purple-500 px-5 py-2 text-white shadow transition hover:bg-purple-600 disabled:cursor-not-allowed disabled:bg-purple-300"
                     >
                         {isSharing ? "Mengirim..." : "🔗 Share Lokasi"}

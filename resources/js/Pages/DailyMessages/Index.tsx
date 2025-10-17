@@ -8,6 +8,7 @@ import TextInput from "@/Components/TextInput";
 import InputLabel from "@/Components/InputLabel";
 import PrimaryButton from "@/Components/PrimaryButton";
 import SecondaryButton from "@/Components/SecondaryButton";
+import { useCurrentSpace } from "@/hooks/useCurrentSpace";
 
 const ExpandableText = ({
     text,
@@ -46,16 +47,21 @@ const ExpandableText = ({
 
 export default function DailyMessageIndex({
     messages,
-    spaceId,
     filters,
 }: {
     messages: any[];
-    spaceId: string;
     filters: {
         search?: string;
         date?: string;
     };
 }) {
+    const currentSpace = useCurrentSpace();
+
+    if (!currentSpace) {
+        return null;
+    }
+
+    const spaceSlug = currentSpace.slug;
     const [showSearchModal, setShowSearchModal] = useState(false);
     const [searchKeyword, setSearchKeyword] = useState(
         filters.search || ""
@@ -124,7 +130,7 @@ export default function DailyMessageIndex({
                             Cari Pesan
                         </button>
                         <Link
-                            href={route("daily.create", { spaceId: spaceId })}
+                            href={route("daily.create", { space: spaceSlug })}
                             className="bg-pink-600 hover:bg-pink-700 text-white px-4 py-2 rounded-lg shadow-md transition duration-200"
                         >
                             + Tambah Manual
@@ -158,7 +164,7 @@ export default function DailyMessageIndex({
                                 <div className="flex gap-2 mt-4">
                                     <Link
                                         href={route("daily.edit", {
-                                            spaceId: spaceId,
+                                            space: spaceSlug,
                                             id: messages[i].id,
                                         })}
                                         className="px-3 py-1 text-sm rounded-lg bg-yellow-500 hover:bg-yellow-600 text-white transition"
@@ -169,9 +175,9 @@ export default function DailyMessageIndex({
                                         onClick={() =>
                                             router.post(
                                                 route("daily.regenerate", {
-                                                    spaceId: spaceId,
+                                                    space: spaceSlug,
                                                 }),
-                                                { date: messages[i].date }
+                                                { date: messages[i].date },
                                             )
                                         }
 
@@ -190,13 +196,13 @@ export default function DailyMessageIndex({
                         onSubmit={(e) => {
                             e.preventDefault();
                             router.get(
-                                route("daily.index", { spaceId: spaceId }),
+                                route("daily.index", { space: spaceSlug }),
                                 { search: searchKeyword, date: searchDate },
                                 {
                                     preserveState: true,
                                     replace: true,
                                     onSuccess: () => setShowSearchModal(false),
-                                }
+                                },
                             );
                         }}
                         className="p-6"
@@ -229,11 +235,16 @@ export default function DailyMessageIndex({
                             <SecondaryButton onClick={() => {
                                 setSearchKeyword("");
                                 setSearchDate("");
-                                router.get(route("daily.index", { spaceId: spaceId }), {}, {
-                                    preserveState: true,
-                                    replace: true,
-                                    onSuccess: () => setShowSearchModal(false),
-                                });
+                                router.get(
+                                    route("daily.index", { space: spaceSlug }),
+                                    {},
+                                    {
+                                        preserveState: true,
+                                        replace: true,
+                                        onSuccess: () =>
+                                            setShowSearchModal(false),
+                                    },
+                                );
                             }}>
                                 Clear
                             </SecondaryButton>

@@ -7,13 +7,21 @@ use Illuminate\Support\Facades\Log;
 
 class DailyMessageGenerator
 {
-    public function generate(?string $existingMessage = null, ?string $mood = null): ?string
-    {
-        return $this->generateGeminiMessage($existingMessage, $mood);
+    public function generate(
+        ?string $existingMessage = null,
+        ?string $mood = null,
+        ?string $senderName = null,
+        ?string $partnerName = null
+    ): ?string {
+        return $this->generateGeminiMessage($existingMessage, $mood, $senderName, $partnerName);
     }
 
-    private function generateGeminiMessage(?string $existingMessage = null, ?string $mood = null)
-    {
+    private function generateGeminiMessage(
+        ?string $existingMessage = null,
+        ?string $mood = null,
+        ?string $senderName = null,
+        ?string $partnerName = null
+    ) {
         $apiKey = env('GEMINI_API_KEY');
         if (!$apiKey) {
             Log::warning('GEMINI_API_KEY is not set in .env file.');
@@ -37,6 +45,34 @@ class DailyMessageGenerator
 
             $selectedStyle = $styles[array_rand($styles)];
 
+            $fromName = $senderName ? trim($senderName) : null;
+            $toName = $partnerName ? trim($partnerName) : null;
+
+            $context = [
+                'from_name' => $fromName,
+                'partner_name' => $toName,
+            ];
+
+            if (!$fromName) {
+                $context['from_name_hint'] = "Use a gentle neutral sign-off like 'Your partner'.";
+            }
+
+            if (!$toName) {
+                $context['partner_name_hint'] = 'No partner name supplied, keep the wording affectionate without inventing one.';
+            }
+
+            $personalizationRequirement = $toName
+                ? sprintf(
+                    'Mention %s naturally at least once and write it as if %s is speaking directly to them.',
+                    $toName,
+                    $fromName ?: 'their partner'
+                )
+                : 'Keep the message intimate without inventing specific names.';
+
+            $signOffInstruction = $fromName
+                ? sprintf('Optionally close with a warm sign-off from %s.', $fromName)
+                : 'Close with a caring sign-off that still feels personal.';
+
             // Structured prompt as JSON
             $promptData = [
                 "task" => "Generate a unique romantic or love-related message.",
@@ -44,18 +80,20 @@ class DailyMessageGenerator
                     "length" => "20-50 sentences",
                     "style" => $selectedStyle,
                     "language" => "Mix of natural English",
-                    "tone" => "warm, genuine, personal, avoid clichés",
+                    "tone" => "warm, genuine, personal, avoid cliches",
                     "emoji" => "Add 5-7 appropriate emojis",
                     "avoid" => [
-                        "Sayangku",
                         "meski jarak memisahkan",
                         "samudra dan daratan",
                         "benang cinta tak kasat mata",
                         "ketahuilah",
                         "percayalah at beginning"
                     ],
-                    "source_reference" => "You may draw inspiration or quotes from famous authors, poets, or philosophers about love (like Rumi, Khalil Gibran, Maya Angelou, etc.) but adapt to personal message style.",
+                    "source_reference" => "You may draw inspiration or quotes from famous authors, poets, or philosophers about love, but adapt to personal message style.",
+                    "personalization" => $personalizationRequirement,
+                    "sign_off" => $signOffInstruction,
                 ],
+                "context" => $context,
                 "examples" => [
                     // --- Your short examples ---
                     "You're special to me. You are the only one who I wouldn't mind losing sleep for, the only one who I can never get tired of talking to and the only one who crosses my mind constantly throughout the day. You are the only one who can make me smile without any intention and affect my emotions with every action of yours. I can't explain in words how much you mean to me but you're the one I'm afraid of losing and the one I want to keep in my life.",

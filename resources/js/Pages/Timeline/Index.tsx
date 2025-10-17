@@ -2,6 +2,7 @@ import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout";
 import { Head, Link } from "@inertiajs/react";
 import { Calendar, Edit, Plus, Heart, Eye, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
+import { useCurrentSpace } from "@/hooks/useCurrentSpace";
 
 interface TimelineItem {
     id: number;
@@ -13,10 +14,17 @@ interface TimelineItem {
 
 interface Props {
     timelines: TimelineItem[];
-    spaceId: number;
 }
 
-export default function TimelineIndex({ timelines, spaceId }: Props) {
+export default function TimelineIndex({ timelines }: Props) {
+    const currentSpace = useCurrentSpace();
+
+    if (!currentSpace) {
+        return null;
+    }
+
+    const spaceSlug = currentSpace.slug;
+    const spaceTitle = currentSpace.title;
     const [selectedItem, setSelectedItem] = useState<TimelineItem | null>(null);
     const [selectedImage, setSelectedImage] = useState<string | null>(null);
 
@@ -138,7 +146,7 @@ export default function TimelineIndex({ timelines, spaceId }: Props) {
                         Love Timeline
                     </h2>
                     <Link
-                        href={route("timeline.create", { spaceId })}
+                        href={route("timeline.create", { space: spaceSlug })}
                         className="bg-gradient-to-r from-pink-500 to-purple-600 hover:from-pink-600 hover:to-purple-700 text-white px-4 py-2 rounded-lg shadow-lg transition-all duration-300 flex items-center gap-2"
                     >
                         <Plus className="w-4 h-4" />
@@ -147,7 +155,7 @@ export default function TimelineIndex({ timelines, spaceId }: Props) {
                 </div>
             }
         >
-            <Head title="Love Timeline" />
+            <Head title={`Love Timeline - ${spaceTitle}`} />
 
             {/* Background Animasi */}
             <div className="relative min-h-screen bg-gradient-to-br from-pink-50 via-white to-rose-50 py-10 px-4 sm:px-6 lg:px-8 overflow-hidden">
@@ -192,7 +200,9 @@ export default function TimelineIndex({ timelines, spaceId }: Props) {
                                     kalian!
                                 </p>
                                 <Link
-                                    href={route("timeline.create", { spaceId })}
+                                    href={route("timeline.create", {
+                                        space: spaceSlug,
+                                    })}
                                     className="bg-gradient-to-r from-pink-500 to-purple-600 text-white px-6 py-2 rounded-lg inline-block hover:shadow-lg transition-all"
                                 >
                                     Tambah Momen Pertama
@@ -242,9 +252,9 @@ export default function TimelineIndex({ timelines, spaceId }: Props) {
                                                     href={route(
                                                         "timeline.edit",
                                                         {
-                                                            spaceId,
+                                                            space: spaceSlug,
                                                             id: item.id,
-                                                        }
+                                                        },
                                                     )}
                                                     className="text-pink-600 hover:text-pink-700 flex items-center gap-1 text-sm font-medium"
                                                 >
