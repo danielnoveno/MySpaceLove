@@ -1,12 +1,20 @@
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout";
 import { Head } from "@inertiajs/react";
 import axios from "axios";
-import L, { type LatLngExpression } from "leaflet";
+import L, {
+    type LatLngExpression,
+    type Marker as LeafletMarker,
+} from "leaflet";
 import "leaflet/dist/leaflet.css";
-import markerIcon2x from "leaflet/dist/images/marker-icon-2x.png?inline";
-import markerIcon from "leaflet/dist/images/marker-icon.png?inline";
-import markerShadow from "leaflet/dist/images/marker-shadow.png?inline";
-import { MapContainer, Marker, Popup, TileLayer, useMap } from "react-leaflet";
+import {
+    MapContainer,
+    Marker,
+    Polyline,
+    Popup,
+    Tooltip,
+    TileLayer,
+    useMap,
+} from "react-leaflet";
 import {
     FormEvent,
     useCallback,
@@ -47,14 +55,81 @@ type Props = {
     userLocation: LocationPoint | null;
     partnerLocation: LocationPoint | null;
     shareBaseUrl: string;
+    space: {
+        id: number;
+        slug: string;
+        title: string;
+    };
 };
 
 const indonesiaCenter: LatLngExpression = [-2.5489, 118.0149];
 
-L.Icon.Default.mergeOptions({
-    iconRetinaUrl: markerIcon2x,
-    iconUrl: markerIcon,
-    shadowUrl: markerShadow,
+const createMarkerIcon = ({
+    primaryColor,
+    iconColor,
+}: {
+    primaryColor: string;
+    iconColor: string;
+}) =>
+    L.divIcon({
+        className: "custom-leaflet-marker",
+        html: `
+            <div style="
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                gap: 6px;
+            ">
+                <span style="
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    width: 44px;
+                    height: 44px;
+                    border-radius: 9999px;
+                    background: #ffffff;
+                    border: 4px solid ${primaryColor};
+                    box-shadow: 0 12px 28px rgba(15, 23, 42, 0.18);
+                ">
+                    <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        viewBox="0 0 24 24"
+                        width="22"
+                        height="22"
+                        fill="none"
+                        stroke="${iconColor}"
+                        stroke-width="1.8"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                    >
+                        <path d="M20 10c0 4.993-5.539 10.193-7.399 11.799a1 1 0 0 1-1.202 0C9.539 20.193 4 14.993 4 10a8 8 0 0 1 16 0"/>
+                        <circle cx="12" cy="10" r="3"/>
+                    </svg>
+                </span>
+                <span style="
+                    width: 10px;
+                    height: 10px;
+                    border-radius: 9999px;
+                    background: ${primaryColor};
+                    opacity: 0.85;
+                    box-shadow: 0 3px 10px rgba(15, 23, 42, 0.25);
+                "></span>
+            </div>
+        `,
+        iconSize: [46, 60],
+        iconAnchor: [23, 56],
+        tooltipAnchor: [0, -48],
+        popupAnchor: [0, -48],
+    });
+
+const userMarkerIcon = createMarkerIcon({
+    primaryColor: "#ec4899",
+    iconColor: "#db2777",
+});
+
+const partnerMarkerIcon = createMarkerIcon({
+    primaryColor: "#8b5cf6",
+    iconColor: "#7c3aed",
 });
 
 function MapCenterUpdater({ center }: { center: LatLngExpression }) {
@@ -71,7 +146,7 @@ function calculateDistance(
     lat1: number,
     lon1: number,
     lat2: number,
-    lon2: number,
+    lon2: number
 ): number {
     const toRad = (value: number) => (value * Math.PI) / 180;
     const R = 6371;
@@ -110,25 +185,25 @@ export default function MapView({
     userLocation: initialUserLocation,
     partnerLocation: initialPartnerLocation,
     shareBaseUrl,
+    space,
 }: Props) {
     const [userLocation, setUserLocation] = useState<LocationPoint | null>(
-        initialUserLocation,
+        initialUserLocation
     );
-    const [partnerLocation, setPartnerLocation] = useState<LocationPoint | null>(
-        initialPartnerLocation,
-    );
+    const [partnerLocation, setPartnerLocation] =
+        useState<LocationPoint | null>(initialPartnerLocation);
     const [lastUpdated, setLastUpdated] = useState<string | null>(
-        initialUserLocation?.updated_at ?? null,
+        initialUserLocation?.updated_at ?? null
     );
     const [partnerUpdatedAt, setPartnerUpdatedAt] = useState<string | null>(
-        initialPartnerLocation?.updated_at ?? null,
+        initialPartnerLocation?.updated_at ?? null
     );
     const [isClient, setIsClient] = useState(false);
     const [isUpdating, setIsUpdating] = useState(false);
     const [isSharing, setIsSharing] = useState(false);
     const [isStopping, setIsStopping] = useState(false);
     const [notification, setNotification] = useState<NotificationState | null>(
-        null,
+        null
     );
     const [partner, setPartner] = useState<Partner | null>(initialPartner);
     const [isConnectingPartner, setIsConnectingPartner] = useState(false);
@@ -136,10 +211,18 @@ export default function MapView({
     const [partnerNameInput, setPartnerNameInput] = useState("");
     const [partnerEmailInput, setPartnerEmailInput] = useState("");
     const [generatedPassword, setGeneratedPassword] = useState<string | null>(
-        null,
+        null
     );
+    const [routeCoordinates, setRouteCoordinates] = useState<
+        LatLngExpression[] | null
+    >(null);
+    const [isRouteLoading, setIsRouteLoading] = useState(false);
+    const [routeFetchError, setRouteFetchError] = useState<string | null>(null);
+    const [routeDistanceKm, setRouteDistanceKm] = useState<number | null>(null);
 
     const notificationTimeout = useRef<number>();
+    const userMarkerRef = useRef<LeafletMarker | null>(null);
+    const partnerMarkerRef = useRef<LeafletMarker | null>(null);
 
     useEffect(() => {
         setIsClient(true);
@@ -151,15 +234,35 @@ export default function MapView({
         };
     }, []);
 
-    const showNotification = useCallback((message: string, type: NotificationType) => {
-        setNotification({ message, type });
-        if (notificationTimeout.current) {
-            window.clearTimeout(notificationTimeout.current);
+    useEffect(() => {
+        if (isClient && userLocation && userMarkerRef.current) {
+            userMarkerRef.current.openPopup();
         }
-        notificationTimeout.current = window.setTimeout(() => {
-            setNotification(null);
-        }, 4000);
-    }, []);
+    }, [isClient, userLocation]);
+
+    useEffect(() => {
+        if (
+            isClient &&
+            partner &&
+            partnerLocation &&
+            partnerMarkerRef.current
+        ) {
+            partnerMarkerRef.current.openPopup();
+        }
+    }, [isClient, partner, partnerLocation]);
+
+    const showNotification = useCallback(
+        (message: string, type: NotificationType) => {
+            setNotification({ message, type });
+            if (notificationTimeout.current) {
+                window.clearTimeout(notificationTimeout.current);
+            }
+            notificationTimeout.current = window.setTimeout(() => {
+                setNotification(null);
+            }, 4000);
+        },
+        []
+    );
 
     const fetchPartnerLocation = useCallback(
         async (silent = false) => {
@@ -180,17 +283,20 @@ export default function MapView({
                 if (!silent && location) {
                     showNotification(
                         "Lokasi pasangan diperbarui 💕",
-                        "success",
+                        "success"
                     );
                 }
             } catch (error) {
                 console.error("Failed to fetch partner location", error);
                 if (!silent) {
-                    showNotification("Gagal mengambil lokasi pasangan.", "error");
+                    showNotification(
+                        "Gagal mengambil lokasi pasangan.",
+                        "error"
+                    );
                 }
             }
         },
-        [partner, showNotification],
+        [partner, showNotification]
     );
 
     const handleConnectPartner = useCallback(
@@ -200,16 +306,28 @@ export default function MapView({
             setIsConnectingPartner(true);
 
             try {
-                const response = await axios.post("/api/spaces/connect-partner", {
-                    partner_name: partnerNameInput,
-                    partner_email: partnerEmailInput,
-                });
+                const partnerName = partnerNameInput.trim();
+                const partnerEmail = partnerEmailInput.trim();
+
+                if (!partnerName || !partnerEmail) {
+                    showNotification(
+                        "Nama dan email pasangan wajib diisi.",
+                        "error"
+                    );
+                    return;
+                }
+
+                const response = await axios.post(
+                    `/api/spaces/${space.slug}/connect-partner`,
+                    {
+                        partner_name: partnerName,
+                        partner_email: partnerEmail,
+                    }
+                );
 
                 const responsePartner = response.data.partner as Partner;
                 setPartner(responsePartner);
-                setGeneratedPassword(
-                    response.data.temporary_password ?? null,
-                );
+                setGeneratedPassword(response.data.temporary_password ?? null);
                 showNotification("Pasangan berhasil terhubung ??", "success");
                 setShowPartnerForm(false);
                 setPartnerNameInput("");
@@ -252,7 +370,8 @@ export default function MapView({
             partnerEmailInput,
             partnerNameInput,
             showNotification,
-        ],
+            space.slug,
+        ]
     );
 
     const persistLocation = useCallback(
@@ -266,7 +385,10 @@ export default function MapView({
                 setUserLocation(location);
                 setLastUpdated(location.updated_at ?? null);
                 if (!silent) {
-                    showNotification("Lokasimu berhasil diperbarui 💖", "success");
+                    showNotification(
+                        "Lokasimu berhasil diperbarui 💖",
+                        "success"
+                    );
                 }
                 await fetchPartnerLocation(true);
             } catch (error) {
@@ -280,7 +402,7 @@ export default function MapView({
                 }
             }
         },
-        [fetchPartnerLocation, showNotification],
+        [fetchPartnerLocation, showNotification]
     );
 
     const fallbackToIp = useCallback(
@@ -292,28 +414,33 @@ export default function MapView({
                     await persistLocation(
                         Number(data.latitude),
                         Number(data.longitude),
-                        silent,
+                        silent
                     );
                     if (!silent) {
                         showNotification(
                             "Menggunakan lokasi berdasarkan alamat IP.",
-                            "warning",
+                            "warning"
                         );
                     }
                 } else {
-                    throw new Error("IP geolocation did not return coordinates");
+                    throw new Error(
+                        "IP geolocation did not return coordinates"
+                    );
                 }
             } catch (error) {
                 console.error("IP geolocation fallback failed", error);
                 if (!silent) {
-                    showNotification("Tidak dapat mengambil lokasi otomatis.", "error");
+                    showNotification(
+                        "Tidak dapat mengambil lokasi otomatis.",
+                        "error"
+                    );
                 }
                 if (!silent) {
                     setIsUpdating(false);
                 }
             }
         },
-        [persistLocation, showNotification],
+        [persistLocation, showNotification]
     );
 
     const requestLocation = useCallback(
@@ -329,7 +456,7 @@ export default function MapView({
                         void persistLocation(
                             position.coords.latitude,
                             position.coords.longitude,
-                            silent,
+                            silent
                         );
                     },
                     () => {
@@ -339,13 +466,13 @@ export default function MapView({
                         enableHighAccuracy: true,
                         maximumAge: 10000,
                         timeout: 10000,
-                    },
+                    }
                 );
             } else {
                 void fallbackToIp(silent);
             }
         },
-        [fallbackToIp, persistLocation],
+        [fallbackToIp, persistLocation]
     );
 
     useEffect(() => {
@@ -369,15 +496,12 @@ export default function MapView({
             return [userLocation.latitude, userLocation.longitude];
         }
         if (partnerLocation) {
-            return [
-                partnerLocation.latitude,
-                partnerLocation.longitude,
-            ];
+            return [partnerLocation.latitude, partnerLocation.longitude];
         }
         return indonesiaCenter;
     }, [partnerLocation, userLocation]);
 
-    const distanceKm = useMemo(() => {
+    const straightDistanceKm = useMemo(() => {
         if (!userLocation || !partnerLocation) {
             return null;
         }
@@ -385,31 +509,141 @@ export default function MapView({
             userLocation.latitude,
             userLocation.longitude,
             partnerLocation.latitude,
-            partnerLocation.longitude,
+            partnerLocation.longitude
         );
     }, [partnerLocation, userLocation]);
 
+    const displayDistanceKm = useMemo(() => {
+        if (routeDistanceKm !== null) {
+            return routeDistanceKm;
+        }
+        return straightDistanceKm;
+    }, [routeDistanceKm, straightDistanceKm]);
+
     const formattedUserUpdated = useMemo(
         () => formatTimestamp(lastUpdated),
-        [lastUpdated],
+        [lastUpdated]
     );
     const formattedPartnerUpdated = useMemo(
         () => formatTimestamp(partnerUpdatedAt),
-        [partnerUpdatedAt],
+        [partnerUpdatedAt]
     );
+
+    const fetchRouteBetweenLocations = useCallback(
+        async (origin: LocationPoint, destination: LocationPoint) => {
+            setIsRouteLoading(true);
+            setRouteFetchError(null);
+            try {
+                const response = await fetch(
+                    `https://router.project-osrm.org/route/v1/driving/${origin.longitude},${origin.latitude};${destination.longitude},${destination.latitude}?overview=full&geometries=geojson`
+                );
+
+                if (!response.ok) {
+                    throw new Error(
+                        `OSRM request failed with status ${response.status}`
+                    );
+                }
+
+                const data: {
+                    routes?: Array<{
+                        geometry?: { coordinates?: Array<[number, number]> };
+                        distance?: number;
+                    }>;
+                } = await response.json();
+
+                const firstRoute = data.routes?.[0];
+                const coordinates = firstRoute?.geometry?.coordinates;
+
+                if (
+                    coordinates &&
+                    Array.isArray(coordinates) &&
+                    coordinates.length > 0
+                ) {
+                    const convertedCoordinates = coordinates.map(
+                        ([longitude, latitude]) =>
+                            [latitude, longitude] as LatLngExpression
+                    );
+                    setRouteCoordinates(convertedCoordinates);
+                    if (typeof firstRoute?.distance === "number") {
+                        setRouteDistanceKm(firstRoute.distance / 1000);
+                    } else {
+                        setRouteDistanceKm(
+                            calculateDistance(
+                                origin.latitude,
+                                origin.longitude,
+                                destination.latitude,
+                                destination.longitude
+                            )
+                        );
+                    }
+                } else {
+                    setRouteCoordinates([
+                        [origin.latitude, origin.longitude],
+                        [destination.latitude, destination.longitude],
+                    ]);
+                    setRouteDistanceKm(
+                        calculateDistance(
+                            origin.latitude,
+                            origin.longitude,
+                            destination.latitude,
+                            destination.longitude
+                        )
+                    );
+                    setRouteFetchError(
+                        "Rute jalan tidak tersedia, menampilkan garis lurus."
+                    );
+                }
+            } catch (error) {
+                console.error("Failed to fetch route", error);
+                setRouteCoordinates([
+                    [origin.latitude, origin.longitude],
+                    [destination.latitude, destination.longitude],
+                ]);
+                setRouteDistanceKm(
+                    calculateDistance(
+                        origin.latitude,
+                        origin.longitude,
+                        destination.latitude,
+                        destination.longitude
+                    )
+                );
+                setRouteFetchError(
+                    "Gagal memuat rute jalan, menampilkan garis lurus."
+                );
+            } finally {
+                setIsRouteLoading(false);
+            }
+        },
+        []
+    );
+
+    useEffect(() => {
+        if (!isClient) {
+            return;
+        }
+
+        if (!userLocation || !partnerLocation) {
+            setRouteCoordinates(null);
+            setRouteDistanceKm(null);
+            setRouteFetchError(null);
+            return;
+        }
+
+        void fetchRouteBetweenLocations(userLocation, partnerLocation);
+    }, [fetchRouteBetweenLocations, isClient, partnerLocation, userLocation]);
 
     const handleShareLocation = useCallback(async () => {
         if (!userLocation) {
             showNotification(
                 "Lokasi belum tersedia. Tekan update lokasi terlebih dahulu.",
-                "warning",
+                "warning"
             );
             return;
         }
         if (!partner) {
             showNotification(
                 "Pasangan belum terhubung di MySpaceLove.",
-                "warning",
+                "warning"
             );
             return;
         }
@@ -418,7 +652,7 @@ export default function MapView({
         const shareUrl = `${shareBaseUrl}?lat=${userLocation.latitude}&lng=${userLocation.longitude}`;
 
         try {
-            await axios.post("/api/location/share", {
+            await axios.post(`/api/spaces/${space.slug}/location/share`, {
                 latitude: userLocation.latitude,
                 longitude: userLocation.longitude,
                 url: shareUrl,
@@ -430,7 +664,7 @@ export default function MapView({
 
             showNotification(
                 "Link lokasi berhasil dikirim dan disalin! 💞",
-                "success",
+                "success"
             );
         } catch (error) {
             console.error("Failed to share location", error);
@@ -438,7 +672,7 @@ export default function MapView({
         } finally {
             setIsSharing(false);
         }
-    }, [partner, shareBaseUrl, showNotification, userLocation]);
+    }, [partner, shareBaseUrl, showNotification, space.slug, userLocation]);
 
     const handleStopSharing = useCallback(async () => {
         setIsStopping(true);
@@ -478,7 +712,9 @@ export default function MapView({
                         </h3>
                         <p className="text-sm text-gray-600">
                             {userLocation
-                                ? `${userLocation.latitude.toFixed(5)}, ${userLocation.longitude.toFixed(5)}`
+                                ? `${userLocation.latitude.toFixed(
+                                      5
+                                  )}, ${userLocation.longitude.toFixed(5)}`
                                 : "Belum ada lokasi"}
                         </p>
                         <p className="text-xs text-gray-400 mt-2">
@@ -495,7 +731,11 @@ export default function MapView({
                             <>
                                 <p className="text-sm text-gray-600">
                                     {partnerLocation
-                                        ? `${partnerLocation.latitude.toFixed(5)}, ${partnerLocation.longitude.toFixed(5)}`
+                                        ? `${partnerLocation.latitude.toFixed(
+                                              5
+                                          )}, ${partnerLocation.longitude.toFixed(
+                                              5
+                                          )}`
                                         : "Belum ada lokasi"}
                                 </p>
                                 <p className="text-xs text-gray-400 mt-2">
@@ -522,7 +762,7 @@ export default function MapView({
                                                 value={partnerNameInput}
                                                 onChange={(event) =>
                                                     setPartnerNameInput(
-                                                        event.target.value,
+                                                        event.target.value
                                                     )
                                                 }
                                                 required
@@ -539,7 +779,7 @@ export default function MapView({
                                                 value={partnerEmailInput}
                                                 onChange={(event) =>
                                                     setPartnerEmailInput(
-                                                        event.target.value,
+                                                        event.target.value
                                                     )
                                                 }
                                                 required
@@ -602,10 +842,16 @@ export default function MapView({
                     </div>
                 )}
 
-                {distanceKm !== null && (
+                {displayDistanceKm !== null && (
                     <div className="rounded-2xl bg-gradient-to-r from-pink-500 to-purple-500 px-6 py-4 text-white shadow-lg">
                         <p className="text-sm font-semibold">
-                            Jarak kalian saat ini sekitar {distanceKm.toFixed(2)} km 🌍
+                            {routeDistanceKm !== null
+                                ? `Jarak estimasi via jalan sekitar ${displayDistanceKm.toFixed(
+                                      2
+                                  )} km 🚗`
+                                : `Jarak garis lurus kalian sekitar ${displayDistanceKm.toFixed(
+                                      2
+                                  )} km 🌍`}
                         </p>
                     </div>
                 )}
@@ -623,12 +869,19 @@ export default function MapView({
                                 <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
                                 {userLocation && (
                                     <Marker
+                                        ref={userMarkerRef}
                                         position={[
                                             userLocation.latitude,
                                             userLocation.longitude,
                                         ]}
+                                        icon={userMarkerIcon}
                                     >
-                                        <Popup>
+                                        <Popup
+                                            autoClose={false}
+                                            closeButton={false}
+                                            closeOnClick={false}
+                                            autoPan={false}
+                                        >
                                             <span className="font-semibold text-pink-500">
                                                 Kamu di sini 💖
                                             </span>
@@ -641,12 +894,19 @@ export default function MapView({
                                 )}
                                 {partner && partnerLocation && (
                                     <Marker
+                                        ref={partnerMarkerRef}
                                         position={[
                                             partnerLocation.latitude,
                                             partnerLocation.longitude,
                                         ]}
+                                        icon={partnerMarkerIcon}
                                     >
-                                        <Popup>
+                                        <Popup
+                                            autoClose={false}
+                                            closeButton={false}
+                                            closeOnClick={false}
+                                            autoPan={false}
+                                        >
                                             <span className="font-semibold text-purple-500">
                                                 Pasanganmu 💕
                                             </span>
@@ -657,6 +917,18 @@ export default function MapView({
                                         </Popup>
                                     </Marker>
                                 )}
+                                {routeCoordinates && (
+                                    <Polyline
+                                        positions={routeCoordinates}
+                                        pathOptions={{
+                                            color: "#ec4899",
+                                            weight: 5,
+                                            opacity: 0.75,
+                                            lineCap: "round",
+                                            lineJoin: "round",
+                                        }}
+                                    />
+                                )}
                             </MapContainer>
                         ) : (
                             <div className="flex h-full items-center justify-center text-sm text-gray-500">
@@ -664,6 +936,20 @@ export default function MapView({
                             </div>
                         )}
                     </div>
+                    {(isRouteLoading || routeFetchError) && (
+                        <div className="mt-3 px-1 space-y-1">
+                            {isRouteLoading && (
+                                <p className="text-xs text-gray-500">
+                                    Menentukan jalur terbaik...
+                                </p>
+                            )}
+                            {routeFetchError && (
+                                <p className="text-xs text-yellow-600">
+                                    {routeFetchError}
+                                </p>
+                            )}
+                        </div>
+                    )}
                 </div>
 
                 <div className="flex flex-wrap gap-3">

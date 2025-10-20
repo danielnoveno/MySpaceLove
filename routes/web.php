@@ -29,6 +29,30 @@ Route::get('/', function () {
 });
 
 Route::get('/location/{space:slug}', [LocationController::class, 'publicView'])->name('location.public');
+Route::get('/surprise/story', function () {
+    return Inertia::render('Surprise/StoryBook');
+})->name('surprise.story');
+Route::get('/surprise/memory', function () {
+    return Inertia::render('Surprise/MemoryLanePublic');
+})->name('surprise.memory');
+Route::get('/surprise/{space:slug}/story', function (\App\Models\Space $space) {
+    return Inertia::render('Surprise/StoryBook', [
+        'space' => [
+            'id' => $space->id,
+            'slug' => $space->slug,
+            'title' => $space->title,
+        ],
+    ]);
+})->name('surprise.story.space');
+Route::get('/surprise/{space:slug}/memory', function (\App\Models\Space $space) {
+    return Inertia::render('Surprise/MemoryLanePublic', [
+        'space' => [
+            'id' => $space->id,
+            'slug' => $space->slug,
+            'title' => $space->title,
+        ],
+    ]);
+})->name('surprise.memory.space');
 
 Route::middleware(['auth', 'verified'])->group(function () {
     // Profile Routes

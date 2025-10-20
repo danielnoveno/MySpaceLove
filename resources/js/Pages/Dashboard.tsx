@@ -1,7 +1,7 @@
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout";
 import { Head, Link, usePage } from "@inertiajs/react";
 import axios from "axios";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { Fragment, useCallback, useEffect, useMemo, useState } from "react";
 import {
     Calendar,
     Clock,
@@ -54,6 +54,57 @@ export default function Dashboard({ dashboardData, spaceContext }: Props) {
         Record<number, boolean>
     >({});
 
+    const formattedDailyMessage = useMemo(() => {
+        if (!dailyMessage) {
+            return null;
+        }
+
+        const segments = dailyMessage.split(/(\*[^*]+\*)/g);
+
+        return segments.map((segment, index) => {
+            const boldMatch = segment.match(/^\*([^*]+)\*$/);
+
+            if (boldMatch) {
+                return (
+                    <strong
+                        key={`bold-${index}`}
+                        className="font-semibold text-pink-500"
+                    >
+                        {boldMatch[1]}
+                    </strong>
+                );
+            }
+
+            return <Fragment key={`text-${index}`}>{segment}</Fragment>;
+        });
+    }, [dailyMessage]);
+
+    const openDailyMessageModal = useCallback((value: string | null) => {
+        if (typeof value !== "string" || value.trim() === "") {
+            return;
+        }
+
+        setDailyMessage(value);
+        setShowModal(true);
+    }, []);
+
+    const extractDailyMessageText = useCallback((payload: unknown): string | null => {
+        if (typeof payload === "string") {
+            return payload;
+        }
+
+        if (
+            payload &&
+            typeof payload === "object" &&
+            "message" in payload &&
+            typeof (payload as { message?: unknown }).message === "string"
+        ) {
+            return (payload as { message: string }).message;
+        }
+
+        return null;
+    }, []);
+
     useEffect(() => {
         const fetchDailyMessage = async () => {
             try {
@@ -61,9 +112,12 @@ export default function Dashboard({ dashboardData, spaceContext }: Props) {
                     route("api.spaces.daily-message", { space: spaceSlug }),
                 );
 
-                if (response.status === 200 && response.data?.message) {
-                    setDailyMessage(response.data.message.message);
-                    setShowModal(true);
+                const messageText = extractDailyMessageText(
+                    response.data?.message,
+                );
+
+                if (response.status === 200 && messageText) {
+                    openDailyMessageModal(messageText);
                     return;
                 }
             } catch (error) {
@@ -78,9 +132,15 @@ export default function Dashboard({ dashboardData, spaceContext }: Props) {
                             }),
                         );
 
-                        if (regenerateResponse.status === 200) {
-                            setDailyMessage(regenerateResponse.data.message);
-                            setShowModal(true);
+                        const regeneratedText = extractDailyMessageText(
+                            regenerateResponse.data?.message,
+                        );
+
+                        if (
+                            regenerateResponse.status === 200 &&
+                            regeneratedText
+                        ) {
+                            openDailyMessageModal(regeneratedText);
                         }
                     } catch (regenerateError) {
                         console.error(
@@ -95,7 +155,7 @@ export default function Dashboard({ dashboardData, spaceContext }: Props) {
         };
 
         void fetchDailyMessage();
-    }, [spaceSlug]);
+    }, [extractDailyMessageText, openDailyMessageModal, spaceSlug]);
 
     const quickActions = useMemo(
         () => [
@@ -119,6 +179,20 @@ export default function Dashboard({ dashboardData, spaceContext }: Props) {
                 description: "Lihat pesan cinta",
                 href: route("daily.index", { space: spaceSlug }),
                 color: "from-purple-500 to-indigo-500",
+            },
+            {
+                icon: Gift,
+                label: "Surprise Story",
+                description: "Hadiahkan cerita ulang tahun",
+                href: route("surprise.story.space", { space: spaceSlug }),
+                color: "from-amber-500 to-pink-500",
+            },
+            {
+                icon: Heart,
+                label: "Memory Lane Kit",
+                description: "Panduan surprise 3 tahap",
+                href: route("surprise.memory.space", { space: spaceSlug }),
+                color: "from-fuchsia-500 to-violet-500",
             },
             {
                 icon: BookOpen,
@@ -182,7 +256,7 @@ export default function Dashboard({ dashboardData, spaceContext }: Props) {
                             Pesan Cinta Hari Ini
                         </h3>
                         <p className="mt-3 text-center text-sm leading-relaxed text-gray-600">
-                            {dailyMessage}
+                            {formattedDailyMessage}
                         </p>
                     </div>
                 </div>
