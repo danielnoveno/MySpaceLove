@@ -19,8 +19,14 @@ class SetLocale
         $availableLocales = Config::get('app.available_locales', []);
         $defaultLocale = Config::get('app.locale', 'en');
 
+        $sessionLocale = null;
+
+        if ($request->hasSession()) {
+            $sessionLocale = $request->session()->get('locale');
+        }
+
         $candidateLocales = [
-            $request->session()->get('locale'),
+            $sessionLocale,
             $request->cookie('locale'),
             $request->getPreferredLanguage($availableLocales),
         ];
@@ -38,7 +44,7 @@ class SetLocale
             App::setLocale($resolvedLocale);
         }
 
-        if ($request->session()->get('locale') !== $resolvedLocale) {
+        if ($request->hasSession() && $sessionLocale !== $resolvedLocale) {
             $request->session()->put('locale', $resolvedLocale);
         }
 
