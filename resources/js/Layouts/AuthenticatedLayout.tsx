@@ -3,7 +3,7 @@ import { Link, usePage } from "@inertiajs/react";
 import ApplicationLogo from "@/Components/ApplicationLogo";
 import Dropdown from "@/Components/Dropdown";
 import ResponsiveNavLink from "@/Components/ResponsiveNavLink";
-import { Lock } from "lucide-react";
+import { Check, Globe, Lock } from "lucide-react";
 import { useTranslation } from "@/hooks/useTranslation";
 
 export default function Authenticated({
@@ -37,10 +37,20 @@ export default function Authenticated({
         useTranslation<{
             navigation?: Record<string, string>;
             user?: { fallback_name?: string };
+            language?: { label?: string; options?: Record<string, string> };
         }>("layout");
 
     const navigation = layoutTranslations.navigation ?? {};
     const userStrings = layoutTranslations.user ?? {};
+    const languageStrings = layoutTranslations.language ?? {};
+
+    const availableLocales =
+        (props.availableLocales as string[] | undefined) ?? [];
+    const activeLocale = (props.locale as string | undefined) ?? "en";
+    const languageOptions = languageStrings.options ?? {};
+    const languageLabel = languageStrings.label ?? "Language";
+    const activeLanguageLabel =
+        languageOptions[activeLocale] ?? activeLocale.toUpperCase();
 
     const fallbackHref = route("spaces.index");
 
@@ -188,6 +198,72 @@ export default function Authenticated({
                                             >
                                                 + {navigation.manage_spaces ?? "Kelola Spaces"}
                                             </Dropdown.Link>
+                                        </Dropdown.Content>
+                                    </Dropdown>
+                                </div>
+                            )}
+                            {availableLocales.length > 0 && (
+                                <div className="mr-4">
+                                    <Dropdown>
+                                        <Dropdown.Trigger>
+                                            <span className="inline-flex rounded-md">
+                                                <button
+                                                    type="button"
+                                                    className="inline-flex items-center gap-2 px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-gray-600 bg-white hover:text-gray-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-200 transition ease-in-out duration-150"
+                                                    aria-label={languageLabel}
+                                                >
+                                                    <Globe
+                                                        className="h-4 w-4 text-purple-500"
+                                                        aria-hidden="true"
+                                                    />
+                                                    <span>{activeLanguageLabel}</span>
+                                                    <svg
+                                                        className="ml-1 -mr-1 h-4 w-4 text-gray-400"
+                                                        xmlns="http://www.w3.org/2000/svg"
+                                                        viewBox="0 0 20 20"
+                                                        fill="currentColor"
+                                                    >
+                                                        <path
+                                                            fillRule="evenodd"
+                                                            d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
+                                                            clipRule="evenodd"
+                                                        />
+                                                    </svg>
+                                                </button>
+                                            </span>
+                                        </Dropdown.Trigger>
+
+                                        <Dropdown.Content align="right">
+                                            {availableLocales.map((locale) => {
+                                                const isActive = locale === activeLocale;
+                                                return (
+                                                    <Dropdown.Link
+                                                        key={locale}
+                                                        href={route("locale.switch")}
+                                                        method="post"
+                                                        as="button"
+                                                        data={{ locale }}
+                                                        className={
+                                                            isActive
+                                                                ? "bg-purple-50 text-purple-600"
+                                                                : ""
+                                                        }
+                                                    >
+                                                        <span className="flex items-center justify-between gap-2">
+                                                            <span>
+                                                                {languageOptions[locale] ??
+                                                                    locale.toUpperCase()}
+                                                            </span>
+                                                            {isActive && (
+                                                                <Check
+                                                                    className="h-3 w-3"
+                                                                    aria-hidden="true"
+                                                                />
+                                                            )}
+                                                        </span>
+                                                    </Dropdown.Link>
+                                                );
+                                            })}
                                         </Dropdown.Content>
                                     </Dropdown>
                                 </div>
@@ -371,6 +447,39 @@ export default function Authenticated({
                                 {navigation.logout ?? "Log Out"}
                             </ResponsiveNavLink>
                         </div>
+                        {availableLocales.length > 0 && (
+                            <div className="mt-6 border-t border-gray-200 pt-4">
+                                <div className="px-4 text-xs font-semibold uppercase tracking-wider text-gray-500">
+                                    {languageLabel}
+                                </div>
+                                <div className="mt-2 space-y-1">
+                                    {availableLocales.map((locale) => {
+                                        const isActive = locale === activeLocale;
+                                        return (
+                                            <ResponsiveNavLink
+                                                key={locale}
+                                                href={route("locale.switch")}
+                                                method="post"
+                                                as="button"
+                                                data={{ locale }}
+                                                active={isActive}
+                                            >
+                                                <span className="flex w-full items-center justify-between gap-2">
+                                                    {languageOptions[locale] ??
+                                                        locale.toUpperCase()}
+                                                    {isActive && (
+                                                        <Check
+                                                            className="h-4 w-4"
+                                                            aria-hidden="true"
+                                                        />
+                                                    )}
+                                                </span>
+                                            </ResponsiveNavLink>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+                        )}
                     </div>
                 </div>
             </nav>

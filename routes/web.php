@@ -19,9 +19,11 @@ use App\Http\Controllers\LocationController;
 use App\Http\Controllers\SpaceController;
 use App\Http\Controllers\SpotifyAuthController;
 use App\Http\Controllers\SpotifyController;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Response;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 
 Route::post('/logout', [AuthenticatedSessionController::class, 'destroy'])->name('logout');
@@ -107,6 +109,21 @@ Route::get('/surprise/{space:slug}/memory', function (\App\Models\Space $space) 
 })->name('surprise.memory.space');
 
 Route::middleware(['auth', 'verified'])->group(function () {
+    Route::post('/locale', function (Request $request) {
+        $availableLocales = config('app.available_locales', []);
+
+        $validated = $request->validate([
+            'locale' => ['required', 'string', Rule::in($availableLocales)],
+        ]);
+
+        $locale = $validated['locale'];
+
+        $request->session()->put('locale', $locale);
+        app()->setLocale($locale);
+
+        return back()->withCookie(cookie()->forever('locale', $locale));
+    })->name('locale.switch');
+
     // Profile Routes
     Route::get('/profile/edit', [App\Http\Controllers\ProfileController::class, 'edit'])->name('profile.edit');
     Route::put('/profile/update', [App\Http\Controllers\ProfileController::class, 'update'])->name('profile.update');

@@ -41,6 +41,13 @@ return [
         'user' => [
             'fallback_name' => 'User',
         ],
+        'language' => [
+            'label' => 'Bahasa',
+            'options' => [
+                'en' => 'Bahasa Inggris',
+                'id' => 'Bahasa Indonesia',
+            ],
+        ],
     ],
     'dashboard' => [
         'meta' => [
