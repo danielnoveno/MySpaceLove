@@ -16,6 +16,8 @@ import {
     Lock,
     X,
 } from "lucide-react";
+import { useTranslation } from "@/hooks/useTranslation";
+import { replacePlaceholders } from "@/utils/translation";
 
 interface DashboardData {
     timelineCount: number;
@@ -43,6 +45,51 @@ interface Props {
     spaceContext: SpaceContext;
 }
 
+type DashboardTranslation = {
+    meta?: { title?: string };
+    header?: { subtitle?: string };
+    modals?: {
+        daily_message?: { title?: string };
+        locked?: { title?: string; action?: string };
+    };
+    cards?: {
+        partner_pending?: {
+            title?: string;
+            description?: string;
+            cta?: string;
+        };
+        timeline_total?: string;
+        gallery_total?: string;
+        location_share?: { title?: string; cta?: string };
+        quick_actions?: {
+            title?: string;
+            add_moment?: { label?: string; description?: string };
+            upload_photo?: { label?: string; description?: string };
+            daily_message?: { label?: string; description?: string };
+            memory_lane?: { label?: string; description?: string };
+            spotify?: { label?: string; description?: string };
+            journal?: { label?: string; description?: string };
+            nobar?: { label?: string; description?: string };
+        };
+        upcoming_events?: {
+            title?: string;
+            empty?: string;
+            days_left?: string;
+            view_all?: string;
+        };
+        recent_messages?: {
+            title?: string;
+            empty?: string;
+            show_more?: string;
+            show_less?: string;
+            view_all?: string;
+        };
+    };
+    locks?: {
+        requires_partner?: string;
+    };
+};
+
 export default function Dashboard({ dashboardData, spaceContext }: Props) {
     const { props } = usePage<{
         currentSpace?: {
@@ -63,7 +110,12 @@ export default function Dashboard({ dashboardData, spaceContext }: Props) {
         (currentSpace.is_owner ?? spaceContext.is_owner) ?? false;
 
     const coupleFeaturesLocked = !hasPartner;
+    const { translations: dashboardStrings } =
+        useTranslation<DashboardTranslation>("dashboard");
+    const { t: tCommon } = useTranslation("common");
+
     const coupleLockMessage =
+        dashboardStrings.locks?.requires_partner ??
         "Hubungkan pasanganmu terlebih dahulu untuk membuka fitur ini.";
     const [dailyMessage, setDailyMessage] = useState<string | null>(null);
     const [showModal, setShowModal] = useState(false);
@@ -185,66 +237,90 @@ export default function Dashboard({ dashboardData, spaceContext }: Props) {
         void fetchDailyMessage();
     }, [extractDailyMessageText, openDailyMessageModal, spaceSlug]);
 
+    const quickActionStrings = dashboardStrings.cards?.quick_actions;
     const quickActions = useMemo(
         () => [
             {
                 icon: Calendar,
-                label: "Tambah Momen",
-                description: "Catat momen spesial",
+                label:
+                    quickActionStrings?.add_moment?.label ?? "Tambah Momen",
+                description:
+                    quickActionStrings?.add_moment?.description ??
+                    "Catat momen spesial",
                 href: route("timeline.create", { space: spaceSlug }),
                 color: "from-pink-500 to-rose-500",
                 requiresPartner: true,
             },
             {
                 icon: Image,
-                label: "Upload Foto",
-                description: "Simpan kenangan",
+                label:
+                    quickActionStrings?.upload_photo?.label ?? "Upload Foto",
+                description:
+                    quickActionStrings?.upload_photo?.description ??
+                    "Simpan kenangan",
                 href: route("gallery.create", { space: spaceSlug }),
                 color: "from-blue-500 to-cyan-500",
                 requiresPartner: true,
             },
             {
                 icon: MessageSquare,
-                label: "Pesan Harian",
-                description: "Lihat pesan cinta",
+                label:
+                    quickActionStrings?.daily_message?.label ??
+                    "Pesan Harian",
+                description:
+                    quickActionStrings?.daily_message?.description ??
+                    "Lihat pesan cinta",
                 href: route("daily.index", { space: spaceSlug }),
                 color: "from-purple-500 to-indigo-500",
                 requiresPartner: true,
             },
             {
                 icon: Heart,
-                label: "Memory Lane Kit",
-                description: "Panduan surprise 3 tahap + storybook",
+                label:
+                    quickActionStrings?.memory_lane?.label ??
+                    "Memory Lane Kit",
+                description:
+                    quickActionStrings?.memory_lane?.description ??
+                    "Panduan surprise 3 tahap + storybook",
                 href: route("surprise.memory.space", { space: spaceSlug }),
                 color: "from-fuchsia-500 to-violet-500",
                 requiresPartner: true,
             },
             {
                 icon: Music,
-                label: "Spotify Companion",
-                description: "Sinkronisasi musik & mood jarak jauh",
+                label:
+                    quickActionStrings?.spotify?.label ?? "Spotify Companion",
+                description:
+                    quickActionStrings?.spotify?.description ??
+                    "Sinkronisasi musik & mood jarak jauh",
                 href: route("spotify.companion", { space: spaceSlug }),
                 color: "from-emerald-500 to-teal-500",
                 requiresPartner: true,
             },
             {
                 icon: BookOpen,
-                label: "Tulis Journal",
-                description: "Ekspresikan perasaan",
+                label:
+                    quickActionStrings?.journal?.label ?? "Tulis Journal",
+                description:
+                    quickActionStrings?.journal?.description ??
+                    "Ekspresikan perasaan",
                 href: route("journal.create", { space: spaceSlug }),
                 color: "from-green-500 to-emerald-500",
                 requiresPartner: true,
             },
             {
                 icon: Video,
-                label: "Masuk Nobar",
-                description: "Mulai nonton bareng",
+                label:
+                    quickActionStrings?.nobar?.label ?? "Masuk Nobar",
+                description:
+                    quickActionStrings?.nobar?.description ??
+                    "Mulai nonton bareng",
                 href: route("space.nobar", { space: spaceSlug }),
                 color: "from-red-500 to-orange-500",
                 requiresPartner: true,
             },
         ],
-        [spaceSlug]
+        [quickActionStrings, spaceSlug]
     );
 
     const recentMessages = useMemo(
@@ -264,7 +340,8 @@ export default function Dashboard({ dashboardData, spaceContext }: Props) {
             header={
                 <div className="flex flex-col gap-1">
                     <p className="text-sm text-gray-500">
-                        Space kamu bersama pasangan
+                        {dashboardStrings.header?.subtitle ??
+                            "Space kamu bersama pasangan"}
                     </p>
                     <h2 className="text-2xl font-semibold text-gray-900">
                         {spaceTitle}
@@ -272,7 +349,13 @@ export default function Dashboard({ dashboardData, spaceContext }: Props) {
                 </div>
             }
         >
-            <Head title={`Dashboard - ${spaceTitle}`} />
+            <Head
+                title={replacePlaceholders(
+                    dashboardStrings.meta?.title ??
+                        `Dashboard - :space`,
+                    { space: spaceTitle },
+                )}
+            />
 
             {showModal && dailyMessage && (
                 <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/30 px-4">
@@ -281,7 +364,7 @@ export default function Dashboard({ dashboardData, spaceContext }: Props) {
                             type="button"
                             onClick={() => setShowModal(false)}
                             className="absolute right-4 top-4 text-gray-400 transition hover:text-gray-600"
-                            aria-label="Tutup"
+                            aria-label={tCommon("actions.close", "Tutup")}
                         >
                             <X className="h-5 w-5" />
                         </button>
@@ -289,7 +372,8 @@ export default function Dashboard({ dashboardData, spaceContext }: Props) {
                             <Heart className="h-8 w-8 text-pink-500" />
                         </div>
                         <h3 className="mt-4 text-center text-xl font-semibold text-gray-900">
-                            Pesan Cinta Hari Ini
+                            {dashboardStrings.modals?.daily_message?.title ??
+                                "Pesan Cinta Hari Ini"}
                         </h3>
                         <p className="mt-3 text-center text-sm leading-relaxed text-gray-600">
                             {formattedDailyMessage}
@@ -305,7 +389,7 @@ export default function Dashboard({ dashboardData, spaceContext }: Props) {
                             type="button"
                             onClick={() => setShowLockModal(false)}
                             className="absolute right-4 top-4 text-gray-400 transition hover:text-gray-600"
-                            aria-label="Tutup"
+                            aria-label={tCommon("actions.close", "Tutup")}
                         >
                             <X className="h-5 w-5" />
                         </button>
@@ -313,7 +397,8 @@ export default function Dashboard({ dashboardData, spaceContext }: Props) {
                             <Lock className="h-8 w-8 text-pink-500" />
                         </div>
                         <h3 className="mt-4 text-xl font-semibold text-gray-900">
-                            Fitur Terkunci
+                            {dashboardStrings.modals?.locked?.title ??
+                                "Fitur Terkunci"}
                         </h3>
                         <p className="mt-3 text-sm leading-relaxed text-gray-600">
                             {coupleLockMessage}
@@ -323,7 +408,8 @@ export default function Dashboard({ dashboardData, spaceContext }: Props) {
                             onClick={() => setShowLockModal(false)}
                             className="mt-6 inline-flex items-center justify-center rounded-full bg-pink-500 px-6 py-2 text-sm font-semibold text-white transition hover:bg-pink-600"
                         >
-                            Mengerti
+                            {dashboardStrings.modals?.locked?.action ??
+                                tCommon("actions.understand", "Mengerti")}
                         </button>
                     </div>
                 </div>
@@ -339,10 +425,13 @@ export default function Dashboard({ dashboardData, spaceContext }: Props) {
                                 </span>
                                 <div>
                                     <h3 className="text-lg font-semibold text-indigo-900">
-                                        Pasangan belum terhubung
+                                        {dashboardStrings.cards?.partner_pending?.title ??
+                                            "Pasangan belum terhubung"}
                                     </h3>
                                     <p className="mt-1 text-sm text-indigo-700">
-                                        Ajak pasanganmu bergabung agar kalian bisa menikmati semua fitur berdua.
+                                        {dashboardStrings.cards?.partner_pending
+                                            ?.description ??
+                                            "Ajak pasanganmu bergabung agar kalian bisa menikmati semua fitur berdua."}
                                     </p>
                                 </div>
                             </div>
@@ -350,7 +439,8 @@ export default function Dashboard({ dashboardData, spaceContext }: Props) {
                                 href={route("spaces.index")}
                                 className="inline-flex items-center justify-center rounded-full bg-indigo-600 px-5 py-2 text-sm font-semibold text-white transition hover:bg-indigo-700"
                             >
-                                Hubungkan Pasangan
+                                {dashboardStrings.cards?.partner_pending?.cta ??
+                                    "Hubungkan Pasangan"}
                             </Link>
                         </div>
                     </div>
@@ -364,7 +454,8 @@ export default function Dashboard({ dashboardData, spaceContext }: Props) {
                             </span>
                             <div>
                                 <p className="text-sm text-gray-500">
-                                    Total Timeline
+                                    {dashboardStrings.cards?.timeline_total ??
+                                        "Total Timeline"}
                                 </p>
                                 <p className="text-2xl font-semibold text-gray-900">
                                     {dashboardData.timelineCount}
@@ -379,7 +470,8 @@ export default function Dashboard({ dashboardData, spaceContext }: Props) {
                             </span>
                             <div>
                                 <p className="text-sm text-gray-500">
-                                    Foto & Video
+                                    {dashboardStrings.cards?.gallery_total ??
+                                        "Foto & Video"}
                                 </p>
                                 <p className="text-2xl font-semibold text-gray-900">
                                     {dashboardData.galleryCount}
@@ -394,7 +486,8 @@ export default function Dashboard({ dashboardData, spaceContext }: Props) {
                             </span>
                             <div>
                                 <p className="text-sm text-purple-100">
-                                    Berbagi Lokasi
+                                    {dashboardStrings.cards?.location_share?.title ??
+                                        "Berbagi Lokasi"}
                                 </p>
                                 <Link
                                     href={route("location.map", {
@@ -409,7 +502,8 @@ export default function Dashboard({ dashboardData, spaceContext }: Props) {
                                             : "bg-white/20 hover:bg-white/30"
                                     }`}
                                 >
-                                    Buka Peta
+                                    {dashboardStrings.cards?.location_share?.cta ??
+                                        "Buka Peta"}
                                     <Video className="h-4 w-4" />
                                 </Link>
                             </div>
@@ -419,7 +513,8 @@ export default function Dashboard({ dashboardData, spaceContext }: Props) {
 
                 <div className="rounded-3xl bg-white p-6 shadow-sm">
                     <h2 className="text-xl font-semibold text-gray-900">
-                        Aksi Cepat
+                        {dashboardStrings.cards?.quick_actions?.title ??
+                            "Aksi Cepat"}
                     </h2>
                     <div className="mt-4 grid gap-4 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5">
                         {quickActions.map((action, index) => {
@@ -451,7 +546,7 @@ export default function Dashboard({ dashboardData, spaceContext }: Props) {
                                         {locked && (
                                             <span className="inline-flex items-center justify-center rounded-full bg-pink-100 px-2 py-0.5 text-xs font-semibold text-pink-500">
                                                 <Lock className="h-3 w-3" />
-                                                Terkunci
+                                                {tCommon("states.locked", "Terkunci")}
                                             </span>
                                         )}
                                     </h3>
@@ -468,13 +563,14 @@ export default function Dashboard({ dashboardData, spaceContext }: Props) {
                     <div className="rounded-3xl border border-orange-100 bg-white p-6 shadow-sm">
                         <h2 className="mb-4 flex items-center gap-2 text-xl font-semibold text-gray-900">
                             <Calendar className="h-5 w-5 text-orange-500" />
-                            Event Mendatang
+                            {dashboardStrings.cards?.upcoming_events?.title ??
+                                "Event Mendatang"}
                         </h2>
                         <div className="space-y-3">
                             {dashboardData.upcomingEvents.length === 0 && (
                                 <p className="rounded-2xl border border-dashed border-orange-200 bg-orange-50 p-4 text-sm text-orange-600">
-                                    Belum ada event yang dijadwalkan. Yuk buat
-                                    countdown pertama kalian!
+                                    {dashboardStrings.cards?.upcoming_events?.empty ??
+                                        "Belum ada event yang dijadwalkan. Yuk buat countdown pertama kalian!"}
                                 </p>
                             )}
                             {dashboardData.upcomingEvents.map(
@@ -491,7 +587,13 @@ export default function Dashboard({ dashboardData, spaceContext }: Props) {
                                                 {event.event_name}
                                             </p>
                                             <p className="text-xs text-orange-600">
-                                                {event.days_left} hari lagi
+                                                {replacePlaceholders(
+                                                    dashboardStrings.cards
+                                                        ?.upcoming_events
+                                                        ?.days_left ??
+                                                        ":count hari lagi",
+                                                    { count: event.days_left },
+                                                )}
                                             </p>
                                         </div>
                                     </div>
@@ -511,20 +613,22 @@ export default function Dashboard({ dashboardData, spaceContext }: Props) {
                                     : "text-orange-600 hover:text-orange-700"
                             }`}
                         >
-                            Lihat Semua
+                            {dashboardStrings.cards?.upcoming_events?.view_all ??
+                                tCommon("actions.view_all", "Lihat Semua")}
                         </Link>
                     </div>
 
                     <div className="rounded-3xl border border-purple-100 bg-white p-6 shadow-sm">
                         <h2 className="mb-4 flex items-center gap-2 text-xl font-semibold text-gray-900">
                             <MessageSquare className="h-5 w-5 text-purple-500" />
-                            Pesan Terbaru
+                            {dashboardStrings.cards?.recent_messages?.title ??
+                                "Pesan Terbaru"}
                         </h2>
                         <div className="space-y-3">
                             {dashboardData.recentMessages.length === 0 && (
                                 <p className="rounded-2xl border border-dashed border-purple-200 bg-purple-50 p-4 text-sm text-purple-600">
-                                    Belum ada pesan terbaru. Coba tulis pesan
-                                    spesial untuk pasanganmu!
+                                    {dashboardStrings.cards?.recent_messages?.empty ??
+                                        "Belum ada pesan terbaru. Coba tulis pesan spesial untuk pasanganmu!"}
                                 </p>
                             )}
                             {recentMessages.map((message, index) => (
@@ -548,8 +652,10 @@ export default function Dashboard({ dashboardData, spaceContext }: Props) {
                                             className="mt-3 text-xs font-medium text-purple-600 transition hover:text-purple-700"
                                         >
                                             {expandedMessages[index]
-                                                ? "Sembunyikan"
-                                                : "Baca selengkapnya"}
+                                                ? dashboardStrings.cards?.recent_messages?.show_less ??
+                                                  "Sembunyikan"
+                                                : dashboardStrings.cards?.recent_messages?.show_more ??
+                                                  "Baca selengkapnya"}
                                         </button>
                                     )}
                                     <p className="mt-3 text-xs text-purple-500">
@@ -569,7 +675,8 @@ export default function Dashboard({ dashboardData, spaceContext }: Props) {
                                     : "text-purple-600 hover:text-purple-700"
                             }`}
                         >
-                            Lihat Semua
+                            {dashboardStrings.cards?.recent_messages?.view_all ??
+                                tCommon("actions.view_all", "Lihat Semua")}
                         </Link>
                     </div>
                 </div>

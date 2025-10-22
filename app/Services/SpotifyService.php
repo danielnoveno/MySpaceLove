@@ -213,4 +213,19 @@ class SpotifyService
             ->throw()
             ->json();
     }
+
+    public function startPlayback(string $trackId, ?int $positionMs = null): void
+    {
+        $payload = [
+            'uris' => ["spotify:track:{$trackId}"],
+        ];
+
+        if ($positionMs !== null && $positionMs >= 0) {
+            $payload['position_ms'] = $positionMs;
+        }
+
+        $this->http()
+            ->put('/me/player/play', $payload)
+            ->throw();
+    }
 }

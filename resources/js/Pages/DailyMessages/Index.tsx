@@ -2,20 +2,25 @@ import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout";
 import { Head, Link, router } from "@inertiajs/react";
 import { useSprings, animated } from "react-spring";
 import { useDrag } from "react-use-gesture";
-import { useRef, useState, FormEventHandler } from "react";
+import { useRef, useState } from "react";
 import Modal from "@/Components/Modal";
 import TextInput from "@/Components/TextInput";
 import InputLabel from "@/Components/InputLabel";
 import PrimaryButton from "@/Components/PrimaryButton";
 import SecondaryButton from "@/Components/SecondaryButton";
 import { useCurrentSpace } from "@/hooks/useCurrentSpace";
+import { useTranslation } from "@/hooks/useTranslation";
 
 const ExpandableText = ({
     text,
     wordLimit,
+    expandMoreLabel,
+    expandLessLabel,
 }: {
     text: string;
     wordLimit: number;
+    expandMoreLabel: string;
+    expandLessLabel: string;
 }) => {
     const [isExpanded, setIsExpanded] = useState(false);
     const words = text.split(" ");
@@ -38,7 +43,7 @@ const ExpandableText = ({
                     onClick={() => setIsExpanded(!isExpanded)}
                     className="text-pink-600 hover:text-pink-800 text-sm mt-2"
                 >
-                    {isExpanded ? "Baca lebih sedikit" : "Baca selengkapnya"}
+                    {isExpanded ? expandLessLabel : expandMoreLabel}
                 </button>
             )}
         </div>
@@ -56,6 +61,28 @@ export default function DailyMessageIndex({
     };
 }) {
     const currentSpace = useCurrentSpace();
+    const { translations: dailyStrings } =
+        useTranslation<{
+            meta?: { title?: string };
+            header?: string;
+            title?: string;
+            actions?: {
+                search?: string;
+                add_manual?: string;
+                regenerate_ai?: string;
+            };
+            empty?: string;
+            modal?: {
+                title?: string;
+                keyword?: string;
+                date?: string;
+            };
+            expand?: {
+                more?: string;
+                less?: string;
+            };
+        }>("daily_messages");
+    const { t: tCommon } = useTranslation("common");
 
     if (!currentSpace) {
         return null;
@@ -111,36 +138,37 @@ export default function DailyMessageIndex({
         <AuthenticatedLayout
             header={
                 <h2 className="font-semibold text-xl text-gray-800">
-                    Daily Message
+                    {dailyStrings.header ?? "Daily Message"}
                 </h2>
             }
         >
-            <Head title="Daily Message" />
+            <Head title={dailyStrings.meta?.title ?? "Daily Messages"} />
 
             <div className="p-6 space-y-6 max-w-8xl mx-auto">
                 <div className="p-4 flex justify-between items-center">
                     <h3 className="text-lg font-bold text-pink-700">
-                        Pesan Harian Kita 💌
+                        {dailyStrings.title ?? "Pesan Harian Kita 💌"}
                     </h3>
                     <div className="flex gap-2">
                         <button
                             onClick={() => setShowSearchModal(true)}
                             className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg shadow-md transition duration-200"
                         >
-                            Cari Pesan
+                            {dailyStrings.actions?.search ?? "Cari Pesan"}
                         </button>
                         <Link
                             href={route("daily.create", { space: spaceSlug })}
                             className="bg-pink-600 hover:bg-pink-700 text-white px-4 py-2 rounded-lg shadow-md transition duration-200"
                         >
-                            + Tambah Manual
+                            {dailyStrings.actions?.add_manual ?? "+ Tambah Manual"}
                         </Link>
                     </div>
                 </div>
 
                 {messages.length === 0 ? (
                     <p className="text-gray-500 text-center py-8">
-                        Belum ada pesan harian. AI akan generate otomatis! ✨
+                        {dailyStrings.empty ??
+                            "Belum ada pesan harian. AI akan generate otomatis! ✨"}
                     </p>
                 ) : (
                     <div
@@ -160,6 +188,14 @@ export default function DailyMessageIndex({
                                 <ExpandableText
                                     text={sanitize(`"${messages[i].message}"`)}
                                     wordLimit={50}
+                                    expandMoreLabel={
+                                        dailyStrings.expand?.more ??
+                                        "Baca selengkapnya"
+                                    }
+                                    expandLessLabel={
+                                        dailyStrings.expand?.less ??
+                                        "Baca lebih sedikit"
+                                    }
                                 />
                                 <div className="flex gap-2 mt-4">
                                     <Link
@@ -169,7 +205,7 @@ export default function DailyMessageIndex({
                                         })}
                                         className="px-3 py-1 text-sm rounded-lg bg-yellow-500 hover:bg-yellow-600 text-white transition"
                                     >
-                                        Edit
+                                        {tCommon("actions.edit", "Edit")}
                                     </Link>
                                     <button
                                         onClick={() =>
@@ -183,7 +219,8 @@ export default function DailyMessageIndex({
 
                                         className="px-3 py-1 text-sm rounded-lg bg-green-500 hover:bg-green-600 text-white transition"
                                     >
-                                        Regenerate AI
+                                        {dailyStrings.actions?.regenerate_ai ??
+                                            tCommon("actions.regenerate", "Regenerate AI")}
                                     </button>
                                 </div>
                             </animated.div>
@@ -207,10 +244,15 @@ export default function DailyMessageIndex({
                         }}
                         className="p-6"
                     >
-                        <h2 className="text-lg font-medium text-gray-900">Cari Pesan Harian</h2>
+                        <h2 className="text-lg font-medium text-gray-900">
+                            {dailyStrings.modal?.title ?? "Cari Pesan Harian"}
+                        </h2>
 
                         <div className="mt-6">
-                            <InputLabel htmlFor="searchKeyword" value="Kata Kunci" />
+                            <InputLabel
+                                htmlFor="searchKeyword"
+                                value={dailyStrings.modal?.keyword ?? "Kata Kunci"}
+                            />
                             <TextInput
                                 id="searchKeyword"
                                 type="text"
@@ -221,7 +263,10 @@ export default function DailyMessageIndex({
                         </div>
 
                         <div className="mt-4">
-                            <InputLabel htmlFor="searchDate" value="Tanggal (YYYY-MM-DD)" />
+                            <InputLabel
+                                htmlFor="searchDate"
+                                value={dailyStrings.modal?.date ?? "Tanggal (YYYY-MM-DD)"}
+                            />
                             <TextInput
                                 id="searchDate"
                                 type="date"
@@ -246,10 +291,10 @@ export default function DailyMessageIndex({
                                     },
                                 );
                             }}>
-                                Clear
+                                {tCommon("actions.clear", "Clear")}
                             </SecondaryButton>
                             <PrimaryButton className="ms-3" type="submit">
-                                Cari
+                                {dailyStrings.actions?.search ?? "Cari"}
                             </PrimaryButton>
                         </div>
                     </form>

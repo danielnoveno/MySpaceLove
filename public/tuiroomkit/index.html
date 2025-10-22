@@ -33,6 +33,20 @@
         alert("The current browser failed to load the page, we recommend you use the latest version of chrome browser.");
       }
     </script>
+    <script>
+      (function () {
+        var params = new URLSearchParams(window.location.search);
+        var userId = params.get('userId');
+        var userName = params.get('userName');
+        var avatarUrl = params.get('avatarUrl');
+
+        window.__MYSPACE_ROOM__ = {
+          userId: userId && userId.trim() ? userId.trim() : undefined,
+          userName: userName && userName.trim() ? userName.trim() : undefined,
+          avatarUrl: avatarUrl && avatarUrl.trim() ? avatarUrl.trim() : undefined,
+        };
+      })();
+    </script>
     <script type="module" crossorigin src="./assets/index-DVXc8A3U.js"></script>
     <link rel="modulepreload" crossorigin href="./assets/roomEngine-ozIi9Uch.js">
     <link rel="modulepreload" crossorigin href="./assets/roomkit-qngZv_Jb.js">

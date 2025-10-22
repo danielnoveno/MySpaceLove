@@ -19,9 +19,32 @@ import type {
     LoveStoryDecoration,
 } from "@/data/loveStoryChapters";
 
+type StoryFlipBookLabels = {
+    empty: string;
+    narratorLabel: string;
+    progressSuffix: string;
+    messageLabel: string;
+    previous: string;
+    next: string;
+    finish: string;
+    dateFallback: string;
+};
+
 type StoryFlipBookProps = {
     chapters: LoveStoryChapter[];
     onReachEnd?: () => void;
+    labels?: Partial<StoryFlipBookLabels>;
+};
+
+const DEFAULT_LABELS: StoryFlipBookLabels = {
+    empty: "No stories to display yet.",
+    narratorLabel: "Love log",
+    progressSuffix: "complete",
+    messageLabel: "A note for you",
+    previous: "Previous",
+    next: "Next",
+    finish: "Finish",
+    dateFallback: "Special memory",
 };
 
 const DECORATION_SIZE = [68, 52, 60, 56];
@@ -60,7 +83,9 @@ const gradientBorder = (accent: string) =>
 export function StoryFlipBook({
     chapters,
     onReachEnd,
+    labels,
 }: StoryFlipBookProps): JSX.Element {
+    const resolvedLabels = { ...DEFAULT_LABELS, ...labels };
     const [currentIndex, setCurrentIndex] = useState(0);
     const [direction, setDirection] = useState<"forward" | "backward">(
         "forward",
@@ -97,7 +122,7 @@ export function StoryFlipBook({
     if (totalPages === 0) {
         return (
             <div className="rounded-3xl border border-white/30 bg-white/10 px-8 py-10 text-center text-white/70 backdrop-blur">
-                Belum ada cerita untuk ditampilkan.
+                {resolvedLabels.empty}
             </div>
         );
     }
@@ -150,7 +175,7 @@ export function StoryFlipBook({
                             {currentIndex + 1} / {totalPages}
                         </span>
                     </div>
-                <span>{currentChapter.dateLabel ?? "Memori spesial"}</span>
+                <span>{currentChapter.dateLabel ?? resolvedLabels.dateFallback}</span>
             </div>
 
             <div
@@ -303,7 +328,7 @@ export function StoryFlipBook({
                                                 <div className="max-w-sm">
                                                     <div className="rounded-3xl bg-white/70 p-6 text-slate-700 shadow-md backdrop-blur">
                                                         <p className="text-sm uppercase tracking-[0.3em] text-slate-400">
-                                                            Pesan untukmu
+                                                            {resolvedLabels.messageLabel}
                                                         </p>
                                                         <blockquote className="mt-3 text-lg font-semibold leading-7 text-slate-800">
                                                             &ldquo;{chapter.quote.text}&rdquo;
@@ -327,8 +352,10 @@ export function StoryFlipBook({
 
             <div className="space-y-4">
                 <div className="flex items-center justify-between text-sm font-medium uppercase tracking-[0.24em] text-white/70">
-                    <span>Narablog cinta</span>
-                    <span>{progress}% selesai</span>
+                    <span>{resolvedLabels.narratorLabel}</span>
+                    <span>
+                        {progress}% {resolvedLabels.progressSuffix}
+                    </span>
                 </div>
                 <div className="h-2 w-full overflow-hidden rounded-full bg-white/20">
                     <animated.div
@@ -358,7 +385,7 @@ export function StoryFlipBook({
                         }}
                     >
                         <ArrowLeft size={16} />
-                        Sebelumnya
+                        {resolvedLabels.previous}
                     </button>
 
                     <button
@@ -367,12 +394,12 @@ export function StoryFlipBook({
                     >
                         {currentIndex === totalPages - 1 ? (
                             <>
-                                Selesai
+                                {resolvedLabels.finish}
                                 <Sparkles size={18} />
                             </>
                         ) : (
                             <>
-                                Berikutnya
+                                {resolvedLabels.next}
                                 <ArrowRight size={16} />
                             </>
                         )}
