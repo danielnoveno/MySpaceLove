@@ -15,17 +15,23 @@ type SecretCodeGateProps = {
     buttonLabel?: string;
     errorMessage?: string;
     hint?: string;
+    hintLabel?: string;
+    accessLabel?: string;
+    inputLabel?: string;
 };
 
 export function SecretCodeGate({
     code,
     children,
-    title = "Masukkan Kode Rahasia",
-    description = "Butuh kode manis buat buka halaman ini.",
-    placeholder = "Contoh: 160825",
-    buttonLabel = "Buka Halaman",
-    errorMessage = "Kode salah. Coba ingat lagi tanggal spesial kalian.",
+    title = "Enter Secret Code",
+    description = "You need a sweet code to unlock this page.",
+    placeholder = "Example: 160825",
+    buttonLabel = "Unlock Page",
+    errorMessage = "Incorrect code. Try remembering our special date again.",
     hint,
+    hintLabel = "Hint",
+    accessLabel = "Restricted Access",
+    inputLabel = "Secret Code",
 }: SecretCodeGateProps): JSX.Element {
     const normalizedCode = useMemo(
         () => code.replace(/\s+/g, "").toLowerCase(),
@@ -63,13 +69,13 @@ export function SecretCodeGate({
             <div className="w-full max-w-md rounded-3xl border border-white/30 bg-white/15 p-8 text-white backdrop-blur-xl shadow-2xl">
                 <div className="space-y-3 text-center">
                     <p className="text-xs font-semibold uppercase tracking-[0.32em] text-white/60">
-                        Akses Terbatas
+                        {accessLabel}
                     </p>
                     <h2 className="text-2xl font-bold">{title}</h2>
                     <p className="text-sm text-white/70">{description}</p>
                     {hint && (
                         <p className="text-xs font-medium uppercase tracking-[0.24em] text-white/50">
-                            Hint: {hint}
+                            {hintLabel}: {hint}
                         </p>
                     )}
                 </div>
@@ -80,7 +86,7 @@ export function SecretCodeGate({
                             htmlFor="secret-code"
                             className="text-xs font-semibold uppercase tracking-[0.28em] text-white/60"
                         >
-                            Secret Code
+                            {inputLabel}
                         </label>
                         <input
                             id="secret-code"

@@ -3,7 +3,8 @@ import { Link, usePage } from "@inertiajs/react";
 import ApplicationLogo from "@/Components/ApplicationLogo";
 import Dropdown from "@/Components/Dropdown";
 import ResponsiveNavLink from "@/Components/ResponsiveNavLink";
-import { Lock } from "lucide-react";
+import { Check, Globe, Lock } from "lucide-react";
+import { useTranslation } from "@/hooks/useTranslation";
 
 export default function Authenticated({
     header,
@@ -32,6 +33,25 @@ export default function Authenticated({
             | null
             | undefined) ?? null;
 
+    const { translations: layoutTranslations } =
+        useTranslation<{
+            navigation?: Record<string, string>;
+            user?: { fallback_name?: string };
+            language?: { label?: string; options?: Record<string, string> };
+        }>("layout");
+
+    const navigation = layoutTranslations.navigation ?? {};
+    const userStrings = layoutTranslations.user ?? {};
+    const languageStrings = layoutTranslations.language ?? {};
+
+    const availableLocales =
+        (props.availableLocales as string[] | undefined) ?? [];
+    const activeLocale = (props.locale as string | undefined) ?? "en";
+    const languageOptions = languageStrings.options ?? {};
+    const languageLabel = languageStrings.label ?? "Language";
+    const activeLanguageLabel =
+        languageOptions[activeLocale] ?? activeLocale.toUpperCase();
+
     const fallbackHref = route("spaces.index");
 
     const dashboardHref = currentSpace
@@ -51,7 +71,9 @@ export default function Authenticated({
         : fallbackHref;
     const partnerFeaturesLocked =
         currentSpace !== null && currentSpace.has_partner === false;
-    const lockedTooltip = "Fitur couple akan aktif setelah pasanganmu bergabung.";
+    const lockedTooltip =
+        navigation.locked_tooltip ??
+        "Fitur couple akan aktif setelah pasanganmu bergabung.";
 
     const navClass = (locked: boolean) =>
         `inline-flex items-center px-1 pt-1 border-b-2 border-transparent text-sm font-medium leading-5 transition duration-150 ease-in-out ${
@@ -77,7 +99,7 @@ export default function Authenticated({
                                     href={dashboardHref}
                                     className="inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium leading-5 text-gray-900 focus:outline-none focus:border-pink-700 transition duration-150 ease-in-out"
                                 >
-                                    Dashboard
+                                    {navigation.dashboard ?? "Dashboard"}
                                 </Link>
                                 <Link
                                     href={timelineHref}
@@ -88,7 +110,7 @@ export default function Authenticated({
                                         {partnerFeaturesLocked && (
                                             <Lock className="h-3 w-3 text-gray-400" aria-hidden="true" />
                                         )}
-                                        Timeline
+                                        {navigation.timeline ?? "Timeline"}
                                     </span>
                                 </Link>
                                 <Link
@@ -100,7 +122,7 @@ export default function Authenticated({
                                         {partnerFeaturesLocked && (
                                             <Lock className="h-3 w-3 text-gray-400" aria-hidden="true" />
                                         )}
-                                        Daily Message
+                                        {navigation.daily_messages ?? "Daily Message"}
                                     </span>
                                 </Link>
                                 <Link
@@ -112,7 +134,7 @@ export default function Authenticated({
                                         {partnerFeaturesLocked && (
                                             <Lock className="h-3 w-3 text-gray-400" aria-hidden="true" />
                                         )}
-                                        Gallery
+                                        {navigation.gallery ?? "Gallery"}
                                     </span>
                                 </Link>
                                 <Link
@@ -124,7 +146,7 @@ export default function Authenticated({
                                         {partnerFeaturesLocked && (
                                             <Lock className="h-3 w-3 text-gray-400" aria-hidden="true" />
                                         )}
-                                        Spotify Kit
+                                        {navigation.spotify ?? "Spotify Kit"}
                                     </span>
                                 </Link>
                             </div>
@@ -142,7 +164,7 @@ export default function Authenticated({
                                                 >
                                                     {currentSpace
                                                         ? currentSpace.title
-                                                        : "Pilih Space"}
+                                                        : navigation.choose_space ?? "Pilih Space"}
                                                     <svg
                                                         className="ml-2 -mr-0.5 h-4 w-4"
                                                         xmlns="http://www.w3.org/2000/svg"
@@ -174,8 +196,74 @@ export default function Authenticated({
                                             <Dropdown.Link
                                                 href={route("spaces.index")}
                                             >
-                                                + Kelola Spaces
+                                                + {navigation.manage_spaces ?? "Kelola Spaces"}
                                             </Dropdown.Link>
+                                        </Dropdown.Content>
+                                    </Dropdown>
+                                </div>
+                            )}
+                            {availableLocales.length > 0 && (
+                                <div className="mr-4">
+                                    <Dropdown>
+                                        <Dropdown.Trigger>
+                                            <span className="inline-flex rounded-md">
+                                                <button
+                                                    type="button"
+                                                    className="inline-flex items-center gap-2 px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-gray-600 bg-white hover:text-gray-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-200 transition ease-in-out duration-150"
+                                                    aria-label={languageLabel}
+                                                >
+                                                    <Globe
+                                                        className="h-4 w-4 text-purple-500"
+                                                        aria-hidden="true"
+                                                    />
+                                                    <span>{activeLanguageLabel}</span>
+                                                    <svg
+                                                        className="ml-1 -mr-1 h-4 w-4 text-gray-400"
+                                                        xmlns="http://www.w3.org/2000/svg"
+                                                        viewBox="0 0 20 20"
+                                                        fill="currentColor"
+                                                    >
+                                                        <path
+                                                            fillRule="evenodd"
+                                                            d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
+                                                            clipRule="evenodd"
+                                                        />
+                                                    </svg>
+                                                </button>
+                                            </span>
+                                        </Dropdown.Trigger>
+
+                                        <Dropdown.Content align="right">
+                                            {availableLocales.map((locale) => {
+                                                const isActive = locale === activeLocale;
+                                                return (
+                                                    <Dropdown.Link
+                                                        key={locale}
+                                                        href={route("locale.switch")}
+                                                        method="post"
+                                                        as="button"
+                                                        data={{ locale }}
+                                                        className={
+                                                            isActive
+                                                                ? "bg-purple-50 text-purple-600"
+                                                                : ""
+                                                        }
+                                                    >
+                                                        <span className="flex items-center justify-between gap-2">
+                                                            <span>
+                                                                {languageOptions[locale] ??
+                                                                    locale.toUpperCase()}
+                                                            </span>
+                                                            {isActive && (
+                                                                <Check
+                                                                    className="h-3 w-3"
+                                                                    aria-hidden="true"
+                                                                />
+                                                            )}
+                                                        </span>
+                                                    </Dropdown.Link>
+                                                );
+                                            })}
                                         </Dropdown.Content>
                                     </Dropdown>
                                 </div>
@@ -190,6 +278,7 @@ export default function Authenticated({
                                             >
                                                 {`${
                                                     props.auth?.user?.name ||
+                                                    userStrings.fallback_name ||
                                                     "User"
                                                 }`}
                                                 <svg
@@ -212,14 +301,14 @@ export default function Authenticated({
                                         <Dropdown.Link
                                             href={route("profile.edit")}
                                         >
-                                            Profile
+                                            {navigation.profile ?? "Profile"}
                                         </Dropdown.Link>
                                         <Dropdown.Link
                                             href={route("logout")}
                                             method="post"
                                             as="button"
                                         >
-                                            Log Out
+                                            {navigation.logout ?? "Log Out"}
                                         </Dropdown.Link>
                                     </Dropdown.Content>
                                 </Dropdown>
@@ -280,7 +369,7 @@ export default function Authenticated({
                             href={dashboardHref}
                             active={route().current("spaces.dashboard")}
                         >
-                            Dashboard
+                            {navigation.dashboard ?? "Dashboard"}
                         </ResponsiveNavLink>
                         <ResponsiveNavLink
                             href={timelineHref}
@@ -292,7 +381,7 @@ export default function Authenticated({
                                 {partnerFeaturesLocked && (
                                     <Lock className="h-4 w-4 text-gray-400" aria-hidden="true" />
                                 )}
-                                Timeline
+                                {navigation.timeline ?? "Timeline"}
                             </span>
                         </ResponsiveNavLink>
                         <ResponsiveNavLink
@@ -305,7 +394,7 @@ export default function Authenticated({
                                 {partnerFeaturesLocked && (
                                     <Lock className="h-4 w-4 text-gray-400" aria-hidden="true" />
                                 )}
-                                Daily Message
+                                {navigation.daily_messages ?? "Daily Message"}
                             </span>
                         </ResponsiveNavLink>
                         <ResponsiveNavLink
@@ -318,7 +407,7 @@ export default function Authenticated({
                                 {partnerFeaturesLocked && (
                                     <Lock className="h-4 w-4 text-gray-400" aria-hidden="true" />
                                 )}
-                                Gallery
+                                {navigation.gallery ?? "Gallery"}
                             </span>
                         </ResponsiveNavLink>
                         <ResponsiveNavLink
@@ -331,7 +420,7 @@ export default function Authenticated({
                                 {partnerFeaturesLocked && (
                                     <Lock className="h-4 w-4 text-gray-400" aria-hidden="true" />
                                 )}
-                                Spotify Kit
+                                {navigation.spotify ?? "Spotify Kit"}
                             </span>
                         </ResponsiveNavLink>
                     </div>
@@ -348,16 +437,49 @@ export default function Authenticated({
 
                         <div className="mt-3 space-y-1">
                             <ResponsiveNavLink href={route("profile.edit")}>
-                                Profile
+                                {navigation.profile ?? "Profile"}
                             </ResponsiveNavLink>
                             <ResponsiveNavLink
                                 method="post"
                                 href={route("logout")}
                                 as="button"
                             >
-                                Log Out
+                                {navigation.logout ?? "Log Out"}
                             </ResponsiveNavLink>
                         </div>
+                        {availableLocales.length > 0 && (
+                            <div className="mt-6 border-t border-gray-200 pt-4">
+                                <div className="px-4 text-xs font-semibold uppercase tracking-wider text-gray-500">
+                                    {languageLabel}
+                                </div>
+                                <div className="mt-2 space-y-1">
+                                    {availableLocales.map((locale) => {
+                                        const isActive = locale === activeLocale;
+                                        return (
+                                            <ResponsiveNavLink
+                                                key={locale}
+                                                href={route("locale.switch")}
+                                                method="post"
+                                                as="button"
+                                                data={{ locale }}
+                                                active={isActive}
+                                            >
+                                                <span className="flex w-full items-center justify-between gap-2">
+                                                    {languageOptions[locale] ??
+                                                        locale.toUpperCase()}
+                                                    {isActive && (
+                                                        <Check
+                                                            className="h-4 w-4"
+                                                            aria-hidden="true"
+                                                        />
+                                                    )}
+                                                </span>
+                                            </ResponsiveNavLink>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+                        )}
                     </div>
                 </div>
             </nav>

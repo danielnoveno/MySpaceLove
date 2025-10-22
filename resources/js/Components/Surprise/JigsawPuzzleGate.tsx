@@ -56,6 +56,9 @@ type JigsawPuzzleGateProps = {
     onSolved?: () => void;
     resetLabel?: string;
     controls?: ReactNode;
+    pretitle?: string;
+    dragLabel?: string;
+    movesLabel?: string;
 };
 
 type PieceScatter = {
@@ -277,13 +280,16 @@ export default function JigsawPuzzleGate({
     rows = 3,
     cols = 3,
     missingCount = 5,
-    title = "Susun puzzle rahasia kita",
-    description = "Geser potongan yang hilang ke papan sampai gambarnya utuh.",
-    solvedTitle = "Puzzle selesai!",
-    solvedDescription = "Siap lanjut ke kejutan selanjutnya.",
+    title = "Assemble our secret puzzle",
+    description = "Slide the missing pieces onto the board until the picture is whole.",
+    solvedTitle = "Puzzle complete!",
+    solvedDescription = "Ready for the next surprise.",
     onSolved,
-    resetLabel = "Acak ulang puzzle",
+    resetLabel = "Shuffle puzzle pieces",
     controls,
+    pretitle = "Mini game",
+    dragLabel = "Drag each piece to the correct slot.",
+    movesLabel = "Moves",
 }: JigsawPuzzleGateProps): JSX.Element {
     const blueprint = useMemo(() => buildBlueprint(rows, cols), [rows, cols]);
     const [placements, setPlacements] = useState<PlacementMap>(() =>
@@ -727,7 +733,7 @@ export default function JigsawPuzzleGate({
         <div className="space-y-8">
             <div className="space-y-3 text-center">
                 <p className="text-xs font-semibold uppercase tracking-[0.32em] text-white/60">
-                    Mini game
+                    {pretitle}
                 </p>
                 <h2 className="text-2xl font-bold text-white">{title}</h2>
                 <p className="text-sm text-white/70">{description}</p>
@@ -740,7 +746,7 @@ export default function JigsawPuzzleGate({
             ) : null}
 
             <p className="text-xs font-semibold uppercase tracking-[0.28em] text-white/60 text-center lg:text-left">
-                Seret potongan ke slot yang pas.
+                {dragLabel}
             </p>
 
             <div className="flex flex-col items-center gap-8 lg:flex-row lg:items-start lg:justify-start lg:gap-16 lg:pl-6">
@@ -875,7 +881,9 @@ export default function JigsawPuzzleGate({
                     </div>
 
                     <div className="flex w-full max-w-sm flex-col items-center gap-3 rounded-[1.8rem] border border-white/15 bg-white/6 px-4 py-5 text-xs uppercase tracking-[0.28em] text-white/75">
-                        <span>Langkah: {moves}</span>
+                        <span>
+                            {movesLabel}: {moves}
+                        </span>
                         <button
                             type="button"
                             onClick={resetPuzzle}

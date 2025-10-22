@@ -11,6 +11,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
 use RuntimeException;
+use Throwable;
 
 class SpotifyController extends Controller
 {
@@ -156,6 +157,36 @@ class SpotifyController extends Controller
         ], 201);
     }
 
+    public function joinPlayback(Request $request, Space $space, SpotifyService $spotifyService): JsonResponse
+    {
+        $user = $request->user();
+
+        try {
+            $spotifyService->forSpace($space, $user);
+        } catch (RuntimeException $exception) {
+            return response()->json([
+                'message' => $exception->getMessage(),
+            ], 409);
+        }
+
+        $data = $request->validate([
+            'track_id' => ['required', 'string'],
+            'position_ms' => ['nullable', 'integer', 'min:0'],
+        ]);
+
+        try {
+            $spotifyService->startPlayback($data['track_id'], $data['position_ms'] ?? null);
+        } catch (Throwable $exception) {
+            return response()->json([
+                'message' => 'Gagal menghubungkan playback: ' . $exception->getMessage(),
+            ], 422);
+        }
+
+        return response()->json([
+            'status' => 'playing',
+        ], 202);
+    }
+
     protected function buildPlaylistSummary(SpotifyService $spotifyService, ?string $preferredPlaylistId): array
     {
         $playlistInfo = null;
@@ -239,7 +270,11 @@ class SpotifyController extends Controller
             ->filter(fn (array $track) => !empty($track['id']))
             ->values();
 
-        $features = $spotifyService->getAudioFeatures($tracks->pluck('id')->all());
+        try {
+            $features = $spotifyService->getAudioFeatures($tracks->pluck('id')->all());
+        } catch (Throwable $exception) {
+            $features = [];
+        }
 
         $averageEnergy = $tracks->count() > 0
             ? round($tracks->map(fn ($track) => Arr::get($features, $track['id'] . '.energy', 0))->average() ?? 0, 2)
@@ -344,6 +379,10 @@ class SpotifyController extends Controller
             'started_at' => $elapsedMinutes > 0 ? $elapsedMinutes . ' menit lalu' : 'Baru saja',
             'listeners' => 1,
             'joinable' => (bool) Arr::get($state, 'is_playing', false),
+            'track_id' => Arr::get($track, 'id'),
+            'track_uri' => Arr::get($track, 'uri'),
+            'progress_ms' => Arr::get($state, 'progress_ms', 0),
+            'external_url' => Arr::get($track, 'external_urls.spotify'),
         ];
     }
 
