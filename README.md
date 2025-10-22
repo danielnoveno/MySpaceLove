@@ -1,61 +1,105 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# LoveSpace 💖 - Ruang Digital untuk Pasangan LDR
 
 <p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
+  <img src="public/images/icon.png" alt="LoveSpace Logo" width="150"/>
 </p>
 
-## About Laravel
+<p align="center">
+  <strong>Tetap terhubung, berbagi momen, dan tumbuhkan cinta meski terpisah jarak.</strong>
+</p>
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+<p align="center">
+  <a href="https://github.com/danielnoveno/MySpaceLove/stargazers"><img src="https://img.shields.io/github/stars/danielnoveno/MySpaceLove?style=for-the-badge&logo=github&color=FF69B4" alt="Stars"></a>
+  <a href="https://github.com/danielnoveno/MySpaceLove/network/members"><img src="https://img.shields.io/github/forks/danielnoveno/MySpaceLove?style=for-the-badge&logo=github&color=87CEEB" alt="Forks"></a>
+  <a href="https://github.com/danielnoveno/MySpaceLove/issues"><img src="https://img.shields.io/github/issues/danielnoveno/MySpaceLove?style=for-the-badge&logo=github&color=FFD700" alt="Issues"></a>
+  <a href="https://github.com/danielnoveno/MySpaceLove/blob/main/LICENSE"><img src="https://img.shields.io/github/license/danielnoveno/MySpaceLove?style=for-the-badge&color=90EE90" alt="License"></a>
+</p>
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+---
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+**LoveSpace** adalah aplikasi web modern yang dirancang khusus untuk membantu pasangan yang menjalani hubungan jarak jauh (LDR) agar tetap merasa dekat. Dengan fitur-fitur interaktif dan personal, LoveSpace menjadi rumah digital bagi setiap pasangan untuk berbagi cerita, merencanakan masa depan, dan merayakan cinta setiap hari.
 
-## Learning Laravel
+## ✨ Fitur Unggulan
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+| Fitur                 | Deskripsi                                                              | Ikon        |
+| --------------------- | ---------------------------------------------------------------------- | ----------- |
+| **Shared Space**      | Ruang privat untuk Anda dan pasangan dengan tema yang bisa disesuaikan. | 🏡          |
+| **Love Timeline**     | Abadikan setiap momen berharga dalam sebuah timeline interaktif.       | 🗓️          |
+| **Countdown**         | Hitung mundur hari-hari spesial, seperti hari jadi atau pertemuan.     | ⏳          |
+| **Daily Messages**    | Dapatkan pesan cinta harian yang di-generate oleh AI (Google Gemini).  | 💌          |
+| **Location Sharing**  | Bagikan lokasi real-time agar selalu merasa dekat.                     | 📍          |
+| **Spotify Companion** | Dengarkan musik bersama, kirim lagu kejutan, dan buat playlist cinta.  | 🎵          |
+| **Video Call**        | Lakukan panggilan video dan "nobar" (nonton bareng) langsung di aplikasi.| 📹          |
+| **Love Journal**      | Tulis dan bagikan perasaan Anda dalam jurnal bersama.                  | 📔          |
+| **Wishlist**          | Buat daftar keinginan bersama untuk masa depan.                        | 🎁          |
+| **Media Gallery**     | Simpan semua foto dan video kenangan dalam satu galeri.                | 🖼️          |
+| **Surprise Notes**    | Kirim catatan kejutan untuk mencerahkan hari pasangan.                 | 💖          |
 
-You may also try the [Laravel Bootcamp](https://bootcamp.laravel.com), where you will be guided through building a modern Laravel application from scratch.
+## 🛠️ Tumpukan Teknologi
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+LoveSpace dibangun dengan teknologi modern untuk memberikan pengalaman terbaik bagi pengguna.
 
-## Laravel Sponsors
+- **Backend**: Laravel 12, PHP 8.2+, FilamentPHP
+- **Frontend**: React 18, TypeScript, Inertia.js, Vite
+- **Styling**: Tailwind CSS
+- **Database**: MySQL / PostgreSQL
+- **Real-time**: Laravel Echo, Pusher
+- **AI**: Google Gemini API
+- **Integrasi**: Spotify API, Agora, Daily.co
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+## 🚀 Instalasi & Setup
 
-### Premium Partners
+Ingin mencoba LoveSpace di environment lokal Anda? Ikuti langkah-langkah berikut:
 
-- **[Vehikl](https://vehikl.com)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Redberry](https://redberry.international/laravel-development)**
-- **[Active Logic](https://activelogic.com)**
+1. **Clone repository:**
+   ```bash
+   git clone https://github.com/danielnoveno/MySpaceLove.git
+   cd MySpaceLove
+   ```
 
-## Contributing
+2. **Install dependensi (PHP & JS):**
+   ```bash
+   composer install
+   npm install
+   ```
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+3. **Setup environment:**
+   - Salin file `.env.example` menjadi `.env`.
+   - Konfigurasi koneksi database Anda.
+   - Jalankan `php artisan key:generate`.
 
-## Code of Conduct
+4. **Jalankan migrasi database:**
+   ```bash
+   php artisan migrate --seed
+   ```
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+5. **Jalankan server development:**
+   ```bash
+   # Terminal 1: Jalankan Vite
+   npm run dev
 
-## Security Vulnerabilities
+   # Terminal 2: Jalankan Laravel Server
+   php artisan serve
+   ```
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+6. **Buka aplikasi:**
+   Akses `http://localhost:8000` di browser Anda.
 
-## License
+## 🤝 Berkontribusi
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+Kami sangat terbuka untuk kontribusi dari komunitas! Jika Anda ingin membantu mengembangkan LoveSpace, silakan:
+- Lakukan **Fork** pada repository ini.
+- Buat **Branch** baru untuk fitur atau perbaikan Anda.
+- Kirim **Pull Request** dengan penjelasan yang detail.
+
+Setiap kontribusi, sekecil apapun, sangat kami hargai!
+
+## 📄 Lisensi
+
+Proyek ini dilisensikan di bawah **MIT License**. Lihat file `LICENSE` untuk detail lebih lanjut.
+
+---
+
+<p align="center">
+  Dibuat dengan ❤️ untuk para pejuang LDR di seluruh dunia.
+</p>
