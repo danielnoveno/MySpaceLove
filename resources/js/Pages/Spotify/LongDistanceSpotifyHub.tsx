@@ -223,7 +223,7 @@ export default function LongDistanceSpotifyHub({ space }: Props) {
         >
             <Head title="Spotify Companion Kit" />
 
-            <div className="mx-auto flex w-full max-w-6xl flex-col gap-10 px-4 sm:px-6">
+            <div className="mx-auto flex w-full max-w-6xl flex-col gap-10 px-4 sm:px-6 pt-4">
                 {!isConnected && !loading && (
                     <section className="rounded-3xl border border-purple-200 bg-white p-6 shadow-sm">
                         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
