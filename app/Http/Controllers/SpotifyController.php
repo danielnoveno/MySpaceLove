@@ -11,6 +11,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
 use RuntimeException;
+use Throwable;
 
 class SpotifyController extends Controller
 {
@@ -239,7 +240,11 @@ class SpotifyController extends Controller
             ->filter(fn (array $track) => !empty($track['id']))
             ->values();
 
-        $features = $spotifyService->getAudioFeatures($tracks->pluck('id')->all());
+        try {
+            $features = $spotifyService->getAudioFeatures($tracks->pluck('id')->all());
+        } catch (Throwable $exception) {
+            $features = [];
+        }
 
         $averageEnergy = $tracks->count() > 0
             ? round($tracks->map(fn ($track) => Arr::get($features, $track['id'] . '.energy', 0))->average() ?? 0, 2)
