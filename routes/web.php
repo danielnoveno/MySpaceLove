@@ -17,6 +17,8 @@ use App\Http\Controllers\ChatController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\LocationController;
 use App\Http\Controllers\SpaceController;
+use App\Http\Controllers\SpotifyAuthController;
+use App\Http\Controllers\SpotifyController;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Response;
 use Illuminate\Support\Facades\Route;
@@ -60,9 +62,12 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::put('/profile/update', [App\Http\Controllers\ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile/destroy', [App\Http\Controllers\ProfileController::class, 'destroy'])->name('profile.destroy');
 
+    Route::get('/oauth/spotify/callback', [SpotifyAuthController::class, 'callback'])->name('spotify.callback');
+
     // Dashboard & Space selection
     Route::get('/dashboard', [DashboardController::class, 'redirect'])->name('dashboard');
     Route::get('/spaces', [SpaceController::class, 'index'])->name('spaces.index');
+    Route::post('/spaces', [SpaceController::class, 'store'])->name('spaces.store');
 
     Route::middleware('space.access')->group(function () {
         Route::get('/spaces/{space:slug}/dashboard', [DashboardController::class, 'show'])->name('spaces.dashboard');
@@ -107,6 +112,21 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/spaces/{space:slug}/gallery/{id}/edit', [MediaGalleryApiController::class, 'edit'])->name('gallery.edit');
         Route::put('/spaces/{space:slug}/gallery/{id}', [MediaGalleryApiController::class, 'update'])->name('gallery.update');
         Route::delete('/spaces/{space:slug}/gallery/{id}', [MediaGalleryApiController::class, 'destroy'])->name('gallery.destroy');
+
+        Route::get('/spaces/{space:slug}/spotify/authorize', [SpotifyAuthController::class, 'redirect'])->name('spotify.authorize');
+        Route::get('/spaces/{space:slug}/spotify/dashboard-data', [SpotifyController::class, 'dashboard'])->name('spotify.dashboard');
+        Route::post('/spaces/{space:slug}/spotify/surprises', [SpotifyController::class, 'storeSurprise'])->name('spotify.surprises.store');
+        Route::post('/spaces/{space:slug}/spotify/capsules', [SpotifyController::class, 'storeCapsule'])->name('spotify.capsules.store');
+
+        Route::get('/spaces/{space:slug}/spotify-companion', function (\App\Models\Space $space) {
+            return Inertia::render('Spotify/LongDistanceSpotifyHub', [
+                'space' => [
+                    'id' => $space->id,
+                    'slug' => $space->slug,
+                    'title' => $space->title,
+                ],
+            ]);
+        })->name('spotify.companion');
 
         Route::get('/spaces/{space:slug}/nobar', function (\App\Models\Space $space) {
             return Inertia::render('Room/Show', [

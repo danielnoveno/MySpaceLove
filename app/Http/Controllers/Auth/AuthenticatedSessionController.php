@@ -33,6 +33,18 @@ class AuthenticatedSessionController extends Controller
 
         $request->session()->regenerate();
 
+        $intended = $request->session()->pull('url.intended');
+
+        if ($intended) {
+            $intendedPath = parse_url($intended, PHP_URL_PATH) ?? '';
+
+            if (str_starts_with($intendedPath, '/api/')) {
+                return redirect()->route('dashboard', absolute: false);
+            }
+
+            $request->session()->put('url.intended', $intended);
+        }
+
         return redirect()->intended(route('dashboard', absolute: false));
     }
 

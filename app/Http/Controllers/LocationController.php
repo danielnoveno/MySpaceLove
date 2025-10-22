@@ -9,6 +9,7 @@ use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Schema;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -18,6 +19,17 @@ class LocationController extends Controller
     {
         $user = $request->user();
         $partner = $user ? $this->findPartner($user, $space) : null;
+
+        $pendingInvitation = null;
+
+        if (Schema::hasTable('space_invitations')) {
+            $space->loadMissing('pendingInvitation');
+            $pendingInvitation = $space->pendingInvitation ? [
+                'email' => $space->pendingInvitation->invitee_email,
+                'status' => $space->pendingInvitation->status,
+                'created_at' => optional($space->pendingInvitation->created_at)->toIso8601String(),
+            ] : null;
+        }
 
         $userLocation = $user?->location;
         $partnerLocation = $partner?->location;
@@ -44,6 +56,7 @@ class LocationController extends Controller
                 'slug' => $space->slug,
                 'title' => $space->title,
             ],
+            'pendingInvitation' => $pendingInvitation,
         ]);
     }
 

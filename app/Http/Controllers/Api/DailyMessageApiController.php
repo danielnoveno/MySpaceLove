@@ -166,11 +166,30 @@ class DailyMessageApiController extends Controller
             return $existing;
         }
 
+        if (!$this->spaceHasCouple($space)) {
+            Log::info('Daily message auto-generation skipped because space has no partner.', [
+                'space_id' => $space->id,
+                'date' => $date,
+            ]);
+
+            return null;
+        }
+
         if (!$force && !$this->shouldAutoGenerateMessage($now)) {
             return null;
         }
 
         [$fromName, $partnerName] = $this->resolveNamePair($space);
+
+        if (!$this->hasUsableNamePair($fromName, $partnerName)) {
+            Log::info('Daily message auto-generation skipped because name pair is incomplete.', [
+                'space_id' => $space->id,
+                'date' => $date,
+            ]);
+
+            return null;
+        }
+
         $text = $this->dailyMessageGenerator->generate(null, null, $fromName, $partnerName);
 
         if (!$text) {
@@ -276,6 +295,21 @@ class DailyMessageApiController extends Controller
         }
 
         return [$fromName, $partnerName];
+    }
+
+    private function spaceHasCouple(Space $space): bool
+    {
+        return !empty($space->user_one_id) && !empty($space->user_two_id);
+    }
+
+    private function hasUsableNamePair(?string $fromName, ?string $partnerName): bool
+    {
+        return $this->isFilled($fromName) && $this->isFilled($partnerName);
+    }
+
+    private function isFilled(?string $value): bool
+    {
+        return is_string($value) && trim($value) !== '';
     }
 
     public function update(Request $request, Space $space, $id)

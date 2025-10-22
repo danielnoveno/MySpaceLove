@@ -17,9 +17,11 @@ use App\Http\Controllers\Api\{
 use App\Http\Controllers\LocationController;
 
 Route::middleware('auth:sanctum')->group(function () {
-    Route::apiResource('spaces', SpaceApiController::class)->scoped([
-        'space' => 'slug',
-    ]);
+    Route::apiResource('spaces', SpaceApiController::class)
+        ->names('api.spaces')
+        ->scoped([
+            'space' => 'slug',
+        ]);
 
     // nested resources: /api/spaces/{space}/...
     Route::get('spaces/{space}/timelines', [LoveTimelineApiController::class, 'index']);
@@ -53,7 +55,13 @@ Route::middleware('auth:sanctum')->group(function () {
         'space' => 'slug',
     ]);
 
-    Route::post('spaces/{space}/connect-partner', [SpaceApiController::class, 'connectPartner']);
+    Route::post('spaces/{space}/connect-partner', [SpaceApiController::class, 'connectPartner'])->name('api.spaces.connect-partner');
+    Route::post('spaces/{space}/confirm-partner', [SpaceApiController::class, 'confirmPartner'])->name('api.spaces.confirm-partner');
+    Route::delete('spaces/{space}/invitations/{invitation}', [SpaceApiController::class, 'cancelInvitation'])->name('api.spaces.invitations.cancel');
+    Route::post('spaces/join-by-code', [SpaceApiController::class, 'requestJoin'])->name('api.spaces.request-join');
+    Route::post('spaces/{space}/separation/request', [SpaceApiController::class, 'requestSeparation'])->name('api.spaces.separation.request');
+    Route::post('spaces/{space}/separation/respond', [SpaceApiController::class, 'respondSeparation'])->name('api.spaces.separation.respond');
+    Route::post('spaces/{space}/separation/cancel', [SpaceApiController::class, 'cancelSeparation'])->name('api.spaces.separation.cancel');
 
     Route::get('themes', [ThemeController::class, 'index']);
     Route::get('themes/{id}', [ThemeController::class, 'show']);

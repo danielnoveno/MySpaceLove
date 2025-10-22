@@ -1,7 +1,7 @@
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout";
 import { Head, Link, usePage } from "@inertiajs/react";
 import axios from "axios";
-import { Fragment, useCallback, useEffect, useMemo, useState } from "react";
+import { Fragment, MouseEvent, useCallback, useEffect, useMemo, useState } from "react";
 import {
     Calendar,
     Clock,
@@ -11,6 +11,10 @@ import {
     MessageSquare,
     Video,
     BookOpen,
+    Music,
+    UserPlus,
+    Lock,
+    X,
 } from "lucide-react";
 
 interface DashboardData {
@@ -26,13 +30,17 @@ interface DashboardData {
     }>;
 }
 
+interface SpaceContext {
+    id: number;
+    slug: string;
+    title: string;
+    has_partner?: boolean;
+    is_owner?: boolean;
+}
+
 interface Props {
     dashboardData: DashboardData;
-    spaceContext: {
-        id: number;
-        slug: string;
-        title: string;
-    };
+    spaceContext: SpaceContext;
 }
 
 export default function Dashboard({ dashboardData, spaceContext }: Props) {
@@ -41,18 +49,38 @@ export default function Dashboard({ dashboardData, spaceContext }: Props) {
             id: number;
             slug: string;
             title: string;
+            has_partner?: boolean;
+            is_owner?: boolean;
         } | null;
     }>();
 
     const currentSpace = props.currentSpace ?? spaceContext;
     const spaceSlug = currentSpace.slug;
     const spaceTitle = currentSpace.title;
+    const hasPartner =
+        (currentSpace.has_partner ?? spaceContext.has_partner) ?? false;
+    const isSpaceOwner =
+        (currentSpace.is_owner ?? spaceContext.is_owner) ?? false;
 
+    const coupleFeaturesLocked = !hasPartner;
+    const coupleLockMessage =
+        "Hubungkan pasanganmu terlebih dahulu untuk membuka fitur ini.";
     const [dailyMessage, setDailyMessage] = useState<string | null>(null);
     const [showModal, setShowModal] = useState(false);
     const [expandedMessages, setExpandedMessages] = useState<
         Record<number, boolean>
     >({});
+    const [showLockModal, setShowLockModal] = useState(false);
+
+    const handleLockedNavigation = useCallback(
+        (event: MouseEvent<Element>) => {
+            if (coupleFeaturesLocked) {
+                event.preventDefault();
+                setShowLockModal(true);
+            }
+        },
+        [coupleFeaturesLocked, setShowLockModal]
+    );
 
     const formattedDailyMessage = useMemo(() => {
         if (!dailyMessage) {
@@ -165,6 +193,7 @@ export default function Dashboard({ dashboardData, spaceContext }: Props) {
                 description: "Catat momen spesial",
                 href: route("timeline.create", { space: spaceSlug }),
                 color: "from-pink-500 to-rose-500",
+                requiresPartner: true,
             },
             {
                 icon: Image,
@@ -172,6 +201,7 @@ export default function Dashboard({ dashboardData, spaceContext }: Props) {
                 description: "Simpan kenangan",
                 href: route("gallery.create", { space: spaceSlug }),
                 color: "from-blue-500 to-cyan-500",
+                requiresPartner: true,
             },
             {
                 icon: MessageSquare,
@@ -179,20 +209,23 @@ export default function Dashboard({ dashboardData, spaceContext }: Props) {
                 description: "Lihat pesan cinta",
                 href: route("daily.index", { space: spaceSlug }),
                 color: "from-purple-500 to-indigo-500",
-            },
-            {
-                icon: Gift,
-                label: "Surprise Story",
-                description: "Hadiahkan cerita ulang tahun",
-                href: route("surprise.story.space", { space: spaceSlug }),
-                color: "from-amber-500 to-pink-500",
+                requiresPartner: true,
             },
             {
                 icon: Heart,
                 label: "Memory Lane Kit",
-                description: "Panduan surprise 3 tahap",
+                description: "Panduan surprise 3 tahap + storybook",
                 href: route("surprise.memory.space", { space: spaceSlug }),
                 color: "from-fuchsia-500 to-violet-500",
+                requiresPartner: true,
+            },
+            {
+                icon: Music,
+                label: "Spotify Companion",
+                description: "Sinkronisasi musik & mood jarak jauh",
+                href: route("spotify.companion", { space: spaceSlug }),
+                color: "from-emerald-500 to-teal-500",
+                requiresPartner: true,
             },
             {
                 icon: BookOpen,
@@ -200,6 +233,7 @@ export default function Dashboard({ dashboardData, spaceContext }: Props) {
                 description: "Ekspresikan perasaan",
                 href: route("journal.create", { space: spaceSlug }),
                 color: "from-green-500 to-emerald-500",
+                requiresPartner: true,
             },
             {
                 icon: Video,
@@ -207,6 +241,7 @@ export default function Dashboard({ dashboardData, spaceContext }: Props) {
                 description: "Mulai nonton bareng",
                 href: route("space.nobar", { space: spaceSlug }),
                 color: "from-red-500 to-orange-500",
+                requiresPartner: true,
             },
         ],
         [spaceSlug]
@@ -243,11 +278,12 @@ export default function Dashboard({ dashboardData, spaceContext }: Props) {
                 <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/30 px-4">
                     <div className="relative w-full max-w-lg rounded-3xl bg-white p-8 shadow-2xl">
                         <button
+                            type="button"
                             onClick={() => setShowModal(false)}
                             className="absolute right-4 top-4 text-gray-400 transition hover:text-gray-600"
                             aria-label="Tutup"
                         >
-                            ×
+                            <X className="h-5 w-5" />
                         </button>
                         <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-pink-100">
                             <Heart className="h-8 w-8 text-pink-500" />
@@ -262,7 +298,64 @@ export default function Dashboard({ dashboardData, spaceContext }: Props) {
                 </div>
             )}
 
+            {showLockModal && (
+                <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/30 px-4">
+                    <div className="relative w-full max-w-sm rounded-3xl bg-white p-8 text-center shadow-2xl">
+                        <button
+                            type="button"
+                            onClick={() => setShowLockModal(false)}
+                            className="absolute right-4 top-4 text-gray-400 transition hover:text-gray-600"
+                            aria-label="Tutup"
+                        >
+                            <X className="h-5 w-5" />
+                        </button>
+                        <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-pink-100">
+                            <Lock className="h-8 w-8 text-pink-500" />
+                        </div>
+                        <h3 className="mt-4 text-xl font-semibold text-gray-900">
+                            Fitur Terkunci
+                        </h3>
+                        <p className="mt-3 text-sm leading-relaxed text-gray-600">
+                            {coupleLockMessage}
+                        </p>
+                        <button
+                            type="button"
+                            onClick={() => setShowLockModal(false)}
+                            className="mt-6 inline-flex items-center justify-center rounded-full bg-pink-500 px-6 py-2 text-sm font-semibold text-white transition hover:bg-pink-600"
+                        >
+                            Mengerti
+                        </button>
+                    </div>
+                </div>
+            )}
+
             <div className="mx-auto flex max-w-7xl flex-col gap-8 px-4 py-4">
+                {!hasPartner && isSpaceOwner && (
+                    <div className="rounded-3xl border border-dashed border-indigo-200 bg-indigo-50 p-6 shadow-sm">
+                        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+                            <div className="flex items-start gap-3">
+                                <span className="flex h-12 w-12 items-center justify-center rounded-full bg-indigo-100">
+                                    <UserPlus className="h-6 w-6 text-indigo-600" />
+                                </span>
+                                <div>
+                                    <h3 className="text-lg font-semibold text-indigo-900">
+                                        Pasangan belum terhubung
+                                    </h3>
+                                    <p className="mt-1 text-sm text-indigo-700">
+                                        Ajak pasanganmu bergabung agar kalian bisa menikmati semua fitur berdua.
+                                    </p>
+                                </div>
+                            </div>
+                            <Link
+                                href={route("spaces.index")}
+                                className="inline-flex items-center justify-center rounded-full bg-indigo-600 px-5 py-2 text-sm font-semibold text-white transition hover:bg-indigo-700"
+                            >
+                                Hubungkan Pasangan
+                            </Link>
+                        </div>
+                    </div>
+                )}
+
                 <div className="grid gap-6 md:grid-cols-3">
                     <div className="rounded-3xl bg-white p-6 shadow-sm">
                         <div className="flex items-center gap-3">
@@ -307,7 +400,14 @@ export default function Dashboard({ dashboardData, spaceContext }: Props) {
                                     href={route("location.map", {
                                         space: spaceSlug,
                                     })}
-                                    className="mt-1 inline-flex items-center gap-2 rounded-full bg-white/20 px-4 py-1 text-sm font-medium text-white transition hover:bg-white/30"
+                                    onClick={coupleFeaturesLocked ? handleLockedNavigation : undefined}
+                                    title={coupleFeaturesLocked ? coupleLockMessage : undefined}
+                                    aria-disabled={coupleFeaturesLocked}
+                                    className={`mt-1 inline-flex items-center gap-2 rounded-full px-4 py-1 text-sm font-medium text-white transition ${
+                                        coupleFeaturesLocked
+                                            ? "cursor-not-allowed bg-white/10 opacity-60"
+                                            : "bg-white/20 hover:bg-white/30"
+                                    }`}
                                 >
                                     Buka Peta
                                     <Video className="h-4 w-4" />
@@ -322,25 +422,45 @@ export default function Dashboard({ dashboardData, spaceContext }: Props) {
                         Aksi Cepat
                     </h2>
                     <div className="mt-4 grid gap-4 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5">
-                        {quickActions.map((action, index) => (
-                            <Link
-                                key={index}
-                                href={action.href}
-                                className="group rounded-2xl border border-gray-100 bg-white p-6 shadow-sm transition hover:border-transparent hover:shadow-lg"
-                            >
-                                <div
-                                    className={`mb-3 w-fit rounded-xl bg-gradient-to-r ${action.color} p-3 transition-transform group-hover:scale-110`}
+                        {quickActions.map((action, index) => {
+                            const locked =
+                                coupleFeaturesLocked && action.requiresPartner;
+
+                            return (
+                                <Link
+                                    key={index}
+                                    href={action.href}
+                                    onClick={locked ? handleLockedNavigation : undefined}
+                                    title={locked ? coupleLockMessage : undefined}
+                                    aria-disabled={locked}
+                                    className={`group relative rounded-2xl border border-gray-100 bg-white p-6 shadow-sm transition ${
+                                        locked
+                                            ? "cursor-not-allowed opacity-60"
+                                            : "hover:border-transparent hover:shadow-lg"
+                                    }`}
                                 >
-                                    <action.icon className="h-6 w-6 text-white" />
-                                </div>
-                                <h3 className="text-lg font-semibold text-gray-900">
-                                    {action.label}
-                                </h3>
-                                <p className="mt-1 text-sm text-gray-600">
-                                    {action.description}
-                                </p>
-                            </Link>
-                        ))}
+                                    <div
+                                        className={`mb-3 w-fit rounded-xl bg-gradient-to-r ${action.color} p-3 transition-transform ${
+                                            locked ? "" : "group-hover:scale-110"
+                                        }`}
+                                    >
+                                        <action.icon className="h-6 w-6 text-white" />
+                                    </div>
+                                    <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+                                        {action.label}
+                                        {locked && (
+                                            <span className="inline-flex items-center justify-center rounded-full bg-pink-100 px-2 py-0.5 text-xs font-semibold text-pink-500">
+                                                <Lock className="h-3 w-3" />
+                                                Terkunci
+                                            </span>
+                                        )}
+                                    </h3>
+                                    <p className="mt-1 text-sm text-gray-600">
+                                        {action.description}
+                                    </p>
+                                </Link>
+                            );
+                        })}
                     </div>
                 </div>
 
@@ -382,7 +502,14 @@ export default function Dashboard({ dashboardData, spaceContext }: Props) {
                             href={route("countdown.index", {
                                 space: spaceSlug,
                             })}
-                            className="mt-4 block text-center text-sm font-medium text-orange-600 transition hover:text-orange-700"
+                            onClick={coupleFeaturesLocked ? handleLockedNavigation : undefined}
+                            title={coupleFeaturesLocked ? coupleLockMessage : undefined}
+                            aria-disabled={coupleFeaturesLocked}
+                            className={`mt-4 block text-center text-sm font-medium transition ${
+                                coupleFeaturesLocked
+                                    ? "cursor-not-allowed text-orange-300"
+                                    : "text-orange-600 hover:text-orange-700"
+                            }`}
                         >
                             Lihat Semua
                         </Link>
@@ -433,7 +560,14 @@ export default function Dashboard({ dashboardData, spaceContext }: Props) {
                         </div>
                         <Link
                             href={route("daily.index", { space: spaceSlug })}
-                            className="mt-4 block text-center text-sm font-medium text-purple-600 transition hover:text-purple-700"
+                            onClick={coupleFeaturesLocked ? handleLockedNavigation : undefined}
+                            title={coupleFeaturesLocked ? coupleLockMessage : undefined}
+                            aria-disabled={coupleFeaturesLocked}
+                            className={`mt-4 block text-center text-sm font-medium transition ${
+                                coupleFeaturesLocked
+                                    ? "cursor-not-allowed text-purple-300"
+                                    : "text-purple-600 hover:text-purple-700"
+                            }`}
                         >
                             Lihat Semua
                         </Link>

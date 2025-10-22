@@ -10,3 +10,19 @@ if (csrfToken) {
 } else {
     console.error('CSRF token not found: Ensure @csrf directive is used in your main Blade template.');
 }
+
+if (typeof window !== 'undefined' && window.Ziggy) {
+    try {
+        const currentUrl = new URL(window.location.href);
+
+        if (currentUrl.origin !== window.Ziggy.url) {
+            window.Ziggy = {
+                ...window.Ziggy,
+                url: currentUrl.origin,
+                port: currentUrl.port ? Number(currentUrl.port) : null,
+            };
+        }
+    } catch (error) {
+        console.warn('Unable to synchronize Ziggy base URL.', error);
+    }
+}

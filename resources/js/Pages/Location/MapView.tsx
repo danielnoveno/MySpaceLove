@@ -36,6 +36,12 @@ type Partner = {
     email: string;
 };
 
+type SpaceInvitationSummary = {
+    email: string;
+    status: string;
+    created_at: string | null;
+};
+
 type NotificationType = "success" | "error" | "warning";
 
 type NotificationState = {
@@ -55,6 +61,7 @@ type Props = {
     userLocation: LocationPoint | null;
     partnerLocation: LocationPoint | null;
     shareBaseUrl: string;
+    pendingInvitation: SpaceInvitationSummary | null;
     space: {
         id: number;
         slug: string;
@@ -185,6 +192,7 @@ export default function MapView({
     userLocation: initialUserLocation,
     partnerLocation: initialPartnerLocation,
     shareBaseUrl,
+    pendingInvitation: initialPendingInvitation,
     space,
 }: Props) {
     const [userLocation, setUserLocation] = useState<LocationPoint | null>(
@@ -210,12 +218,22 @@ export default function MapView({
     const [showPartnerForm, setShowPartnerForm] = useState(false);
     const [partnerNameInput, setPartnerNameInput] = useState("");
     const [partnerEmailInput, setPartnerEmailInput] = useState("");
+    const [pendingInvitation, setPendingInvitation] =
+        useState<SpaceInvitationSummary | null>(initialPendingInvitation);
+    const [invitedPartnerEmail, setInvitedPartnerEmail] = useState<string | null>(
+        initialPendingInvitation?.email ?? null
+    );
     const [generatedPassword, setGeneratedPassword] = useState<string | null>(
         null
     );
     const [routeCoordinates, setRouteCoordinates] = useState<
         LatLngExpression[] | null
     >(null);
+
+    useEffect(() => {
+        setPendingInvitation(initialPendingInvitation);
+        setInvitedPartnerEmail(initialPendingInvitation?.email ?? null);
+    }, [initialPendingInvitation]);
     const [isRouteLoading, setIsRouteLoading] = useState(false);
     const [routeFetchError, setRouteFetchError] = useState<string | null>(null);
     const [routeDistanceKm, setRouteDistanceKm] = useState<number | null>(null);
@@ -325,14 +343,28 @@ export default function MapView({
                     }
                 );
 
-                const responsePartner = response.data.partner as Partner;
-                setPartner(responsePartner);
-                setGeneratedPassword(response.data.temporary_password ?? null);
-                showNotification("Pasangan berhasil terhubung ??", "success");
+                const responseData = response.data as {
+                    invitation?: SpaceInvitationSummary;
+                    partner_account?: Partner;
+                    temporary_password?: string | null;
+                };
+
+                const invitation = responseData.invitation ?? null;
+
+                setPendingInvitation(invitation);
+                setInvitedPartnerEmail(
+                    invitation?.email ??
+                        responseData.partner_account?.email ??
+                        partnerEmail
+                );
+                setGeneratedPassword(responseData.temporary_password ?? null);
+                showNotification(
+                    "Undangan berhasil dikirim. Minta pasanganmu untuk mengonfirmasi.",
+                    "success"
+                );
                 setShowPartnerForm(false);
                 setPartnerNameInput("");
                 setPartnerEmailInput("");
-                await fetchPartnerLocation(true);
             } catch (error) {
                 console.error("Failed to connect partner", error);
                 let message = "Gagal menghubungkan pasangan.";
@@ -361,17 +393,16 @@ export default function MapView({
                 }
 
                 showNotification(message, "error");
-            } finally {
-                setIsConnectingPartner(false);
-            }
-        },
-        [
-            fetchPartnerLocation,
-            partnerEmailInput,
-            partnerNameInput,
-            showNotification,
-            space.slug,
-        ]
+        } finally {
+            setIsConnectingPartner(false);
+        }
+    },
+    [
+        partnerEmailInput,
+        partnerNameInput,
+        showNotification,
+        space.slug,
+    ]
     );
 
     const persistLocation = useCallback(
@@ -747,8 +778,19 @@ export default function MapView({
                         ) : (
                             <div className="space-y-3">
                                 <p className="text-sm text-gray-600">
-                                    Hubungkan pasanganmu untuk mulai berbagi.
+                                    Kirim undangan ke pasanganmu untuk mulai
+                                    berbagi.
                                 </p>
+                                {pendingInvitation && (
+                                    <div className="rounded-lg border border-violet-200 bg-violet-50 px-3 py-2 text-xs text-violet-700">
+                                        Menunggu konfirmasi dari{" "}
+                                        <span className="font-semibold">
+                                            {pendingInvitation.email}
+                                        </span>
+                                        . Mintalah pasanganmu untuk login dan
+                                        menerima undangan yang sudah kamu kirim.
+                                    </div>
+                                )}
                                 {showPartnerForm ? (
                                     <form
                                         className="space-y-3 rounded-xl border border-violet-100 bg-violet-50 p-3"
@@ -794,8 +836,8 @@ export default function MapView({
                                                 className="inline-flex items-center justify-center rounded-full bg-purple-500 px-4 py-2 text-sm font-medium text-white shadow transition hover:bg-purple-600 disabled:cursor-not-allowed disabled:bg-purple-300"
                                             >
                                                 {isConnectingPartner
-                                                    ? "Menghubungkan..."
-                                                    : "Simpan Pasangan"}
+                                                    ? "Mengirim..."
+                                                    : "Kirim Undangan"}
                                             </button>
                                             <button
                                                 type="button"
@@ -816,7 +858,7 @@ export default function MapView({
                                         onClick={() => setShowPartnerForm(true)}
                                         className="inline-flex items-center gap-2 rounded-full bg-purple-100 px-4 py-2 text-sm font-medium text-purple-600 transition hover:bg-purple-200"
                                     >
-                                        Hubungkan Pasangan
+                                        Kirim Undangan ke Pasangan
                                     </button>
                                 )}
                             </div>
@@ -824,16 +866,16 @@ export default function MapView({
                     </div>
                 </div>
 
-                {generatedPassword && partner && (
+                {generatedPassword && invitedPartnerEmail && (
                     <div className="rounded-2xl border border-yellow-200 bg-yellow-50 px-4 py-3 text-sm text-yellow-800 shadow-sm">
                         <p className="font-semibold">
-                            Akun pasangan berhasil dibuat.
+                            Akun pasangan berhasil dibuat otomatis.
                         </p>
                         <p className="mt-1">
                             Bagikan kredensial ini ke pasanganmu untuk login:
                             <br />
                             <span className="font-semibold">Email:</span>{" "}
-                            {partner.email}{" "}
+                            {invitedPartnerEmail}{" "}
                             <span className="font-semibold">Password:</span>{" "}
                             <span className="font-mono tracking-wide">
                                 {generatedPassword}

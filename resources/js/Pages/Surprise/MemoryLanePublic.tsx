@@ -1,5 +1,6 @@
 import { Head, Link } from "@inertiajs/react";
 import { useState } from "react";
+import { Gift } from "lucide-react";
 import SecretCodeGate from "@/Components/Surprise/SecretCodeGate";
 import JigsawPuzzleGate from "@/Components/Surprise/JigsawPuzzleGate";
 import {
@@ -36,7 +37,7 @@ export default function MemoryLanePublic({
     space,
 }: MemoryLanePublicProps): JSX.Element {
     const spaceTitle = space?.title ?? "kita";
-    const nextHref = space?.slug
+    const storyHref = space?.slug
         ? route("surprise.story.space", { space: space.slug })
         : route("surprise.story");
     const puzzleRows = 4;
@@ -83,12 +84,12 @@ export default function MemoryLanePublic({
             >
                 <div className="relative mx-auto flex min-h-screen w-full max-w-6xl flex-col px-4 py-16 sm:px-8 md:px-12">
                     <div className="mb-6 flex flex-col items-center gap-3 text-center sm:mb-8 sm:flex-row sm:justify-center">
-                        <span className="text-[0.65rem] font-semibold uppercase tracking-[0.32em] text-white/60">
+                        {/* <span className="text-[0.65rem] font-semibold uppercase tracking-[0.32em] text-white/60">
                             Ganti gambar puzzle:
-                        </span>
-                        <div className="flex flex-wrap justify-center gap-2">
+                        </span> */}
+                        {/* <div className="flex flex-wrap justify-center gap-2">
                             {renderPuzzleButtons()}
-                        </div>
+                        </div> */}
                     </div>
                     <JigsawPuzzleGate
                         rows={puzzleRows}
@@ -175,19 +176,39 @@ export default function MemoryLanePublic({
 
                             <section className="space-y-6 rounded-3xl border border-white/20 bg-black/20 p-6 text-sm text-white/70 backdrop-blur">
                                 <p>
-                                    Selesai kit ini, kirim link Storybook ruang{" "}
-                                    {spaceTitle} biar pasanganmu dapet kejutan
-                                    ganda. Rahasiain kode 160825 ya, cuma kita
-                                    yang tahu!
+                                    Selesai kit ini, buka menu Surprise Story
+                                    buat kirim hadiah cerita ulang tahun ruang{" "}
+                                    {spaceTitle}. Bagikan link ini biar
+                                    pasanganmu dapet kejutan ganda.
                                 </p>
-                                <div className="flex justify-center">
-                                    <Link
-                                        href={nextHref}
-                                        className="inline-flex items-center justify-center rounded-full bg-rose-500 px-6 py-3 text-sm font-semibold text-white transition hover:bg-rose-600 focus:outline-none focus-visible:ring-2 focus-visible:ring-rose-300 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900"
-                                    >
-                                        Next
-                                    </Link>
+                                <div className="flex flex-col gap-4 rounded-2xl border border-white/15 bg-white/10 p-5 text-white">
+                                    <div className="flex items-center gap-4">
+                                        <span className="flex h-12 w-12 items-center justify-center rounded-full bg-rose-500/20 text-rose-100">
+                                            <Gift className="h-6 w-6" />
+                                        </span>
+                                        <div className="space-y-1">
+                                            <h3 className="text-lg font-semibold text-white">
+                                                Surprise Story
+                                            </h3>
+                                            <p className="text-sm text-white/70">
+                                                Hadiahkan cerita ulang tahun
+                                                lengkap untuk pasanganmu.
+                                            </p>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <Link
+                                            href={storyHref}
+                                            className="inline-flex items-center justify-center rounded-full bg-rose-500 px-6 py-3 text-sm font-semibold text-white transition hover:bg-rose-600 focus:outline-none focus-visible:ring-2 focus-visible:ring-rose-300 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900"
+                                        >
+                                            Buka Storybook
+                                        </Link>
+                                    </div>
                                 </div>
+                                <p className="text-center text-xs text-white/60">
+                                    Rahasiain kode 160825 ya, cuma kita yang
+                                    tahu!
+                                </p>
                             </section>
                         </div>
                     </JigsawPuzzleGate>

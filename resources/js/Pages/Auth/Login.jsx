@@ -94,6 +94,16 @@ export default function Login({ status, canResetPassword }) {
                         Log in
                     </PrimaryButton>
                 </div>
+
+                <div className="mt-6 text-center text-sm text-gray-600">
+                    Belum punya akun?{' '}
+                    <Link
+                        href={route('register')}
+                        className="font-semibold text-indigo-600 underline hover:text-indigo-500"
+                    >
+                        Daftar sekarang
+                    </Link>
+                </div>
             </form>
         </GuestLayout>
     );

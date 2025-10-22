@@ -3,6 +3,7 @@ import { Link, usePage } from "@inertiajs/react";
 import ApplicationLogo from "@/Components/ApplicationLogo";
 import Dropdown from "@/Components/Dropdown";
 import ResponsiveNavLink from "@/Components/ResponsiveNavLink";
+import { Lock } from "lucide-react";
 
 export default function Authenticated({
     header,
@@ -13,11 +14,21 @@ export default function Authenticated({
     const { props }: any = usePage();
     const user = props.auth?.user;
     const spaces =
-        (props.spaces as Array<{ id: number; slug: string; title: string }>) ??
+        (props.spaces as Array<{
+            id: number;
+            slug: string;
+            title: string;
+            has_partner?: boolean;
+        }>) ??
         [];
     const currentSpace =
         (props.currentSpace as
-            | { id: number; slug: string; title: string }
+            | {
+                  id: number;
+                  slug: string;
+                  title: string;
+                  has_partner?: boolean;
+              }
             | null
             | undefined) ?? null;
 
@@ -35,6 +46,19 @@ export default function Authenticated({
     const galleryHref = currentSpace
         ? route("gallery.index", { space: currentSpace.slug })
         : fallbackHref;
+    const spotifyHref = currentSpace
+        ? route("spotify.companion", { space: currentSpace.slug })
+        : fallbackHref;
+    const partnerFeaturesLocked =
+        currentSpace !== null && currentSpace.has_partner === false;
+    const lockedTooltip = "Fitur couple akan aktif setelah pasanganmu bergabung.";
+
+    const navClass = (locked: boolean) =>
+        `inline-flex items-center px-1 pt-1 border-b-2 border-transparent text-sm font-medium leading-5 transition duration-150 ease-in-out ${
+            locked
+                ? "cursor-not-allowed text-gray-300 pointer-events-none"
+                : "text-gray-500 hover:text-gray-700 hover:border-gray-300 focus:outline-none focus:text-gray-700 focus:border-gray-300"
+        }`;
 
     return (
         <div className="min-h-screen bg-gradient-to-br from-pink-50 via-white to-purple-50">
@@ -57,21 +81,51 @@ export default function Authenticated({
                                 </Link>
                                 <Link
                                     href={timelineHref}
-                                    className="inline-flex items-center px-1 pt-1 border-b-2 border-transparent text-sm font-medium leading-5 text-gray-500 hover:text-gray-700 hover:border-gray-300 focus:outline-none focus:text-gray-700 focus:border-gray-300 transition duration-150 ease-in-out"
+                                    className={navClass(partnerFeaturesLocked)}
+                                    title={partnerFeaturesLocked ? lockedTooltip : undefined}
                                 >
-                                    Timeline
+                                    <span className="flex items-center gap-1">
+                                        {partnerFeaturesLocked && (
+                                            <Lock className="h-3 w-3 text-gray-400" aria-hidden="true" />
+                                        )}
+                                        Timeline
+                                    </span>
                                 </Link>
                                 <Link
                                     href={dailyHref}
-                                    className="inline-flex items-center px-1 pt-1 border-b-2 border-transparent text-sm font-medium leading-5 text-gray-500 hover:text-gray-700 hover:border-gray-300 focus:outline-none focus:text-gray-700 focus:border-gray-300 transition duration-150 ease-in-out"
+                                    className={navClass(partnerFeaturesLocked)}
+                                    title={partnerFeaturesLocked ? lockedTooltip : undefined}
                                 >
-                                    Daily Message
+                                    <span className="flex items-center gap-1">
+                                        {partnerFeaturesLocked && (
+                                            <Lock className="h-3 w-3 text-gray-400" aria-hidden="true" />
+                                        )}
+                                        Daily Message
+                                    </span>
                                 </Link>
                                 <Link
                                     href={galleryHref}
-                                    className="inline-flex items-center px-1 pt-1 border-b-2 border-transparent text-sm font-medium leading-5 text-gray-500 hover:text-gray-700 hover:border-gray-300 focus:outline-none focus:text-gray-700 focus:border-gray-300 transition duration-150 ease-in-out"
+                                    className={navClass(partnerFeaturesLocked)}
+                                    title={partnerFeaturesLocked ? lockedTooltip : undefined}
                                 >
-                                    Gallery
+                                    <span className="flex items-center gap-1">
+                                        {partnerFeaturesLocked && (
+                                            <Lock className="h-3 w-3 text-gray-400" aria-hidden="true" />
+                                        )}
+                                        Gallery
+                                    </span>
+                                </Link>
+                                <Link
+                                    href={spotifyHref}
+                                    className={navClass(partnerFeaturesLocked)}
+                                    title={partnerFeaturesLocked ? lockedTooltip : undefined}
+                                >
+                                    <span className="flex items-center gap-1">
+                                        {partnerFeaturesLocked && (
+                                            <Lock className="h-3 w-3 text-gray-400" aria-hidden="true" />
+                                        )}
+                                        Spotify Kit
+                                    </span>
                                 </Link>
                             </div>
                         </div>
@@ -231,20 +285,54 @@ export default function Authenticated({
                         <ResponsiveNavLink
                             href={timelineHref}
                             active={route().current("timeline.index")}
+                            className={partnerFeaturesLocked ? "opacity-40 pointer-events-none" : ""}
+                            title={partnerFeaturesLocked ? lockedTooltip : undefined}
                         >
-                            Timeline
+                            <span className="flex items-center gap-2">
+                                {partnerFeaturesLocked && (
+                                    <Lock className="h-4 w-4 text-gray-400" aria-hidden="true" />
+                                )}
+                                Timeline
+                            </span>
                         </ResponsiveNavLink>
                         <ResponsiveNavLink
                             href={dailyHref}
                             active={route().current("daily.index")}
+                            className={partnerFeaturesLocked ? "opacity-40 pointer-events-none" : ""}
+                            title={partnerFeaturesLocked ? lockedTooltip : undefined}
                         >
-                            Daily Message
+                            <span className="flex items-center gap-2">
+                                {partnerFeaturesLocked && (
+                                    <Lock className="h-4 w-4 text-gray-400" aria-hidden="true" />
+                                )}
+                                Daily Message
+                            </span>
                         </ResponsiveNavLink>
                         <ResponsiveNavLink
                             href={galleryHref}
                             active={route().current("gallery.index")}
+                            className={partnerFeaturesLocked ? "opacity-40 pointer-events-none" : ""}
+                            title={partnerFeaturesLocked ? lockedTooltip : undefined}
                         >
-                            Gallery
+                            <span className="flex items-center gap-2">
+                                {partnerFeaturesLocked && (
+                                    <Lock className="h-4 w-4 text-gray-400" aria-hidden="true" />
+                                )}
+                                Gallery
+                            </span>
+                        </ResponsiveNavLink>
+                        <ResponsiveNavLink
+                            href={spotifyHref}
+                            active={route().current("spotify.companion")}
+                            className={partnerFeaturesLocked ? "opacity-40 pointer-events-none" : ""}
+                            title={partnerFeaturesLocked ? lockedTooltip : undefined}
+                        >
+                            <span className="flex items-center gap-2">
+                                {partnerFeaturesLocked && (
+                                    <Lock className="h-4 w-4 text-gray-400" aria-hidden="true" />
+                                )}
+                                Spotify Kit
+                            </span>
                         </ResponsiveNavLink>
                     </div>
 

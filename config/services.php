@@ -35,4 +35,12 @@ return [
         ],
     ],
 
+    'spotify' => [
+        'client_id' => env('SPOTIFY_CLIENT_ID'),
+        'client_secret' => env('SPOTIFY_CLIENT_SECRET'),
+        'redirect_uri' => env('SPOTIFY_REDIRECT_URI'),
+        'scopes' => env('SPOTIFY_SCOPES', ''),
+        'refresh_margin' => (int) env('SPOTIFY_REFRESH_MARGIN', 300),
+    ],
+
 ];

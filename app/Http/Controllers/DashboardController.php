@@ -67,6 +67,8 @@ class DashboardController extends Controller
                 'id' => $space->id,
                 'slug' => $space->slug,
                 'title' => $space->title,
+                'has_partner' => $space->user_two_id !== null,
+                'is_owner' => $space->user_one_id === Auth::id(),
             ],
         ]);
     }

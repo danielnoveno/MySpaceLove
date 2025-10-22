@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use App\Models\SpaceInvitation;
+use App\Models\SpaceSeparationRequest;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
@@ -22,6 +24,26 @@ class Space extends Model
     public function getRouteKeyName(): string
     {
         return 'slug';
+    }
+
+    public function invitations()
+    {
+        return $this->hasMany(SpaceInvitation::class);
+    }
+
+    public function pendingInvitation()
+    {
+        return $this->hasOne(SpaceInvitation::class)->where('status', 'pending');
+    }
+
+    public function separationRequests()
+    {
+        return $this->hasMany(SpaceSeparationRequest::class);
+    }
+
+    public function pendingSeparationRequest()
+    {
+        return $this->hasOne(SpaceSeparationRequest::class)->where('status', SpaceSeparationRequest::STATUS_PENDING);
     }
 
     public function userOne()
