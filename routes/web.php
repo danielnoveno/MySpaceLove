@@ -31,7 +31,7 @@ Route::get('/', function () {
 });
 
 Route::get('/about', function () {
-    return Inertia::render('About.jsx');
+    return Inertia::render('About');
 })->name('about');
 
 Route::get('/location/{space:slug}', [LocationController::class, 'publicView'])->name('location.public');

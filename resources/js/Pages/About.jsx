@@ -1,5 +1,4 @@
 import React from "react";
-import GuestLayout from "@/Layouts/GuestLayout";
 import { Head } from "@inertiajs/react";
 
 const features = [
@@ -27,17 +26,17 @@ const features = [
 
 export default function About() {
     return (
-        <GuestLayout>
+        <>
             <Head title="About LoveSpace" />
             <div className="min-h-screen bg-gradient-to-b from-rose-100 via-white to-rose-50 dark:from-gray-950 dark:via-gray-900 dark:to-gray-950">
                 <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
-                    <div className="bg-white/90 dark:bg-gray-900/70 backdrop-blur border border-rose-100/60 dark:border-gray-700 rounded-3xl shadow-xl overflow-hidden">
+                    <div className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm border border-rose-100/60 dark:border-gray-700 rounded-3xl shadow-xl overflow-hidden">
                         <div className="grid grid-cols-1 lg:grid-cols-5">
                             <div className="lg:col-span-3 p-8 sm:p-12 space-y-6">
                                 <p className="inline-flex items-center rounded-full bg-rose-100 dark:bg-rose-500/10 text-rose-500 dark:text-rose-300 px-4 py-1 text-sm font-semibold tracking-wide uppercase">
                                     Kisah di Balik LoveSpace
                                 </p>
-                                <h1 className="text-3xl sm:text-4xl font-extrabold text-gray-900 dark:text-white leading-tight">
+                                <h1 className="text-3xl sm:text-4xl font-extrabold text-rose-600 dark:text-rose-400 leading-tight drop-shadow-sm">
                                     Hadiah dari rindu, ruang untuk menumbuhkan cinta
                                 </h1>
                                 <p className="text-gray-700 dark:text-gray-300 leading-relaxed">
@@ -90,7 +89,6 @@ export default function About() {
                     </div>
                 </div>
             </div>
-        </GuestLayout>
+        </>
     );
 }
-
