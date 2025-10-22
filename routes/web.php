@@ -36,27 +36,73 @@ Route::get('/about', function () {
 
 Route::get('/location/{space:slug}', [LocationController::class, 'publicView'])->name('location.public');
 Route::get('/surprise/story', function () {
-    return Inertia::render('Surprise/StoryBook');
+    $storyBase = __('surprise.story_book');
+    $defaultSpaceTitle = data_get($storyBase, 'defaults.spaceTitle', 'My Favorite Person');
+
+    $storyContent = __('surprise.story_book', [
+        'spaceTitle' => $defaultSpaceTitle,
+    ]);
+
+    unset($storyContent['defaults']);
+
+    return Inertia::render('Surprise/StoryBook', [
+        'storyBook' => $storyContent,
+    ]);
 })->name('surprise.story');
 Route::get('/surprise/memory', function () {
-    return Inertia::render('Surprise/MemoryLanePublic');
+    $memoryBase = __('surprise.memory_lane');
+    $defaultSpaceTitle = data_get($memoryBase, 'defaults.spaceTitle', 'kita');
+    $grid = data_get($memoryBase, 'puzzle.grid', ['rows' => 4, 'cols' => 4]);
+
+    $memoryContent = __('surprise.memory_lane', [
+        'spaceTitle' => $defaultSpaceTitle,
+        'rows' => $grid['rows'] ?? 4,
+        'cols' => $grid['cols'] ?? 4,
+    ]);
+
+    $memoryContent['puzzle']['grid'] = $grid;
+    unset($memoryContent['defaults']);
+
+    return Inertia::render('Surprise/MemoryLanePublic', [
+        'memoryLane' => $memoryContent,
+    ]);
 })->name('surprise.memory');
 Route::get('/surprise/{space:slug}/story', function (\App\Models\Space $space) {
+    $storyBase = __('surprise.story_book');
+    $storyContent = __('surprise.story_book', [
+        'spaceTitle' => $space->title ?? data_get($storyBase, 'defaults.spaceTitle', 'My Favorite Person'),
+    ]);
+
+    unset($storyContent['defaults']);
+
     return Inertia::render('Surprise/StoryBook', [
         'space' => [
             'id' => $space->id,
             'slug' => $space->slug,
             'title' => $space->title,
         ],
+        'storyBook' => $storyContent,
     ]);
 })->name('surprise.story.space');
 Route::get('/surprise/{space:slug}/memory', function (\App\Models\Space $space) {
+    $memoryBase = __('surprise.memory_lane');
+    $grid = data_get($memoryBase, 'puzzle.grid', ['rows' => 4, 'cols' => 4]);
+    $memoryContent = __('surprise.memory_lane', [
+        'spaceTitle' => $space->title ?? data_get($memoryBase, 'defaults.spaceTitle', 'kita'),
+        'rows' => $grid['rows'] ?? 4,
+        'cols' => $grid['cols'] ?? 4,
+    ]);
+
+    $memoryContent['puzzle']['grid'] = $grid;
+    unset($memoryContent['defaults']);
+
     return Inertia::render('Surprise/MemoryLanePublic', [
         'space' => [
             'id' => $space->id,
             'slug' => $space->slug,
             'title' => $space->title,
         ],
+        'memoryLane' => $memoryContent,
     ]);
 })->name('surprise.memory.space');
 

@@ -135,6 +135,7 @@ class HandleInertiaRequests extends Middleware
             ],
             'spaces' => $spaces,
             'currentSpace' => $currentSpace,
+            'locale' => app()->getLocale(),
         ];
     }
 }
