@@ -1,3 +1,4 @@
+import Modal from "@/Components/Modal";
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout";
 import { Head } from "@inertiajs/react";
 import axios from "axios";
@@ -12,7 +13,7 @@ import {
     Sparkles,
     Users,
 } from "lucide-react";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { FormEvent, useCallback, useEffect, useMemo, useState } from "react";
 
 type SpaceInfo = {
     id: number;
@@ -74,6 +75,10 @@ type ListeningSnapshot = {
     started_at?: string;
     listeners?: number;
     joinable: boolean;
+    track_id?: string | null;
+    track_uri?: string | null;
+    progress_ms?: number | null;
+    external_url?: string | null;
 };
 
 type MemoryCapsule = {
@@ -99,6 +104,54 @@ type SpotifyDashboardResponse = {
 type Props = {
     space: SpaceInfo;
 };
+
+type ActionMessage = {
+    type: "success" | "error";
+    message: string;
+};
+
+type SurpriseFormState = {
+    trackInput: string;
+    scheduledFor: string;
+    note: string;
+};
+
+type CapsuleFormState = {
+    trackInput: string;
+    moment: string;
+    description: string;
+    savedAt: string;
+};
+
+function extractSpotifyTrackId(input: string): string | null {
+    const value = input.trim();
+    if (!value) {
+        return null;
+    }
+
+    if (value.startsWith("spotify:track:")) {
+        return value.split(":").pop() ?? null;
+    }
+
+    try {
+        const url = new URL(value);
+        if (url.hostname.includes("spotify.com")) {
+            const parts = url.pathname.split("/").filter(Boolean);
+            const trackIndex = parts.findIndex((segment) => segment === "track");
+            if (trackIndex !== -1 && parts[trackIndex + 1]) {
+                return parts[trackIndex + 1];
+            }
+        }
+    } catch (error) {
+        // Not a valid URL, fall back to simple matching below.
+    }
+
+    if (/^[a-zA-Z0-9]{10,}$/.test(value)) {
+        return value;
+    }
+
+    return null;
+}
 function formatEnergy(energy: number | undefined | null): string {
     if (typeof energy !== "number" || Number.isNaN(energy)) {
         return "0%";
@@ -139,6 +192,25 @@ export default function LongDistanceSpotifyHub({ space }: Props) {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [selectedMoodId, setSelectedMoodId] = useState<string | null>(null);
+    const [actionMessage, setActionMessage] = useState<ActionMessage | null>(null);
+    const [surpriseModalOpen, setSurpriseModalOpen] = useState(false);
+    const [capsuleModalOpen, setCapsuleModalOpen] = useState(false);
+    const [surpriseForm, setSurpriseForm] = useState<SurpriseFormState>({
+        trackInput: "",
+        scheduledFor: "",
+        note: "",
+    });
+    const [capsuleForm, setCapsuleForm] = useState<CapsuleFormState>({
+        trackInput: "",
+        moment: "",
+        description: "",
+        savedAt: "",
+    });
+    const [surpriseSubmitting, setSurpriseSubmitting] = useState(false);
+    const [capsuleSubmitting, setCapsuleSubmitting] = useState(false);
+    const [surpriseError, setSurpriseError] = useState<string | null>(null);
+    const [capsuleError, setCapsuleError] = useState<string | null>(null);
+    const [joiningPlayback, setJoiningPlayback] = useState(false);
 
     const authorizeHref = route("spotify.authorize", {
         space: space.slug,
@@ -186,6 +258,138 @@ export default function LongDistanceSpotifyHub({ space }: Props) {
         }
     }, [space.slug]);
 
+    const handleSurpriseSubmit = async (event: FormEvent<HTMLFormElement>) => {
+        event.preventDefault();
+        if (surpriseSubmitting) {
+            return;
+        }
+
+        setSurpriseError(null);
+
+        const trackId = extractSpotifyTrackId(surpriseForm.trackInput);
+        if (!trackId) {
+            setSurpriseError("Masukkan tautan atau ID lagu Spotify yang valid.");
+            return;
+        }
+
+        setSurpriseSubmitting(true);
+
+        try {
+            const response = await axios.post<SurpriseDrop>(
+                route("spotify.surprises.store", { space: space.slug }),
+                {
+                    spotify_track_id: trackId,
+                    scheduled_for: surpriseForm.scheduledFor,
+                    note: surpriseForm.note || null,
+                },
+            );
+
+            const drop = response.data;
+
+            setDashboard((prev) => {
+                if (!prev) {
+                    return prev;
+                }
+
+                const drops = [...(prev.surpriseDrops ?? []), drop].sort((a, b) => {
+                    const aTime = a.scheduled_for ? new Date(a.scheduled_for).getTime() : Number.MAX_SAFE_INTEGER;
+                    const bTime = b.scheduled_for ? new Date(b.scheduled_for).getTime() : Number.MAX_SAFE_INTEGER;
+                    return aTime - bTime;
+                });
+
+                return {
+                    ...prev,
+                    surpriseDrops: drops,
+                };
+            });
+
+            setSurpriseForm({ trackInput: "", scheduledFor: "", note: "" });
+            setSurpriseModalOpen(false);
+            setActionMessage({
+                type: "success",
+                message: "Lagu kejutan berhasil dijadwalkan!",
+            });
+        } catch (err) {
+            if (axios.isAxiosError(err)) {
+                const message = (err.response?.data as { message?: string })?.message;
+                setSurpriseError(message ?? "Gagal menjadwalkan lagu kejutan. Coba lagi.");
+            } else if (err instanceof Error) {
+                setSurpriseError(err.message);
+            } else {
+                setSurpriseError("Gagal menjadwalkan lagu kejutan. Coba lagi.");
+            }
+        } finally {
+            setSurpriseSubmitting(false);
+        }
+    };
+
+    const handleCapsuleSubmit = async (event: FormEvent<HTMLFormElement>) => {
+        event.preventDefault();
+        if (capsuleSubmitting) {
+            return;
+        }
+
+        setCapsuleError(null);
+
+        const trackId = extractSpotifyTrackId(capsuleForm.trackInput);
+        if (!trackId) {
+            setCapsuleError("Masukkan tautan atau ID lagu Spotify yang valid.");
+            return;
+        }
+
+        setCapsuleSubmitting(true);
+
+        try {
+            const response = await axios.post<MemoryCapsule>(
+                route("spotify.capsules.store", { space: space.slug }),
+                {
+                    spotify_track_id: trackId,
+                    moment: capsuleForm.moment || null,
+                    description: capsuleForm.description || null,
+                    saved_at: capsuleForm.savedAt || null,
+                },
+            );
+
+            const capsule = response.data;
+
+            setDashboard((prev) => {
+                if (!prev) {
+                    return prev;
+                }
+
+                const capsules = [...(prev.memoryCapsules ?? []), capsule].sort((a, b) => {
+                    const aTime = a.saved_at ? new Date(a.saved_at).getTime() : 0;
+                    const bTime = b.saved_at ? new Date(b.saved_at).getTime() : 0;
+
+                    return bTime - aTime;
+                });
+
+                return {
+                    ...prev,
+                    memoryCapsules: capsules,
+                };
+            });
+
+            setCapsuleForm({ trackInput: "", moment: "", description: "", savedAt: "" });
+            setCapsuleModalOpen(false);
+            setActionMessage({
+                type: "success",
+                message: "Kapsul memori berhasil disimpan!",
+            });
+        } catch (err) {
+            if (axios.isAxiosError(err)) {
+                const message = (err.response?.data as { message?: string })?.message;
+                setCapsuleError(message ?? "Gagal menyimpan kapsul memori. Coba lagi.");
+            } else if (err instanceof Error) {
+                setCapsuleError(err.message);
+            } else {
+                setCapsuleError("Gagal menyimpan kapsul memori. Coba lagi.");
+            }
+        } finally {
+            setCapsuleSubmitting(false);
+        }
+    };
+
     useEffect(() => {
         void fetchDashboard();
     }, [fetchDashboard]);
@@ -210,6 +414,79 @@ export default function LongDistanceSpotifyHub({ space }: Props) {
 
     const isConnected = dashboard?.connected ?? false;
 
+    const handleJoinPlayback = useCallback(async () => {
+        if (!isConnected) {
+            handleAuthorize();
+            return;
+        }
+
+        if (!listening?.joinable || !listening.track_id) {
+            setActionMessage({
+                type: "error",
+                message: "Tidak ada sesi playback yang bisa diikuti saat ini.",
+            });
+            return;
+        }
+
+        setJoiningPlayback(true);
+        setActionMessage(null);
+
+        try {
+            await axios.post(
+                route("spotify.playback.join", { space: space.slug }),
+                {
+                    track_id: listening.track_id,
+                    position_ms: listening.progress_ms ?? 0,
+                },
+            );
+
+            setActionMessage({
+                type: "success",
+                message: "Playback kamu sudah sinkron dengan sesi live.",
+            });
+        } catch (err) {
+            if (axios.isAxiosError(err)) {
+                const message = (err.response?.data as { message?: string })?.message;
+                setActionMessage({
+                    type: "error",
+                    message: message ?? "Gagal gabung playback. Pastikan Spotify-mu sedang aktif.",
+                });
+            } else if (err instanceof Error) {
+                setActionMessage({
+                    type: "error",
+                    message: err.message,
+                });
+            } else {
+                setActionMessage({
+                    type: "error",
+                    message: "Gagal gabung playback. Coba ulang sebentar lagi.",
+                });
+            }
+        } finally {
+            setJoiningPlayback(false);
+        }
+    }, [handleAuthorize, isConnected, listening, space.slug]);
+
+    const openSurpriseModal = useCallback(() => {
+        if (!isConnected) {
+            handleAuthorize();
+            return;
+        }
+
+        setSurpriseError(null);
+        setSurpriseModalOpen(true);
+    }, [handleAuthorize, isConnected]);
+
+    const openCapsuleModal = useCallback(() => {
+        if (!isConnected) {
+            handleAuthorize();
+            return;
+        }
+
+        setCapsuleError(null);
+        setCapsuleModalOpen(true);
+    }, [handleAuthorize, isConnected]);
+
     return (
         <AuthenticatedLayout
             header={
@@ -224,6 +501,18 @@ export default function LongDistanceSpotifyHub({ space }: Props) {
             <Head title="Spotify Companion Kit" />
 
             <div className="mx-auto flex w-full max-w-6xl flex-col gap-10 px-4 sm:px-6">
+                {actionMessage && (
+                    <div
+                        className={`rounded-3xl border p-4 text-sm ${
+                            actionMessage.type === "success"
+                                ? "border-emerald-200 bg-emerald-50 text-emerald-700"
+                                : "border-rose-200 bg-rose-50 text-rose-700"
+                        }`}
+                    >
+                        {actionMessage.message}
+                    </div>
+                )}
+
                 {!isConnected && !loading && (
                     <section className="rounded-3xl border border-purple-200 bg-white p-6 shadow-sm">
                         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
@@ -502,12 +791,17 @@ export default function LongDistanceSpotifyHub({ space }: Props) {
                                 </p>
                                 <button
                                     type="button"
-                                    onClick={handleAuthorize}
+                                    onClick={openSurpriseModal}
                                     className="inline-flex items-center justify-center gap-2 rounded-full bg-rose-500 px-5 py-2 text-sm font-semibold text-white shadow transition hover:bg-rose-600 focus:outline-none focus-visible:ring-2 focus-visible:ring-rose-300 focus-visible:ring-offset-2 focus-visible:ring-offset-rose-50"
                                 >
                                     <Sparkles className="h-4 w-4" />
-                                    Re-authorize Spotify
+                                    Jadwalkan lagu kejutan
                                 </button>
+                                {!isConnected && (
+                                    <p className="text-xs text-rose-400">
+                                        Sambungkan Spotify dulu supaya bisa menjadwalkan lagu otomatis.
+                                    </p>
+                                )}
                             </div>
                         </section>
                         <section className="grid gap-5 rounded-3xl border border-emerald-200 bg-emerald-50 p-6 shadow-sm md:grid-cols-[0.95fr_1.05fr]">
@@ -542,10 +836,12 @@ export default function LongDistanceSpotifyHub({ space }: Props) {
                                             </div>
                                             <button
                                                 type="button"
-                                                className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-full bg-emerald-500 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-emerald-600 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300 focus-visible:ring-offset-2 focus-visible:ring-offset-emerald-50"
+                                                onClick={() => void handleJoinPlayback()}
+                                                disabled={joiningPlayback}
+                                                className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-full bg-emerald-500 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-emerald-600 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300 focus-visible:ring-offset-2 focus-visible:ring-offset-emerald-50 disabled:cursor-not-allowed disabled:bg-emerald-400/70"
                                             >
                                                 <Play className="h-4 w-4" />
-                                                Gabung playback
+                                                {joiningPlayback ? "Menyambungkan..." : "Gabung playback"}
                                             </button>
                                         </>
                                     ) : (
@@ -629,11 +925,36 @@ export default function LongDistanceSpotifyHub({ space }: Props) {
                             </div>
 
                             <div className="grid gap-4 rounded-2xl bg-white p-5 shadow-sm">
+                                <div className="rounded-2xl border border-amber-100 bg-amber-50 p-4 text-sm text-amber-700">
+                                    <p className="text-base font-semibold text-amber-900">Simpan momen baru</p>
+                                    <p className="mt-1">
+                                        Tandai highlight lagu dan tuliskan kenangannya supaya mudah diputar lagi kapan pun.
+                                    </p>
+                                    <button
+                                        type="button"
+                                        onClick={openCapsuleModal}
+                                        className="mt-4 inline-flex items-center justify-center gap-2 rounded-full bg-amber-500 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-amber-600 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-300 focus-visible:ring-offset-2 focus-visible:ring-offset-amber-50"
+                                    >
+                                        <Sparkles className="h-4 w-4" />
+                                        Simpan kapsul memori
+                                    </button>
+                                    {!isConnected && (
+                                        <p className="mt-2 text-xs text-amber-500">
+                                            Hubungkan Spotify terlebih dahulu untuk menyimpan kapsul langsung dari lagu pilihanmu.
+                                        </p>
+                                    )}
+                                </div>
                                 <div>
                                     <p className="text-xs uppercase tracking-[0.28em] text-amber-400">Integrasi berikutnya</p>
                                     <ul className="mt-2 space-y-2 text-sm text-amber-700">
-                                        <li>- Tambah kapsul lewat `POST /spaces/{slug}/spotify/capsules`.</li>
-                                        <li>- Jadwalkan kejutan via `POST /spaces/{slug}/spotify/surprises`.</li>
+                                        <li>
+                                            - Tambah kapsul lewat{' '}
+                                            <code>{`POST /spaces/${space.slug}/spotify/capsules`}</code>.
+                                        </li>
+                                        <li>
+                                            - Jadwalkan kejutan via{' '}
+                                            <code>{`POST /spaces/${space.slug}/spotify/surprises`}</code>.
+                                        </li>
                                         <li>- Otomatiskan reminder tahunan dari data kapsul.</li>
                                     </ul>
                                 </div>
@@ -645,6 +966,208 @@ export default function LongDistanceSpotifyHub({ space }: Props) {
                     </>
                 )}
             </div>
+
+            <Modal
+                show={surpriseModalOpen}
+                onClose={() => {
+                    setSurpriseModalOpen(false);
+                    setSurpriseError(null);
+                }}
+                maxWidth="lg"
+            >
+                <form onSubmit={handleSurpriseSubmit} className="space-y-5 p-6">
+                    <div>
+                        <h3 className="text-lg font-semibold text-rose-900">Tambah Surprise Song Drop</h3>
+                        <p className="mt-1 text-sm text-rose-600">
+                            Tempel tautan lagu Spotify, pilih jadwal pemutaran, dan tambahkan pesan manis untuk pasanganmu.
+                        </p>
+                    </div>
+                    {surpriseError && <p className="rounded-md bg-rose-50 p-3 text-sm text-rose-600">{surpriseError}</p>}
+                    <div className="space-y-2">
+                        <label htmlFor="surprise-track" className="text-sm font-medium text-rose-900">
+                            Lagu Spotify
+                        </label>
+                        <input
+                            id="surprise-track"
+                            type="text"
+                            required
+                            value={surpriseForm.trackInput}
+                            onChange={(event) =>
+                                setSurpriseForm((prev) => ({
+                                    ...prev,
+                                    trackInput: event.target.value,
+                                }))
+                            }
+                            placeholder="https://open.spotify.com/track/..."
+                            className="w-full rounded-lg border border-rose-200 px-3 py-2 text-sm text-rose-900 focus:border-rose-400 focus:outline-none focus:ring-2 focus:ring-rose-200"
+                        />
+                    </div>
+                    <div className="space-y-2">
+                        <label htmlFor="surprise-schedule" className="text-sm font-medium text-rose-900">
+                            Jadwalkan untuk
+                        </label>
+                        <input
+                            id="surprise-schedule"
+                            type="datetime-local"
+                            required
+                            value={surpriseForm.scheduledFor}
+                            onChange={(event) =>
+                                setSurpriseForm((prev) => ({
+                                    ...prev,
+                                    scheduledFor: event.target.value,
+                                }))
+                            }
+                            className="w-full rounded-lg border border-rose-200 px-3 py-2 text-sm text-rose-900 focus:border-rose-400 focus:outline-none focus:ring-2 focus:ring-rose-200"
+                        />
+                    </div>
+                    <div className="space-y-2">
+                        <label htmlFor="surprise-note" className="text-sm font-medium text-rose-900">
+                            Catatan kejutan (opsional)
+                        </label>
+                        <textarea
+                            id="surprise-note"
+                            rows={3}
+                            value={surpriseForm.note}
+                            onChange={(event) =>
+                                setSurpriseForm((prev) => ({
+                                    ...prev,
+                                    note: event.target.value,
+                                }))
+                            }
+                            className="w-full rounded-lg border border-rose-200 px-3 py-2 text-sm text-rose-900 focus:border-rose-400 focus:outline-none focus:ring-2 focus:ring-rose-200"
+                        />
+                    </div>
+                    <div className="flex items-center justify-end gap-3">
+                        <button
+                            type="button"
+                            onClick={() => {
+                                setSurpriseModalOpen(false);
+                                setSurpriseError(null);
+                            }}
+                            className="rounded-full border border-rose-200 px-4 py-2 text-sm font-semibold text-rose-600 hover:border-rose-300"
+                        >
+                            Batal
+                        </button>
+                        <button
+                            type="submit"
+                            disabled={surpriseSubmitting}
+                            className="inline-flex items-center justify-center gap-2 rounded-full bg-rose-500 px-5 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-rose-600 focus:outline-none focus-visible:ring-2 focus-visible:ring-rose-300 focus-visible:ring-offset-2 focus-visible:ring-offset-white disabled:cursor-not-allowed disabled:bg-rose-400/70"
+                        >
+                            {surpriseSubmitting ? "Menyimpan..." : "Jadwalkan"}
+                        </button>
+                    </div>
+                </form>
+            </Modal>
+
+            <Modal
+                show={capsuleModalOpen}
+                onClose={() => {
+                    setCapsuleModalOpen(false);
+                    setCapsuleError(null);
+                }}
+                maxWidth="lg"
+            >
+                <form onSubmit={handleCapsuleSubmit} className="space-y-5 p-6">
+                    <div>
+                        <h3 className="text-lg font-semibold text-amber-900">Buat Memory Capsule</h3>
+                        <p className="mt-1 text-sm text-amber-600">
+                            Simpan cerita singkat tentang lagu yang berarti untuk kalian. Kami ambil preview 30 detik otomatis jika tersedia.
+                        </p>
+                    </div>
+                    {capsuleError && <p className="rounded-md bg-amber-50 p-3 text-sm text-amber-700">{capsuleError}</p>}
+                    <div className="space-y-2">
+                        <label htmlFor="capsule-track" className="text-sm font-medium text-amber-900">
+                            Lagu Spotify
+                        </label>
+                        <input
+                            id="capsule-track"
+                            type="text"
+                            required
+                            value={capsuleForm.trackInput}
+                            onChange={(event) =>
+                                setCapsuleForm((prev) => ({
+                                    ...prev,
+                                    trackInput: event.target.value,
+                                }))
+                            }
+                            placeholder="https://open.spotify.com/track/..."
+                            className="w-full rounded-lg border border-amber-200 px-3 py-2 text-sm text-amber-900 focus:border-amber-400 focus:outline-none focus:ring-2 focus:ring-amber-200"
+                        />
+                    </div>
+                    <div className="space-y-2">
+                        <label htmlFor="capsule-moment" className="text-sm font-medium text-amber-900">
+                            Judul momen (opsional)
+                        </label>
+                        <input
+                            id="capsule-moment"
+                            type="text"
+                            value={capsuleForm.moment}
+                            onChange={(event) =>
+                                setCapsuleForm((prev) => ({
+                                    ...prev,
+                                    moment: event.target.value,
+                                }))
+                            }
+                            placeholder="Contoh: Anniversary pertama"
+                            className="w-full rounded-lg border border-amber-200 px-3 py-2 text-sm text-amber-900 focus:border-amber-400 focus:outline-none focus:ring-2 focus:ring-amber-200"
+                        />
+                    </div>
+                    <div className="space-y-2">
+                        <label htmlFor="capsule-description" className="text-sm font-medium text-amber-900">
+                            Cerita singkat (opsional)
+                        </label>
+                        <textarea
+                            id="capsule-description"
+                            rows={4}
+                            value={capsuleForm.description}
+                            onChange={(event) =>
+                                setCapsuleForm((prev) => ({
+                                    ...prev,
+                                    description: event.target.value,
+                                }))
+                            }
+                            placeholder="Tulis kenapa lagu ini spesial..."
+                            className="w-full rounded-lg border border-amber-200 px-3 py-2 text-sm text-amber-900 focus:border-amber-400 focus:outline-none focus:ring-2 focus:ring-amber-200"
+                        />
+                    </div>
+                    <div className="space-y-2">
+                        <label htmlFor="capsule-date" className="text-sm font-medium text-amber-900">
+                            Tanggal momen (opsional)
+                        </label>
+                        <input
+                            id="capsule-date"
+                            type="date"
+                            value={capsuleForm.savedAt}
+                            onChange={(event) =>
+                                setCapsuleForm((prev) => ({
+                                    ...prev,
+                                    savedAt: event.target.value,
+                                }))
+                            }
+                            className="w-full rounded-lg border border-amber-200 px-3 py-2 text-sm text-amber-900 focus:border-amber-400 focus:outline-none focus:ring-2 focus:ring-amber-200"
+                        />
+                    </div>
+                    <div className="flex items-center justify-end gap-3">
+                        <button
+                            type="button"
+                            onClick={() => {
+                                setCapsuleModalOpen(false);
+                                setCapsuleError(null);
+                            }}
+                            className="rounded-full border border-amber-200 px-4 py-2 text-sm font-semibold text-amber-600 hover:border-amber-300"
+                        >
+                            Batal
+                        </button>
+                        <button
+                            type="submit"
+                            disabled={capsuleSubmitting}
+                            className="inline-flex items-center justify-center gap-2 rounded-full bg-amber-500 px-5 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-amber-600 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-300 focus-visible:ring-offset-2 focus-visible:ring-offset-white disabled:cursor-not-allowed disabled:bg-amber-400/70"
+                        >
+                            {capsuleSubmitting ? "Menyimpan..." : "Simpan"}
+                        </button>
+                    </div>
+                </form>
+            </Modal>
         </AuthenticatedLayout>
     );
 }
