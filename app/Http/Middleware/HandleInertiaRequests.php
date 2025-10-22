@@ -4,6 +4,7 @@ namespace App\Http\Middleware;
 
 use App\Models\Space;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Lang;
 use Illuminate\Support\Facades\Schema;
 use Inertia\Middleware;
 
@@ -136,6 +137,7 @@ class HandleInertiaRequests extends Middleware
             'spaces' => $spaces,
             'currentSpace' => $currentSpace,
             'locale' => app()->getLocale(),
+            'translations' => Lang::get('app'),
         ];
     }
 }

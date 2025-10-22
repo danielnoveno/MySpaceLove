@@ -4,6 +4,7 @@ import ApplicationLogo from "@/Components/ApplicationLogo";
 import Dropdown from "@/Components/Dropdown";
 import ResponsiveNavLink from "@/Components/ResponsiveNavLink";
 import { Lock } from "lucide-react";
+import { useTranslation } from "@/hooks/useTranslation";
 
 export default function Authenticated({
     header,
@@ -32,6 +33,15 @@ export default function Authenticated({
             | null
             | undefined) ?? null;
 
+    const { translations: layoutTranslations } =
+        useTranslation<{
+            navigation?: Record<string, string>;
+            user?: { fallback_name?: string };
+        }>("layout");
+
+    const navigation = layoutTranslations.navigation ?? {};
+    const userStrings = layoutTranslations.user ?? {};
+
     const fallbackHref = route("spaces.index");
 
     const dashboardHref = currentSpace
@@ -51,7 +61,9 @@ export default function Authenticated({
         : fallbackHref;
     const partnerFeaturesLocked =
         currentSpace !== null && currentSpace.has_partner === false;
-    const lockedTooltip = "Fitur couple akan aktif setelah pasanganmu bergabung.";
+    const lockedTooltip =
+        navigation.locked_tooltip ??
+        "Fitur couple akan aktif setelah pasanganmu bergabung.";
 
     const navClass = (locked: boolean) =>
         `inline-flex items-center px-1 pt-1 border-b-2 border-transparent text-sm font-medium leading-5 transition duration-150 ease-in-out ${
@@ -77,7 +89,7 @@ export default function Authenticated({
                                     href={dashboardHref}
                                     className="inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium leading-5 text-gray-900 focus:outline-none focus:border-pink-700 transition duration-150 ease-in-out"
                                 >
-                                    Dashboard
+                                    {navigation.dashboard ?? "Dashboard"}
                                 </Link>
                                 <Link
                                     href={timelineHref}
@@ -88,7 +100,7 @@ export default function Authenticated({
                                         {partnerFeaturesLocked && (
                                             <Lock className="h-3 w-3 text-gray-400" aria-hidden="true" />
                                         )}
-                                        Timeline
+                                        {navigation.timeline ?? "Timeline"}
                                     </span>
                                 </Link>
                                 <Link
@@ -100,7 +112,7 @@ export default function Authenticated({
                                         {partnerFeaturesLocked && (
                                             <Lock className="h-3 w-3 text-gray-400" aria-hidden="true" />
                                         )}
-                                        Daily Message
+                                        {navigation.daily_messages ?? "Daily Message"}
                                     </span>
                                 </Link>
                                 <Link
@@ -112,7 +124,7 @@ export default function Authenticated({
                                         {partnerFeaturesLocked && (
                                             <Lock className="h-3 w-3 text-gray-400" aria-hidden="true" />
                                         )}
-                                        Gallery
+                                        {navigation.gallery ?? "Gallery"}
                                     </span>
                                 </Link>
                                 <Link
@@ -124,7 +136,7 @@ export default function Authenticated({
                                         {partnerFeaturesLocked && (
                                             <Lock className="h-3 w-3 text-gray-400" aria-hidden="true" />
                                         )}
-                                        Spotify Kit
+                                        {navigation.spotify ?? "Spotify Kit"}
                                     </span>
                                 </Link>
                             </div>
@@ -142,7 +154,7 @@ export default function Authenticated({
                                                 >
                                                     {currentSpace
                                                         ? currentSpace.title
-                                                        : "Pilih Space"}
+                                                        : navigation.choose_space ?? "Pilih Space"}
                                                     <svg
                                                         className="ml-2 -mr-0.5 h-4 w-4"
                                                         xmlns="http://www.w3.org/2000/svg"
@@ -174,7 +186,7 @@ export default function Authenticated({
                                             <Dropdown.Link
                                                 href={route("spaces.index")}
                                             >
-                                                + Kelola Spaces
+                                                + {navigation.manage_spaces ?? "Kelola Spaces"}
                                             </Dropdown.Link>
                                         </Dropdown.Content>
                                     </Dropdown>
@@ -190,6 +202,7 @@ export default function Authenticated({
                                             >
                                                 {`${
                                                     props.auth?.user?.name ||
+                                                    userStrings.fallback_name ||
                                                     "User"
                                                 }`}
                                                 <svg
@@ -212,14 +225,14 @@ export default function Authenticated({
                                         <Dropdown.Link
                                             href={route("profile.edit")}
                                         >
-                                            Profile
+                                            {navigation.profile ?? "Profile"}
                                         </Dropdown.Link>
                                         <Dropdown.Link
                                             href={route("logout")}
                                             method="post"
                                             as="button"
                                         >
-                                            Log Out
+                                            {navigation.logout ?? "Log Out"}
                                         </Dropdown.Link>
                                     </Dropdown.Content>
                                 </Dropdown>
@@ -280,7 +293,7 @@ export default function Authenticated({
                             href={dashboardHref}
                             active={route().current("spaces.dashboard")}
                         >
-                            Dashboard
+                            {navigation.dashboard ?? "Dashboard"}
                         </ResponsiveNavLink>
                         <ResponsiveNavLink
                             href={timelineHref}
@@ -292,7 +305,7 @@ export default function Authenticated({
                                 {partnerFeaturesLocked && (
                                     <Lock className="h-4 w-4 text-gray-400" aria-hidden="true" />
                                 )}
-                                Timeline
+                                {navigation.timeline ?? "Timeline"}
                             </span>
                         </ResponsiveNavLink>
                         <ResponsiveNavLink
@@ -305,7 +318,7 @@ export default function Authenticated({
                                 {partnerFeaturesLocked && (
                                     <Lock className="h-4 w-4 text-gray-400" aria-hidden="true" />
                                 )}
-                                Daily Message
+                                {navigation.daily_messages ?? "Daily Message"}
                             </span>
                         </ResponsiveNavLink>
                         <ResponsiveNavLink
@@ -318,7 +331,7 @@ export default function Authenticated({
                                 {partnerFeaturesLocked && (
                                     <Lock className="h-4 w-4 text-gray-400" aria-hidden="true" />
                                 )}
-                                Gallery
+                                {navigation.gallery ?? "Gallery"}
                             </span>
                         </ResponsiveNavLink>
                         <ResponsiveNavLink
@@ -331,7 +344,7 @@ export default function Authenticated({
                                 {partnerFeaturesLocked && (
                                     <Lock className="h-4 w-4 text-gray-400" aria-hidden="true" />
                                 )}
-                                Spotify Kit
+                                {navigation.spotify ?? "Spotify Kit"}
                             </span>
                         </ResponsiveNavLink>
                     </div>
@@ -348,14 +361,14 @@ export default function Authenticated({
 
                         <div className="mt-3 space-y-1">
                             <ResponsiveNavLink href={route("profile.edit")}>
-                                Profile
+                                {navigation.profile ?? "Profile"}
                             </ResponsiveNavLink>
                             <ResponsiveNavLink
                                 method="post"
                                 href={route("logout")}
                                 as="button"
                             >
-                                Log Out
+                                {navigation.logout ?? "Log Out"}
                             </ResponsiveNavLink>
                         </div>
                     </div>
