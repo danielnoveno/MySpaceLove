@@ -10,25 +10,22 @@ use Illuminate\Support\Facades\Auth;
 
 class WishlistApiController extends Controller
 {
-    public function index($spaceId)
+    public function index(Space $space)
     {
-        $space = Space::findOrFail($spaceId);
         $this->authorizeSpace($space);
         return $space->wishlist()->get();
     }
 
-    public function store(Request $r, $spaceId)
+    public function store(Request $r, Space $space)
     {
-        $space = Space::findOrFail($spaceId);
         $this->authorizeSpace($space);
         $data = $r->validate(['title' => 'required|string|max:255', 'description' => 'nullable|string', 'location' => 'nullable|string', 'notes' => 'nullable|string']);
         $data['space_id'] = $space->id;
         return WishlistItem::create($data);
     }
 
-    public function update(Request $r, $spaceId, $id)
+    public function update(Request $r, Space $space, $id)
     {
-        $space = Space::findOrFail($spaceId);
         $this->authorizeSpace($space);
         $item = WishlistItem::where('space_id', $space->id)->findOrFail($id);
         $data = $r->validate(['title' => 'required|string|max:255', 'description' => 'nullable|string', 'location' => 'nullable|string', 'status' => 'nullable|in:pending,done', 'notes' => 'nullable|string']);
@@ -36,9 +33,8 @@ class WishlistApiController extends Controller
         return $item;
     }
 
-    public function destroy($spaceId, $id)
+    public function destroy(Space $space, $id)
     {
-        $space = Space::findOrFail($spaceId);
         $this->authorizeSpace($space);
         $item = WishlistItem::where('space_id', $space->id)->findOrFail($id);
         $item->delete();

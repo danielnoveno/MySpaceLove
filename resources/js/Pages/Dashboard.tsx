@@ -1,369 +1,579 @@
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout";
 import { Head, Link, usePage } from "@inertiajs/react";
-import { useState, useEffect } from "react";
+import axios from "axios";
+import { Fragment, MouseEvent, useCallback, useEffect, useMemo, useState } from "react";
 import {
-    Heart,
     Calendar,
+    Clock,
+    Gift,
+    Heart,
     Image,
     MessageSquare,
-    Clock,
-    BookOpen,
-    Gift,
     Video,
+    BookOpen,
+    Music,
+    UserPlus,
+    Lock,
+    X,
 } from "lucide-react";
 
 interface DashboardData {
     timelineCount: number;
     galleryCount: number;
-    upcomingEvents: any[];
-    recentMessages: any[];
+    upcomingEvents: Array<{
+        event_name: string;
+        days_left: number;
+    }>;
+    recentMessages: Array<{
+        message: string;
+        date: string;
+    }>;
+}
+
+interface SpaceContext {
+    id: number;
+    slug: string;
+    title: string;
+    has_partner?: boolean;
+    is_owner?: boolean;
 }
 
 interface Props {
-    auth: {
-        user: {
-            id: number;
-            name: string;
-            email: string;
-        };
-    };
     dashboardData: DashboardData;
+    spaceContext: SpaceContext;
 }
 
-export default function Dashboard({ auth, dashboardData }: Props) {
-    const [dailyMessage, setDailyMessage] = useState(null);
+export default function Dashboard({ dashboardData, spaceContext }: Props) {
+    const { props } = usePage<{
+        currentSpace?: {
+            id: number;
+            slug: string;
+            title: string;
+            has_partner?: boolean;
+            is_owner?: boolean;
+        } | null;
+    }>();
+
+    const currentSpace = props.currentSpace ?? spaceContext;
+    const spaceSlug = currentSpace.slug;
+    const spaceTitle = currentSpace.title;
+    const hasPartner =
+        (currentSpace.has_partner ?? spaceContext.has_partner) ?? false;
+    const isSpaceOwner =
+        (currentSpace.is_owner ?? spaceContext.is_owner) ?? false;
+
+    const coupleFeaturesLocked = !hasPartner;
+    const coupleLockMessage =
+        "Hubungkan pasanganmu terlebih dahulu untuk membuka fitur ini.";
+    const [dailyMessage, setDailyMessage] = useState<string | null>(null);
     const [showModal, setShowModal] = useState(false);
-    const { props } = usePage();
-    const spaceId = props.spaceId;
+    const [expandedMessages, setExpandedMessages] = useState<
+        Record<number, boolean>
+    >({});
+    const [showLockModal, setShowLockModal] = useState(false);
+
+    const handleLockedNavigation = useCallback(
+        (event: MouseEvent<Element>) => {
+            if (coupleFeaturesLocked) {
+                event.preventDefault();
+                setShowLockModal(true);
+            }
+        },
+        [coupleFeaturesLocked, setShowLockModal]
+    );
+
+    const formattedDailyMessage = useMemo(() => {
+        if (!dailyMessage) {
+            return null;
+        }
+
+        const segments = dailyMessage.split(/(\*[^*]+\*)/g);
+
+        return segments.map((segment, index) => {
+            const boldMatch = segment.match(/^\*([^*]+)\*$/);
+
+            if (boldMatch) {
+                return (
+                    <strong
+                        key={`bold-${index}`}
+                        className="font-semibold text-pink-500"
+                    >
+                        {boldMatch[1]}
+                    </strong>
+                );
+            }
+
+            return <Fragment key={`text-${index}`}>{segment}</Fragment>;
+        });
+    }, [dailyMessage]);
+
+    const openDailyMessageModal = useCallback((value: string | null) => {
+        if (typeof value !== "string" || value.trim() === "") {
+            return;
+        }
+
+        setDailyMessage(value);
+        setShowModal(true);
+    }, []);
+
+    const extractDailyMessageText = useCallback((payload: unknown): string | null => {
+        if (typeof payload === "string") {
+            return payload;
+        }
+
+        if (
+            payload &&
+            typeof payload === "object" &&
+            "message" in payload &&
+            typeof (payload as { message?: unknown }).message === "string"
+        ) {
+            return (payload as { message: string }).message;
+        }
+
+        return null;
+    }, []);
 
     useEffect(() => {
         const fetchDailyMessage = async () => {
             try {
-                const response = await fetch(
-                    route("api.spaces.daily-message", { space: spaceId })
+                const response = await axios.get(
+                    route("api.spaces.daily-message", { space: spaceSlug }),
                 );
-                if (response.ok) {
-                    const data = await response.json();
-                    setDailyMessage(data.message.message);
-                    setShowModal(true);
-                } else if (response.status === 404) {
-                    // Daily message not found, generate a new one
-                    const regenerateResponse = await fetch(
-                        route("api.spaces.daily-message.regenerate", {
-                            space: spaceId,
-                        }),
-                        {
-                            method: "POST",
-                        }
-                    );
-                    if (regenerateResponse.ok) {
-                        const regenerateData = await regenerateResponse.json();
-                        setDailyMessage(regenerateData.message);
-                        setShowModal(true);
-                    } else {
-                        console.error("Failed to regenerate daily message");
-                    }
-                } else {
-                    console.error("Failed to fetch daily message");
+
+                const messageText = extractDailyMessageText(
+                    response.data?.message,
+                );
+
+                if (response.status === 200 && messageText) {
+                    openDailyMessageModal(messageText);
+                    return;
                 }
             } catch (error) {
-                console.error("Error fetching daily message:", error);
+                if (
+                    axios.isAxiosError(error) &&
+                    error.response?.status === 404
+                ) {
+                    try {
+                        const regenerateResponse = await axios.post(
+                            route("api.spaces.daily-message.regenerate", {
+                                space: spaceSlug,
+                            }),
+                        );
+
+                        const regeneratedText = extractDailyMessageText(
+                            regenerateResponse.data?.message,
+                        );
+
+                        if (
+                            regenerateResponse.status === 200 &&
+                            regeneratedText
+                        ) {
+                            openDailyMessageModal(regeneratedText);
+                        }
+                    } catch (regenerateError) {
+                        console.error(
+                            "Error regenerating daily message:",
+                            regenerateError,
+                        );
+                    }
+                } else {
+                    console.error("Error fetching daily message:", error);
+                }
             }
         };
 
-        fetchDailyMessage();
-    }, [spaceId]);
+        void fetchDailyMessage();
+    }, [extractDailyMessageText, openDailyMessageModal, spaceSlug]);
 
-    const quickActions = [
-        {
-            icon: Calendar,
-            label: "Tambah Momen",
-            description: "Catat momen spesial",
-            href: route("timeline.create", { spaceId: spaceId }),
-            color: "from-pink-500 to-rose-500",
-        },
-        {
-            icon: Image,
-            label: "Upload Foto",
-            description: "Simpan kenangan",
-            href: route("gallery.create", { spaceId: spaceId }),
-            color: "from-blue-500 to-cyan-500",
-        },
-        {
-            icon: MessageSquare,
-            label: "Pesan Harian",
-            description: "Lihat pesan cinta",
-            href: route("daily.index", { spaceId: spaceId }),
-            color: "from-purple-500 to-indigo-500",
-        },
-        {
-            icon: BookOpen,
-            label: "Tulis Journal",
-            description: "Ekspresikan perasaan",
-            href: route("journal.create", { spaceId: spaceId }),
-            color: "from-green-500 to-emerald-500",
-        },
-    ];
+    const quickActions = useMemo(
+        () => [
+            {
+                icon: Calendar,
+                label: "Tambah Momen",
+                description: "Catat momen spesial",
+                href: route("timeline.create", { space: spaceSlug }),
+                color: "from-pink-500 to-rose-500",
+                requiresPartner: true,
+            },
+            {
+                icon: Image,
+                label: "Upload Foto",
+                description: "Simpan kenangan",
+                href: route("gallery.create", { space: spaceSlug }),
+                color: "from-blue-500 to-cyan-500",
+                requiresPartner: true,
+            },
+            {
+                icon: MessageSquare,
+                label: "Pesan Harian",
+                description: "Lihat pesan cinta",
+                href: route("daily.index", { space: spaceSlug }),
+                color: "from-purple-500 to-indigo-500",
+                requiresPartner: true,
+            },
+            {
+                icon: Heart,
+                label: "Memory Lane Kit",
+                description: "Panduan surprise 3 tahap + storybook",
+                href: route("surprise.memory.space", { space: spaceSlug }),
+                color: "from-fuchsia-500 to-violet-500",
+                requiresPartner: true,
+            },
+            {
+                icon: Music,
+                label: "Spotify Companion",
+                description: "Sinkronisasi musik & mood jarak jauh",
+                href: route("spotify.companion", { space: spaceSlug }),
+                color: "from-emerald-500 to-teal-500",
+                requiresPartner: true,
+            },
+            {
+                icon: BookOpen,
+                label: "Tulis Journal",
+                description: "Ekspresikan perasaan",
+                href: route("journal.create", { space: spaceSlug }),
+                color: "from-green-500 to-emerald-500",
+                requiresPartner: true,
+            },
+            {
+                icon: Video,
+                label: "Masuk Nobar",
+                description: "Mulai nonton bareng",
+                href: route("space.nobar", { space: spaceSlug }),
+                color: "from-red-500 to-orange-500",
+                requiresPartner: true,
+            },
+        ],
+        [spaceSlug]
+    );
+
+    const recentMessages = useMemo(
+        () => dashboardData.recentMessages.slice(0, 3),
+        [dashboardData.recentMessages],
+    );
+
+    const toggleMessage = useCallback((index: number) => {
+        setExpandedMessages((prev) => ({
+            ...prev,
+            [index]: !prev[index],
+        }));
+    }, []);
 
     return (
-        <>
+        <AuthenticatedLayout
+            header={
+                <div className="flex flex-col gap-1">
+                    <p className="text-sm text-gray-500">
+                        Space kamu bersama pasangan
+                    </p>
+                    <h2 className="text-2xl font-semibold text-gray-900">
+                        {spaceTitle}
+                    </h2>
+                </div>
+            }
+        >
+            <Head title={`Dashboard - ${spaceTitle}`} />
+
             {showModal && dailyMessage && (
-                <div className="fixed z-10 inset-0 overflow-y-auto">
-                    <div className="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
-                        <div
-                            className="fixed inset-0 transition-opacity"
-                            aria-hidden="true"
+                <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/30 px-4">
+                    <div className="relative w-full max-w-lg rounded-3xl bg-white p-8 shadow-2xl">
+                        <button
+                            type="button"
+                            onClick={() => setShowModal(false)}
+                            className="absolute right-4 top-4 text-gray-400 transition hover:text-gray-600"
+                            aria-label="Tutup"
                         >
-                            <div className="absolute inset-0 bg-gray-500 opacity-75"></div>
+                            <X className="h-5 w-5" />
+                        </button>
+                        <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-pink-100">
+                            <Heart className="h-8 w-8 text-pink-500" />
                         </div>
-
-                        <span
-                            className="hidden sm:inline-block sm:align-middle sm:h-screen"
-                            aria-hidden="true"
-                        >
-                            &#8203;
-                        </span>
-
-                        <div className="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
-                            <div className="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
-                                <div className="sm:flex sm:items-start">
-                                    <div className="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left">
-                                        <h3
-                                            className="text-lg leading-6 font-medium text-gray-900"
-                                            id="modal-title"
-                                        >
-                                            Pesan Harian
-                                        </h3>
-                                        <div className="mt-2">
-                                            <p className="text-sm text-gray-500">
-                                                {dailyMessage}
-                                            </p>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            <div className="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
-                                <button
-                                    type="button"
-                                    className="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm"
-                                    onClick={() => setShowModal(false)}
-                                >
-                                    Tutup
-                                </button>
-                            </div>
-                        </div>
+                        <h3 className="mt-4 text-center text-xl font-semibold text-gray-900">
+                            Pesan Cinta Hari Ini
+                        </h3>
+                        <p className="mt-3 text-center text-sm leading-relaxed text-gray-600">
+                            {formattedDailyMessage}
+                        </p>
                     </div>
                 </div>
             )}
 
-            <AuthenticatedLayout
-                header={
-                    <div className="flex items-center gap-3">
-                        <Heart className="w-8 h-8 text-pink-500" />
-                        <div>
-                            <h1 className="text-2xl font-bold text-gray-900">
-                                Selamat Datang di LoveSpace! 💕
-                            </h1>
-                            <p className="text-gray-600">
-                                Ruang cinta digital untuk kalian berdua
-                            </p>
+            {showLockModal && (
+                <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/30 px-4">
+                    <div className="relative w-full max-w-sm rounded-3xl bg-white p-8 text-center shadow-2xl">
+                        <button
+                            type="button"
+                            onClick={() => setShowLockModal(false)}
+                            className="absolute right-4 top-4 text-gray-400 transition hover:text-gray-600"
+                            aria-label="Tutup"
+                        >
+                            <X className="h-5 w-5" />
+                        </button>
+                        <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-pink-100">
+                            <Lock className="h-8 w-8 text-pink-500" />
                         </div>
+                        <h3 className="mt-4 text-xl font-semibold text-gray-900">
+                            Fitur Terkunci
+                        </h3>
+                        <p className="mt-3 text-sm leading-relaxed text-gray-600">
+                            {coupleLockMessage}
+                        </p>
+                        <button
+                            type="button"
+                            onClick={() => setShowLockModal(false)}
+                            className="mt-6 inline-flex items-center justify-center rounded-full bg-pink-500 px-6 py-2 text-sm font-semibold text-white transition hover:bg-pink-600"
+                        >
+                            Mengerti
+                        </button>
                     </div>
-                }
-            >
-                <Head title="Dashboard" />
+                </div>
+            )}
 
-                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-8">
-                    {/* Stats Grid */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-                        <Link
-                            href={route("timeline.index", { spaceId: spaceId })}
-                            className="bg-gradient-to-br from-pink-50 to-rose-50 rounded-2xl p-6 border border-pink-100 block transition-all duration-300 hover:scale-105 hover:shadow-md"
-                        >
-                            <div className="flex items-center gap-3">
-                                <div className="p-3 bg-pink-100 rounded-xl">
-                                    <Calendar className="w-6 h-6 text-pink-600" />
-                                </div>
+            <div className="mx-auto flex max-w-7xl flex-col gap-8 px-4 py-4">
+                {!hasPartner && isSpaceOwner && (
+                    <div className="rounded-3xl border border-dashed border-indigo-200 bg-indigo-50 p-6 shadow-sm">
+                        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+                            <div className="flex items-start gap-3">
+                                <span className="flex h-12 w-12 items-center justify-center rounded-full bg-indigo-100">
+                                    <UserPlus className="h-6 w-6 text-indigo-600" />
+                                </span>
                                 <div>
-                                    <p className="text-2xl font-bold text-gray-900">
-                                        {dashboardData.timelineCount}
-                                    </p>
-                                    <p className="text-sm text-gray-600">
-                                        Momen Spesial
-                                    </p>
-                                </div>
-                            </div>
-                        </Link>
-
-                        <Link
-                            href={route("gallery.index", { spaceId: spaceId })}
-                            className="bg-gradient-to-br from-blue-50 to-cyan-50 rounded-2xl p-6 border border-blue-100 block transition-all duration-300 hover:scale-105 hover:shadow-md"
-                        >
-                            <div className="flex items-center gap-3">
-                                <div className="p-3 bg-blue-100 rounded-xl">
-                                    <Image className="w-6 h-6 text-blue-600" />
-                                </div>
-                                <div>
-                                    <p className="text-2xl font-bold text-gray-900">
-                                        {dashboardData.galleryCount}
-                                    </p>
-                                    <p className="text-sm text-gray-600">
-                                        Foto & Video
-                                    </p>
-                                </div>
-                            </div>
-                        </Link>
-
-                        <Link
-                            href={route("daily.index", { spaceId: spaceId })}
-                            className="bg-gradient-to-br from-purple-50 to-indigo-50 rounded-2xl p-6 border border-purple-100 block transition-all duration-300 hover:scale-105 hover:shadow-md"
-                        >
-                            <div className="flex items-center gap-3">
-                                <div className="p-3 bg-purple-100 rounded-xl">
-                                    <MessageSquare className="w-6 h-6 text-purple-600" />
-                                </div>
-                                <div>
-                                    <p className="text-2xl font-bold text-gray-900">
-                                        {dashboardData.recentMessages.length}
-                                    </p>
-                                    <p className="text-sm text-gray-600">
-                                        Pesan Terbaru
-                                    </p>
-                                </div>
-                            </div>
-                        </Link>
-
-                        <Link
-                            href={route("countdown.index", {
-                                spaceId: spaceId,
-                            })}
-                            className="bg-gradient-to-br from-orange-50 to-red-50 rounded-2xl p-6 border border-orange-100 block transition-all duration-300 hover:scale-105 hover:shadow-md"
-                        >
-                            <div className="flex items-center gap-3">
-                                <div className="p-3 bg-orange-100 rounded-xl">
-                                    <Clock className="w-6 h-6 text-orange-600" />
-                                </div>
-                                <div>
-                                    <p className="text-2xl font-bold text-gray-900">
-                                        {dashboardData.upcomingEvents.length}
-                                    </p>
-                                    <p className="text-sm text-gray-600">
-                                        Event Mendatang
-                                    </p>
-                                </div>
-                            </div>
-                        </Link>
-
-                        <Link
-                            href={route("space.nobar", { id: spaceId })}
-                            className="inline-flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition"
-                        >
-                            🎥 Mulai Nobar
-                        </Link>
-                    </div>
-
-                    {/* Quick Actions */}
-                    <div className="mb-8">
-                        <h2 className="text-xl font-semibold text-gray-900 mb-4">
-                            Aksi Cepat
-                        </h2>
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                            {quickActions.map((action, index) => (
-                                <Link
-                                    key={index}
-                                    href={action.href}
-                                    className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 hover:shadow-lg transition-all duration-300 group"
-                                >
-                                    <div
-                                        className={`p-3 rounded-xl bg-gradient-to-r ${action.color} w-fit mb-3 group-hover:scale-110 transition-transform`}
-                                    >
-                                        <action.icon className="w-6 h-6 text-white" />
-                                    </div>
-                                    <h3 className="font-semibold text-gray-900 mb-1">
-                                        {action.label}
+                                    <h3 className="text-lg font-semibold text-indigo-900">
+                                        Pasangan belum terhubung
                                     </h3>
-                                    <p className="text-sm text-gray-600">
-                                        {action.description}
+                                    <p className="mt-1 text-sm text-indigo-700">
+                                        Ajak pasanganmu bergabung agar kalian bisa menikmati semua fitur berdua.
                                     </p>
-                                </Link>
-                            ))}
+                                </div>
+                            </div>
+                            <Link
+                                href={route("spaces.index")}
+                                className="inline-flex items-center justify-center rounded-full bg-indigo-600 px-5 py-2 text-sm font-semibold text-white transition hover:bg-indigo-700"
+                            >
+                                Hubungkan Pasangan
+                            </Link>
                         </div>
                     </div>
+                )}
 
-                    {/* Upcoming Events */}
-                    <div className="grid lg:grid-cols-2 gap-8">
-                        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-                            <h2 className="text-xl font-semibold text-gray-900 mb-4 flex items-center gap-2">
-                                <Calendar className="w-5 h-5 text-orange-500" />
-                                Event Mendatang
-                            </h2>
-                            <div className="space-y-3 max-h-60 overflow-y-auto pr-2">
-                                {dashboardData.upcomingEvents.map(
-                                    (event, index) => (
-                                        <div
-                                            key={index}
-                                            className="flex items-center gap-3 p-3 bg-orange-50 rounded-lg"
-                                        >
-                                            <div className="bg-orange-100 p-2 rounded-lg">
-                                                <Calendar className="w-4 h-4 text-orange-600" />
-                                            </div>
-                                            <div className="flex-1">
-                                                <p className="font-medium text-gray-900">
-                                                    {event.event_name}
-                                                </p>
-                                                <p className="text-sm text-gray-600">
-                                                    {event.days_left} hari lagi
-                                                </p>
-                                            </div>
-                                        </div>
-                                    )
-                                )}
+                <div className="grid gap-6 md:grid-cols-3">
+                    <div className="rounded-3xl bg-white p-6 shadow-sm">
+                        <div className="flex items-center gap-3">
+                            <span className="flex h-10 w-10 items-center justify-center rounded-full bg-pink-100">
+                                <Calendar className="h-5 w-5 text-pink-500" />
+                            </span>
+                            <div>
+                                <p className="text-sm text-gray-500">
+                                    Total Timeline
+                                </p>
+                                <p className="text-2xl font-semibold text-gray-900">
+                                    {dashboardData.timelineCount}
+                                </p>
                             </div>
-                            <Link
-                                href={route("countdown.index", {
-                                    spaceId: spaceId,
-                                })}
-                                className="block text-center mt-4 text-orange-600 hover:text-orange-700 font-medium"
-                            >
-                                Lihat Semua →
-                            </Link>
                         </div>
-
-                        {/* Recent Messages */}
-                        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-                            <h2 className="text-xl font-semibold text-gray-900 mb-4 flex items-center gap-2">
-                                <MessageSquare className="w-5 h-5 text-purple-500" />
-                                Pesan Terbaru
-                            </h2>
-                            <div className="space-y-3 max-h-60 overflow-y-auto pr-2">
-                                {dashboardData.recentMessages.map(
-                                    (message, index) => (
-                                        <div
-                                            key={index}
-                                            className="p-3 bg-purple-50 rounded-lg"
-                                        >
-                                            <p className="text-gray-900 line-clamp-2">
-                                                "{message.message}"
-                                            </p>
-                                            <p className="text-sm text-gray-600 mt-3">
-                                                {message.date}
-                                            </p>
-                                        </div>
-                                    )
-                                )}
+                    </div>
+                    <div className="rounded-3xl bg-white p-6 shadow-sm">
+                        <div className="flex items-center gap-3">
+                            <span className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-100">
+                                <Image className="h-5 w-5 text-blue-500" />
+                            </span>
+                            <div>
+                                <p className="text-sm text-gray-500">
+                                    Foto & Video
+                                </p>
+                                <p className="text-2xl font-semibold text-gray-900">
+                                    {dashboardData.galleryCount}
+                                </p>
                             </div>
-                            <Link
-                                href={route("daily.index", {
-                                    spaceId: spaceId,
-                                })}
-                                className="block text-center mt-4 text-purple-600 hover:text-purple-700 font-medium"
-                            >
-                                Lihat Semua →
-                            </Link>
+                        </div>
+                    </div>
+                    <div className="rounded-3xl bg-gradient-to-r from-purple-500 to-pink-500 p-6 text-white shadow-sm">
+                        <div className="flex items-center gap-3">
+                            <span className="flex h-10 w-10 items-center justify-center rounded-full bg-white/20">
+                                <Gift className="h-5 w-5" />
+                            </span>
+                            <div>
+                                <p className="text-sm text-purple-100">
+                                    Berbagi Lokasi
+                                </p>
+                                <Link
+                                    href={route("location.map", {
+                                        space: spaceSlug,
+                                    })}
+                                    onClick={coupleFeaturesLocked ? handleLockedNavigation : undefined}
+                                    title={coupleFeaturesLocked ? coupleLockMessage : undefined}
+                                    aria-disabled={coupleFeaturesLocked}
+                                    className={`mt-1 inline-flex items-center gap-2 rounded-full px-4 py-1 text-sm font-medium text-white transition ${
+                                        coupleFeaturesLocked
+                                            ? "cursor-not-allowed bg-white/10 opacity-60"
+                                            : "bg-white/20 hover:bg-white/30"
+                                    }`}
+                                >
+                                    Buka Peta
+                                    <Video className="h-4 w-4" />
+                                </Link>
+                            </div>
                         </div>
                     </div>
                 </div>
-            </AuthenticatedLayout>
-        </>
+
+                <div className="rounded-3xl bg-white p-6 shadow-sm">
+                    <h2 className="text-xl font-semibold text-gray-900">
+                        Aksi Cepat
+                    </h2>
+                    <div className="mt-4 grid gap-4 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5">
+                        {quickActions.map((action, index) => {
+                            const locked =
+                                coupleFeaturesLocked && action.requiresPartner;
+
+                            return (
+                                <Link
+                                    key={index}
+                                    href={action.href}
+                                    onClick={locked ? handleLockedNavigation : undefined}
+                                    title={locked ? coupleLockMessage : undefined}
+                                    aria-disabled={locked}
+                                    className={`group relative rounded-2xl border border-gray-100 bg-white p-6 shadow-sm transition ${
+                                        locked
+                                            ? "cursor-not-allowed opacity-60"
+                                            : "hover:border-transparent hover:shadow-lg"
+                                    }`}
+                                >
+                                    <div
+                                        className={`mb-3 w-fit rounded-xl bg-gradient-to-r ${action.color} p-3 transition-transform ${
+                                            locked ? "" : "group-hover:scale-110"
+                                        }`}
+                                    >
+                                        <action.icon className="h-6 w-6 text-white" />
+                                    </div>
+                                    <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+                                        {action.label}
+                                        {locked && (
+                                            <span className="inline-flex items-center justify-center rounded-full bg-pink-100 px-2 py-0.5 text-xs font-semibold text-pink-500">
+                                                <Lock className="h-3 w-3" />
+                                                Terkunci
+                                            </span>
+                                        )}
+                                    </h3>
+                                    <p className="mt-1 text-sm text-gray-600">
+                                        {action.description}
+                                    </p>
+                                </Link>
+                            );
+                        })}
+                    </div>
+                </div>
+
+                <div className="grid gap-8 lg:grid-cols-2">
+                    <div className="rounded-3xl border border-orange-100 bg-white p-6 shadow-sm">
+                        <h2 className="mb-4 flex items-center gap-2 text-xl font-semibold text-gray-900">
+                            <Calendar className="h-5 w-5 text-orange-500" />
+                            Event Mendatang
+                        </h2>
+                        <div className="space-y-3">
+                            {dashboardData.upcomingEvents.length === 0 && (
+                                <p className="rounded-2xl border border-dashed border-orange-200 bg-orange-50 p-4 text-sm text-orange-600">
+                                    Belum ada event yang dijadwalkan. Yuk buat
+                                    countdown pertama kalian!
+                                </p>
+                            )}
+                            {dashboardData.upcomingEvents.map(
+                                (event, index) => (
+                                    <div
+                                        key={index}
+                                        className="flex items-center gap-3 rounded-2xl border border-orange-100 bg-orange-50 p-3"
+                                    >
+                                        <div className="rounded-xl bg-white p-2">
+                                            <Clock className="h-5 w-5 text-orange-500" />
+                                        </div>
+                                        <div>
+                                            <p className="font-medium text-gray-900">
+                                                {event.event_name}
+                                            </p>
+                                            <p className="text-xs text-orange-600">
+                                                {event.days_left} hari lagi
+                                            </p>
+                                        </div>
+                                    </div>
+                                )
+                            )}
+                        </div>
+                        <Link
+                            href={route("countdown.index", {
+                                space: spaceSlug,
+                            })}
+                            onClick={coupleFeaturesLocked ? handleLockedNavigation : undefined}
+                            title={coupleFeaturesLocked ? coupleLockMessage : undefined}
+                            aria-disabled={coupleFeaturesLocked}
+                            className={`mt-4 block text-center text-sm font-medium transition ${
+                                coupleFeaturesLocked
+                                    ? "cursor-not-allowed text-orange-300"
+                                    : "text-orange-600 hover:text-orange-700"
+                            }`}
+                        >
+                            Lihat Semua
+                        </Link>
+                    </div>
+
+                    <div className="rounded-3xl border border-purple-100 bg-white p-6 shadow-sm">
+                        <h2 className="mb-4 flex items-center gap-2 text-xl font-semibold text-gray-900">
+                            <MessageSquare className="h-5 w-5 text-purple-500" />
+                            Pesan Terbaru
+                        </h2>
+                        <div className="space-y-3">
+                            {dashboardData.recentMessages.length === 0 && (
+                                <p className="rounded-2xl border border-dashed border-purple-200 bg-purple-50 p-4 text-sm text-purple-600">
+                                    Belum ada pesan terbaru. Coba tulis pesan
+                                    spesial untuk pasanganmu!
+                                </p>
+                            )}
+                            {recentMessages.map((message, index) => (
+                                <div
+                                    key={`${message.date}-${index}`}
+                                    className="rounded-2xl border border-purple-100 bg-purple-50 p-4"
+                                >
+                                    <p className="text-sm text-gray-700">
+                                        {expandedMessages[index] ||
+                                        message.message.length <= 120
+                                            ? `"${message.message}"`
+                                            : `"${message.message.slice(
+                                                  0,
+                                                  120
+                                              )}…"`}{" "}
+                                    </p>
+                                    {message.message.length > 120 && (
+                                        <button
+                                            type="button"
+                                            onClick={() => toggleMessage(index)}
+                                            className="mt-3 text-xs font-medium text-purple-600 transition hover:text-purple-700"
+                                        >
+                                            {expandedMessages[index]
+                                                ? "Sembunyikan"
+                                                : "Baca selengkapnya"}
+                                        </button>
+                                    )}
+                                    <p className="mt-3 text-xs text-purple-500">
+                                        {message.date}
+                                    </p>
+                                </div>
+                            ))}
+                        </div>
+                        <Link
+                            href={route("daily.index", { space: spaceSlug })}
+                            onClick={coupleFeaturesLocked ? handleLockedNavigation : undefined}
+                            title={coupleFeaturesLocked ? coupleLockMessage : undefined}
+                            aria-disabled={coupleFeaturesLocked}
+                            className={`mt-4 block text-center text-sm font-medium transition ${
+                                coupleFeaturesLocked
+                                    ? "cursor-not-allowed text-purple-300"
+                                    : "text-purple-600 hover:text-purple-700"
+                            }`}
+                        >
+                            Lihat Semua
+                        </Link>
+                    </div>
+                </div>
+            </div>
+        </AuthenticatedLayout>
     );
 }

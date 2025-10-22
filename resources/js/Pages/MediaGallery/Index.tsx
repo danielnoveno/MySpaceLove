@@ -2,6 +2,7 @@ import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout";
 import { Head, Link, router } from "@inertiajs/react";
 import { Plus, Edit, Heart, Eye } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
+import { useCurrentSpace } from "@/hooks/useCurrentSpace";
 
 interface GalleryItem {
     id: number;
@@ -9,13 +10,16 @@ interface GalleryItem {
     file_path: string;
 }
 
-export default function GalleryIndex({
-    items,
-    spaceId,
-}: {
-    items: GalleryItem[];
-    spaceId: string;
-}) {
+export default function GalleryIndex({ items }: { items: GalleryItem[] }) {
+    const currentSpace = useCurrentSpace();
+
+    if (!currentSpace) {
+        return null;
+    }
+
+    const spaceSlug = currentSpace.slug;
+    const spaceTitle = currentSpace.title;
+
     const [selectedItem, setSelectedItem] = useState<GalleryItem | null>(null);
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const [parallaxPos, setParallaxPos] = useState({ x: 0, y: 0 });
@@ -126,10 +130,10 @@ export default function GalleryIndex({
                 <div className="flex justify-between items-center">
                     <h2 className="font-semibold text-xl text-gray-800 flex items-center gap-2">
                         <Heart className="w-5 h-5 text-green-500" />
-                        Galeri Kenangan 📸
+                        Galeri {spaceTitle}
                     </h2>
                     <Link
-                        href={route("gallery.create", { spaceId })}
+                        href={route("gallery.create", { space: spaceSlug })}
                         className="bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white px-4 py-2 rounded-lg shadow-lg transition-all duration-300 flex items-center gap-2"
                     >
                         <Plus className="w-4 h-4" />
@@ -138,7 +142,7 @@ export default function GalleryIndex({
                 </div>
             }
         >
-            <Head title="Gallery" />
+            <Head title={`Gallery - ${spaceTitle}`} />
 
             {/* Background Animasi */}
             <div className="relative min-h-screen bg-gradient-to-br from-green-50 via-white to-emerald-50 py-10 px-4 sm:px-6 lg:px-8 overflow-hidden">
@@ -181,7 +185,7 @@ export default function GalleryIndex({
                                     Upload momen spesial pertamamu ✨
                                 </p>
                                 <Link
-                                    href={route("gallery.create", { spaceId })}
+                                    href={route("gallery.create", { space: spaceSlug })}
                                     className="bg-gradient-to-r from-green-500 to-emerald-600 text-white px-6 py-2 rounded-lg inline-block hover:shadow-lg transition-all"
                                 >
                                     Upload Sekarang
@@ -220,7 +224,7 @@ export default function GalleryIndex({
                                                 <Link
                                                     href={route(
                                                         "gallery.edit",
-                                                        { spaceId, id: item.id }
+                                                        { space: spaceSlug, id: item.id }
                                                     )}
                                                     className="text-yellow-600 hover:text-yellow-700 flex items-center gap-1 text-sm font-medium"
                                                 >
@@ -235,7 +239,7 @@ export default function GalleryIndex({
                                                         router.delete(
                                                             route(
                                                                 "gallery.destroy",
-                                                                item.id
+                                                                { space: spaceSlug, id: item.id }
                                                             )
                                                         )
                                                     }

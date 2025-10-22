@@ -8,3 +8,13 @@ declare global {
     }
 }
 export {};
+
+declare module "*.png?inline" {
+    const content: string;
+    export default content;
+}
+
+declare module "*.svg?inline" {
+    const content: string;
+    export default content;
+}

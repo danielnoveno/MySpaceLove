@@ -5,10 +5,15 @@ import DeleteUserForm from './Partials/DeleteUserForm';
 import UpdatePasswordForm from './Partials/UpdatePasswordForm';
 import UpdateProfileInformationForm from './Partials/UpdateProfileInformationForm';
 
+type ProfilePageProps = PageProps & {
+    mustVerifyEmail: boolean;
+    status?: string;
+};
+
 export default function Edit({
     mustVerifyEmail,
     status,
-}: PageProps<{ mustVerifyEmail: boolean; status?: string }>) {
+}: ProfilePageProps) {
     return (
         <AuthenticatedLayout
             header={

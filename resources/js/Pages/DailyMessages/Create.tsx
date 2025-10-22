@@ -2,10 +2,7 @@ import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout";
 import { Head, useForm } from "@inertiajs/react";
 import { useState, useEffect } from "react";
 import axios from "axios";
-
-interface Props {
-    spaceId: string;
-}
+import { useCurrentSpace } from "@/hooks/useCurrentSpace";
 
 // Helper untuk ambil cookie CSRF token
 function getCookie(name: string) {
@@ -16,7 +13,16 @@ function getCookie(name: string) {
     return null;
 }
 
-export default function DailyMessageCreate({ spaceId }: Props) {
+export default function DailyMessageCreate() {
+    const currentSpace = useCurrentSpace();
+
+    if (!currentSpace) {
+        return null;
+    }
+
+    const spaceSlug = currentSpace.slug;
+    const spaceTitle = currentSpace.title;
+
     // Ambil tanggal hari ini (format YYYY-MM-DD)
     const today = new Date().toISOString().split("T")[0];
 
@@ -44,7 +50,7 @@ export default function DailyMessageCreate({ spaceId }: Props) {
             return;
         }
 
-        post(route("daily.store", { spaceId }));
+        post(route("daily.store", { space: spaceSlug }));
     }
 
     async function generateAI() {
@@ -73,11 +79,12 @@ export default function DailyMessageCreate({ spaceId }: Props) {
                 payload.mood = mood;
             }
 
-            const resp = await axios.post(
-                `/daily-messages/${spaceId}/regenerate?json=true`,
-                payload,
-                { headers: { "Content-Type": "application/json" } }
-            );
+            const regenerateUrl =
+                route("daily.regenerate", { space: spaceSlug }) + "?json=true";
+
+            const resp = await axios.post(regenerateUrl, payload, {
+                headers: { "Content-Type": "application/json" },
+            });
 
             const aiMessage = resp.data.message.message;
             if (aiMessage) {
@@ -104,7 +111,7 @@ export default function DailyMessageCreate({ spaceId }: Props) {
                 </h2>
             }
         >
-            <Head title="Tambah Pesan Harian" />
+            <Head title={`Tambah Pesan Harian - ${spaceTitle}`} />
 
             <div className="p-6 max-w-xl mx-auto bg-white shadow-md rounded-xl space-y-6 mt-8">
                 <form onSubmit={submit}>

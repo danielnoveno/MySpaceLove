@@ -11,9 +11,8 @@ use Inertia\Inertia;
 
 class LoveJournalApiController extends Controller
 {
-    public function index($spaceId)
+    public function index(Space $space)
     {
-        $space = Space::findOrFail($spaceId);
         $this->authorizeSpace($space);
         // return LoveJournal::where('space_id', $space->id)->latest()->get();
 
@@ -21,13 +20,12 @@ class LoveJournalApiController extends Controller
 
         return Inertia::render('Journals/Index', [
             'items' => $journals,
-            'spaceId' => $spaceId,
+            'space' => $this->spacePayload($space),
         ]);
     }
 
-    public function store(Request $r, $spaceId)
+    public function store(Request $r, Space $space)
     {
-        $space = Space::findOrFail($spaceId);
         $this->authorizeSpace($space);
 
         $data = $r->validate(['title' => 'required|string|max:255', 'content' => 'required|string', 'mood' => 'nullable|in:happy,sad,miss,excited']);
@@ -35,12 +33,11 @@ class LoveJournalApiController extends Controller
         $data['user_id'] = Auth::id();
 
         $journal = LoveJournal::create($data);
-        return Inertia::location(route('journal.index', ['spaceId' => $spaceId]));
+        return Inertia::location(route('journal.index', ['space' => $space->slug]));
     }
 
-    public function update(Request $r, $spaceId, $id)
+    public function update(Request $r, Space $space, $id)
     {
-        $space = Space::findOrFail($spaceId);
         $this->authorizeSpace($space);
         $journal = LoveJournal::where('space_id', $space->id)->findOrFail($id);
 
@@ -49,12 +46,11 @@ class LoveJournalApiController extends Controller
 
         $data = $r->validate(['title' => 'required|string|max:255', 'content' => 'required|string', 'mood' => 'nullable|in:happy,sad,miss,excited']);
         $journal->update($data);
-        return Inertia::location(route('journal.index', ['spaceId' => $spaceId]));
+        return Inertia::location(route('journal.index', ['space' => $space->slug]));
     }
 
-    public function destroy($spaceId, $id)
+    public function destroy(Space $space, $id)
     {
-        $space = Space::findOrFail($spaceId);
         $this->authorizeSpace($space);
         $journal = LoveJournal::where('space_id', $space->id)->findOrFail($id);
         if ($journal->user_id !== Auth::id()) abort(403);
@@ -62,30 +58,36 @@ class LoveJournalApiController extends Controller
         return response()->json(['message' => 'deleted']);
     }
 
-    public function create($spaceId)
+    public function create(Space $space)
     {
-        $space = Space::findOrFail($spaceId);
         $this->authorizeSpace($space);
         return Inertia::render('Journals/Create', [
-            'spaceId' => $space->id,
-            'space'   => $space,
+            'space' => $this->spacePayload($space),
         ]);
     }
 
-    public function edit($spaceId, $id)
+    public function edit(Space $space, $id)
     {
-        $space = Space::findOrFail($spaceId);
         $this->authorizeSpace($space);
         $journal = LoveJournal::where('space_id', $space->id)->findOrFail($id);
 
         return Inertia::render('Journals/Edit', [
             'journal' => $journal,
-            'spaceId' => $spaceId,
+            'space' => $this->spacePayload($space),
         ]);
     }
 
     private function authorizeSpace(Space $space)
     {
         if (!$space->hasMember(Auth::id())) abort(403);
+    }
+
+    private function spacePayload(Space $space): array
+    {
+        return [
+            'id' => $space->id,
+            'slug' => $space->slug,
+            'title' => $space->title,
+        ];
     }
 }

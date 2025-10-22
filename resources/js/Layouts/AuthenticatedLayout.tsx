@@ -3,6 +3,7 @@ import { Link, usePage } from "@inertiajs/react";
 import ApplicationLogo from "@/Components/ApplicationLogo";
 import Dropdown from "@/Components/Dropdown";
 import ResponsiveNavLink from "@/Components/ResponsiveNavLink";
+import { Lock } from "lucide-react";
 
 export default function Authenticated({
     header,
@@ -12,6 +13,52 @@ export default function Authenticated({
         useState(false);
     const { props }: any = usePage();
     const user = props.auth?.user;
+    const spaces =
+        (props.spaces as Array<{
+            id: number;
+            slug: string;
+            title: string;
+            has_partner?: boolean;
+        }>) ??
+        [];
+    const currentSpace =
+        (props.currentSpace as
+            | {
+                  id: number;
+                  slug: string;
+                  title: string;
+                  has_partner?: boolean;
+              }
+            | null
+            | undefined) ?? null;
+
+    const fallbackHref = route("spaces.index");
+
+    const dashboardHref = currentSpace
+        ? route("spaces.dashboard", { space: currentSpace.slug })
+        : fallbackHref;
+    const timelineHref = currentSpace
+        ? route("timeline.index", { space: currentSpace.slug })
+        : fallbackHref;
+    const dailyHref = currentSpace
+        ? route("daily.index", { space: currentSpace.slug })
+        : fallbackHref;
+    const galleryHref = currentSpace
+        ? route("gallery.index", { space: currentSpace.slug })
+        : fallbackHref;
+    const spotifyHref = currentSpace
+        ? route("spotify.companion", { space: currentSpace.slug })
+        : fallbackHref;
+    const partnerFeaturesLocked =
+        currentSpace !== null && currentSpace.has_partner === false;
+    const lockedTooltip = "Fitur couple akan aktif setelah pasanganmu bergabung.";
+
+    const navClass = (locked: boolean) =>
+        `inline-flex items-center px-1 pt-1 border-b-2 border-transparent text-sm font-medium leading-5 transition duration-150 ease-in-out ${
+            locked
+                ? "cursor-not-allowed text-gray-300 pointer-events-none"
+                : "text-gray-500 hover:text-gray-700 hover:border-gray-300 focus:outline-none focus:text-gray-700 focus:border-gray-300"
+        }`;
 
     return (
         <div className="min-h-screen bg-gradient-to-br from-pink-50 via-white to-purple-50">
@@ -27,33 +74,112 @@ export default function Authenticated({
 
                             <div className="hidden space-x-8 sm:-my-px sm:ml-10 sm:flex">
                                 <Link
-                                    href={route("dashboard")}
+                                    href={dashboardHref}
                                     className="inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium leading-5 text-gray-900 focus:outline-none focus:border-pink-700 transition duration-150 ease-in-out"
                                 >
                                     Dashboard
                                 </Link>
                                 <Link
-                                    href={route("timeline.index")}
-                                    className="inline-flex items-center px-1 pt-1 border-b-2 border-transparent text-sm font-medium leading-5 text-gray-500 hover:text-gray-700 hover:border-gray-300 focus:outline-none focus:text-gray-700 focus:border-gray-300 transition duration-150 ease-in-out"
+                                    href={timelineHref}
+                                    className={navClass(partnerFeaturesLocked)}
+                                    title={partnerFeaturesLocked ? lockedTooltip : undefined}
                                 >
-                                    Timeline
+                                    <span className="flex items-center gap-1">
+                                        {partnerFeaturesLocked && (
+                                            <Lock className="h-3 w-3 text-gray-400" aria-hidden="true" />
+                                        )}
+                                        Timeline
+                                    </span>
                                 </Link>
                                 <Link
-                                    href={route("daily.index")}
-                                    className="inline-flex items-center px-1 pt-1 border-b-2 border-transparent text-sm font-medium leading-5 text-gray-500 hover:text-gray-700 hover:border-gray-300 focus:outline-none focus:text-gray-700 focus:border-gray-300 transition duration-150 ease-in-out"
+                                    href={dailyHref}
+                                    className={navClass(partnerFeaturesLocked)}
+                                    title={partnerFeaturesLocked ? lockedTooltip : undefined}
                                 >
-                                    Daily Message
+                                    <span className="flex items-center gap-1">
+                                        {partnerFeaturesLocked && (
+                                            <Lock className="h-3 w-3 text-gray-400" aria-hidden="true" />
+                                        )}
+                                        Daily Message
+                                    </span>
                                 </Link>
                                 <Link
-                                    href={route("gallery.index")}
-                                    className="inline-flex items-center px-1 pt-1 border-b-2 border-transparent text-sm font-medium leading-5 text-gray-500 hover:text-gray-700 hover:border-gray-300 focus:outline-none focus:text-gray-700 focus:border-gray-300 transition duration-150 ease-in-out"
+                                    href={galleryHref}
+                                    className={navClass(partnerFeaturesLocked)}
+                                    title={partnerFeaturesLocked ? lockedTooltip : undefined}
                                 >
-                                    Gallery
+                                    <span className="flex items-center gap-1">
+                                        {partnerFeaturesLocked && (
+                                            <Lock className="h-3 w-3 text-gray-400" aria-hidden="true" />
+                                        )}
+                                        Gallery
+                                    </span>
+                                </Link>
+                                <Link
+                                    href={spotifyHref}
+                                    className={navClass(partnerFeaturesLocked)}
+                                    title={partnerFeaturesLocked ? lockedTooltip : undefined}
+                                >
+                                    <span className="flex items-center gap-1">
+                                        {partnerFeaturesLocked && (
+                                            <Lock className="h-3 w-3 text-gray-400" aria-hidden="true" />
+                                        )}
+                                        Spotify Kit
+                                    </span>
                                 </Link>
                             </div>
                         </div>
 
                         <div className="hidden sm:flex sm:items-center sm:ml-6">
+                            {spaces.length > 0 && (
+                                <div className="mr-4">
+                                    <Dropdown>
+                                        <Dropdown.Trigger>
+                                            <span className="inline-flex rounded-md">
+                                                <button
+                                                    type="button"
+                                                    className="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-purple-600 bg-purple-50 hover:bg-purple-100 focus:outline-none transition ease-in-out duration-150"
+                                                >
+                                                    {currentSpace
+                                                        ? currentSpace.title
+                                                        : "Pilih Space"}
+                                                    <svg
+                                                        className="ml-2 -mr-0.5 h-4 w-4"
+                                                        xmlns="http://www.w3.org/2000/svg"
+                                                        viewBox="0 0 20 20"
+                                                        fill="currentColor"
+                                                    >
+                                                        <path
+                                                            fillRule="evenodd"
+                                                            d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
+                                                            clipRule="evenodd"
+                                                        />
+                                                    </svg>
+                                                </button>
+                                            </span>
+                                        </Dropdown.Trigger>
+
+                                        <Dropdown.Content align="right">
+                                            {spaces.map((space) => (
+                                                <Dropdown.Link
+                                                    key={space.id}
+                                                    href={route(
+                                                        "spaces.dashboard",
+                                                        { space: space.slug },
+                                                    )}
+                                                >
+                                                    {space.title}
+                                                </Dropdown.Link>
+                                            ))}
+                                            <Dropdown.Link
+                                                href={route("spaces.index")}
+                                            >
+                                                + Kelola Spaces
+                                            </Dropdown.Link>
+                                        </Dropdown.Content>
+                                    </Dropdown>
+                                </div>
+                            )}
                             <div className="ml-3 relative">
                                 <Dropdown>
                                     <Dropdown.Trigger>
@@ -151,28 +277,62 @@ export default function Authenticated({
                 >
                     <div className="pt-2 pb-3 space-y-1">
                         <ResponsiveNavLink
-                            href={route("dashboard")}
-                            active={route().current("dashboard")}
+                            href={dashboardHref}
+                            active={route().current("spaces.dashboard")}
                         >
                             Dashboard
                         </ResponsiveNavLink>
                         <ResponsiveNavLink
-                            href={route("timeline.index")}
+                            href={timelineHref}
                             active={route().current("timeline.index")}
+                            className={partnerFeaturesLocked ? "opacity-40 pointer-events-none" : ""}
+                            title={partnerFeaturesLocked ? lockedTooltip : undefined}
                         >
-                            Timeline
+                            <span className="flex items-center gap-2">
+                                {partnerFeaturesLocked && (
+                                    <Lock className="h-4 w-4 text-gray-400" aria-hidden="true" />
+                                )}
+                                Timeline
+                            </span>
                         </ResponsiveNavLink>
                         <ResponsiveNavLink
-                            href={route("daily.index")}
+                            href={dailyHref}
                             active={route().current("daily.index")}
+                            className={partnerFeaturesLocked ? "opacity-40 pointer-events-none" : ""}
+                            title={partnerFeaturesLocked ? lockedTooltip : undefined}
                         >
-                            Daily Message
+                            <span className="flex items-center gap-2">
+                                {partnerFeaturesLocked && (
+                                    <Lock className="h-4 w-4 text-gray-400" aria-hidden="true" />
+                                )}
+                                Daily Message
+                            </span>
                         </ResponsiveNavLink>
                         <ResponsiveNavLink
-                            href={route("gallery.index")}
+                            href={galleryHref}
                             active={route().current("gallery.index")}
+                            className={partnerFeaturesLocked ? "opacity-40 pointer-events-none" : ""}
+                            title={partnerFeaturesLocked ? lockedTooltip : undefined}
                         >
-                            Gallery
+                            <span className="flex items-center gap-2">
+                                {partnerFeaturesLocked && (
+                                    <Lock className="h-4 w-4 text-gray-400" aria-hidden="true" />
+                                )}
+                                Gallery
+                            </span>
+                        </ResponsiveNavLink>
+                        <ResponsiveNavLink
+                            href={spotifyHref}
+                            active={route().current("spotify.companion")}
+                            className={partnerFeaturesLocked ? "opacity-40 pointer-events-none" : ""}
+                            title={partnerFeaturesLocked ? lockedTooltip : undefined}
+                        >
+                            <span className="flex items-center gap-2">
+                                {partnerFeaturesLocked && (
+                                    <Lock className="h-4 w-4 text-gray-400" aria-hidden="true" />
+                                )}
+                                Spotify Kit
+                            </span>
                         </ResponsiveNavLink>
                     </div>
 

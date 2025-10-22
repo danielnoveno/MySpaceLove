@@ -1,23 +1,26 @@
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout";
 import { Head, useForm } from "@inertiajs/react";
+import { useCurrentSpace } from "@/hooks/useCurrentSpace";
 
 interface FormData {
     date: string;
     message: string;
 }
 
-interface Props {
-    item: FormData;
-    spaceId: number;
-}
-
 export default function DailyMessageEdit({
     dailyMessage,
-    spaceId,
 }: {
     dailyMessage: any;
-    spaceId: number;
 }) {
+    const currentSpace = useCurrentSpace();
+
+    if (!currentSpace) {
+        return null;
+    }
+
+    const spaceSlug = currentSpace.slug;
+    const spaceTitle = currentSpace.title;
+
     const { data, setData, put, processing, errors } = useForm<FormData>({
         date: dailyMessage?.date || "",
         message: dailyMessage?.message || "",
@@ -26,9 +29,11 @@ export default function DailyMessageEdit({
     function submit(e: React.FormEvent) {
         e.preventDefault();
         if (dailyMessage) {
-            // put(route("daily.update", dailyMessage.id));
             put(
-                route("daily.update", { id: dailyMessage.id, spaceId: spaceId })
+                route("daily.update", {
+                    id: dailyMessage.id,
+                    space: spaceSlug,
+                }),
             );
         }
     }
@@ -41,7 +46,7 @@ export default function DailyMessageEdit({
                 </h2>
             }
         >
-            <Head title="Edit Pesan Harian" />
+            <Head title={`Edit Pesan Harian - ${spaceTitle}`} />
 
             <div className="p-6 max-w-xl mx-auto bg-white shadow-md rounded-xl space-y-6 mt-8">
                 <form onSubmit={submit}>

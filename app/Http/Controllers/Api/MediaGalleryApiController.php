@@ -5,7 +5,6 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\MediaGallery;
 use App\Models\Space;
-use Doctrine\DBAL\Schema\Index;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
@@ -13,32 +12,28 @@ use Inertia\Inertia;
 
 class MediaGalleryApiController extends Controller
 {
-    public function index($spaceId)
+    public function index(Space $space)
     {
-        $space = Space::findOrFail($spaceId);
         $this->authorizeSpace($space);
 
         $gallery = MediaGallery::where('space_id', $space->id)->latest()->get();
         return Inertia::render('MediaGallery/Index', [
             'items' => $gallery,
-            'spaceId' => $spaceId,
+            'space' => $this->spacePayload($space),
         ]);
     }
 
-    public function create($spaceId)
+    public function create(Space $space)
     {
-        $space = Space::findOrFail($spaceId);
         $this->authorizeSpace($space);
 
         return Inertia::render('MediaGallery/Create', [
-            'spaceId' => $space->id,
-            'space'   => $space,
+            'space' => $this->spacePayload($space),
         ]);
     }
 
-    public function store(Request $r, $spaceId)
+    public function store(Request $r, Space $space)
     {
-        $space = Space::findOrFail($spaceId);
         $this->authorizeSpace($space);
 
         $data = $r->validate([
@@ -56,22 +51,23 @@ class MediaGalleryApiController extends Controller
             'type'     => $r->file('file')->getClientMimeType()
         ]);
 
-        return Inertia::location(route('media-gallery.index', ['spaceId' => $spaceId]));
+        return Inertia::location(route('gallery.index', ['space' => $space->slug]));
     }
 
-    public function edit($spaceId, $id)
+    public function edit(Space $space, $id)
     {
-        $item = MediaGallery::where('space_id', $spaceId)->findOrFail($id);
+        $this->authorizeSpace($space);
+
+        $item = MediaGallery::where('space_id', $space->id)->findOrFail($id);
 
         return Inertia::render('MediaGallery/Edit', [
             'item' => $item,
-            'spaceId' => $spaceId,
+            'space' => $this->spacePayload($space),
         ]);
     }
 
-    public function update(Request $r, $spaceId, $id)
+    public function update(Request $r, Space $space, $id)
     {
-        $space = Space::findOrFail($spaceId);
         $this->authorizeSpace($space);
 
         $media = MediaGallery::where('space_id', $space->id)->findOrFail($id);
@@ -88,12 +84,11 @@ class MediaGalleryApiController extends Controller
         }
 
         $media->update(['title' => $data['title'] ?? $media->title, 'file_path' => $media->file_path]);
-        return Inertia::location(route('gallery.index', ['spaceId' => $spaceId]));
+        return Inertia::location(route('gallery.index', ['space' => $space->slug]));
     }
 
-    public function destroy($spaceId, $id)
+    public function destroy(Space $space, $id)
     {
-        $space = Space::findOrFail($spaceId);
         $this->authorizeSpace($space);
 
         $media = MediaGallery::where('space_id', $space->id)->findOrFail($id);
@@ -107,5 +102,14 @@ class MediaGalleryApiController extends Controller
     private function authorizeSpace(Space $space)
     {
         if (!$space->hasMember(Auth::id())) abort(403);
+    }
+
+    private function spacePayload(Space $space): array
+    {
+        return [
+            'id' => $space->id,
+            'slug' => $space->slug,
+            'title' => $space->title,
+        ];
     }
 }
