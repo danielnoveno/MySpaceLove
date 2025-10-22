@@ -13,6 +13,10 @@ export default function GuestLayout({ children }) {
             <div className="mt-6 w-full overflow-hidden bg-white px-6 py-4 shadow-md sm:max-w-md sm:rounded-lg">
                 {children}
             </div>
+
+            <footer className="py-4 text-center text-sm text-gray-500">
+                Made with ❤️ by Peng for Winnie &copy; {new Date().getFullYear()}
+            </footer>
         </div>
     );
 }

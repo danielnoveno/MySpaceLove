@@ -171,6 +171,10 @@ export default function AuthenticatedLayout({ header, children }) {
             )}
 
             <main>{children}</main>
+
+            <footer className="py-4 text-center text-sm text-gray-500">
+                Made with ❤️ by Peng for Winnie &copy; {new Date().getFullYear()}
+            </footer>
         </div>
     );
 }

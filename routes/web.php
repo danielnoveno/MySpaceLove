@@ -30,6 +30,10 @@ Route::get('/', function () {
     return redirect('/login');
 });
 
+Route::get('/about', function () {
+    return Inertia::render('About.jsx');
+})->name('about');
+
 Route::get('/location/{space:slug}', [LocationController::class, 'publicView'])->name('location.public');
 Route::get('/surprise/story', function () {
     return Inertia::render('Surprise/StoryBook');

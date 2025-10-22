@@ -17,7 +17,7 @@
 
 ---
 
-**LoveSpace** is a modern web application designed to help long-distance relationship (LDR) couples feel closer than ever. With interactive and personal features, LoveSpace becomes a digital home for every couple to share stories, plan for the future, and celebrate their love every day.
+**LoveSpace** is more than just a web application; it's a heartfelt tribute, born from Peng's profound longing for Winnie. This digital sanctuary was created as a special birthday gift, a testament to a love that transcends distance. Here, Peng and Winnie can forever share their stories, experiences, and dreams, ensuring their bond remains vibrant and their hearts connected, no matter how many miles lie between them.
 
 ## ✨ Features
 

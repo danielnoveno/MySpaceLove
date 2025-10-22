@@ -65,6 +65,9 @@
     </div>
     <div class="right-container">
       <end-control />
+      <div class="copyright-text">
+        Made by Peng for Winnie
+      </div>
     </div>
   </div>
 </template>
@@ -137,6 +140,11 @@ function handleControlClick(name: string) {
     display: flex;
     align-items: center;
     height: 100%;
+    .copyright-text {
+      margin-left: 16px;
+      font-size: 14px;
+      color: var(--font-color-4);
+    }
   }
 }
 </style>
