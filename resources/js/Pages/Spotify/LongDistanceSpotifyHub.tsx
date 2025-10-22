@@ -632,8 +632,14 @@ export default function LongDistanceSpotifyHub({ space }: Props) {
                                 <div>
                                     <p className="text-xs uppercase tracking-[0.28em] text-amber-400">Integrasi berikutnya</p>
                                     <ul className="mt-2 space-y-2 text-sm text-amber-700">
-                                        <li>- Tambah kapsul lewat `POST /spaces/{slug}/spotify/capsules`.</li>
-                                        <li>- Jadwalkan kejutan via `POST /spaces/{slug}/spotify/surprises`.</li>
+                                        <li>
+                                            - Tambah kapsul lewat{' '}
+                                            <code>{`POST /spaces/${space.slug}/spotify/capsules`}</code>.
+                                        </li>
+                                        <li>
+                                            - Jadwalkan kejutan via{' '}
+                                            <code>{`POST /spaces/${space.slug}/spotify/surprises`}</code>.
+                                        </li>
                                         <li>- Otomatiskan reminder tahunan dari data kapsul.</li>
                                     </ul>
                                 </div>
