@@ -1,61 +1,133 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# MySpaceLove
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+MySpaceLove is a relationship operating system built on Laravel, Inertia, and React. It helps couples build a shared digital space filled with memories, rituals, and surprises through collaborative tools such as mood-based daily messages, shared countdowns, Spotify-powered listening rooms, multimedia journals, and private watch parties.
 
-## About Laravel
+## Table of Contents
+- [Features](#features)
+- [Tech Stack](#tech-stack)
+- [Getting Started](#getting-started)
+- [Environment Configuration](#environment-configuration)
+- [Running the App](#running-the-app)
+- [Queues & Scheduled Jobs](#queues--scheduled-jobs)
+- [Testing](#testing)
+- [Troubleshooting](#troubleshooting)
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+## Features
+- **Shared Spaces** – Create a private space, invite a partner, and manage partnership status, invitations, and separation flows. Spaces drive routing for every feature module.
+- **Couple Dashboard** – Surface AI-generated daily love notes, quick actions, upcoming events, and recent memories tailored to the current space. Daily notes are generated with Google Gemini when partner data is complete.
+- **Love Timeline & Journals** – Capture milestones and longer-form reflections with rich cards and filters. Timeline entries and journal posts are editable with Inertia-powered forms and Filament resources.
+- **Media Gallery** – Upload and curate photos or documents with inline preview support. Files are stored via Laravel's filesystem and rendered through a signed preview route.
+- **Countdowns & Events** – Track days until anniversaries, trips, or personal goals. Countdowns surface on the dashboard and can be managed through dedicated CRUD screens.
+- **Surprise Notes & Docs** – Leave surprise letters, storybooks, and shared documents. Public surprise routes allow sharing curated memories without exposing the entire space.
+- **Location Memories** – Pin shared locations on an interactive Leaflet map and revisit them from anywhere.
+- **Spotify Companion Hub** – Connect a shared Spotify account to view playlist analytics, mood snapshots, surprise drops, and memory capsules. Authorization flows through Spotify OAuth.
+- **Daily Messages** – Configure personalized, auto-generated daily messages using Gemini. Partners can regenerate messages or create manual entries.
+- **Watch Parties & Rooms** – Launch synchronized video rooms using Daily.co or Agora, with optional chat and host controls via the `Room` pages and Daily API integration.
+- **Filament Admin Panel** – Manage spaces, journals, timelines, media, themes, and surprise notes through Filament resources out of the box.
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+## Tech Stack
+- **Backend:** Laravel 12, PHP 8.2, Laravel Sanctum, queue workers (database driver)
+- **Frontend:** Inertia.js, React 18, TypeScript, Tailwind CSS, Headless UI, Lucide icons
+- **Tooling:** Vite, Laravel Pint, PHPUnit, Laravel Sail (optional), Composer scripts with Concurrently for multi-process dev
+- **Integrations:** Google Gemini API for message generation, Spotify Web API, Daily.co REST API, optional Agora SDK, Leaflet for maps
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+## Getting Started
+1. **Clone the repository**
+   ```bash
+   git clone https://github.com/your-org/MySpaceLove.git
+   cd MySpaceLove
+   ```
+2. **Install PHP dependencies**
+   ```bash
+   composer install
+   ```
+3. **Install Node dependencies**
+   ```bash
+   npm install
+   ```
+4. **Copy the environment file**
+   ```bash
+   cp .env.example .env
+   ```
+5. **Generate the application key**
+   ```bash
+   php artisan key:generate
+   ```
+6. **Run migrations and seeders**
+   ```bash
+   php artisan migrate --seed
+   ```
+   The seeders create an initial admin user (`admin@example.com` / `password123`) and a demo space with default themes.
+7. **Link the storage directory** (required for media previews)
+   ```bash
+   php artisan storage:link
+   ```
 
-## Learning Laravel
+> **Note:** The project defaults to SQLite. Update `.env` if you prefer MySQL or Postgres.
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+## Environment Configuration
+Adjust the following keys in `.env` to unlock all integrations:
 
-You may also try the [Laravel Bootcamp](https://bootcamp.laravel.com), where you will be guided through building a modern Laravel application from scratch.
+| Key | Description |
+| --- | --- |
+| `APP_URL` | Base URL for Inertia responses and asset generation. |
+| `QUEUE_CONNECTION` | Defaults to `database`; ensure migrations are run for queue tables. |
+| `GEMINI_API_KEY` | Required for AI-generated daily love messages. |
+| `DAILY_API_KEY`, `DAILY_BASE_URL` | Required for Daily.co room creation used by the watch party feature. |
+| `AGORA_APP_ID`, `AGORA_APP_CERTIFICATE` | Optional Agora video integration for alternative real-time rooms. |
+| `MAIL_*` | Configure transactional emails (invitations, notifications). Mailtrap values are provided for local development. |
+| `VITE_APP_NAME` | Propagated to the React frontend. |
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+You can also customize logging retention via `LOG_DAILY_DAYS` and AI scheduling with `DAILY_MESSAGE_TIMEZONE` / `DAILY_MESSAGE_AUTO_TIME` in `config/love.php`.
 
-## Laravel Sponsors
+## Running the App
+### Local development
+Run the Laravel HTTP server, queue listener, log viewer, and Vite dev server concurrently:
+```bash
+composer run dev
+```
+This script uses `concurrently` to start:
+- `php artisan serve`
+- `php artisan queue:listen --tries=1`
+- `php artisan pail --timeout=0`
+- `npm run dev`
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+Alternatively, you can run them manually in separate terminals if you only need a subset during development.
 
-### Premium Partners
+### Production build
+```bash
+npm run build
+php artisan config:cache
+php artisan route:cache
+php artisan queue:restart
+```
+Deploy the generated assets under `public/build` and ensure a queue worker is active.
 
-- **[Vehikl](https://vehikl.com)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Redberry](https://redberry.international/laravel-development)**
-- **[Active Logic](https://activelogic.com)**
+## Queues & Scheduled Jobs
+- The application stores jobs in the database queue. Start a worker with:
+  ```bash
+  php artisan queue:work
+  ```
+- Daily message auto-generation should be scheduled through Laravel's scheduler. Example entry for `app/Console/Kernel.php`:
+  ```php
+  $schedule->command('daily-messages:generate')->dailyAt(config('love.auto_generate_time'));
+  ```
+  Ensure your server triggers `php artisan schedule:run` every minute via cron.
 
-## Contributing
+## Testing
+- **Backend:**
+  ```bash
+  php artisan test
+  ```
+- **Linting:**
+  ```bash
+  ./vendor/bin/pint
+  ```
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+## Troubleshooting
+- **Missing AI messages:** Verify `GEMINI_API_KEY` is set and that both partners are linked to the space. Check `storage/logs/laravel.log` for Gemini API warnings.
+- **Video room errors:** Ensure `DAILY_API_KEY` or Agora credentials are present and that queue workers are running to process asynchronous callbacks.
+- **Storage 404s:** Re-run `php artisan storage:link` and confirm files exist under `storage/app/public`.
+- **Invitation issues:** Confirm queue tables exist (`php artisan queue:table`) and migrate if necessary, since invitations rely on queued mail.
 
-## Code of Conduct
-
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
-
-## Security Vulnerabilities
-
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
-
-## License
-
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+Enjoy building memorable shared experiences with MySpaceLove! 💞
