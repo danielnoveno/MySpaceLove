@@ -944,7 +944,7 @@ export default function LongDistanceSpotifyHub({ space }: Props) {
                                         </p>
                                     )}
                                 </div>
-                                <div>
+                                {/* <div>
                                     <p className="text-xs uppercase tracking-[0.28em] text-amber-400">Integrasi berikutnya</p>
                                     <ul className="mt-2 space-y-2 text-sm text-amber-700">
                                         <li>
@@ -957,7 +957,7 @@ export default function LongDistanceSpotifyHub({ space }: Props) {
                                         </li>
                                         <li>- Otomatiskan reminder tahunan dari data kapsul.</li>
                                     </ul>
-                                </div>
+                                </div> */}
                                 <div className="rounded-2xl border border-dashed border-amber-200 bg-amber-50 p-4 text-xs text-amber-600">
                                     Token OAuth sudah tersimpan otomatis setelah kamu menghubungkan Spotify. Gunakan endpoint di atas atau job terjadwal untuk memicu pengalaman tambahan.
                                 </div>
