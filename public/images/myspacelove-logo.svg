@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-labelledby="title">
+  <title>MySpaceLove Heart</title>
+  <defs>
+    <linearGradient id="myspaceloveGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#fdf2f8" />
+      <stop offset="45%" stop-color="#ec4899" />
+      <stop offset="100%" stop-color="#fb923c" />
+    </linearGradient>
+    <filter id="softGlow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur in="SourceAlpha" stdDeviation="3" result="blur" />
+      <feOffset in="blur" dx="0" dy="3" result="offsetBlur" />
+      <feComponentTransfer>
+        <feFuncA type="linear" slope="0.35" />
+      </feComponentTransfer>
+      <feMerge>
+        <feMergeNode in="offsetBlur" />
+        <feMergeNode in="SourceGraphic" />
+      </feMerge>
+    </filter>
+  </defs>
+  <path
+    d="M32 54c-1.1 0-2.2-.33-3.16-.97C18.38 45.83 8 37.22 8 24.72 8 16.36 14.36 10 22.72 10c3.77 0 7.37 1.5 10.03 4.16L32 13.5l-.75.66C33.9 11.5 37.5 10 41.28 10 49.64 10 56 16.36 56 24.72c0 12.5-10.38 21.11-20.84 28.31-.96.64-2.06.97-3.16.97Z"
+    fill="url(#myspaceloveGradient)"
+    filter="url(#softGlow)"
+  />
+</svg>

@@ -110,6 +110,18 @@
         font-family: var(--uikit-font-family, 'Figtree', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif) !important;
       }
 
+      .logo-container {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .custom-logo {
+        height: 46px;
+        width: auto;
+        filter: drop-shadow(0 12px 30px rgba(236, 72, 153, 0.22));
+      }
+
       .myspace-navbar {
         position: sticky;
         top: 0;
@@ -225,6 +237,92 @@
             }
           });
         });
+      })();
+    </script>
+    <script>
+      (function enhanceDisplayCapture() {
+        if (!navigator.mediaDevices || typeof navigator.mediaDevices.getDisplayMedia !== 'function') {
+          return;
+        }
+
+        const originalGetDisplayMedia = navigator.mediaDevices.getDisplayMedia.bind(navigator.mediaDevices);
+
+        function deepMerge(base, override) {
+          const output = Array.isArray(base) ? base.slice() : { ...base };
+
+          if (!override || typeof override !== 'object') {
+            return output;
+          }
+
+          Object.keys(override).forEach(function (key) {
+            const overrideValue = override[key];
+            if (
+              overrideValue &&
+              typeof overrideValue === 'object' &&
+              !Array.isArray(overrideValue) &&
+              !(overrideValue instanceof Date)
+            ) {
+              const baseValue = Object.prototype.hasOwnProperty.call(output, key) ? output[key] : {};
+              output[key] = deepMerge(baseValue, overrideValue);
+            } else {
+              output[key] = overrideValue;
+            }
+          });
+
+          return output;
+        }
+
+        navigator.mediaDevices.getDisplayMedia = async function patchedGetDisplayMedia(constraints) {
+          const baseConstraints = {
+            video: {
+              cursor: 'always',
+              logicalSurface: true,
+              preferCurrentTab: false,
+              surfaceSwitching: 'include',
+            },
+            audio: {
+              autoGainControl: false,
+              echoCancellation: false,
+              noiseSuppression: false,
+              suppressLocalAudioPlayback: false,
+              systemAudio: 'include',
+            },
+          };
+
+          let normalized = {};
+          if (constraints && typeof constraints === 'object') {
+            normalized = { ...constraints };
+          }
+
+          function buildTrackConfig(baseValue, incomingValue) {
+            if (incomingValue === false) {
+              return false;
+            }
+
+            if (incomingValue === true || incomingValue === undefined) {
+              return { ...baseValue };
+            }
+
+            if (incomingValue && typeof incomingValue === 'object') {
+              return deepMerge(baseValue, incomingValue);
+            }
+
+            return { ...baseValue };
+          }
+
+          const merged = {
+            ...normalized,
+            video: buildTrackConfig(baseConstraints.video, normalized.video),
+            audio: buildTrackConfig(baseConstraints.audio, normalized.audio),
+          };
+
+          try {
+            return await originalGetDisplayMedia(merged);
+          } catch (error) {
+            console.warn('Enhanced display capture failed, falling back to original constraints', error);
+            return originalGetDisplayMedia(constraints ?? {});
+          }
+        };
       })();
     </script>
     <script>
