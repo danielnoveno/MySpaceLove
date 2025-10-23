@@ -7,14 +7,18 @@ use Illuminate\Database\QueryException;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Log;
 use App\Http\Controllers\Controller;
+use App\Mail\DailyMessageMail;
 use App\Models\DailyMessage;
 use App\Models\Space;
+use App\Models\User;
 use App\Services\DailyMessageGenerator;
 use Gemini;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Mail;
 use Inertia\Inertia;
+use Throwable;
 
 class DailyMessageApiController extends Controller
 {
@@ -122,6 +126,45 @@ class DailyMessageApiController extends Controller
         }
 
         return response()->json(['message' => $dailyMessage]);
+    }
+
+    public function sendEmail(Request $request, Space $space, $id)
+    {
+        $this->authorizeSpace($space);
+
+        $dailyMessage = DailyMessage::where('space_id', $space->id)
+            ->where('id', $id)
+            ->firstOrFail();
+
+        $partner = $this->resolvePartnerUser($space);
+
+        if (!$partner || !$this->isFilled($partner->email)) {
+            return response()->json([
+                'error' => trans('app.daily_messages.feedback.email_partner_missing'),
+            ], 422);
+        }
+
+        $sender = Auth::user();
+
+        try {
+            Mail::to($partner->email)->send(
+                new DailyMessageMail($space, $dailyMessage, $sender, $partner)
+            );
+        } catch (Throwable $exception) {
+            Log::error('Failed to send daily message email.', [
+                'space_id' => $space->id,
+                'message_id' => $dailyMessage->id,
+                'error' => $exception->getMessage(),
+            ]);
+
+            return response()->json([
+                'error' => trans('app.daily_messages.feedback.email_failed'),
+            ], 500);
+        }
+
+        return response()->json([
+            'message' => trans('app.daily_messages.feedback.email_sent'),
+        ]);
     }
 
     public function getTodayMessage(Space $space)
@@ -295,6 +338,23 @@ class DailyMessageApiController extends Controller
         }
 
         return [$fromName, $partnerName];
+    }
+
+    private function resolvePartnerUser(Space $space): ?User
+    {
+        $space->loadMissing(['userOne', 'userTwo']);
+
+        $currentUserId = Auth::id();
+
+        if ($currentUserId && $currentUserId === $space->user_one_id) {
+            return $space->userTwo;
+        }
+
+        if ($currentUserId && $currentUserId === $space->user_two_id) {
+            return $space->userOne;
+        }
+
+        return null;
     }
 
     private function spaceHasCouple(Space $space): bool

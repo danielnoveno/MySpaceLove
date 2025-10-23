@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 import { useTranslation } from "@/hooks/useTranslation";
 import { replacePlaceholders } from "@/utils/translation";
+import { PageProps } from "@/types";
 
 interface DashboardData {
     timelineCount: number;
@@ -91,15 +92,17 @@ type DashboardTranslation = {
 };
 
 export default function Dashboard({ dashboardData, spaceContext }: Props) {
-    const { props } = usePage<{
-        currentSpace?: {
-            id: number;
-            slug: string;
-            title: string;
-            has_partner?: boolean;
-            is_owner?: boolean;
-        } | null;
-    }>();
+    const { props } = usePage<
+        PageProps & {
+            currentSpace?: {
+                id: number;
+                slug: string;
+                title: string;
+                has_partner?: boolean;
+                is_owner?: boolean;
+            } | null;
+        }
+    >();
 
     const currentSpace = props.currentSpace ?? spaceContext;
     const spaceSlug = currentSpace.slug;

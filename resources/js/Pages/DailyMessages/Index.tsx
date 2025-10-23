@@ -10,6 +10,7 @@ import PrimaryButton from "@/Components/PrimaryButton";
 import SecondaryButton from "@/Components/SecondaryButton";
 import { useCurrentSpace } from "@/hooks/useCurrentSpace";
 import { useTranslation } from "@/hooks/useTranslation";
+import axios from "axios";
 
 const ExpandableText = ({
     text,
@@ -70,6 +71,7 @@ export default function DailyMessageIndex({
                 search?: string;
                 add_manual?: string;
                 regenerate_ai?: string;
+                send_email?: string;
             };
             empty?: string;
             modal?: {
@@ -80,6 +82,11 @@ export default function DailyMessageIndex({
             expand?: {
                 more?: string;
                 less?: string;
+            };
+            feedback?: {
+                email_sent?: string;
+                email_failed?: string;
+                email_partner_missing?: string;
             };
         }>("daily_messages");
     const { t: tCommon } = useTranslation("common");
@@ -96,6 +103,51 @@ export default function DailyMessageIndex({
     const [searchDate, setSearchDate] = useState(
         filters.date || ""
     );
+    const [sendingEmailId, setSendingEmailId] = useState<string | null>(null);
+
+    const handleSendEmail = async (message: DailyMessage) => {
+        if (sendingEmailId !== null) {
+            return;
+        }
+
+        const messageId = String(message.id);
+        setSendingEmailId(messageId);
+
+        try {
+            const response = await axios.post(
+                route("daily.email", { space: spaceSlug, id: message.id }),
+            );
+
+            const successMessage =
+                response.data?.message ??
+                dailyStrings.feedback?.email_sent ??
+                "Daily message sent to your partner's email!";
+
+            window.alert(successMessage);
+        } catch (error) {
+            let fallbackMessage =
+                dailyStrings.feedback?.email_failed ??
+                "Could not send email. Please try again later.";
+
+            if (axios.isAxiosError(error)) {
+                const partnerMissingMessage =
+                    dailyStrings.feedback?.email_partner_missing ??
+                    "Connect your partner and make sure their email is available before sending.";
+
+                if (error.response?.status === 422) {
+                    fallbackMessage =
+                        (error.response.data?.error as string | undefined) ??
+                        partnerMissingMessage;
+                } else if (typeof error.response?.data?.error === "string") {
+                    fallbackMessage = error.response.data.error;
+                }
+            }
+
+            window.alert(fallbackMessage);
+        } finally {
+            setSendingEmailId(null);
+        }
+    };
 
     const sanitize = (text: string) => {
         let sanitizedText = text
@@ -210,17 +262,37 @@ export default function DailyMessageIndex({
                                     <button
                                         onClick={() =>
                                             router.post(
-                                                route("daily.regenerate", {
-                                                    space: spaceSlug,
-                                                }),
-                                                { date: messages[i].date },
-                                            )
-                                        }
+                                            route("daily.regenerate", {
+                                                space: spaceSlug,
+                                            }),
+                                            { date: messages[i].date },
+                                        )
+                                    }
 
                                         className="px-3 py-1 text-sm rounded-lg bg-green-500 hover:bg-green-600 text-white transition"
                                     >
                                         {dailyStrings.actions?.regenerate_ai ??
                                             tCommon("actions.regenerate", "Regenerate AI")}
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => void handleSendEmail(messages[i])}
+                                        className={`px-3 py-1 text-sm rounded-lg bg-blue-500 text-white transition hover:bg-blue-600 ${
+                                            sendingEmailId ===
+                                            String(messages[i].id)
+                                                ? "opacity-70 cursor-not-allowed"
+                                                : ""
+                                        }`}
+                                        disabled={
+                                            sendingEmailId ===
+                                            String(messages[i].id)
+                                        }
+                                    >
+                                        {dailyStrings.actions?.send_email ??
+                                            tCommon(
+                                                "actions.send_email",
+                                                "Send to Email",
+                                            )}
                                     </button>
                                 </div>
                             </animated.div>
@@ -305,7 +377,7 @@ export default function DailyMessageIndex({
 }
 
 interface DailyMessage {
-    id: string;
+    id: string | number;
     date: string;
     message: string;
     searchKeyword?: string;

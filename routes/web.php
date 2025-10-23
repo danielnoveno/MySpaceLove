@@ -155,6 +155,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/spaces/{space:slug}/daily-messages/{id}/edit', [DailyMessageApiController::class, 'edit'])->name('daily.edit');
         Route::put('/spaces/{space:slug}/daily-messages/{id}', [DailyMessageApiController::class, 'update'])->name('daily.update');
         Route::post('/spaces/{space:slug}/daily-messages/regenerate', [DailyMessageApiController::class, 'regenerate'])->name('daily.regenerate');
+        Route::post('/spaces/{space:slug}/daily-messages/{id}/email', [DailyMessageApiController::class, 'sendEmail'])->name('daily.email');
 
         // Countdown Routes
         Route::get('/spaces/{space:slug}/countdowns', [CountdownApiController::class, 'index'])->name('countdown.index');
