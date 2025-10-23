@@ -228,6 +228,210 @@
       })();
     </script>
     <script>
+      (function () {
+        const MESSAGE_SOURCE = 'tuiroomkit';
+        const PARENT_SOURCE = 'myspacelove';
+        const OPEN_TYPE = 'schedule:open';
+        const CLOSE_TYPE = 'schedule:close';
+        const KEYWORDS = ['schedule', 'scheduled', 'jadwal', 'jadwalkan'];
+        let activeButton = null;
+
+        function textMatches(value) {
+          if (!value) {
+            return false;
+          }
+
+          const normalized = String(value).trim().toLowerCase();
+          if (!normalized) {
+            return false;
+          }
+
+          return KEYWORDS.some((keyword) => normalized.includes(keyword));
+        }
+
+        function matchesScheduleElement(element) {
+          if (!(element instanceof HTMLElement)) {
+            return false;
+          }
+
+          if (element.dataset.myspaceScheduleAttached === '1') {
+            return true;
+          }
+
+          const role = element.getAttribute('role');
+          const isButtonTag = element.tagName === 'BUTTON';
+          const isButtonRole = role && role.toLowerCase() === 'button';
+          const isFocusable = element.tabIndex >= 0;
+
+          if (!isButtonTag && !isButtonRole && !isFocusable) {
+            return false;
+          }
+
+          if (textMatches(element.innerText) || textMatches(element.textContent)) {
+            return true;
+          }
+
+          if (textMatches(element.getAttribute('aria-label'))) {
+            return true;
+          }
+
+          if (textMatches(element.getAttribute('title'))) {
+            return true;
+          }
+
+          if (textMatches(element.getAttribute('data-tooltip'))) {
+            return true;
+          }
+
+          const dataTestId = element.getAttribute('data-testid');
+          if (dataTestId && dataTestId.toLowerCase().includes('schedule')) {
+            return true;
+          }
+
+          const className = element.className;
+          if (typeof className === 'string' && className.toLowerCase().includes('schedule')) {
+            return true;
+          }
+
+          return false;
+        }
+
+        function openSchedule(button) {
+          if (!(button instanceof HTMLElement)) {
+            return;
+          }
+
+          if (activeButton && activeButton !== button) {
+            activeButton.removeAttribute('data-myspace-schedule-active');
+          }
+
+          activeButton = button;
+          activeButton.dataset.myspaceScheduleActive = '1';
+          document.documentElement.classList.add('myspace-schedule-open');
+
+          try {
+            window.parent && window.parent.postMessage({ source: MESSAGE_SOURCE, type: OPEN_TYPE }, window.location.origin);
+          } catch (error) {
+            console.warn('Unable to notify parent about schedule trigger', error);
+          }
+        }
+
+        function attachScheduleHandler(element) {
+          if (!(element instanceof HTMLElement)) {
+            return;
+          }
+
+          if (element.dataset.myspaceScheduleAttached === '1') {
+            return;
+          }
+
+          element.dataset.myspaceScheduleAttached = '1';
+          element.dataset.myspaceScheduleButton = '1';
+
+          const handleTrigger = function (event) {
+            event.preventDefault();
+            if (typeof event.stopImmediatePropagation === 'function') {
+              event.stopImmediatePropagation();
+            }
+            event.stopPropagation();
+            openSchedule(element);
+          };
+
+          element.addEventListener('click', handleTrigger, true);
+          element.addEventListener(
+            'keydown',
+            function (event) {
+              if (event.key === 'Enter' || event.key === ' ') {
+                handleTrigger(event);
+              }
+            },
+            true,
+          );
+        }
+
+        function scanForScheduleButtons(root) {
+          if (!(root instanceof HTMLElement)) {
+            return;
+          }
+
+          const candidates = root.querySelectorAll('button, [role="button"], [tabindex="0"], [data-testid], [class*="schedule"]');
+          candidates.forEach((candidate) => {
+            if (matchesScheduleElement(candidate)) {
+              attachScheduleHandler(candidate);
+            }
+          });
+
+          if (matchesScheduleElement(root)) {
+            attachScheduleHandler(root);
+          }
+        }
+
+        const observer = new MutationObserver((mutations) => {
+          mutations.forEach((mutation) => {
+            if (mutation.type === 'childList') {
+              mutation.addedNodes.forEach((node) => {
+                if (node instanceof HTMLElement) {
+                  scanForScheduleButtons(node);
+                }
+              });
+
+              mutation.removedNodes.forEach((node) => {
+                if (activeButton && node instanceof HTMLElement && node.contains(activeButton)) {
+                  activeButton = null;
+                  document.documentElement.classList.remove('myspace-schedule-open');
+                }
+              });
+            }
+
+            if (mutation.type === 'attributes' && mutation.target instanceof HTMLElement) {
+              scanForScheduleButtons(mutation.target);
+            }
+          });
+        });
+
+        document.addEventListener('DOMContentLoaded', function () {
+          scanForScheduleButtons(document.body);
+          observer.observe(document.body, {
+            childList: true,
+            subtree: true,
+            attributes: true,
+            attributeFilter: ['class', 'aria-label', 'title', 'data-tooltip'],
+          });
+        });
+
+        window.addEventListener('message', function (event) {
+          const expectedOrigin = window.location.origin;
+          if (event.origin !== expectedOrigin) {
+            return;
+          }
+
+          const payload = event.data;
+          if (!payload || typeof payload !== 'object') {
+            return;
+          }
+
+          if (payload.source !== PARENT_SOURCE) {
+            return;
+          }
+
+          if (payload.type === CLOSE_TYPE) {
+            document.documentElement.classList.remove('myspace-schedule-open');
+            if (activeButton) {
+              activeButton.removeAttribute('data-myspace-schedule-active');
+            }
+            return;
+          }
+
+          if (payload.type === OPEN_TYPE) {
+            document.documentElement.classList.add('myspace-schedule-open');
+            if (activeButton) {
+              activeButton.dataset.myspaceScheduleActive = '1';
+            }
+          }
+        });
+      })();
+    </script>
+    <script>
       const translationMap = {
         'Enter Room': 'Masuk Ruangan',
         'Join Room': 'Gabung Ruangan',

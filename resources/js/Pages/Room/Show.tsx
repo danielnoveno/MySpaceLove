@@ -1,6 +1,13 @@
 import { Head, useForm, usePage } from "@inertiajs/react";
-import { FormEvent, useEffect, useMemo } from "react";
-import { Calendar, Clock, MailCheck, Sparkles } from "lucide-react";
+import {
+    FormEvent,
+    useCallback,
+    useEffect,
+    useMemo,
+    useRef,
+    useState,
+} from "react";
+import { Calendar, Clock, MailCheck, Sparkles, X, BellRing } from "lucide-react";
 import { PageProps } from "@/types";
 
 interface NobarSchedulePayload {
@@ -22,6 +29,10 @@ interface Props {
 }
 
 const TUIROOMKIT_ENTRY_PATH = "/tuiroomkit/index.html";
+const CHILD_MESSAGE_SOURCE = "tuiroomkit";
+const PARENT_MESSAGE_SOURCE = "myspacelove";
+const SCHEDULE_OPEN_TYPE = "schedule:open";
+const SCHEDULE_CLOSE_TYPE = "schedule:close";
 
 function formatDateTime(value?: string | null): string {
     if (!value) {
@@ -109,6 +120,11 @@ export default function Room({ spaceId, space, schedules = [] }: Props) {
         ? String(currentUser.profile_photo_url)
         : undefined;
 
+    const iframeRef = useRef<HTMLIFrameElement | null>(null);
+    const [isScheduleOpen, setScheduleOpen] = useState(false);
+    const [toastMessage, setToastMessage] = useState<string | null>(null);
+    const toastTimeoutRef = useRef<number | undefined>(undefined);
+
     const sortedSchedules = useMemo(() => {
         return [...schedules]
             .filter((item) => Boolean(item))
@@ -130,7 +146,7 @@ export default function Room({ spaceId, space, schedules = [] }: Props) {
         });
     }, [sortedSchedules]);
 
-    const { data, setData, post, processing, errors, reset, recentlySuccessful } = useForm({
+    const { data, setData, post, processing, errors, reset } = useForm({
         title: "",
         scheduled_for: "",
         description: "",
@@ -150,6 +166,88 @@ export default function Room({ spaceId, space, schedules = [] }: Props) {
         }
     }, [data.timezone, setData]);
 
+    const closeSchedule = useCallback(() => {
+        setScheduleOpen(false);
+    }, []);
+
+    useEffect(() => {
+        const expectedOrigin = typeof window !== "undefined" ? window.location.origin : undefined;
+
+        function handleMessage(event: MessageEvent) {
+            if (expectedOrigin && event.origin !== expectedOrigin) {
+                return;
+            }
+
+            const payload = event.data;
+            if (!payload || typeof payload !== "object") {
+                return;
+            }
+
+            if (payload.source !== CHILD_MESSAGE_SOURCE) {
+                return;
+            }
+
+            if (payload.type === SCHEDULE_OPEN_TYPE) {
+                setScheduleOpen(true);
+            }
+
+            if (payload.type === SCHEDULE_CLOSE_TYPE) {
+                setScheduleOpen(false);
+            }
+        }
+
+        window.addEventListener("message", handleMessage);
+
+        return () => {
+            window.removeEventListener("message", handleMessage);
+        };
+    }, []);
+
+    useEffect(() => {
+        if (!isScheduleOpen) {
+            return;
+        }
+
+        function handleKeyDown(event: KeyboardEvent) {
+            if (event.key === "Escape") {
+                event.preventDefault();
+                closeSchedule();
+            }
+        }
+
+        window.addEventListener("keydown", handleKeyDown);
+
+        return () => {
+            window.removeEventListener("keydown", handleKeyDown);
+        };
+    }, [closeSchedule, isScheduleOpen]);
+
+    useEffect(() => {
+        const frame = iframeRef.current?.contentWindow;
+        const targetOrigin = typeof window !== "undefined" ? window.location.origin : "*";
+
+        if (!frame) {
+            return;
+        }
+
+        frame.postMessage(
+            {
+                source: PARENT_MESSAGE_SOURCE,
+                type: isScheduleOpen ? SCHEDULE_OPEN_TYPE : SCHEDULE_CLOSE_TYPE,
+            },
+            targetOrigin,
+        );
+    }, [isScheduleOpen]);
+
+    useEffect(() => {
+        return () => {
+            if (toastTimeoutRef.current) {
+                window.clearTimeout(toastTimeoutRef.current);
+                toastTimeoutRef.current = undefined;
+            }
+        };
+    }, []);
+
     const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
         event.preventDefault();
 
@@ -165,6 +263,18 @@ export default function Room({ spaceId, space, schedules = [] }: Props) {
                 preserveScroll: true,
                 onSuccess: () => {
                     reset("title", "scheduled_for", "description");
+                    closeSchedule();
+
+                    if (toastTimeoutRef.current) {
+                        window.clearTimeout(toastTimeoutRef.current);
+                        toastTimeoutRef.current = undefined;
+                    }
+
+                    setToastMessage("Jadwal berhasil disimpan dan email pengingat telah dikirim.");
+                    toastTimeoutRef.current = window.setTimeout(() => {
+                        setToastMessage(null);
+                        toastTimeoutRef.current = undefined;
+                    }, 6000);
                 },
             },
         );
@@ -191,37 +301,62 @@ export default function Room({ spaceId, space, schedules = [] }: Props) {
     return (
         <>
             <Head title={`Nobar ${resolvedSpaceTitle}`} />
-            <div className="min-h-screen bg-neutral-900 flex flex-col">
-                <section className="w-full bg-gradient-to-b from-pink-50 via-white to-purple-50">
-                    <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-                        <div className="flex flex-col gap-10">
-                            <div className="flex flex-col gap-3 text-center">
-                                <span className="inline-flex items-center justify-center gap-2 text-sm font-semibold uppercase tracking-[0.32em] text-pink-500">
-                                    <Sparkles className="h-4 w-4" aria-hidden="true" />
-                                    Nobar Space
-                                </span>
-                                <h1 className="text-3xl sm:text-4xl font-bold text-slate-900">
-                                    Jadwalkan nobar dengan {resolvedSpaceTitle}
-                                </h1>
-                                <p className="text-base text-slate-600 max-w-3xl mx-auto">
-                                    Buat pengingat nobar yang otomatis terkirim ke email kalian berdua. Tetap gunakan ruangan TUIRoomKit di bawah untuk streaming bareng seperti biasa.
-                                </p>
-                            </div>
 
-                            <div className="grid gap-8 lg:grid-cols-[minmax(0,360px)_minmax(0,1fr)]">
-                                <div className="bg-white rounded-3xl shadow-xl shadow-pink-100/60 border border-pink-100 p-6 sm:p-8">
-                                    <div className="flex items-center gap-3 mb-6">
-                                        <div className="h-10 w-10 rounded-full bg-pink-100 text-pink-600 flex items-center justify-center">
-                                            <Calendar className="h-5 w-5" aria-hidden="true" />
-                                        </div>
-                                        <div>
-                                            <h2 className="text-lg font-semibold text-slate-900">Buat Jadwal Nobar</h2>
-                                            <p className="text-sm text-slate-500">Undang pasanganmu dengan reminder otomatis via email.</p>
-                                        </div>
+            {toastMessage && (
+                <div className="fixed inset-x-0 top-6 z-40 flex justify-center px-4">
+                    <div className="flex items-center gap-3 rounded-full bg-emerald-600/95 px-5 py-3 text-sm font-medium text-white shadow-xl shadow-emerald-300/40">
+                        <BellRing className="h-4 w-4" aria-hidden="true" />
+                        <span>{toastMessage}</span>
+                        <button
+                            type="button"
+                            onClick={() => setToastMessage(null)}
+                            className="rounded-full bg-white/20 p-1 hover:bg-white/30 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/60"
+                            aria-label="Tutup notifikasi"
+                        >
+                            <X className="h-3.5 w-3.5" aria-hidden="true" />
+                        </button>
+                    </div>
+                </div>
+            )}
+
+            {isScheduleOpen && (
+                <div
+                    className="fixed inset-0 z-40 flex items-center justify-center"
+                    role="dialog"
+                    aria-modal="true"
+                >
+                    <div className="absolute inset-0 bg-slate-950/70 backdrop-blur-sm" onClick={closeSchedule} />
+                    <div className="relative z-10 w-full max-w-5xl px-4 sm:px-6">
+                        <div className="relative overflow-hidden rounded-3xl border border-pink-200/60 bg-white shadow-2xl shadow-pink-200/50">
+                            <div className="absolute inset-x-0 top-0 h-32 bg-gradient-to-br from-pink-100 via-white to-transparent opacity-90" aria-hidden="true" />
+                            <div className="relative px-6 py-6 sm:px-8 sm:py-8">
+                                <div className="flex items-start justify-between gap-4">
+                                    <div className="flex flex-col gap-2">
+                                        <span className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.28em] text-pink-500">
+                                            <Sparkles className="h-3.5 w-3.5" aria-hidden="true" />
+                                            Nobar Scheduler
+                                        </span>
+                                        <h2 className="text-2xl font-semibold text-slate-900">Atur jadwal nobar untuk {resolvedSpaceTitle}</h2>
+                                        <p className="text-sm text-slate-500 max-w-xl">
+                                            Undangan email akan dikirim ke anggota space setelah jadwal disimpan. Kamu masih bisa memakai tombol Join/Create di TUIRoomKit seperti biasa.
+                                        </p>
                                     </div>
+                                    <button
+                                        type="button"
+                                        onClick={closeSchedule}
+                                        className="rounded-full bg-white/80 p-2 text-slate-500 shadow-sm ring-1 ring-slate-200 transition hover:text-slate-700 hover:ring-slate-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-pink-300"
+                                        aria-label="Tutup jadwal"
+                                    >
+                                        <X className="h-4 w-4" aria-hidden="true" />
+                                    </button>
+                                </div>
 
-                                    <form onSubmit={handleSubmit} className="space-y-5">
-                                        <div className="space-y-1">
+                                <div className="mt-6 grid gap-6 lg:grid-cols-[minmax(0,340px)_minmax(0,1fr)]">
+                                    <form
+                                        onSubmit={handleSubmit}
+                                        className="space-y-5 rounded-2xl border border-pink-100 bg-pink-50/50 p-5 shadow-inner shadow-pink-100"
+                                    >
+                                        <div className="space-y-1.5">
                                             <label htmlFor="nobar-title" className="text-sm font-medium text-slate-700">
                                                 Judul acara
                                             </label>
@@ -230,31 +365,28 @@ export default function Room({ spaceId, space, schedules = [] }: Props) {
                                                 type="text"
                                                 value={data.title}
                                                 onChange={(event) => setData("title", event.target.value)}
-                                                className="w-full rounded-xl border border-pink-100 bg-pink-50/60 px-4 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:border-pink-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-pink-100"
+                                                className="w-full rounded-xl border border-pink-200 bg-white px-4 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:border-pink-400 focus:outline-none focus:ring-2 focus:ring-pink-200"
                                                 placeholder="Movie night, konser online, dll"
+                                                autoFocus
                                             />
                                             {errors.title && (
                                                 <p className="text-sm text-rose-500">{errors.title}</p>
                                             )}
                                         </div>
 
-                                        <div className="space-y-1">
+                                        <div className="space-y-1.5">
                                             <label htmlFor="nobar-schedule" className="text-sm font-medium text-slate-700">
                                                 Waktu nobar
                                             </label>
-                                            <div className="flex items-center gap-3">
-                                                <div className="flex-1">
-                                                    <input
-                                                        id="nobar-schedule"
-                                                        type="datetime-local"
-                                                        value={data.scheduled_for}
-                                                        onChange={(event) => setData("scheduled_for", event.target.value)}
-                                                        className="w-full rounded-xl border border-pink-100 bg-pink-50/60 px-4 py-2.5 text-sm text-slate-900 focus:border-pink-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-pink-100"
-                                                    />
-                                                </div>
-                                            </div>
+                                            <input
+                                                id="nobar-schedule"
+                                                type="datetime-local"
+                                                value={data.scheduled_for}
+                                                onChange={(event) => setData("scheduled_for", event.target.value)}
+                                                className="w-full rounded-xl border border-pink-200 bg-white px-4 py-2.5 text-sm text-slate-900 focus:border-pink-400 focus:outline-none focus:ring-2 focus:ring-pink-200"
+                                            />
                                             {data.timezone && (
-                                                <p className="text-xs text-slate-400 flex items-center gap-1">
+                                                <p className="flex items-center gap-1 text-xs text-slate-400">
                                                     <Clock className="h-3.5 w-3.5" aria-hidden="true" />
                                                     Disimpan sebagai zona waktu <span className="font-medium">{data.timezone}</span>
                                                 </p>
@@ -264,7 +396,7 @@ export default function Room({ spaceId, space, schedules = [] }: Props) {
                                             )}
                                         </div>
 
-                                        <div className="space-y-1">
+                                        <div className="space-y-1.5">
                                             <label htmlFor="nobar-notes" className="text-sm font-medium text-slate-700">
                                                 Catatan tambahan (opsional)
                                             </label>
@@ -272,7 +404,7 @@ export default function Room({ spaceId, space, schedules = [] }: Props) {
                                                 id="nobar-notes"
                                                 value={data.description}
                                                 onChange={(event) => setData("description", event.target.value)}
-                                                className="w-full rounded-xl border border-pink-100 bg-pink-50/60 px-4 py-2.5 text-sm text-slate-900 focus:border-pink-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-pink-100"
+                                                className="w-full rounded-xl border border-pink-200 bg-white px-4 py-2.5 text-sm text-slate-900 focus:border-pink-400 focus:outline-none focus:ring-2 focus:ring-pink-200"
                                                 rows={3}
                                                 placeholder="Link film, daftar camilan, atau dress code lucu"
                                             />
@@ -281,95 +413,97 @@ export default function Room({ spaceId, space, schedules = [] }: Props) {
                                             )}
                                         </div>
 
-                                        <div className="flex flex-col gap-3">
+                                        <div className="flex items-center gap-3">
                                             <button
                                                 type="submit"
                                                 disabled={processing}
-                                                className="inline-flex items-center justify-center gap-2 rounded-full bg-gradient-to-r from-pink-500 via-pink-400 to-rose-400 px-6 py-2.5 text-sm font-semibold text-white shadow-lg shadow-pink-200 transition hover:shadow-xl hover:shadow-pink-300 disabled:cursor-not-allowed disabled:opacity-60"
+                                                className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-gradient-to-r from-pink-500 via-pink-400 to-rose-400 px-6 py-2.5 text-sm font-semibold text-white shadow-lg shadow-pink-200 transition hover:shadow-xl hover:shadow-pink-300 disabled:cursor-not-allowed disabled:opacity-60"
                                             >
                                                 <MailCheck className="h-4 w-4" aria-hidden="true" />
                                                 Kirim pengingat ke email
                                             </button>
-                                            {recentlySuccessful && (
-                                                <p className="text-sm text-emerald-600">Jadwal berhasil disimpan dan email pengingat telah dikirim.</p>
-                                            )}
                                         </div>
                                     </form>
-                                </div>
 
-                                <div className="bg-white rounded-3xl border border-pink-100/70 p-6 sm:p-8 shadow-lg shadow-pink-100/40">
-                                    <div className="flex items-start justify-between gap-4 mb-6">
-                                        <div>
-                                            <h2 className="text-lg font-semibold text-slate-900">Agenda nobar kalian</h2>
-                                            <p className="text-sm text-slate-500">Lihat jadwal terdekat dan siapkan popcornnya 🍿</p>
+                                    <div className="rounded-2xl border border-pink-100 bg-white/90 p-5 shadow-sm">
+                                        <div className="flex items-start justify-between gap-4">
+                                            <div>
+                                                <h3 className="text-base font-semibold text-slate-900">Agenda nobar kalian</h3>
+                                                <p className="text-sm text-slate-500">
+                                                    {sortedSchedules.length === 0
+                                                        ? "Belum ada jadwal nobar yang tersimpan."
+                                                        : "Lihat jadwal terdekat dan siapkan popcornnya 🍿"}
+                                                </p>
+                                            </div>
+                                            {nextSchedule && (
+                                                <span className="inline-flex items-center rounded-full bg-pink-100 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-pink-600">
+                                                    Jadwal terdekat
+                                                </span>
+                                            )}
                                         </div>
-                                        {nextSchedule && (
-                                            <span className="inline-flex items-center rounded-full bg-pink-100 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-pink-600">
-                                                Jadwal terdekat
-                                            </span>
-                                        )}
-                                    </div>
 
-                                    {sortedSchedules.length === 0 ? (
-                                        <div className="rounded-2xl border border-dashed border-pink-200 bg-pink-50/60 p-8 text-center">
-                                            <p className="text-sm font-medium text-pink-600">Belum ada jadwal nobar.</p>
-                                            <p className="mt-2 text-sm text-pink-500">Isi formulir di samping untuk mulai menjadwalkan sesi perdana kalian.</p>
-                                        </div>
-                                    ) : (
-                                        <ul className="space-y-5">
-                                            {sortedSchedules.map((schedule) => {
-                                                const isHighlighted = nextSchedule?.id === schedule.id;
-                                                const relative = formatRelativeTime(schedule.scheduled_for);
-                                                return (
-                                                    <li
-                                                        key={schedule.id}
-                                                        className={`rounded-2xl border px-5 py-4 transition shadow-sm ${
-                                                            isHighlighted
-                                                                ? "border-pink-300 bg-pink-50/80 shadow-pink-100"
-                                                                : "border-pink-100 bg-white/80 hover:border-pink-200"
-                                                        }`}
-                                                    >
-                                                        <div className="flex flex-col gap-3">
-                                                            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-                                                                <div>
-                                                                    <h3 className="text-base font-semibold text-slate-900">{schedule.title}</h3>
-                                                                    <p className="text-sm text-slate-500 flex items-center gap-2">
-                                                                        <Calendar className="h-4 w-4 text-pink-400" aria-hidden="true" />
-                                                                        <span>{formatDateTime(schedule.scheduled_for)}</span>
-                                                                    </p>
+                                        <div className="mt-4 max-h-80 space-y-4 overflow-y-auto pr-1">
+                                            {sortedSchedules.length === 0 ? (
+                                                <div className="rounded-xl border border-dashed border-pink-200 bg-pink-50/70 p-6 text-center text-sm text-pink-500">
+                                                    Klik tombol Schedule di TUIRoomKit untuk membuat jadwal pertama kalian.
+                                                </div>
+                                            ) : (
+                                                <ul className="space-y-4">
+                                                    {sortedSchedules.map((schedule) => {
+                                                        const isHighlighted = nextSchedule?.id === schedule.id;
+                                                        const relative = formatRelativeTime(schedule.scheduled_for);
+
+                                                        return (
+                                                            <li
+                                                                key={schedule.id}
+                                                                className={`rounded-xl border px-4 py-3 text-sm transition ${
+                                                                    isHighlighted
+                                                                        ? "border-pink-300 bg-pink-50/80 shadow-sm shadow-pink-100"
+                                                                        : "border-pink-100 bg-white hover:border-pink-200"
+                                                                }`}
+                                                            >
+                                                                <div className="flex flex-col gap-2">
+                                                                    <div className="flex flex-col gap-1">
+                                                                        <span className="text-sm font-semibold text-slate-900">{schedule.title}</span>
+                                                                        <span className="flex items-center gap-2 text-xs text-slate-500">
+                                                                            <Calendar className="h-3.5 w-3.5 text-pink-400" aria-hidden="true" />
+                                                                            {formatDateTime(schedule.scheduled_for)}
+                                                                        </span>
+                                                                    </div>
+                                                                    {schedule.description && (
+                                                                        <p className="text-xs text-slate-600 whitespace-pre-line">
+                                                                            {schedule.description}
+                                                                        </p>
+                                                                    )}
+                                                                    {relative && (
+                                                                        <span className="inline-flex w-fit items-center rounded-full bg-white/90 px-3 py-1 text-[11px] font-medium text-pink-600 shadow-inner">
+                                                                            {relative}
+                                                                        </span>
+                                                                    )}
                                                                 </div>
-                                                                {relative && (
-                                                                    <span className="inline-flex items-center rounded-full bg-white/80 px-3 py-1 text-xs font-medium text-pink-600 shadow-inner">
-                                                                        {relative}
-                                                                    </span>
-                                                                )}
-                                                            </div>
-                                                            {schedule.description && (
-                                                                <p className="text-sm text-slate-600 whitespace-pre-line">
-                                                                    {schedule.description}
-                                                                </p>
-                                                            )}
-                                                        </div>
-                                                    </li>
-                                                );
-                                            })}
-                                        </ul>
-                                    )}
+                                                            </li>
+                                                        );
+                                                    })}
+                                                </ul>
+                                            )}
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
                     </div>
-                </section>
-
-                <div className="flex-1 bg-neutral-900">
-                    <iframe
-                        title="Tencent Nobar Room"
-                        src={iframeSrc}
-                        className="h-full w-full border-0 bg-neutral-900"
-                        allowFullScreen
-                        allow="microphone; camera; fullscreen; display-capture; clipboard-read; clipboard-write; speaker"
-                    />
                 </div>
+            )}
+
+            <div className="h-screen bg-neutral-900">
+                <iframe
+                    ref={iframeRef}
+                    title="Tencent Nobar Room"
+                    src={iframeSrc}
+                    className="h-full w-full border-0 bg-neutral-900"
+                    allowFullScreen
+                    allow="microphone; camera; fullscreen; display-capture; clipboard-read; clipboard-write; speaker"
+                />
             </div>
         </>
     );
