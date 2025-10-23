@@ -16,6 +16,7 @@ use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\ChatController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\LocationController;
+use App\Http\Controllers\NobarScheduleController;
 use App\Http\Controllers\SpaceController;
 use App\Http\Controllers\SpotifyAuthController;
 use App\Http\Controllers\SpotifyController;
@@ -202,6 +203,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
                 'spaceId' => $space->id,
             ]);
         })->name('space.nobar');
+
+        Route::post('/spaces/{space:slug}/nobar/schedules', [NobarScheduleController::class, 'store'])
+            ->name('nobar.schedules.store');
 
         Route::get('/spaces/{space:slug}/roomjitsi', function (\App\Models\Space $space) {
             return Inertia::render('Room/Show', [
