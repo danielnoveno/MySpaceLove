@@ -13,6 +13,7 @@ return [
             'clear' => 'Clear',
             'search' => 'Search',
             'regenerate' => 'Regenerate',
+            'send_email' => 'Send to Email',
             'add' => 'Add',
             'update' => 'Update',
             'back' => 'Back',
@@ -145,6 +146,7 @@ return [
             'search' => 'Search Messages',
             'add_manual' => '+ Add Manually',
             'regenerate_ai' => 'Regenerate AI',
+            'send_email' => 'Send to Email',
         ],
         'empty' => 'No daily messages yet. AI will generate them automatically! ✨',
         'modal' => [
@@ -155,6 +157,26 @@ return [
         'expand' => [
             'more' => 'Read more',
             'less' => 'Read less',
+        ],
+        'feedback' => [
+            'email_sent' => 'Daily message sent to your partner via email! 💌',
+            'email_failed' => 'We couldn\'t send the email. Please try again later.',
+            'email_partner_missing' => 'Connect your partner and make sure their email is available before sending.',
+        ],
+    ],
+    'emails' => [
+        'daily_message' => [
+            'subject' => ':sender shared a daily message for :partner (:date)',
+            'heading' => 'A little love note just for you 💌',
+            'greeting' => 'Hi :partner,',
+            'intro' => ':sender sent you today\'s daily message from your space ":space".',
+            'date_label' => 'Date',
+            'message_label' => 'Message',
+            'signature' => 'With love, :sender',
+            'outro' => 'Sent with warmth by :appName',
+            'sender_fallback' => 'Someone special',
+            'partner_fallback' => 'you',
+            'date_format' => 'F j, Y',
         ],
     ],
 ];

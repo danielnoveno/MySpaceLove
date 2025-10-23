@@ -83,7 +83,7 @@ export default function Authenticated({
         }`;
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-pink-50 via-white to-purple-50">
+        <div className="min-h-screen bg-gradient-to-br from-pink-50 via-white to-purple-50 flex flex-col">
             <nav className="bg-white border-b border-gray-100 shadow-sm">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                     <div className="flex justify-between h-16">
@@ -484,15 +484,21 @@ export default function Authenticated({
                 </div>
             </nav>
 
-            {header && (
-                <header className="bg-white shadow">
-                    <div className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
-                        {header}
-                    </div>
-                </header>
-            )}
+            <div className="flex-1 flex flex-col">
+                {header && (
+                    <header className="bg-white shadow">
+                        <div className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
+                            {header}
+                        </div>
+                    </header>
+                )}
 
-            <main className="py-8">{children}</main>
+                <main className="flex-1 py-8">{children}</main>
+            </div>
+
+            <footer className="mt-auto w-full border-t border-pink-100 bg-white/80 py-4 text-center text-sm text-gray-600">
+                Made with ❤️ by Peng for Winnie © 2025
+            </footer>
         </div>
     );
 }

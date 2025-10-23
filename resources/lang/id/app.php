@@ -13,6 +13,7 @@ return [
             'clear' => 'Bersihkan',
             'search' => 'Cari',
             'regenerate' => 'Generate ulang',
+            'send_email' => 'Kirim ke Email',
             'add' => 'Tambah',
             'update' => 'Perbarui',
             'back' => 'Kembali',
@@ -145,6 +146,7 @@ return [
             'search' => 'Cari Pesan',
             'add_manual' => '+ Tambah Manual',
             'regenerate_ai' => 'Regenerate AI',
+            'send_email' => 'Kirim ke Email',
         ],
         'empty' => 'Belum ada pesan harian. AI akan generate otomatis! ✨',
         'modal' => [
@@ -155,6 +157,26 @@ return [
         'expand' => [
             'more' => 'Baca selengkapnya',
             'less' => 'Baca lebih sedikit',
+        ],
+        'feedback' => [
+            'email_sent' => 'Pesan harian berhasil dikirim ke email pasanganmu! 💌',
+            'email_failed' => 'Email tidak dapat dikirim. Coba lagi ya.',
+            'email_partner_missing' => 'Pastikan pasanganmu sudah terhubung dan memiliki email sebelum mengirim.',
+        ],
+    ],
+    'emails' => [
+        'daily_message' => [
+            'subject' => ':sender mengirim pesan harian untuk :partner (:date)',
+            'heading' => 'Ada pesan manis untukmu 💌',
+            'greeting' => 'Hai :partner,',
+            'intro' => ':sender mengirim pesan harian hari ini dari space ":space".',
+            'date_label' => 'Tanggal',
+            'message_label' => 'Pesan',
+            'signature' => 'Dengan cinta, :sender',
+            'outro' => 'Dikirim penuh kasih oleh :appName',
+            'sender_fallback' => 'Seseorang spesial',
+            'partner_fallback' => 'kamu',
+            'date_format' => 'd F Y',
         ],
     ],
 ];
