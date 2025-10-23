@@ -38,18 +38,29 @@ class MediaGalleryApiController extends Controller
 
         $data = $r->validate([
             'title' => 'nullable|string|max:255',
-            'file'  => 'required|file|mimes:jpg,jpeg,png,gif,mp4,mov|max:30720',
+            'files' => 'required|array|min:1|max:12',
+            'files.*' => 'required|file|mimes:jpg,jpeg,png,gif,mp4,mov|max:30720',
         ]);
 
-        $path = $r->file('file')->store("spaces/{$space->slug}/media", 'public');
+        $files = $r->file('files', []);
+        $total = count($files);
 
-        $media = MediaGallery::create([
-            'space_id' => $space->id,
-            'user_id'  => Auth::id(),
-            'title'    => $data['title'] ?? null,
-            'file_path' => $path,
-            'type'     => $r->file('file')->getClientMimeType()
-        ]);
+        foreach ($files as $index => $file) {
+            $path = $file->store("spaces/{$space->slug}/media", 'public');
+            $resolvedTitle = $data['title']
+                ? ($total > 1
+                    ? sprintf('%s (%d)', $data['title'], $index + 1)
+                    : $data['title'])
+                : pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME);
+
+            MediaGallery::create([
+                'space_id' => $space->id,
+                'user_id' => Auth::id(),
+                'title' => $resolvedTitle,
+                'file_path' => $path,
+                'type' => $file->getClientMimeType(),
+            ]);
+        }
 
         return Inertia::location(route('gallery.index', ['space' => $space->slug]));
     }

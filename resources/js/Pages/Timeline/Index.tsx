@@ -27,6 +27,41 @@ export default function TimelineIndex({ timelines }: Props) {
     const spaceTitle = currentSpace.title;
     const [selectedItem, setSelectedItem] = useState<TimelineItem | null>(null);
     const [selectedImage, setSelectedImage] = useState<string | null>(null);
+    const [thumbnailSelections, setThumbnailSelections] = useState<
+        Record<number, string>
+    >({});
+
+    useEffect(() => {
+        try {
+            const stored = window.localStorage.getItem(
+                `timeline-thumbnails:${spaceSlug}`,
+            );
+            if (stored) {
+                const parsed = JSON.parse(stored) as Record<number, string>;
+                setThumbnailSelections(parsed);
+            }
+        } catch (error) {
+            console.warn("Failed to load saved thumbnail selections", error);
+        }
+    }, [spaceSlug]);
+
+    useEffect(() => {
+        try {
+            window.localStorage.setItem(
+                `timeline-thumbnails:${spaceSlug}`,
+                JSON.stringify(thumbnailSelections),
+            );
+        } catch (error) {
+            console.warn("Failed to persist thumbnail selections", error);
+        }
+    }, [spaceSlug, thumbnailSelections]);
+
+    const handleThumbnailChange = (timelineId: number, path: string) => {
+        setThumbnailSelections((prev) => ({
+            ...prev,
+            [timelineId]: path,
+        }));
+    };
 
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const [parallaxPos, setParallaxPos] = useState({ x: 0, y: 0 });
@@ -212,7 +247,12 @@ export default function TimelineIndex({ timelines }: Props) {
                     ) : (
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                             {timelines.map((item) => {
-                                const cover = item.media_paths?.[0];
+                                const availableMedia = item.media_paths ?? [];
+                                const cover = thumbnailSelections[item.id]
+                                    ? `/storage/${thumbnailSelections[item.id]}`
+                                    : availableMedia[0]
+                                    ? `/storage/${availableMedia[0]}`
+                                    : null;
                                 return (
                                     <div
                                         key={item.id}
@@ -221,7 +261,7 @@ export default function TimelineIndex({ timelines }: Props) {
                                         {cover && (
                                             <div className="h-48 overflow-hidden">
                                                 <img
-                                                    src={`/storage/${cover}`}
+                                                    src={cover}
                                                     alt={item.title}
                                                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                                                 />
@@ -262,6 +302,46 @@ export default function TimelineIndex({ timelines }: Props) {
                                                     Edit
                                                 </Link>
                                             </div>
+                                            {availableMedia.length > 1 && (
+                                                <div className="mt-4">
+                                                    <p className="text-xs uppercase tracking-[0.2em] text-pink-400 mb-2">
+                                                        Pilih thumbnail
+                                                    </p>
+                                                    <div className="flex flex-wrap gap-2">
+                                                        {availableMedia.map((path, mediaIndex) => {
+                                                            const resolvedPath = `/storage/${path}`;
+                                                            const isActive =
+                                                                thumbnailSelections[item.id]
+                                                                    ? thumbnailSelections[item.id] === path
+                                                                    : mediaIndex === 0;
+                                                            return (
+                                                                <button
+                                                                    key={path}
+                                                                    type="button"
+                                                                    onClick={() =>
+                                                                        handleThumbnailChange(
+                                                                            item.id,
+                                                                            path,
+                                                                        )
+                                                                    }
+                                                                    className={`relative h-14 w-14 overflow-hidden rounded-lg border transition shadow-sm focus:outline-none focus:ring-2 focus:ring-pink-400 ${
+                                                                        isActive
+                                                                            ? "border-pink-400 ring-2 ring-pink-300"
+                                                                            : "border-transparent"
+                                                                    }`}
+                                                                    aria-label={`Pilih thumbnail ${mediaIndex + 1}`}
+                                                                >
+                                                                    <img
+                                                                        src={resolvedPath}
+                                                                        alt={`thumbnail-${mediaIndex}`}
+                                                                        className="h-full w-full object-cover"
+                                                                    />
+                                                                </button>
+                                                            );
+                                                        })}
+                                                    </div>
+                                                </div>
+                                            )}
                                         </div>
                                     </div>
                                 );

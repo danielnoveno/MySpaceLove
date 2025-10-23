@@ -1,7 +1,7 @@
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout";
 import { Head, Link, router } from "@inertiajs/react";
 import { Plus, Edit, Heart, Eye } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useCurrentSpace } from "@/hooks/useCurrentSpace";
 
 interface GalleryItem {
@@ -31,6 +31,15 @@ export default function GalleryIndex({ items }: { items: GalleryItem[] }) {
             opacity: Math.random() * 0.5 + 0.2,
         }))
     );
+
+    const polaroidAngles = useMemo(() => {
+        return items.reduce<Record<number, number>>((acc, item, index) => {
+            const seed = Math.sin(item.id * 37.21 + index * 11.3) * 1000;
+            const angle = ((seed - Math.floor(seed)) * 12 - 6).toFixed(2);
+            acc[item.id] = Number(angle);
+            return acc;
+        }, {});
+    }, [items]);
 
     useEffect(() => {
         const canvas = canvasRef.current;
@@ -193,65 +202,69 @@ export default function GalleryIndex({ items }: { items: GalleryItem[] }) {
                             </div>
                         </div>
                     ) : (
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                            {items.map((item) => (
-                                <div
-                                    key={item.id}
-                                    className="bg-white/80 backdrop-blur-md rounded-2xl shadow-lg border border-gray-100 hover:shadow-xl transition-all duration-300 overflow-hidden group"
-                                >
-                                    <div className="h-48 overflow-hidden">
-                                        <img
-                                            src={`/storage/${item.file_path}`}
-                                            alt={item.title}
-                                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
+                            {items.map((item) => {
+                                const rotation = polaroidAngles[item.id] ?? 0;
+                                const shadowRotation = rotation > 0 ? rotation - 6 : rotation + 6;
+                                const storagePath = `/storage/${item.file_path}`;
+
+                                return (
+                                    <div key={item.id} className="relative group">
+                                        <div
+                                            className="absolute inset-0 rounded-[30px] bg-white/60 shadow-lg -z-10 transition duration-300 group-hover:translate-x-2 group-hover:-translate-y-2"
+                                            style={{ transform: `rotate(${shadowRotation}deg)` }}
                                         />
-                                    </div>
-                                    <div className="p-6">
-                                        <h3 className="font-semibold text-gray-800 text-lg mb-2 line-clamp-2">
-                                            {item.title || "Untitled"}
-                                        </h3>
-                                        <div className="flex justify-between items-center">
-                                            <button
-                                                onClick={() =>
-                                                    setSelectedItem(item)
-                                                }
-                                                className="text-green-600 hover:text-green-700 flex items-center gap-1 text-sm font-medium"
-                                            >
-                                                <Eye className="w-4 h-4" />
-                                                Detail
-                                            </button>
-                                            <div className="flex gap-3">
-                                                <Link
-                                                    href={route(
-                                                        "gallery.edit",
-                                                        { space: spaceSlug, id: item.id }
-                                                    )}
-                                                    className="text-yellow-600 hover:text-yellow-700 flex items-center gap-1 text-sm font-medium"
-                                                >
-                                                    <Edit className="w-4 h-4" />
-                                                    Edit
-                                                </Link>
+                                        <div
+                                            className="relative bg-white rounded-[30px] shadow-2xl border border-rose-50 px-6 pt-6 pb-8 transition duration-300 group-hover:-translate-y-2"
+                                            style={{ transform: `rotate(${rotation}deg)` }}
+                                        >
+                                            <div className="overflow-hidden rounded-2xl border-4 border-white shadow-inner">
+                                                <img
+                                                    src={storagePath}
+                                                    alt={item.title}
+                                                    className="h-56 w-full object-cover transition duration-500 group-hover:scale-[1.03]"
+                                                />
+                                            </div>
+                                            <p className="mt-5 text-center text-lg font-semibold text-gray-800">
+                                                {item.title || "Untitled"}
+                                            </p>
+                                            <div className="mt-4 flex items-center justify-between text-xs uppercase tracking-[0.28em] text-gray-400">
                                                 <button
-                                                    onClick={() =>
-                                                        confirm(
-                                                            "Yakin hapus?"
-                                                        ) &&
-                                                        router.delete(
-                                                            route(
-                                                                "gallery.destroy",
-                                                                { space: spaceSlug, id: item.id }
-                                                            )
-                                                        )
-                                                    }
-                                                    className="text-red-600 hover:text-red-700 text-sm font-medium"
+                                                    onClick={() => setSelectedItem(item)}
+                                                    className="flex items-center gap-2 text-emerald-500 hover:text-emerald-600 transition"
                                                 >
-                                                    Hapus
+                                                    <Eye className="h-4 w-4" /> Detail
                                                 </button>
+                                                <div className="flex items-center gap-4">
+                                                    <Link
+                                                        href={route("gallery.edit", {
+                                                            space: spaceSlug,
+                                                            id: item.id,
+                                                        })}
+                                                        className="flex items-center gap-1 text-yellow-600 hover:text-yellow-700 transition"
+                                                    >
+                                                        <Edit className="h-4 w-4" /> Edit
+                                                    </Link>
+                                                    <button
+                                                        onClick={() =>
+                                                            confirm("Yakin hapus?") &&
+                                                            router.delete(
+                                                                route("gallery.destroy", {
+                                                                    space: spaceSlug,
+                                                                    id: item.id,
+                                                                }),
+                                                            )
+                                                        }
+                                                        className="text-rose-500 hover:text-rose-600 transition"
+                                                    >
+                                                        Hapus
+                                                    </button>
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
-                                </div>
-                            ))}
+                                );
+                            })}
                         </div>
                     )}
                 </div>

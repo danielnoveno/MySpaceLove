@@ -250,7 +250,7 @@ export default function Dashboard({ dashboardData, spaceContext }: Props) {
                 description:
                     quickActionStrings?.add_moment?.description ??
                     "Catat momen spesial",
-                href: route("timeline.create", { space: spaceSlug }),
+                href: route("timeline.index", { space: spaceSlug }),
                 color: "from-pink-500 to-rose-500",
                 requiresPartner: true,
             },
@@ -261,7 +261,7 @@ export default function Dashboard({ dashboardData, spaceContext }: Props) {
                 description:
                     quickActionStrings?.upload_photo?.description ??
                     "Simpan kenangan",
-                href: route("gallery.create", { space: spaceSlug }),
+                href: route("gallery.index", { space: spaceSlug }),
                 color: "from-blue-500 to-cyan-500",
                 requiresPartner: true,
             },
@@ -307,7 +307,7 @@ export default function Dashboard({ dashboardData, spaceContext }: Props) {
                 description:
                     quickActionStrings?.journal?.description ??
                     "Ekspresikan perasaan",
-                href: route("journal.create", { space: spaceSlug }),
+                href: route("journal.index", { space: spaceSlug }),
                 color: "from-green-500 to-emerald-500",
                 requiresPartner: true,
             },
@@ -361,8 +361,14 @@ export default function Dashboard({ dashboardData, spaceContext }: Props) {
             />
 
             {showModal && dailyMessage && (
-                <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/30 px-4">
-                    <div className="relative w-full max-w-lg rounded-3xl bg-white p-8 shadow-2xl">
+                <div
+                    className="fixed inset-0 z-40 flex items-center justify-center bg-black/30 px-4"
+                    onClick={() => setShowModal(false)}
+                >
+                    <div
+                        className="relative w-full max-w-lg rounded-3xl bg-white p-8 shadow-2xl"
+                        onClick={(event) => event.stopPropagation()}
+                    >
                         <button
                             type="button"
                             onClick={() => setShowModal(false)}
@@ -386,8 +392,14 @@ export default function Dashboard({ dashboardData, spaceContext }: Props) {
             )}
 
             {showLockModal && (
-                <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/30 px-4">
-                    <div className="relative w-full max-w-sm rounded-3xl bg-white p-8 text-center shadow-2xl">
+                <div
+                    className="fixed inset-0 z-40 flex items-center justify-center bg-black/30 px-4"
+                    onClick={() => setShowLockModal(false)}
+                >
+                    <div
+                        className="relative w-full max-w-sm rounded-3xl bg-white p-8 text-center shadow-2xl"
+                        onClick={(event) => event.stopPropagation()}
+                    >
                         <button
                             type="button"
                             onClick={() => setShowLockModal(false)}

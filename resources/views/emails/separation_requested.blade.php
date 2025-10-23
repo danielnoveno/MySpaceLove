@@ -4,26 +4,39 @@
     <meta charset="UTF-8">
     <title>Permintaan Pembubaran Space</title>
 </head>
-<body style="font-family: Arial, sans-serif; background-color: #f3f4f6; padding: 24px; color: #1f2937;">
-    <div style="max-width: 560px; margin: 0 auto; background: #ffffff; border-radius: 16px; padding: 24px; box-shadow: 0 10px 30px rgba(15, 23, 42, 0.08);">
-        <h1 style="font-size: 20px; margin-bottom: 16px; color: #b91c1c;">Permintaan pembubaran Space</h1>
-        <p style="margin-bottom: 16px;">
-            {{ $initiator->name }} mengajukan permintaan untuk mengakhiri Space <strong>"{{ $space->title }}"</strong>.
+<body style="margin: 0; font-family: 'Figtree', 'Inter', Arial, sans-serif; background-color: #f9fafb; color: #0f172a;">
+    <div style="max-width: 600px; margin: 0 auto; padding: 36px 24px;">
+        <header style="margin-bottom: 20px;">
+            <p style="margin: 0; font-size: 13px; letter-spacing: 0.08em; text-transform: uppercase; color: #f97316;">
+                Permintaan pembubaran Space
+            </p>
+            <h1 style="margin: 8px 0 0; font-size: 24px; font-weight: 700; color: #ef4444;">{{ $space->title }}</h1>
+        </header>
+
+        <p style="margin: 0 0 18px; font-size: 15px; line-height: 1.7;">
+            {{ $initiator->name }} mengajukan permintaan untuk mengakhiri Space kalian.
         </p>
+
         @if ($reason)
-            <p style="margin-bottom: 16px; padding: 12px 16px; border-left: 4px solid #f87171; background-color: #fee2e2; color: #7f1d1d;">
-                Pesan dari {{ $initiator->name }}:<br>{{ $reason }}
+            <p style="margin: 0 0 20px; padding: 16px 18px; border-radius: 14px; background-color: #fee2e2; color: #7f1d1d; font-size: 14px; line-height: 1.7;">
+                Pesan dari {{ $initiator->name }}:<br>
+                <span style="display: inline-block; margin-top: 6px;">{{ $reason }}</span>
             </p>
         @endif
-        <p style="margin-bottom: 16px;">
-            Buka LoveSpace sesegera mungkin untuk menyetujui atau menolak permintaan ini. Tanpa keputusanmu, Space tetap dalam status menunggu.
+
+        <p style="margin: 0 0 24px; font-size: 15px; line-height: 1.7; color: #1f2937;">
+            Segera buka MySpaceLove untuk menyetujui atau menolak permintaan ini. Tanpa tindakanmu, status akan tetap menunggu.
         </p>
-        <p style="margin-bottom: 24px;">
-            <a href="{{ $spacesUrl }}" style="display: inline-block; padding: 12px 24px; background: linear-gradient(135deg, #f97316, #ef4444); color: #fff; border-radius: 9999px; text-decoration: none; font-weight: bold;">Kelola Permintaan</a>
+
+        <p style="margin: 0 0 28px;">
+            <a href="{{ $spacesUrl }}" style="display: inline-block; padding: 12px 28px; background-color: #ef4444; color: #ffffff; border-radius: 9999px; text-decoration: none; font-weight: 600; letter-spacing: 0.02em;">
+                Kelola Permintaan
+            </a>
         </p>
-        <p style="margin: 0; font-size: 12px; color: #9ca3af;">
+
+        <footer style="font-size: 13px; line-height: 1.6; color: #94a3b8;">
             Pesan otomatis dari {{ $appName }}. Kami harap kalian menemukan keputusan terbaik.
-        </p>
+        </footer>
     </div>
 </body>
 </html>
