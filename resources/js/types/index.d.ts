@@ -4,6 +4,7 @@ export interface User {
     name: string;
     email: string;
     email_verified_at?: string | null;
+    profile_photo_url?: string | null;
 }
 
 // ==== Space ====
@@ -100,8 +101,8 @@ export interface Theme {
 
 // ==== PageProps (global untuk Inertia) ====
 export interface PageProps {
-    auth: {
-        user: User;
+    auth?: {
+        user?: User | null;
     };
     [key: string]: any;
     space?: Space;

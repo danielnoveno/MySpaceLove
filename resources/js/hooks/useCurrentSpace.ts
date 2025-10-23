@@ -1,4 +1,5 @@
 import { usePage } from "@inertiajs/react";
+import { PageProps } from "@/types";
 
 type CurrentSpace = {
     id: number;
@@ -7,15 +8,17 @@ type CurrentSpace = {
 } | null;
 
 export function useCurrentSpace(): CurrentSpace {
-    const { props } = usePage<{
-        currentSpace?:
-            | {
-                  id: number;
-                  slug: string;
-                  title: string;
-              }
-            | null;
-    }>();
+    const { props } = usePage<
+        PageProps & {
+            currentSpace?:
+                | {
+                      id: number;
+                      slug: string;
+                      title: string;
+                  }
+                | null;
+        }
+    >();
 
     return props.currentSpace ?? null;
 }

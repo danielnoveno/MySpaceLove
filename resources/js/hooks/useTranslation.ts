@@ -1,5 +1,6 @@
 import { useMemo, useCallback } from "react";
 import { usePage } from "@inertiajs/react";
+import { PageProps } from "@/types";
 
 type TranslationTree = Record<string, unknown>;
 
@@ -34,7 +35,7 @@ const getValue = (source: TranslationTree | undefined, path: string): unknown =>
 export const useTranslation = <T extends TranslationTree = TranslationTree>(
     namespace?: string,
 ) => {
-    const { props } = usePage<{ translations?: TranslationTree }>();
+    const { props } = usePage<PageProps & { translations?: TranslationTree }>();
     const translations = (props.translations ?? {}) as TranslationTree;
 
     const scopedTranslations = useMemo(() => {

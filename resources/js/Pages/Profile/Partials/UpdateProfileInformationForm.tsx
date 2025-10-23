@@ -1,26 +1,28 @@
-import InputError from '@/Components/InputError';
-import InputLabel from '@/Components/InputLabel';
-import PrimaryButton from '@/Components/PrimaryButton';
-import TextInput from '@/Components/TextInput';
-import { Transition } from '@headlessui/react';
-import { Link, useForm, usePage } from '@inertiajs/react';
-import { FormEventHandler } from 'react';
+import InputError from "@/Components/InputError";
+import InputLabel from "@/Components/InputLabel";
+import PrimaryButton from "@/Components/PrimaryButton";
+import TextInput from "@/Components/TextInput";
+import { PageProps } from "@/types";
+import { Transition } from "@headlessui/react";
+import { Link, useForm, usePage } from "@inertiajs/react";
+import { FormEventHandler } from "react";
 
 export default function UpdateProfileInformation({
     mustVerifyEmail,
     status,
-    className = '',
+    className = "",
 }: {
     mustVerifyEmail: boolean;
     status?: string;
     className?: string;
 }) {
-    const user = usePage().props.auth.user;
+    const { props } = usePage<PageProps>();
+    const user = props.auth?.user;
 
     const { data, setData, patch, errors, processing, recentlySuccessful } =
         useForm({
-            name: user.name,
-            email: user.email,
+            name: user?.name ?? "",
+            email: user?.email ?? "",
         });
 
     const submit: FormEventHandler = (e) => {
@@ -74,7 +76,7 @@ export default function UpdateProfileInformation({
                     <InputError className="mt-2" message={errors.email} />
                 </div>
 
-                {mustVerifyEmail && user.email_verified_at === null && (
+                {mustVerifyEmail && user?.email_verified_at === null && (
                     <div>
                         <p className="mt-2 text-sm text-gray-800">
                             Your email address is unverified.

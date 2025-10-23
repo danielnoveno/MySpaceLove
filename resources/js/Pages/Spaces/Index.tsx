@@ -184,7 +184,20 @@ export default function SpacesIndex({
     );
 
     const updateInviteForm = useCallback(
-
+        (spaceId: number, field: "name" | "email", value: string) => {
+            setInviteForms((previous) => {
+                const current = previous[spaceId] ?? { name: "", email: "" };
+                return {
+                    ...previous,
+                    [spaceId]: {
+                        ...current,
+                        [field]: value,
+                    },
+                };
+            });
+        },
+        [],
+    );
 
     const getInvitationStatusClasses = (status: string): string => {
         switch (status) {
@@ -202,20 +215,16 @@ export default function SpacesIndex({
                 return "border border-gray-200 bg-gray-50 text-gray-600";
         }
     };
-        (spaceId: number, field: "name" | "email", value: string) => {
-            setInviteForms((previous) => {
-                const current = previous[spaceId] ?? { name: "", email: "" };
-                return {
-                    ...previous,
-                    [spaceId]: {
-                        ...current,
-                        [field]: value,
-                    },
-                };
-            });
-        },
-        []
-    );
+
+    const getInviteAlertClasses = useCallback((type: "success" | "error") => {
+        switch (type) {
+            case "success":
+                return "rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-700";
+            case "error":
+            default:
+                return "rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700";
+        }
+    }, []);
 
     const updateSeparationInput = useCallback(
         (
