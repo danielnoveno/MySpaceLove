@@ -178,5 +178,18 @@ return [
             'partner_fallback' => 'kamu',
             'date_format' => 'd F Y',
         ],
+        'nobar_schedule' => [
+            'subject' => 'Pengingat Nobar: :title',
+            'heading' => 'Nobar akan dimulai 🍿',
+            'greeting' => 'Hai :recipient,',
+            'intro' => ':creator baru saja menjadwalkan nobar di space ":space".',
+            'schedule_label' => 'Jadwal',
+            'details_label' => 'Catatan',
+            'cta' => 'Buka Ruang Nobar',
+            'footer' => 'Dikirim penuh kasih oleh :appName',
+            'creator_fallback' => 'Seseorang spesial',
+            'recipient_fallback' => 'teman baik',
+            'time_format' => 'd F Y H.i T',
+        ],
     ],
 ];

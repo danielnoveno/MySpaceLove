@@ -17,6 +17,7 @@ use App\Http\Controllers\ChatController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\LocationController;
 use App\Http\Controllers\SpaceController;
+use App\Http\Controllers\NobarController;
 use App\Http\Controllers\SpotifyAuthController;
 use App\Http\Controllers\SpotifyController;
 use Illuminate\Http\Request;
@@ -197,11 +198,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
             ]);
         })->name('spotify.companion');
 
-        Route::get('/spaces/{space:slug}/nobar', function (\App\Models\Space $space) {
-            return Inertia::render('Room/Show', [
-                'spaceId' => $space->id,
-            ]);
-        })->name('space.nobar');
+        Route::get('/spaces/{space:slug}/nobar', [NobarController::class, 'show'])->name('space.nobar');
+        Route::post('/spaces/{space:slug}/nobar/schedules', [NobarController::class, 'storeSchedule'])->name('space.nobar.schedules.store');
 
         Route::get('/spaces/{space:slug}/roomjitsi', function (\App\Models\Space $space) {
             return Inertia::render('Room/Show', [
