@@ -395,6 +395,45 @@ export default function LongDistanceSpotifyHub({ space }: Props) {
     }, [fetchDashboard]);
 
     const playlist = dashboard?.playlist ?? null;
+    const listening = dashboard?.listening ?? null;
+
+    const playlistEmbedUrl = useMemo(() => {
+        if (!playlist?.playlist_id) {
+            return null;
+        }
+
+        const params = new URLSearchParams({
+            utm_source: "myspacelove",
+            theme: "0",
+        });
+
+        return `https://open.spotify.com/embed/playlist/${encodeURIComponent(
+            playlist.playlist_id,
+        )}?${params.toString()}`;
+    }, [playlist?.playlist_id]);
+
+    const liveTrackEmbedUrl = useMemo(() => {
+        if (!listening?.track_id) {
+            return null;
+        }
+
+        const params = new URLSearchParams({
+            utm_source: "myspacelove",
+        });
+
+        return `https://open.spotify.com/embed/track/${encodeURIComponent(
+            listening.track_id,
+        )}?${params.toString()}`;
+    }, [listening?.track_id]);
+
+    const highlightedTracks = useMemo<PlaylistSampleTrack[]>(() => {
+        if (!playlist?.sample_tracks?.length) {
+            return [];
+        }
+
+        return playlist.sample_tracks.slice(0, 3);
+    }, [playlist?.sample_tracks]);
+
     const moods = dashboard?.moods ?? [];
     const selectedMood = useMemo(() => {
         if (!moods.length) {
@@ -408,7 +447,6 @@ export default function LongDistanceSpotifyHub({ space }: Props) {
         return moods.find((mood) => mood.id === selectedMoodId) ?? moods[0];
     }, [moods, selectedMoodId]);
 
-    const listening = dashboard?.listening ?? null;
     const surpriseDrops = dashboard?.surpriseDrops ?? [];
     const memoryCapsules = dashboard?.memoryCapsules ?? [];
 
@@ -617,9 +655,83 @@ export default function LongDistanceSpotifyHub({ space }: Props) {
                                         </a>
                                     )}
                                 </div>
+
+                                {highlightedTracks.length > 0 && (
+                                    <div className="rounded-2xl bg-white p-5 shadow-sm">
+                                        <p className="text-xs uppercase tracking-[0.28em] text-purple-400">
+                                            Dengarkan cuplikan favorit
+                                        </p>
+                                        <div className="mt-4 space-y-3">
+                                            {highlightedTracks.map((track) => (
+                                                <div
+                                                    key={track.id}
+                                                    className="rounded-2xl border border-purple-100 bg-purple-50/70 p-4 shadow-inner"
+                                                >
+                                                    <div className="flex flex-wrap items-start justify-between gap-3">
+                                                        <div>
+                                                            <p className="text-sm font-semibold text-purple-800">{track.name}</p>
+                                                            <p className="text-xs text-purple-500">
+                                                                {track.artists.join(", ")}
+                                                            </p>
+                                                        </div>
+                                                        {track.added_at && (
+                                                            <span className="rounded-full bg-white px-3 py-1 text-xs font-semibold text-purple-500 shadow-sm">
+                                                                Ditambahkan {formatDate(track.added_at)}
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                    <div className="mt-3 flex flex-col gap-2">
+                                                        {track.preview_url ? (
+                                                            <audio
+                                                                className="w-full"
+                                                                controls
+                                                                preload="none"
+                                                                src={track.preview_url}
+                                                            >
+                                                                Browser kamu tidak mendukung audio HTML5.
+                                                            </audio>
+                                                        ) : (
+                                                            <p className="text-xs text-purple-500">
+                                                                Preview tidak tersedia, buka di Spotify untuk memutar penuh.
+                                                            </p>
+                                                        )}
+                                                        {track.external_url && (
+                                                            <a
+                                                                href={track.external_url}
+                                                                target="_blank"
+                                                                rel="noopener"
+                                                                className="inline-flex items-center justify-center rounded-full border border-purple-200 px-3 py-1 text-xs font-semibold text-purple-600 transition hover:border-purple-300 hover:text-purple-700"
+                                                            >
+                                                                Buka di Spotify
+                                                            </a>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
                             </div>
 
                             <div className="space-y-4 rounded-2xl bg-white p-5 shadow-sm">
+                                {playlistEmbedUrl ? (
+                                    <div className="overflow-hidden rounded-xl border border-purple-100 shadow-inner">
+                                        <iframe
+                                            key={playlistEmbedUrl}
+                                            src={playlistEmbedUrl}
+                                            width="100%"
+                                            height="352"
+                                            frameBorder="0"
+                                            allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
+                                            loading="lazy"
+                                            title="Spotify playlist embed"
+                                        />
+                                    </div>
+                                ) : (
+                                    <p className="rounded-xl border border-dashed border-purple-200 bg-purple-50/80 p-4 text-sm text-purple-500">
+                                        Hubungkan Spotify untuk memutar playlist langsung tanpa meninggalkan halaman ini.
+                                    </p>
+                                )}
                                 <div className="flex items-center justify-between">
                                     <p className="text-xs uppercase tracking-[0.3em] text-purple-400">Progress Weekly Mix</p>
                                     <span className="rounded-full bg-purple-100 px-3 py-1 text-xs font-semibold text-purple-600">
@@ -834,6 +946,31 @@ export default function LongDistanceSpotifyHub({ space }: Props) {
                                                 <span>{listening.started_at ?? "Baru mulai"}</span>
                                                 <span>{listening.listeners ?? 1} pendengar</span>
                                             </div>
+                                            {liveTrackEmbedUrl ? (
+                                                <div className="mt-4 overflow-hidden rounded-xl border border-emerald-100 shadow-inner">
+                                                    <iframe
+                                                        key={liveTrackEmbedUrl}
+                                                        src={liveTrackEmbedUrl}
+                                                        width="100%"
+                                                        height="152"
+                                                        frameBorder="0"
+                                                        allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
+                                                        loading="lazy"
+                                                        title="Spotify track embed"
+                                                    />
+                                                </div>
+                                            ) : (
+                                                listening?.external_url && (
+                                                    <a
+                                                        href={listening.external_url}
+                                                        target="_blank"
+                                                        rel="noopener"
+                                                        className="mt-4 inline-flex items-center justify-center rounded-full border border-emerald-200 px-4 py-2 text-xs font-semibold text-emerald-600 transition hover:border-emerald-300"
+                                                    >
+                                                        Buka sesi di Spotify
+                                                    </a>
+                                                )
+                                            )}
                                             <button
                                                 type="button"
                                                 onClick={() => void handleJoinPlayback()}
