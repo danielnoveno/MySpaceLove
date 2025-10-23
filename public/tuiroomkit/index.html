@@ -35,15 +35,40 @@
     </script>
     <script>
       (function () {
+        function parseFlag(value, defaultValue) {
+          if (typeof value !== 'string') {
+            return defaultValue;
+          }
+          var normalized = value.trim().toLowerCase();
+          if (!normalized) {
+            return defaultValue;
+          }
+          if (['1', 'true', 'yes', 'on'].includes(normalized)) {
+            return true;
+          }
+          if (['0', 'false', 'no', 'off'].includes(normalized)) {
+            return false;
+          }
+          return defaultValue;
+        }
+
         var params = new URLSearchParams(window.location.search);
         var userId = params.get('userId');
         var userName = params.get('userName');
         var avatarUrl = params.get('avatarUrl');
+        var enableSchedulingParam = params.get('enableScheduling');
+        var disableSchedulingParam = params.get('disableScheduling');
+        var schedulingEnabled = parseFlag(enableSchedulingParam, false);
+
+        if (enableSchedulingParam === null && disableSchedulingParam !== null) {
+          schedulingEnabled = !parseFlag(disableSchedulingParam, false);
+        }
 
         window.__MYSPACE_ROOM__ = {
           userId: userId && userId.trim() ? userId.trim() : undefined,
           userName: userName && userName.trim() ? userName.trim() : undefined,
           avatarUrl: avatarUrl && avatarUrl.trim() ? avatarUrl.trim() : undefined,
+          enableScheduling: schedulingEnabled,
         };
       })();
     </script>
@@ -136,6 +161,18 @@
         color: #ec4899;
         transform: translateY(-1px);
       }
+
+      .myspace-navbar__alert {
+        margin: 0;
+        padding: 16px 24px;
+        background: rgba(236, 72, 153, 0.08);
+        border-bottom: 1px solid rgba(236, 72, 153, 0.2);
+        color: #9d174d;
+        font-size: 0.95rem;
+        font-weight: 500;
+        letter-spacing: 0.02em;
+        text-align: center;
+      }
     </style>
   </head>
   <body>
@@ -160,6 +197,31 @@
         var spaceSlug = params.get('spaceSlug');
         var spaceTitle = params.get('spaceTitle');
         var dashboardUrl = params.get('dashboardUrl');
+        var enableSchedulingParam = params.get('enableScheduling');
+        var disableSchedulingParam = params.get('disableScheduling');
+
+        function parseFlag(value, defaultValue) {
+          if (typeof value !== 'string') {
+            return defaultValue;
+          }
+          var normalized = value.trim().toLowerCase();
+          if (!normalized) {
+            return defaultValue;
+          }
+          if (['1', 'true', 'yes', 'on'].includes(normalized)) {
+            return true;
+          }
+          if (['0', 'false', 'no', 'off'].includes(normalized)) {
+            return false;
+          }
+          return defaultValue;
+        }
+
+        var schedulingEnabled = parseFlag(enableSchedulingParam, false);
+
+        if (enableSchedulingParam === null && disableSchedulingParam !== null) {
+          schedulingEnabled = !parseFlag(disableSchedulingParam, false);
+        }
 
         try {
           localStorage.setItem('tuiRoom-language', 'en-US');
@@ -189,6 +251,7 @@
           spaceTitle: spaceTitle && spaceTitle.trim() ? spaceTitle.trim() : 'MySpaceLove',
           dashboardUrl: baseDashboard,
           navLinks: navLinks,
+          enableScheduling: schedulingEnabled,
         };
 
         document.addEventListener('DOMContentLoaded', function () {
@@ -203,6 +266,17 @@
               link.setAttribute('href', navLinks[key]);
             }
           });
+
+          if (!window.__MYSPACE_ROOM__.enableScheduling) {
+            var alertBar = document.createElement('div');
+            alertBar.className = 'myspace-navbar__alert';
+            alertBar.textContent =
+              'Penjadwalan nobar belum tersedia di versi ini. Mulai nobar langsung untuk tetap terhubung.';
+            var navbar = document.querySelector('.myspace-navbar');
+            if (navbar && navbar.parentNode) {
+              navbar.parentNode.insertBefore(alertBar, navbar.nextSibling);
+            }
+          }
         });
       })();
     </script>

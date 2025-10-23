@@ -36,6 +36,8 @@ export default function Room({ spaceId }: Props) {
         ? String(currentUser.profile_photo_url)
         : undefined;
 
+    const schedulingEnabled = false;
+
     const iframeSrc = useMemo(() => {
         const params = new URLSearchParams({
             roomId: `space-${spaceId}`,
@@ -51,8 +53,18 @@ export default function Room({ spaceId }: Props) {
             params.set("avatarUrl", avatarUrl);
         }
 
+        params.set("enableScheduling", schedulingEnabled ? "1" : "0");
+
         return `${TUIROOMKIT_ENTRY_PATH}?${params.toString()}`;
-    }, [avatarUrl, resolvedUserId, resolvedUserName, spaceId, spaceSlug, spaceTitle]);
+    }, [
+        avatarUrl,
+        resolvedUserId,
+        resolvedUserName,
+        schedulingEnabled,
+        spaceId,
+        spaceSlug,
+        spaceTitle,
+    ]);
 
     return (
         <>
