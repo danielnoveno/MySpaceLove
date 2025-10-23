@@ -18,6 +18,7 @@ class SpaceInvitation extends Model
         'token',
         'status',
         'accepted_at',
+        'cancelled_at',
     ];
 
     protected $casts = [
