@@ -13,6 +13,10 @@ const TUIROOMKIT_ENTRY_PATH = "/tuiroomkit/index.html";
 export default function Room({ spaceId }: Props) {
     const { props } = usePage<PageProps>();
     const currentUser = props.auth?.user;
+    const currentSpace = props.currentSpace;
+
+    const spaceSlug = currentSpace?.slug ?? `space-${spaceId}`;
+    const spaceTitle = currentSpace?.title ?? `Space #${spaceId}`;
 
     const resolvedUserId = currentUser?.id
         ? `user-${String(currentUser.id)}`
@@ -37,6 +41,10 @@ export default function Room({ spaceId }: Props) {
             roomId: `space-${spaceId}`,
             userId: resolvedUserId,
             userName: resolvedUserName,
+            lang: "id-ID",
+            spaceSlug,
+            spaceTitle,
+            dashboardUrl: `/spaces/${spaceSlug}/dashboard`,
         });
 
         if (avatarUrl) {
@@ -44,11 +52,11 @@ export default function Room({ spaceId }: Props) {
         }
 
         return `${TUIROOMKIT_ENTRY_PATH}?${params.toString()}`;
-    }, [avatarUrl, resolvedUserId, resolvedUserName, spaceId]);
+    }, [avatarUrl, resolvedUserId, resolvedUserName, spaceId, spaceSlug, spaceTitle]);
 
     return (
         <>
-            <Head title={`Nobar Space #${spaceId}`} />
+            <Head title={`Nobar ${spaceTitle}`} />
             <div className="h-screen bg-neutral-900">
                 <iframe
                     title="Tencent Nobar Room"

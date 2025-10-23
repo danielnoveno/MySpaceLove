@@ -15,8 +15,13 @@ export default function GalleryCreate() {
     const spaceTitle = currentSpace.title;
     const { data, setData, post, processing, errors } = useForm({
         title: "",
-        file: null as File | null,
+        files: [] as File[],
     });
+
+    const [previewUrls, setPreviewUrls] = useState<string[]>([]);
+    const firstFileError = Object.entries(errors).find(([key]) =>
+        key.startsWith("files.")
+    )?.[1] as string | undefined;
 
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const [parallaxPos, setParallaxPos] = useState({ x: 0, y: 0 });
@@ -134,8 +139,18 @@ export default function GalleryCreate() {
     };
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        setData("file", e.target.files?.[0] || null);
+        const files = Array.from(e.target.files ?? []);
+        setData("files", files);
     };
+
+    useEffect(() => {
+        const urls = data.files.map((file) => URL.createObjectURL(file));
+        setPreviewUrls(urls);
+
+        return () => {
+            urls.forEach((url) => URL.revokeObjectURL(url));
+        };
+    }, [data.files]);
 
     return (
         <AuthenticatedLayout
@@ -224,35 +239,83 @@ export default function GalleryCreate() {
                         </div>
 
                         {/* File Upload */}
-                        <div>
-                            <label className="block text-base font-semibold text-gray-800 mb-2">
-                                File (Foto/Video)
-                            </label>
-                            <div className="border-2 border-dashed border-gray-300 rounded-2xl p-8 text-center hover:border-green-400 transition">
-                                <Upload className="w-14 h-14 text-gray-400 mx-auto mb-4" />
-                                <input
-                                    type="file"
-                                    onChange={handleFileChange}
-                                    className="hidden"
-                                    id="file-upload"
-                                />
-                                <label
-                                    htmlFor="file-upload"
-                                    className="cursor-pointer bg-green-600 text-white px-8 py-3 rounded-xl font-medium hover:bg-green-700 transition"
-                                >
-                                    Pilih File
+                        <div className="space-y-4">
+                            <div>
+                                <label className="block text-base font-semibold text-gray-800 mb-2">
+                                    File (Foto/Video)
                                 </label>
-                                {data.file && (
-                                    <p className="text-sm text-gray-600 mt-3">
-                                        {data.file.name}
+                                <div className="border-2 border-dashed border-emerald-200 rounded-2xl p-8 text-center hover:border-emerald-400 transition bg-white/70">
+                                    <Upload className="w-14 h-14 text-emerald-500 mx-auto mb-4" />
+                                    <p className="text-sm text-gray-600 mb-4">
+                                        Tarik dan letakkan file di sini atau pilih secara manual (maks. 12 file)
+                                    </p>
+                                    <input
+                                        type="file"
+                                        id="file-upload"
+                                        className="hidden"
+                                        name="files"
+                                        multiple
+                                        onChange={handleFileChange}
+                                    />
+                                    <label
+                                        htmlFor="file-upload"
+                                        className="cursor-pointer inline-flex items-center justify-center gap-2 bg-emerald-500 text-white px-8 py-3 rounded-xl font-semibold hover:bg-emerald-600 transition"
+                                    >
+                                        Pilih File
+                                    </label>
+                                    {data.files.length > 0 && (
+                                        <p className="text-sm text-gray-600 mt-4">
+                                            {data.files.length} file dipilih
+                                        </p>
+                                    )}
+                                </div>
+                                {errors.files && (
+                                    <p className="text-red-500 text-sm mt-2">{errors.files}</p>
+                                )}
+                                {firstFileError && (
+                                    <p className="text-red-500 text-sm mt-2">{firstFileError}</p>
+                                )}
+                            </div>
+
+                            <div className="bg-white/70 rounded-2xl p-6 border border-emerald-100 shadow-sm">
+                                <h3 className="text-sm font-semibold text-emerald-600 mb-3 uppercase tracking-wide">
+                                    Preview
+                                </h3>
+                                {previewUrls.length > 0 ? (
+                                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                                        {previewUrls.map((url, index) => (
+                                            <div
+                                                key={`${url}-${index}`}
+                                                className="relative aspect-square overflow-hidden rounded-xl border border-emerald-100 shadow-sm"
+                                            >
+                                                <img
+                                                    src={url}
+                                                    alt={`preview-${index}`}
+                                                    className="h-full w-full object-cover"
+                                                />
+                                                <span className="absolute bottom-1 right-1 rounded-full bg-emerald-500/90 px-2 text-xs font-semibold text-white">
+                                                    #{index + 1}
+                                                </span>
+                                            </div>
+                                        ))}
+                                    </div>
+                                ) : (
+                                    <p className="text-gray-500 text-sm">
+                                        Belum ada file dipilih
                                     </p>
                                 )}
                             </div>
-                            {errors.file && (
-                                <p className="text-red-500 text-sm mt-2">
-                                    {errors.file}
-                                </p>
-                            )}
+                        </div>
+
+                        <div className="bg-white/60 rounded-2xl p-6 border border-emerald-100 shadow-sm">
+                            <h3 className="text-sm font-semibold text-emerald-600 mb-3 uppercase tracking-wide">
+                                Tips Upload
+                            </h3>
+                            <ul className="space-y-2 text-sm text-gray-600">
+                                <li>Format foto: JPG, JPEG, PNG, GIF (maks 30MB per file).</li>
+                                <li>Format video: MP4 atau MOV (maks 30MB per file).</li>
+                                <li>Tambahkan catatan agar mudah mengingat momennya.</li>
+                            </ul>
                         </div>
 
                         {/* Buttons */}

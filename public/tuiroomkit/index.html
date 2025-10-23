@@ -52,8 +52,219 @@
     <link rel="modulepreload" crossorigin href="./assets/roomkit-qngZv_Jb.js">
     <link rel="stylesheet" crossorigin href="./assets/roomkit-ChuLqLgJ.css">
     <link rel="stylesheet" crossorigin href="./assets/index-W0gUjUu0.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        font-family: 'Figtree', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+        color-scheme: light;
+      }
+
+      body {
+        margin: 0;
+        font-family: 'Figtree', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+        background: linear-gradient(180deg, #fdf2f8 0%, #ffffff 32%, #f8fafc 100%);
+        color: #0f172a;
+      }
+
+      #app {
+        height: calc(100vh - 72px);
+      }
+
+      :root[tui-theme-mode="light"], .tui-theme-light {
+        --uikit-color-theme-1: #fdf2f8;
+        --uikit-color-theme-2: #fce7f3;
+        --uikit-color-theme-3: #fbcfe8;
+        --uikit-color-theme-4: #f9a8d4;
+        --uikit-color-theme-5: #f472b6;
+        --uikit-color-primary: #ec4899;
+        --uikit-color-primary-hover: #db2777;
+        --uikit-color-success: #22c55e;
+        --uikit-color-warning: #f97316;
+        --uikit-color-error: #ef4444;
+        --uikit-text-color: #1f2937;
+      }
+
+      .myspace-navbar {
+        position: sticky;
+        top: 0;
+        z-index: 60;
+        backdrop-filter: blur(18px);
+        background: rgba(255, 255, 255, 0.85);
+        border-bottom: 1px solid rgba(236, 72, 153, 0.12);
+      }
+
+      .myspace-navbar__inner {
+        margin: 0 auto;
+        max-width: 1100px;
+        padding: 20px 24px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 24px;
+      }
+
+      .myspace-navbar__brand {
+        font-weight: 700;
+        font-size: 1.125rem;
+        color: #ec4899;
+        text-decoration: none;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+      }
+
+      .myspace-navbar__links {
+        display: flex;
+        gap: 18px;
+        align-items: center;
+      }
+
+      .myspace-navbar__links a {
+        font-size: 0.85rem;
+        letter-spacing: 0.18em;
+        text-transform: uppercase;
+        text-decoration: none;
+        color: #475569;
+        transition: color 0.2s ease, transform 0.2s ease;
+      }
+
+      .myspace-navbar__links a:hover {
+        color: #ec4899;
+        transform: translateY(-1px);
+      }
+    </style>
   </head>
   <body>
+    <header class="myspace-navbar">
+      <div class="myspace-navbar__inner">
+        <a class="myspace-navbar__brand" data-nav-brand href="/">MySpaceLove</a>
+        <nav class="myspace-navbar__links">
+          <a data-nav="dashboard" href="/">Dashboard</a>
+          <a data-nav="timeline" href="/">Timeline</a>
+          <a data-nav="gallery" href="/">Galeri</a>
+          <a data-nav="journal" href="/">Jurnal</a>
+        </nav>
+      </div>
+    </header>
     <div id="app"></div>
+    <script>
+      (function () {
+        var params = new URLSearchParams(window.location.search);
+        var userId = params.get('userId');
+        var userName = params.get('userName');
+        var avatarUrl = params.get('avatarUrl');
+        var spaceSlug = params.get('spaceSlug');
+        var spaceTitle = params.get('spaceTitle');
+        var dashboardUrl = params.get('dashboardUrl');
+
+        try {
+          localStorage.setItem('tuiRoom-language', 'en-US');
+        } catch (error) {
+          console.warn('Unable to persist language preference', error);
+        }
+
+        document.documentElement.setAttribute('tui-theme-mode', 'light');
+
+        var sanitizedSlug = spaceSlug && spaceSlug.trim() ? spaceSlug.trim() : '';
+        var baseDashboard = dashboardUrl && dashboardUrl.trim()
+          ? dashboardUrl.trim()
+          : (sanitizedSlug ? '/spaces/' + sanitizedSlug + '/dashboard' : '/dashboard');
+
+        var navLinks = {
+          dashboard: baseDashboard,
+          timeline: sanitizedSlug ? '/spaces/' + sanitizedSlug + '/timeline' : baseDashboard,
+          gallery: sanitizedSlug ? '/spaces/' + sanitizedSlug + '/gallery' : '/gallery',
+          journal: sanitizedSlug ? '/spaces/' + sanitizedSlug + '/journals' : '/journals',
+        };
+
+        window.__MYSPACE_ROOM__ = {
+          userId: userId && userId.trim() ? userId.trim() : undefined,
+          userName: userName && userName.trim() ? userName.trim() : undefined,
+          avatarUrl: avatarUrl && avatarUrl.trim() ? avatarUrl.trim() : undefined,
+          spaceSlug: sanitizedSlug || null,
+          spaceTitle: spaceTitle && spaceTitle.trim() ? spaceTitle.trim() : 'MySpaceLove',
+          dashboardUrl: baseDashboard,
+          navLinks: navLinks,
+        };
+
+        document.addEventListener('DOMContentLoaded', function () {
+          var brand = document.querySelector('[data-nav-brand]');
+          if (brand && window.__MYSPACE_ROOM__.spaceTitle) {
+            brand.textContent = window.__MYSPACE_ROOM__.spaceTitle + ' • MySpaceLove';
+          }
+
+          Object.keys(navLinks).forEach(function (key) {
+            var link = document.querySelector('[data-nav="' + key + '"]');
+            if (link) {
+              link.setAttribute('href', navLinks[key]);
+            }
+          });
+        });
+      })();
+    </script>
+    <script>
+      const translationMap = {
+        'Enter Room': 'Masuk Ruangan',
+        'Join Room': 'Gabung Ruangan',
+        'Join': 'Gabung',
+        'Leave Room': 'Keluar',
+        'Leave': 'Keluar',
+        'Cancel': 'Batal',
+        'Confirm': 'Konfirmasi',
+        'Room ID': 'ID Ruangan',
+        'Room Name': 'Nama Ruangan',
+        'Your name': 'Namamu',
+        'Start video': 'Mulai video',
+        'Stop video': 'Hentikan video',
+        'Microphone': 'Mikrofon',
+        'Camera': 'Kamera',
+        'Share screen': 'Bagikan layar',
+        'Members': 'Peserta',
+        'Chat': 'Obrolan',
+        'Settings': 'Pengaturan',
+        'Room Settings': 'Pengaturan Ruangan',
+        'Copy Link': 'Salin Tautan',
+        'Copy': 'Salin',
+        'Mute': 'Bisukan',
+        'Unmute': 'Buka Suara',
+        'End Room': 'Akhiri Ruangan',
+        'Waiting for host': 'Menunggu host',
+        'OK': 'Oke',
+      };
+
+      const translationKeys = Object.keys(translationMap);
+
+      function translateNode(node) {
+        if (node.nodeType === Node.TEXT_NODE) {
+          const text = node.textContent;
+          if (!text) return;
+          const trimmed = text.trim();
+          if (!trimmed) return;
+          translationKeys.forEach((key) => {
+            if (trimmed === key) {
+              node.textContent = node.textContent.replace(key, translationMap[key]);
+            }
+          });
+        } else if (node.nodeType === Node.ELEMENT_NODE) {
+          node.childNodes.forEach(translateNode);
+        }
+      }
+
+      function applyTranslations() {
+        translateNode(document.body);
+      }
+
+      document.addEventListener('DOMContentLoaded', function () {
+        applyTranslations();
+        const observer = new MutationObserver(function () {
+          applyTranslations();
+        });
+        observer.observe(document.body, { childList: true, subtree: true });
+      });
+    </script>
   </body>
 </html>
