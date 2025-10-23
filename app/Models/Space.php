@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\NobarSchedule;
 use App\Models\SpaceInvitation;
 use App\Models\SpaceSeparationRequest;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -90,6 +91,11 @@ class Space extends Model
     public function docs()
     {
         return $this->hasMany(Doc::class);
+    }
+
+    public function nobarSchedules()
+    {
+        return $this->hasMany(NobarSchedule::class);
     }
 
     public function hasMember($userId)

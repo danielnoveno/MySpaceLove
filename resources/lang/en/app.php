@@ -178,5 +178,18 @@ return [
             'partner_fallback' => 'you',
             'date_format' => 'F j, Y',
         ],
+        'nobar_schedule' => [
+            'subject' => 'Watch Party Reminder: :title',
+            'heading' => 'Upcoming Watch Party 🍿',
+            'greeting' => 'Hi :recipient,',
+            'intro' => ':creator scheduled a watch party in your space ":space".',
+            'schedule_label' => 'Scheduled for',
+            'details_label' => 'Notes',
+            'cta' => 'Open Watch Room',
+            'footer' => 'Sent with care from :appName',
+            'creator_fallback' => 'Someone special',
+            'recipient_fallback' => 'there',
+            'time_format' => 'F j, Y g:i A T',
+        ],
     ],
 ];
