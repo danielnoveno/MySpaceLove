@@ -68,6 +68,35 @@ Want to try LoveSpace in your local environment? Follow these steps:
    - Configure your database connection.
    - Run `php artisan key:generate`.
 
+### 🔐 Enable Google Login
+
+LoveSpace sekarang mendukung login menggunakan akun Google. Ikuti langkah berikut untuk mengaktifkannya:
+
+1. Buka [Google Cloud Console](https://console.cloud.google.com/) dan buat **OAuth 2.0 Client ID** baru (type: Web application).
+2. Tambahkan URL berikut pada daftar *Authorized redirect URIs* sesuai lingkungan kamu.
+   - Lokal: `http://localhost/auth/google/callback`
+   - Produksi: `https://your-domain.com/auth/google/callback`
+3. Salin **Client ID** dan **Client Secret**, kemudian isi pada variabel berikut di file `.env`:
+   ```env
+   GOOGLE_CLIENT_ID=your-client-id
+   GOOGLE_CLIENT_SECRET=your-client-secret
+   GOOGLE_REDIRECT_URI="https://your-domain.com/auth/google/callback"
+   GOOGLE_ALLOWED_DOMAIN= # Opsional, batasi login hanya untuk domain email tertentu
+   ```
+4. Jalankan `php artisan config:clear` setelah memperbarui konfigurasi.
+
+### 🌐 Subdomain untuk Setiap Space
+
+Setiap space kini otomatis tersedia pada subdomain masing-masing, misalnya `namaspace.myspacelove.com`. Aturannya sebagai berikut:
+
+- Pastikan DNS kamu mendukung wildcard (`*.myspacelove.com`). Untuk pengembangan lokal, domain `*.localhost` sudah otomatis berfungsi.
+- Perbarui file `.env` dengan domain utama yang ingin digunakan:
+  ```env
+  SPACE_BASE_DOMAIN=myspacelove.com
+  SPACE_ENABLE_SUBDOMAIN=true
+  ```
+- Jika ingin menonaktifkan pola subdomain (misalnya ketika wildcard domain belum siap), set `SPACE_ENABLE_SUBDOMAIN=false` agar aplikasi kembali menggunakan rute `/spaces/{slug}`.
+
 4. **Run database migrations:**
    ```bash
    php artisan migrate --seed

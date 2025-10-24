@@ -54,6 +54,13 @@ return [
 
     'url' => env('APP_URL', 'http://localhost'),
 
+    'space_domain' => env(
+        'SPACE_BASE_DOMAIN',
+        parse_url(env('APP_URL', 'http://localhost'), PHP_URL_HOST) ?: 'localhost'
+    ),
+
+    'space_subdomain_routing' => (bool) env('SPACE_ENABLE_SUBDOMAIN', true),
+
     /*
     |--------------------------------------------------------------------------
     | Application Timezone

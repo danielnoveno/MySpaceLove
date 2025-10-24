@@ -20,10 +20,12 @@ use App\Http\Controllers\SpaceController;
 use App\Http\Controllers\NobarController;
 use App\Http\Controllers\SpotifyAuthController;
 use App\Http\Controllers\SpotifyController;
+use App\Models\Space;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Response;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 
@@ -137,58 +139,54 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/spaces', [SpaceController::class, 'index'])->name('spaces.index');
     Route::post('/spaces', [SpaceController::class, 'store'])->name('spaces.store');
 
-    Route::middleware('space.access')->group(function () {
-        Route::get('/spaces/{space:slug}/dashboard', [DashboardController::class, 'show'])->name('spaces.dashboard');
+    $spaceFeatureRoutes = function (): void {
+        Route::get('dashboard', [DashboardController::class, 'show'])->name('spaces.dashboard');
 
-        Route::get('/spaces/{space:slug}/location', [LocationController::class, 'index'])->name('location.map');
+        Route::get('location', [LocationController::class, 'index'])->name('location.map');
 
-        Route::get('/spaces/{space:slug}/timeline', [LoveTimelineApiController::class, 'index'])->name('timeline.index');
-        Route::get('/spaces/{space:slug}/timeline/create', [LoveTimelineApiController::class, 'create'])->name('timeline.create');
-        Route::post('/spaces/{space:slug}/timeline', [LoveTimelineApiController::class, 'store'])->name('timeline.store');
-        Route::get('/spaces/{space:slug}/timeline/{id}/edit', [LoveTimelineApiController::class, 'edit'])->name('timeline.edit');
-        Route::post('/spaces/{space:slug}/timeline/{id}', [LoveTimelineApiController::class, 'update'])->name('timeline.update');
-        Route::delete('/spaces/{space:slug}/timeline/{id}', [LoveTimelineApiController::class, 'destroy'])->name('timeline.destroy');
+        Route::get('timeline', [LoveTimelineApiController::class, 'index'])->name('timeline.index');
+        Route::get('timeline/create', [LoveTimelineApiController::class, 'create'])->name('timeline.create');
+        Route::post('timeline', [LoveTimelineApiController::class, 'store'])->name('timeline.store');
+        Route::get('timeline/{id}/edit', [LoveTimelineApiController::class, 'edit'])->name('timeline.edit');
+        Route::post('timeline/{id}', [LoveTimelineApiController::class, 'update'])->name('timeline.update');
+        Route::delete('timeline/{id}', [LoveTimelineApiController::class, 'destroy'])->name('timeline.destroy');
 
-        // Daily Messages Routes
-        Route::get('/spaces/{space:slug}/daily-messages', [DailyMessageApiController::class, 'index'])->name('daily.index');
-        Route::get('/spaces/{space:slug}/daily-messages/create', [DailyMessageApiController::class, 'create'])->name('daily.create');
-        Route::post('/spaces/{space:slug}/daily-messages', [DailyMessageApiController::class, 'store'])->name('daily.store');
-        Route::get('/spaces/{space:slug}/daily-messages/{id}/edit', [DailyMessageApiController::class, 'edit'])->name('daily.edit');
-        Route::put('/spaces/{space:slug}/daily-messages/{id}', [DailyMessageApiController::class, 'update'])->name('daily.update');
-        Route::post('/spaces/{space:slug}/daily-messages/regenerate', [DailyMessageApiController::class, 'regenerate'])->name('daily.regenerate');
-        Route::post('/spaces/{space:slug}/daily-messages/{id}/email', [DailyMessageApiController::class, 'sendEmail'])->name('daily.email');
+        Route::get('daily-messages', [DailyMessageApiController::class, 'index'])->name('daily.index');
+        Route::get('daily-messages/create', [DailyMessageApiController::class, 'create'])->name('daily.create');
+        Route::post('daily-messages', [DailyMessageApiController::class, 'store'])->name('daily.store');
+        Route::get('daily-messages/{id}/edit', [DailyMessageApiController::class, 'edit'])->name('daily.edit');
+        Route::put('daily-messages/{id}', [DailyMessageApiController::class, 'update'])->name('daily.update');
+        Route::post('daily-messages/regenerate', [DailyMessageApiController::class, 'regenerate'])->name('daily.regenerate');
+        Route::post('daily-messages/{id}/email', [DailyMessageApiController::class, 'sendEmail'])->name('daily.email');
 
-        // Countdown Routes
-        Route::get('/spaces/{space:slug}/countdowns', [CountdownApiController::class, 'index'])->name('countdown.index');
-        Route::get('/spaces/{space:slug}/countdowns/create', [CountdownApiController::class, 'create'])->name('countdown.create');
-        Route::post('/spaces/{space:slug}/countdowns', [CountdownApiController::class, 'store'])->name('countdown.store');
-        Route::get('/spaces/{space:slug}/countdowns/{id}/edit', [CountdownApiController::class, 'edit'])->name('countdown.edit');
-        Route::put('/spaces/{space:slug}/countdowns/{id}', [CountdownApiController::class, 'update'])->name('countdown.update');
-        Route::delete('/spaces/{space:slug}/countdowns/{id}', [CountdownApiController::class, 'destroy'])->name('countdown.destroy');
+        Route::get('countdowns', [CountdownApiController::class, 'index'])->name('countdown.index');
+        Route::get('countdowns/create', [CountdownApiController::class, 'create'])->name('countdown.create');
+        Route::post('countdowns', [CountdownApiController::class, 'store'])->name('countdown.store');
+        Route::get('countdowns/{id}/edit', [CountdownApiController::class, 'edit'])->name('countdown.edit');
+        Route::put('countdowns/{id}', [CountdownApiController::class, 'update'])->name('countdown.update');
+        Route::delete('countdowns/{id}', [CountdownApiController::class, 'destroy'])->name('countdown.destroy');
 
-        // Journal Routes
-        Route::get('/spaces/{space:slug}/journals', [LoveJournalApiController::class, 'index'])->name('journal.index');
-        Route::get('/spaces/{space:slug}/journals/create', [LoveJournalApiController::class, 'create'])->name('journal.create');
-        Route::post('/spaces/{space:slug}/journals', [LoveJournalApiController::class, 'store'])->name('journal.store');
-        Route::get('/spaces/{space:slug}/journals/{id}/edit', [LoveJournalApiController::class, 'edit'])->name('journal.edit');
-        Route::put('/spaces/{space:slug}/journals/{id}', [LoveJournalApiController::class, 'update'])->name('journal.update');
-        Route::delete('/spaces/{space:slug}/journals/{id}', [LoveJournalApiController::class, 'destroy'])->name('journal.destroy');
+        Route::get('journals', [LoveJournalApiController::class, 'index'])->name('journal.index');
+        Route::get('journals/create', [LoveJournalApiController::class, 'create'])->name('journal.create');
+        Route::post('journals', [LoveJournalApiController::class, 'store'])->name('journal.store');
+        Route::get('journals/{id}/edit', [LoveJournalApiController::class, 'edit'])->name('journal.edit');
+        Route::put('journals/{id}', [LoveJournalApiController::class, 'update'])->name('journal.update');
+        Route::delete('journals/{id}', [LoveJournalApiController::class, 'destroy'])->name('journal.destroy');
 
-        // Media Gallery Routes
-        Route::get('/spaces/{space:slug}/gallery', [MediaGalleryApiController::class, 'index'])->name('gallery.index');
-        Route::get('/spaces/{space:slug}/gallery/create', [MediaGalleryApiController::class, 'create'])->name('gallery.create');
-        Route::post('/spaces/{space:slug}/gallery', [MediaGalleryApiController::class, 'store'])->name('gallery.store');
-        Route::get('/spaces/{space:slug}/gallery/{id}/edit', [MediaGalleryApiController::class, 'edit'])->name('gallery.edit');
-        Route::put('/spaces/{space:slug}/gallery/{id}', [MediaGalleryApiController::class, 'update'])->name('gallery.update');
-        Route::delete('/spaces/{space:slug}/gallery/{id}', [MediaGalleryApiController::class, 'destroy'])->name('gallery.destroy');
+        Route::get('gallery', [MediaGalleryApiController::class, 'index'])->name('gallery.index');
+        Route::get('gallery/create', [MediaGalleryApiController::class, 'create'])->name('gallery.create');
+        Route::post('gallery', [MediaGalleryApiController::class, 'store'])->name('gallery.store');
+        Route::get('gallery/{id}/edit', [MediaGalleryApiController::class, 'edit'])->name('gallery.edit');
+        Route::put('gallery/{id}', [MediaGalleryApiController::class, 'update'])->name('gallery.update');
+        Route::delete('gallery/{id}', [MediaGalleryApiController::class, 'destroy'])->name('gallery.destroy');
 
-        Route::get('/spaces/{space:slug}/spotify/authorize', [SpotifyAuthController::class, 'redirect'])->name('spotify.authorize');
-        Route::get('/spaces/{space:slug}/spotify/dashboard-data', [SpotifyController::class, 'dashboard'])->name('spotify.dashboard');
-        Route::post('/spaces/{space:slug}/spotify/surprises', [SpotifyController::class, 'storeSurprise'])->name('spotify.surprises.store');
-        Route::post('/spaces/{space:slug}/spotify/capsules', [SpotifyController::class, 'storeCapsule'])->name('spotify.capsules.store');
-        Route::post('/spaces/{space:slug}/spotify/playback/join', [SpotifyController::class, 'joinPlayback'])->name('spotify.playback.join');
+        Route::get('spotify/authorize', [SpotifyAuthController::class, 'redirect'])->name('spotify.authorize');
+        Route::get('spotify/dashboard-data', [SpotifyController::class, 'dashboard'])->name('spotify.dashboard');
+        Route::post('spotify/surprises', [SpotifyController::class, 'storeSurprise'])->name('spotify.surprises.store');
+        Route::post('spotify/capsules', [SpotifyController::class, 'storeCapsule'])->name('spotify.capsules.store');
+        Route::post('spotify/playback/join', [SpotifyController::class, 'joinPlayback'])->name('spotify.playback.join');
 
-        Route::get('/spaces/{space:slug}/spotify-companion', function (\App\Models\Space $space) {
+        Route::get('spotify-companion', function (Space $space) {
             return Inertia::render('Spotify/LongDistanceSpotifyHub', [
                 'space' => [
                     'id' => $space->id,
@@ -198,16 +196,36 @@ Route::middleware(['auth', 'verified'])->group(function () {
             ]);
         })->name('spotify.companion');
 
-        Route::get('/spaces/{space:slug}/nobar', [NobarController::class, 'show'])->name('space.nobar');
-        Route::post('/spaces/{space:slug}/nobar/schedules', [NobarController::class, 'storeSchedule'])->name('space.nobar.schedules.store');
+        Route::get('nobar', [NobarController::class, 'show'])->name('space.nobar');
+        Route::post('nobar/schedules', [NobarController::class, 'storeSchedule'])->name('space.nobar.schedules.store');
 
-        Route::get('/spaces/{space:slug}/roomjitsi', function (\App\Models\Space $space) {
+        Route::get('roomjitsi', function (Space $space) {
             return Inertia::render('Room/Show', [
                 'spaceId' => $space->id,
                 'user' => Auth::user()?->name ?? 'Guest',
             ]);
         });
-    });
+    };
+
+    if (config('app.space_subdomain_routing')) {
+        Route::domain('{space:slug}.' . config('app.space_domain'))
+            ->middleware('space.access')
+            ->group($spaceFeatureRoutes);
+
+        Route::middleware('space.access')->group(function () {
+            Route::get('/spaces/{space:slug}/{any?}', function (Space $space, ?string $any = null) {
+                $dashboardUrl = route('spaces.dashboard', ['space' => $space->slug]);
+                $rootUrl = Str::replaceLast('/dashboard', '', $dashboardUrl);
+                $target = $any ? Str::finish($rootUrl, '/') . ltrim($any, '/') : $dashboardUrl;
+
+                return redirect()->to($target);
+            })->where('any', '.*');
+        });
+    } else {
+        Route::prefix('spaces/{space:slug}')
+            ->middleware('space.access')
+            ->group($spaceFeatureRoutes);
+    }
 
     // Surprise Notes Routes
     Route::get('/surprise-notes', [SurpriseNoteApiController::class, 'index'])->name('notes.index');
