@@ -3,17 +3,27 @@ import { Link } from '@inertiajs/react';
 import { PropsWithChildren } from 'react';
 
 export default function Guest({ children }: PropsWithChildren) {
+    const currentYear = new Date().getFullYear();
+
     return (
-        <div className="flex min-h-screen flex-col items-center bg-gray-100 pt-6 sm:justify-center sm:pt-0">
-            <div>
-                <Link href="/">
-                    <ApplicationLogo className="h-20 w-20 fill-current text-gray-500" />
-                </Link>
+        <div className="flex min-h-screen flex-col bg-gradient-to-br from-pink-100/80 via-white to-purple-100/70">
+            <div className="flex flex-1 items-center justify-center px-4 py-12 sm:px-6 lg:px-8">
+                <div className="w-full max-w-md">
+                    <div className="flex justify-center">
+                        <Link href="/" aria-label="Kembali ke halaman utama MySpaceLove">
+                            <ApplicationLogo className="h-16 w-auto text-pink-500" />
+                        </Link>
+                    </div>
+
+                    <div className="mt-8 overflow-hidden rounded-3xl bg-white/90 p-8 shadow-xl ring-1 ring-white/40 backdrop-blur">
+                        {children}
+                    </div>
+                </div>
             </div>
 
-            <div className="mt-6 w-full overflow-hidden bg-white px-6 py-4 shadow-md sm:max-w-md sm:rounded-lg">
-                {children}
-            </div>
+            <footer className="py-6 text-center text-sm text-purple-500/80">
+                Made with ❤️ by Peng for Winnie &copy; {currentYear}
+            </footer>
         </div>
     );
 }

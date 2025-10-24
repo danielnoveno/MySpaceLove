@@ -288,7 +288,7 @@ export default function Room({ spaceId, space, schedules = [] }: Props) {
             lang: "id-ID",
             spaceSlug: resolvedSpaceSlug,
             spaceTitle: resolvedSpaceTitle,
-            dashboardUrl: `/spaces/${resolvedSpaceSlug}/dashboard`,
+            dashboardUrl: route('spaces.dashboard', { space: resolvedSpaceSlug }),
         });
 
         if (avatarUrl) {
