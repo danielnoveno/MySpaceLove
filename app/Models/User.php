@@ -24,6 +24,10 @@ class User extends Authenticatable
         'password',
         'username',
         'partner_code',
+        'email_verified_at',
+        'auth_provider',
+        'provider_id',
+        'provider_avatar',
     ];
 
     /**

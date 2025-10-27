@@ -1,8 +1,11 @@
+import LoveCursorCanvas from "@/Components/LoveCursorCanvas";
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout";
-import { Head, useForm, router, Link } from "@inertiajs/react";
-import { ArrowLeft, Upload } from "lucide-react";
-import { useState, useRef, useEffect } from "react";
 import { useCurrentSpace } from "@/hooks/useCurrentSpace";
+import { Head, Link, useForm } from "@inertiajs/react";
+import { ArrowLeft, Trash2, Upload } from "lucide-react";
+import { ChangeEvent, FormEvent, useMemo, useRef, useState } from "react";
+
+const MAX_FILES = 12;
 
 export default function GalleryCreate() {
     const currentSpace = useCurrentSpace();
@@ -13,144 +16,74 @@ export default function GalleryCreate() {
 
     const spaceSlug = currentSpace.slug;
     const spaceTitle = currentSpace.title;
-    const { data, setData, post, processing, errors } = useForm({
+    const { data, setData, post, processing, errors, reset } = useForm({
         title: "",
         files: [] as File[],
     });
 
     const [previewUrls, setPreviewUrls] = useState<string[]>([]);
-    const firstFileError = Object.entries(errors).find(([key]) =>
-        key.startsWith("files.")
-    )?.[1] as string | undefined;
+    const [fileError, setFileError] = useState<string | null>(null);
+    const createdPreviewUrls = useRef<string[]>([]);
 
-    const canvasRef = useRef<HTMLCanvasElement>(null);
-    const [parallaxPos, setParallaxPos] = useState({ x: 0, y: 0 });
-    const [randomHearts] = useState(() =>
-        Array.from({ length: 40 }, () => ({
-            x: Math.random() * window.innerWidth,
-            y: Math.random() * window.innerHeight,
-            size: Math.random() * 14 + 8,
-            opacity: Math.random() * 0.5 + 0.2,
-        }))
-    );
+    const firstFileError = useMemo(() => {
+        const match = Object.entries(errors).find(([key]) => key.startsWith("files."));
+        return match ? (match[1] as string) : undefined;
+    }, [errors]);
 
-    useEffect(() => {
-        const canvas = canvasRef.current;
-        if (!canvas) return;
-        const ctx = canvas.getContext("2d");
-        if (!ctx) return;
+    const syncPreviewState = (files: File[]) => {
+        createdPreviewUrls.current.forEach((url) => URL.revokeObjectURL(url));
+        createdPreviewUrls.current = [];
 
-        canvas.width = window.innerWidth;
-        canvas.height = window.innerHeight;
-
-        const hearts: {
-            x: number;
-            y: number;
-            size: number;
-            dx: number;
-            dy: number;
-        }[] = [];
-
-        const createHeart = (x: number, y: number) => {
-            hearts.push({
-                x,
-                y,
-                size: Math.random() * 8 + 10,
-                dx: (Math.random() - 0.5) * 2,
-                dy: (Math.random() - 0.5) * 2,
-            });
-        };
-
-        const drawHeart = (
-            ctx: CanvasRenderingContext2D,
-            x: number,
-            y: number,
-            size: number,
-            opacity = 0.6
-        ) => {
-            ctx.save();
-            ctx.translate(x, y);
-            ctx.scale(size / 20, size / 20);
-            ctx.beginPath();
-            ctx.moveTo(0, 0);
-            ctx.bezierCurveTo(0, -3, -5, -15, -20, -15);
-            ctx.bezierCurveTo(-55, -15, -55, 22.5, -55, 22.5);
-            ctx.bezierCurveTo(-55, 40, -35, 62, 0, 80);
-            ctx.bezierCurveTo(35, 62, 55, 40, 55, 22.5);
-            ctx.bezierCurveTo(55, 22.5, 55, -15, 20, -15);
-            ctx.bezierCurveTo(5, -15, 0, -3, 0, 0);
-            ctx.fillStyle = `rgba(16,185,129,${opacity})`; // emerald-500
-            ctx.fill();
-            ctx.restore();
-        };
-
-        const animate = () => {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-            hearts.forEach((h, i) => {
-                h.x += h.dx;
-                h.y += h.dy;
-                drawHeart(ctx, h.x, h.y, h.size);
-                if (
-                    h.x < 0 ||
-                    h.y < 0 ||
-                    h.x > canvas.width ||
-                    h.y > canvas.height
-                ) {
-                    hearts.splice(i, 1);
-                }
-            });
-
-            requestAnimationFrame(animate);
-        };
-
-        animate();
-
-        const handleMouseMove = (e: MouseEvent) => {
-            for (let i = 0; i < 3; i++) {
-                createHeart(e.clientX, e.clientY);
-            }
-            const centerX = window.innerWidth / 2;
-            const centerY = window.innerHeight / 2;
-            setParallaxPos({
-                x: (e.clientX - centerX) * 0.02,
-                y: (e.clientY - centerY) * 0.02,
-            });
-        };
-
-        window.addEventListener("mousemove", handleMouseMove);
-        window.addEventListener("resize", () => {
-            canvas.width = window.innerWidth;
-            canvas.height = window.innerHeight;
+        const urls = files.map((file) => {
+            const url = URL.createObjectURL(file);
+            createdPreviewUrls.current.push(url);
+            return url;
         });
 
-        return () => {
-            window.removeEventListener("mousemove", handleMouseMove);
-        };
-    }, []);
+        setPreviewUrls(urls);
+    };
 
-    const handleSubmit = (e: React.FormEvent) => {
-        e.preventDefault();
+    const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {
+        const files = Array.from(event.target.files ?? []);
+
+        if (files.length === 0) {
+            return;
+        }
+
+        const combined = [...data.files, ...files];
+
+        if (combined.length > MAX_FILES) {
+            setFileError(`Maksimal ${MAX_FILES} file yang dapat diunggah.`);
+            return;
+        }
+
+        setFileError(null);
+        setData("files", combined);
+        syncPreviewState(combined);
+        event.target.value = "";
+    };
+
+    const handleRemoveFile = (index: number) => {
+        const newFiles = [...data.files];
+        newFiles.splice(index, 1);
+        setData("files", newFiles);
+        syncPreviewState(newFiles);
+    };
+
+    const handleSubmit = (event: FormEvent) => {
+        event.preventDefault();
+        setFileError(null);
+
         post(route("gallery.store", { space: spaceSlug }), {
             forceFormData: true,
-            onSuccess: () =>
-                router.visit(route("gallery.index", { space: spaceSlug })),
+            onSuccess: () => {
+                createdPreviewUrls.current.forEach((url) => URL.revokeObjectURL(url));
+                createdPreviewUrls.current = [];
+                setPreviewUrls([]);
+                reset();
+            },
         });
     };
-
-    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const files = Array.from(e.target.files ?? []);
-        setData("files", files);
-    };
-
-    useEffect(() => {
-        const urls = data.files.map((file) => URL.createObjectURL(file));
-        setPreviewUrls(urls);
-
-        return () => {
-            urls.forEach((url) => URL.revokeObjectURL(url));
-        };
-    }, [data.files]);
 
     return (
         <AuthenticatedLayout
@@ -158,180 +91,131 @@ export default function GalleryCreate() {
                 <div className="flex items-center gap-4">
                     <Link
                         href={route("gallery.index", { space: spaceSlug })}
-                        className="p-2 hover:bg-gray-100 rounded-lg transition"
+                        className="rounded-lg p-2 transition hover:bg-gray-100"
                     >
-                        <ArrowLeft className="w-5 h-5" />
+                        <ArrowLeft className="h-5 w-5" />
                     </Link>
                     <div>
-                        <h1 className="text-3xl font-bold text-gray-900">
-                            Upload Galeri
-                        </h1>
-                        <p className="text-gray-600">
-                            Tambahkan foto atau video ke galeri {spaceTitle}
-                        </p>
+                        <h1 className="text-3xl font-bold text-gray-900">Upload Galeri</h1>
+                        <p className="text-gray-600">Tambahkan foto atau video ke galeri {spaceTitle}</p>
                     </div>
                 </div>
             }
         >
             <Head title={`Upload Galeri - ${spaceTitle}`} />
 
-            <div className="relative min-h-screen bg-gradient-to-br from-emerald-50 via-white to-green-50 py-10 px-4 sm:px-6 lg:px-8 overflow-hidden">
-                <canvas
-                    ref={canvasRef}
-                    className="absolute inset-0 w-full h-full pointer-events-none"
-                />
+            <div className="relative min-h-screen overflow-hidden bg-gradient-to-br from-emerald-50 via-white to-green-50 py-10 px-4 sm:px-6 lg:px-8">
+                <LoveCursorCanvas color="#10b981" heartCount={32} className="opacity-60" />
 
-                <div className="absolute inset-0 overflow-hidden pointer-events-none">
-                    {randomHearts.map((h, idx) => (
-                        <div
-                            key={idx}
-                            className="absolute text-green-400 select-none"
-                            style={{
-                                left: h.x,
-                                top: h.y,
-                                fontSize: h.size,
-                                opacity: h.opacity,
-                                transform: `translate3d(${
-                                    parallaxPos.x * 0.5
-                                }px, ${parallaxPos.y * 0.5}px, 0)`,
-                                transition: "transform 0.2s ease-out",
-                            }}
-                        >
-                            ♥
-                        </div>
-                    ))}
-                </div>
-
-                <div
-                    className="absolute inset-0 flex justify-center items-center pointer-events-none text-6xl opacity-20 select-none"
-                    style={{
-                        transform: `translate3d(${parallaxPos.x}px, ${parallaxPos.y}px, 0)`,
-                        transition: "transform 0.1s ease-out",
-                    }}
-                >
-                    💚 💖 💚 💚
-                </div>
-
-                <div className="relative max-w-3xl mx-auto">
+                <div className="relative mx-auto max-w-3xl">
                     <form
                         onSubmit={handleSubmit}
-                        className="bg-white/80 backdrop-blur-sm rounded-3xl shadow-lg border border-gray-100 p-8 md:p-10 relative z-10 space-y-8"
+                        className="relative z-10 space-y-8 rounded-3xl border border-emerald-100 bg-white/85 p-8 shadow-lg backdrop-blur-sm md:p-10"
                     >
-                        {/* Title */}
                         <div>
-                            <label className="block text-base font-semibold text-gray-800 mb-2">
-                                Judul
-                            </label>
+                            <label className="mb-2 block text-base font-semibold text-gray-800">Judul</label>
                             <input
                                 type="text"
                                 value={data.title}
-                                onChange={(e) =>
-                                    setData("title", e.target.value)
-                                }
-                                className="w-full px-5 py-4 border border-gray-300 rounded-2xl focus:ring-2 focus:ring-green-500 focus:border-transparent transition text-gray-800"
+                                onChange={(event) => setData("title", event.target.value)}
+                                className="w-full rounded-2xl border border-gray-300 px-5 py-4 text-gray-800 transition focus:border-transparent focus:ring-2 focus:ring-emerald-500"
                                 placeholder="Contoh: Foto Liburan"
                             />
                             {errors.title && (
-                                <p className="text-red-500 text-sm mt-2">
-                                    {errors.title}
-                                </p>
+                                <p className="mt-2 text-sm text-red-500">{errors.title}</p>
                             )}
                         </div>
 
-                        {/* File Upload */}
                         <div className="space-y-4">
-                            <div>
-                                <label className="block text-base font-semibold text-gray-800 mb-2">
-                                    File (Foto/Video)
+                            <label className="block text-base font-semibold text-gray-800">File (Foto/Video)</label>
+                            <div className="rounded-2xl border-2 border-dashed border-emerald-200 bg-white/80 p-8 text-center transition hover:border-emerald-400">
+                                <Upload className="mx-auto mb-4 h-14 w-14 text-emerald-500" />
+                                <p className="mb-4 text-sm text-gray-600">
+                                    Tarik dan letakkan file di sini atau pilih manual (maks. {MAX_FILES} file sekaligus)
+                                </p>
+                                <input
+                                    type="file"
+                                    id="file-upload"
+                                    className="hidden"
+                                    name="files"
+                                    multiple
+                                    onChange={handleFileChange}
+                                    accept="image/*,video/mp4,video/quicktime"
+                                />
+                                <label
+                                    htmlFor="file-upload"
+                                    className="inline-flex cursor-pointer items-center justify-center gap-2 rounded-xl bg-emerald-500 px-8 py-3 font-semibold text-white transition hover:bg-emerald-600"
+                                >
+                                    Pilih File
                                 </label>
-                                <div className="border-2 border-dashed border-emerald-200 rounded-2xl p-8 text-center hover:border-emerald-400 transition bg-white/70">
-                                    <Upload className="w-14 h-14 text-emerald-500 mx-auto mb-4" />
-                                    <p className="text-sm text-gray-600 mb-4">
-                                        Tarik dan letakkan file di sini atau pilih secara manual (maks. 12 file)
-                                    </p>
-                                    <input
-                                        type="file"
-                                        id="file-upload"
-                                        className="hidden"
-                                        name="files"
-                                        multiple
-                                        onChange={handleFileChange}
-                                    />
-                                    <label
-                                        htmlFor="file-upload"
-                                        className="cursor-pointer inline-flex items-center justify-center gap-2 bg-emerald-500 text-white px-8 py-3 rounded-xl font-semibold hover:bg-emerald-600 transition"
-                                    >
-                                        Pilih File
-                                    </label>
-                                    {data.files.length > 0 && (
-                                        <p className="text-sm text-gray-600 mt-4">
-                                            {data.files.length} file dipilih
-                                        </p>
-                                    )}
-                                </div>
-                                {errors.files && (
-                                    <p className="text-red-500 text-sm mt-2">{errors.files}</p>
-                                )}
-                                {firstFileError && (
-                                    <p className="text-red-500 text-sm mt-2">{firstFileError}</p>
-                                )}
-                            </div>
-
-                            <div className="bg-white/70 rounded-2xl p-6 border border-emerald-100 shadow-sm">
-                                <h3 className="text-sm font-semibold text-emerald-600 mb-3 uppercase tracking-wide">
-                                    Preview
-                                </h3>
-                                {previewUrls.length > 0 ? (
-                                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                                        {previewUrls.map((url, index) => (
-                                            <div
-                                                key={`${url}-${index}`}
-                                                className="relative aspect-square overflow-hidden rounded-xl border border-emerald-100 shadow-sm"
-                                            >
-                                                <img
-                                                    src={url}
-                                                    alt={`preview-${index}`}
-                                                    className="h-full w-full object-cover"
-                                                />
-                                                <span className="absolute bottom-1 right-1 rounded-full bg-emerald-500/90 px-2 text-xs font-semibold text-white">
-                                                    #{index + 1}
-                                                </span>
-                                            </div>
-                                        ))}
-                                    </div>
-                                ) : (
-                                    <p className="text-gray-500 text-sm">
-                                        Belum ada file dipilih
+                                {data.files.length > 0 && (
+                                    <p className="mt-4 text-sm text-gray-600">
+                                        {data.files.length} file dipilih
                                     </p>
                                 )}
                             </div>
+                            {fileError && <p className="text-sm text-red-500">{fileError}</p>}
+                            {errors.files && <p className="text-sm text-red-500">{errors.files}</p>}
+                            {firstFileError && <p className="text-sm text-red-500">{firstFileError}</p>}
                         </div>
 
-                        <div className="bg-white/60 rounded-2xl p-6 border border-emerald-100 shadow-sm">
-                            <h3 className="text-sm font-semibold text-emerald-600 mb-3 uppercase tracking-wide">
+                        <div className="rounded-2xl border border-emerald-100 bg-white/75 p-6 shadow-sm">
+                            <h3 className="mb-3 text-sm font-semibold uppercase tracking-wide text-emerald-600">
+                                Preview
+                            </h3>
+                            {previewUrls.length > 0 ? (
+                                <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
+                                    {previewUrls.map((url, index) => (
+                                        <div
+                                            key={`${url}-${index}`}
+                                            className="relative overflow-hidden rounded-xl border border-emerald-100 shadow-sm"
+                                        >
+                                            <img
+                                                src={url}
+                                                alt={`preview-${index}`}
+                                                className="h-40 w-full object-cover"
+                                            />
+                                            <button
+                                                type="button"
+                                                onClick={() => handleRemoveFile(index)}
+                                                className="absolute right-2 top-2 inline-flex items-center gap-1 rounded-full bg-black/60 px-2 py-1 text-xs font-semibold text-white transition hover:bg-black"
+                                            >
+                                                <Trash2 className="h-3 w-3" />
+                                                Hapus
+                                            </button>
+                                            <span className="absolute bottom-2 left-2 rounded-full bg-emerald-500/90 px-2 text-xs font-semibold text-white">
+                                                #{index + 1}
+                                            </span>
+                                        </div>
+                                    ))}
+                                </div>
+                            ) : (
+                                <p className="text-sm text-gray-500">Belum ada file dipilih.</p>
+                            )}
+                        </div>
+
+                        <div className="rounded-2xl border border-emerald-100 bg-white/70 p-6 shadow-sm">
+                            <h3 className="mb-3 text-sm font-semibold uppercase tracking-wide text-emerald-600">
                                 Tips Upload
                             </h3>
                             <ul className="space-y-2 text-sm text-gray-600">
-                                <li>Format foto: JPG, JPEG, PNG, GIF (maks 30MB per file).</li>
-                                <li>Format video: MP4 atau MOV (maks 30MB per file).</li>
-                                <li>Tambahkan catatan agar mudah mengingat momennya.</li>
+                                <li>Format foto: JPG, JPEG, PNG, GIF (maks. 30MB per file).</li>
+                                <li>Format video: MP4 atau MOV (maks. 30MB per file).</li>
+                                <li>Berikan judul agar memori mudah ditemukan kembali.</li>
                             </ul>
                         </div>
 
-                        {/* Buttons */}
-                        <div className="flex flex-col sm:flex-row gap-4 pt-6">
+                        <div className="flex flex-col gap-4 pt-4 sm:flex-row">
                             <Link
-                                href={route("gallery.index", {
-                                    space: spaceSlug,
-                                })}
-                                className="flex-1 px-6 py-4 border border-gray-300 text-gray-700 rounded-xl hover:bg-gray-50 transition text-center font-medium"
+                                href={route("gallery.index", { space: spaceSlug })}
+                                className="flex-1 rounded-xl border border-gray-300 px-6 py-4 text-center font-medium text-gray-700 transition hover:bg-gray-50"
                             >
                                 Batal
                             </Link>
                             <button
                                 type="submit"
-                                disabled={processing}
-                                className="flex-1 bg-gradient-to-r from-green-500 to-emerald-600 text-white px-6 py-4 rounded-xl font-semibold hover:shadow-lg transition-all disabled:opacity-50"
+                                disabled={processing || data.files.length === 0}
+                                className="flex-1 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-600 px-6 py-4 font-semibold text-white shadow transition hover:shadow-lg disabled:cursor-not-allowed disabled:opacity-60"
                             >
                                 {processing ? "Mengunggah..." : "Upload"}
                             </button>

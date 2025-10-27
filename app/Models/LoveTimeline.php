@@ -15,6 +15,7 @@ class LoveTimeline extends Model
         'description',
         'date',
         'media_paths',
+        'thumbnail_path',
     ];
 
     protected $casts = [

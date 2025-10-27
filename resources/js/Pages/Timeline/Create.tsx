@@ -1,7 +1,8 @@
+import LoveCursorCanvas from "@/Components/LoveCursorCanvas";
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout";
 import { Head, useForm, router, Link } from "@inertiajs/react";
 import { Calendar, ArrowLeft, Upload, X } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { ChangeEvent, FormEvent, useEffect, useRef, useState } from "react";
 import { useCurrentSpace } from "@/hooks/useCurrentSpace";
 
 export default function TimelineCreate() {
@@ -21,105 +22,18 @@ export default function TimelineCreate() {
         media: [] as File[],
     });
 
-    const canvasRef = useRef<HTMLCanvasElement>(null);
-    const [parallaxPos, setParallaxPos] = useState({ x: 0, y: 0 });
     const [previews, setPreviews] = useState<string[]>([]);
     const [fileError, setFileError] = useState<string | null>(null);
+    const createdPreviewUrls = useRef<string[]>([]);
 
-    // ====== Canvas animasi ======
     useEffect(() => {
-        const canvas = canvasRef.current;
-        if (!canvas) return;
-        const ctx = canvas.getContext("2d");
-        if (!ctx) return;
-
-        canvas.width = window.innerWidth;
-        canvas.height = window.innerHeight;
-
-        const hearts: {
-            x: number;
-            y: number;
-            size: number;
-            dx: number;
-            dy: number;
-        }[] = [];
-
-        const createHeart = (x: number, y: number) => {
-            hearts.push({
-                x,
-                y,
-                size: Math.random() * 8 + 10,
-                dx: (Math.random() - 0.5) * 2,
-                dy: (Math.random() - 0.5) * 2,
-            });
-        };
-
-        const drawHeart = (
-            ctx: CanvasRenderingContext2D,
-            x: number,
-            y: number,
-            size: number,
-            opacity = 0.6
-        ) => {
-            ctx.save();
-            ctx.translate(x, y);
-            ctx.scale(size / 20, size / 20);
-            ctx.beginPath();
-            ctx.moveTo(0, 0);
-            ctx.bezierCurveTo(0, -3, -5, -15, -20, -15);
-            ctx.bezierCurveTo(-55, -15, -55, 22.5, -55, 22.5);
-            ctx.bezierCurveTo(-55, 40, -35, 62, 0, 80);
-            ctx.bezierCurveTo(35, 62, 55, 40, 55, 22.5);
-            ctx.bezierCurveTo(55, 22.5, 55, -15, 20, -15);
-            ctx.bezierCurveTo(5, -15, 0, -3, 0, 0);
-            ctx.fillStyle = `rgba(244,63,94,${opacity})`;
-            ctx.fill();
-            ctx.restore();
-        };
-
-        const animate = () => {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            hearts.forEach((h, i) => {
-                h.x += h.dx;
-                h.y += h.dy;
-                drawHeart(ctx, h.x, h.y, h.size);
-                if (
-                    h.x < 0 ||
-                    h.y < 0 ||
-                    h.x > canvas.width ||
-                    h.y > canvas.height
-                ) {
-                    hearts.splice(i, 1);
-                }
-            });
-            requestAnimationFrame(animate);
-        };
-
-        animate();
-
-        const handleMouseMove = (e: MouseEvent) => {
-            for (let i = 0; i < 3; i++) createHeart(e.clientX, e.clientY);
-            const centerX = window.innerWidth / 2;
-            const centerY = window.innerHeight / 2;
-            setParallaxPos({
-                x: (e.clientX - centerX) * 0.02,
-                y: (e.clientY - centerY) * 0.02,
-            });
-        };
-
-        window.addEventListener("mousemove", handleMouseMove);
-        window.addEventListener("resize", () => {
-            canvas.width = window.innerWidth;
-            canvas.height = window.innerHeight;
-        });
-
         return () => {
-            window.removeEventListener("mousemove", handleMouseMove);
+            createdPreviewUrls.current.forEach((url) => URL.revokeObjectURL(url));
         };
     }, []);
 
     // ====== Submit ======
-    const handleSubmit = (e: React.FormEvent) => {
+    const handleSubmit = (e: FormEvent) => {
         e.preventDefault();
         clearErrors();
         post(route("timeline.store", { space: spaceSlug }), {
@@ -130,7 +44,7 @@ export default function TimelineCreate() {
     };
 
     // ====== File handler ======
-    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
         const files = Array.from(e.target.files || []);
         const totalFiles = data.media.length + files.length;
 
@@ -146,7 +60,11 @@ export default function TimelineCreate() {
 
         const newPreviews = [
             ...previews,
-            ...files.map((file) => URL.createObjectURL(file)),
+            ...files.map((file) => {
+                const url = URL.createObjectURL(file);
+                createdPreviewUrls.current.push(url);
+                return url;
+            }),
         ];
         setPreviews(newPreviews);
     };
@@ -154,8 +72,14 @@ export default function TimelineCreate() {
     const removeFile = (index: number) => {
         const newFiles = [...data.media];
         const newPreviews = [...previews];
+        const [removedPreview] = newPreviews.splice(index, 1);
+        if (removedPreview) {
+            URL.revokeObjectURL(removedPreview);
+            createdPreviewUrls.current = createdPreviewUrls.current.filter(
+                (url) => url !== removedPreview,
+            );
+        }
         newFiles.splice(index, 1);
-        newPreviews.splice(index, 1);
         setData("media", newFiles);
         setPreviews(newPreviews);
     };
@@ -183,11 +107,8 @@ export default function TimelineCreate() {
         >
             <Head title="Tambah Momen" />
 
-            <div className="relative min-h-screen bg-gradient-to-br from-pink-50 via-white to-rose-50 py-10 px-4 sm:px-6 lg:px-8 overflow-hidden">
-                <canvas
-                    ref={canvasRef}
-                    className="absolute inset-0 w-full h-full pointer-events-none"
-                />
+            <div className="relative min-h-screen overflow-hidden bg-gradient-to-br from-pink-50 via-white to-rose-50 py-10 px-4 sm:px-6 lg:px-8">
+                <LoveCursorCanvas color="#f43f5e" heartCount={42} className="opacity-70" />
 
                 <div className="relative max-w-4xl mx-auto">
                     <form

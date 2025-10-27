@@ -23,7 +23,9 @@ class RegisteredUserController extends Controller
      */
     public function create(): Response
     {
-        return Inertia::render('Auth/Register');
+        return Inertia::render('Auth/Register', [
+            'canUseGoogleAuth' => $this->googleCredentialsConfigured(),
+        ]);
     }
 
     /**
@@ -89,5 +91,12 @@ class RegisteredUserController extends Controller
         return redirect()
             ->route('spaces.index')
             ->with('status', 'Selamat datang! Kamu bisa langsung membuat Space pertama atau bergabung ke Space pasanganmu menggunakan kode pasangan.');
+    }
+
+    private function googleCredentialsConfigured(): bool
+    {
+        return filled(config('services.google.client_id'))
+            && filled(config('services.google.client_secret'))
+            && filled(config('services.google.redirect'));
     }
 }

@@ -16,7 +16,32 @@ class LoveTimelineApiController extends Controller
     {
         $this->authorizeSpace($space);
 
-        $timelines = $space->timelines()->orderBy('date')->get();
+        $timelines = $space->timelines()
+            ->orderBy('date')
+            ->get()
+            ->map(function (LoveTimeline $timeline) use ($space) {
+                $mediaPaths = $timeline->media_paths ?? [];
+                $thumbnail = $timeline->thumbnail_path;
+
+                if ($thumbnail && !in_array($thumbnail, $mediaPaths, true)) {
+                    $thumbnail = null;
+                }
+
+                $resolvedThumbnail = $thumbnail
+                    ? Storage::disk('public')->url($thumbnail)
+                    : ($mediaPaths ? Storage::disk('public')->url($mediaPaths[0]) : null);
+
+                return [
+                    'id' => $timeline->id,
+                    'title' => $timeline->title,
+                    'description' => $timeline->description,
+                    'date' => $timeline->date?->toDateString(),
+                    'media_paths' => $mediaPaths,
+                    'thumbnail_path' => $thumbnail,
+                    'thumbnail_url' => $resolvedThumbnail,
+                    'media_urls' => collect($mediaPaths)->map(fn ($path) => Storage::disk('public')->url($path))->all(),
+                ];
+            });
 
         return Inertia::render('Timeline/Index', [
             'timelines' => $timelines,
@@ -57,6 +82,7 @@ class LoveTimelineApiController extends Controller
         }
 
         $timeline->media_paths = $paths;
+        $timeline->thumbnail_path = $paths[0] ?? null;
         $timeline->save();
 
         return redirect()
@@ -102,11 +128,17 @@ class LoveTimelineApiController extends Controller
             }
         }
 
+        $thumbnailPath = $item->thumbnail_path;
+        if ($thumbnailPath && !in_array($thumbnailPath, $paths, true)) {
+            $thumbnailPath = $paths[0] ?? null;
+        }
+
         $item->update([
             'title' => $data['title'],
             'description' => $data['description'] ?? null,
             'date' => $data['date'],
             'media_paths' => $paths,
+            'thumbnail_path' => $thumbnailPath,
         ]);
 
         return redirect()->route('timeline.index', ['space' => $space->slug])
@@ -118,9 +150,50 @@ class LoveTimelineApiController extends Controller
         $this->authorizeSpace($space);
 
         $item = LoveTimeline::where('space_id', $space->id)->findOrFail($id);
-        if ($item->media_path) Storage::disk('public')->delete($item->media_path);
+
+        $mediaPaths = $item->media_paths ?? [];
+        foreach ($mediaPaths as $path) {
+            Storage::disk('public')->delete($path);
+        }
+
+        if ($item->thumbnail_path && !in_array($item->thumbnail_path, $mediaPaths, true)) {
+            Storage::disk('public')->delete($item->thumbnail_path);
+        }
+
         $item->delete();
         return response()->json(['message' => 'deleted']);
+    }
+
+    public function setThumbnail(Request $request, Space $space, LoveTimeline $timeline)
+    {
+        $this->authorizeSpace($space);
+
+        if ($timeline->space_id !== $space->id) {
+            abort(404);
+        }
+
+        $data = $request->validate([
+            'path' => ['nullable', 'string'],
+        ]);
+
+        $path = $data['path'] ?? null;
+        $media = $timeline->media_paths ?? [];
+
+        if ($path !== null && !in_array($path, $media, true)) {
+            return response()->json([
+                'message' => 'Thumbnail tidak valid.',
+            ], 422);
+        }
+
+        $timeline->update([
+            'thumbnail_path' => $path,
+        ]);
+
+        return response()->json([
+            'message' => 'Thumbnail berhasil diperbarui.',
+            'thumbnail_path' => $path,
+            'thumbnail_url' => $path ? Storage::disk('public')->url($path) : null,
+        ]);
     }
 
     private function authorizeSpace(Space $space)

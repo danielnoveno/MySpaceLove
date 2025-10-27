@@ -81,6 +81,7 @@ export default function Authenticated({
                 ? "cursor-not-allowed text-gray-300 pointer-events-none"
                 : "text-gray-500 hover:text-gray-700 hover:border-gray-300 focus:outline-none focus:text-gray-700 focus:border-gray-300"
         }`;
+    const currentYear = new Date().getFullYear();
 
     return (
         <div className="min-h-screen bg-gradient-to-br from-pink-50 via-white to-purple-50 flex flex-col">
@@ -493,11 +494,11 @@ export default function Authenticated({
                     </header>
                 )}
 
-                <main className="flex-1 py-8">{children}</main>
+                <main className="flex-1 pt-8 pb-6">{children}</main>
             </div>
 
-            <footer className="mt-auto w-full border-t border-pink-100 bg-white/80 py-4 text-center text-sm text-gray-600">
-                Made with ❤️ by Peng for Winnie © 2025
+            <footer className="mt-auto w-full border-t border-pink-100 bg-white/90 py-3 text-center text-sm text-gray-600">
+                <span className="font-medium text-pink-500">MySpaceLove</span> © {currentYear} • Made with ❤️ by Peng for Winnie
             </footer>
         </div>
     );

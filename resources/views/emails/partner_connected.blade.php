@@ -1,34 +1,28 @@
-<!DOCTYPE html>
-<html lang="id">
-<head>
-    <meta charset="UTF-8">
-    <title>Pasangan Bergabung</title>
-</head>
-<body style="margin: 0; font-family: 'Figtree', 'Inter', Arial, sans-serif; background-color: #f9fafb; color: #0f172a;">
-    <div style="max-width: 600px; margin: 0 auto; padding: 36px 24px;">
-        <header style="margin-bottom: 20px;">
-            <p style="margin: 0; font-size: 13px; letter-spacing: 0.08em; text-transform: uppercase; color: #0ea5e9;">
-                Space {{ $space->title }}
-            </p>
-            <h1 style="margin: 8px 0 0; font-size: 24px; font-weight: 700; color: #ec4899;">Pasanganmu sudah bergabung!</h1>
-        </header>
+@php
+    $appName = config('app.name');
+    $title = __('Pasanganmu sudah bergabung!');
+    $subtitle = __('Space :space sekarang lengkap', ['space' => $space->title]);
+    $subject = __('Pasangan Bergabung ke :space', ['space' => $space->title]);
+    $preheader = __(':partner kini bergabung di Space :space.', ['partner' => $partner->name, 'space' => $space->title]);
+@endphp
 
-        <p style="margin: 0 0 16px; font-size: 15px; line-height: 1.7;">
-            {{ $partner->name }} sekarang resmi terhubung di Space <strong>“{{ $space->title }}”</strong>.
-        </p>
-        <p style="margin: 0 0 24px; font-size: 15px; line-height: 1.7; color: #1f2937;">
-            Mulai isi timeline, kirim pesan harian, atau rencanakan kejutan bareng dari dashboard Space kalian.
-        </p>
+@extends('emails.layouts.base', compact('appName', 'title', 'subtitle', 'subject', 'preheader'))
 
-        <p style="margin: 0 0 28px;">
-            <a href="{{ $spacesUrl }}" style="display: inline-block; padding: 12px 28px; background-color: #ec4899; color: #ffffff; border-radius: 9999px; text-decoration: none; font-weight: 600; letter-spacing: 0.02em;">
-                Buka Dashboard
-            </a>
-        </p>
+@section('content')
+    <p style="margin:0 0 18px; color:#1f2937;">
+        {{ __('Hai! :partner sekarang resmi terhubung di Space ":space".', ['partner' => $partner->name, 'space' => $space->title]) }}
+    </p>
+    <p style="margin:0 0 24px; color:#1f2937;">
+        {{ __('Kalian bisa mulai mengisi timeline, mengirim pesan harian, atau menjadwalkan nobar langsung dari dashboard.') }}
+    </p>
 
-        <footer style="font-size: 13px; line-height: 1.6; color: #94a3b8;">
-            Dikirim oleh {{ $appName }} untuk membantu kalian tetap sinkron.
-        </footer>
-    </div>
-</body>
-</html>
+    <p style="margin:0 0 28px;">
+        <a href="{{ $spacesUrl }}" style="display:inline-block; padding:12px 22px; border-radius:999px; background-color:#f43f5e; color:#ffffff; text-decoration:none; font-weight:600; letter-spacing:0.02em;">
+            {{ __('Buka Dashboard') }}
+        </a>
+    </p>
+
+    <p style="margin:0; color:#64748b;">
+        {{ __('Selamat bersenang-senang dan ciptakan cerita baru bersama ya!') }}
+    </p>
+@endsection

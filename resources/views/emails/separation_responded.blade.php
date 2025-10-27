@@ -1,73 +1,55 @@
-<!DOCTYPE html>
-<html lang="id">
-<head>
-    <meta charset="UTF-8">
-    <title>Tanggapan Pembubaran Space</title>
-    <style>
-        .body { margin: 0; font-family: 'Figtree', 'Inter', Arial, sans-serif; background-color: #f9fafb; color: #0f172a; }
-        .container { max-width: 640px; margin: 0 auto; padding: 40px 24px; }
-        .header { margin-bottom: 20px; }
-        .header p { margin: 0; font-size: 13px; letter-spacing: 0.08em; text-transform: uppercase; }
-        .header h1 { margin: 8px 0 0; font-size: 24px; font-weight: 700; }
-        .paragraph { margin: 0 0 18px; font-size: 15px; line-height: 1.7; }
-        .reason { margin: 0 0 20px; padding: 16px 18px; border-radius: 14px; font-size: 14px; line-height: 1.7; }
-        .reason span { display: inline-block; margin-top: 6px; }
-        .paragraph-alt { margin: 0 0 24px; font-size: 15px; line-height: 1.7; color: #1f2937; }
-        .button-container { margin: 0 0 28px; }
-        .button { display: inline-block; padding: 12px 28px; background-color: #6366f1; color: #ffffff; border-radius: 9999px; text-decoration: none; font-weight: 600; letter-spacing: 0.02em; }
-        .footer { font-size: 13px; line-height: 1.6; color: #94a3b8; }
+@php
+    $approved = $decision === 'approved';
+    $appName = config('app.name');
+    $title = $approved
+        ? __('Permintaan pembubaran disetujui')
+        : __('Permintaan pembubaran ditolak');
+    $subtitle = __('Space :space', ['space' => $space->title]);
+    $subject = $approved
+        ? __(':name menyetujui pembubaran Space', ['name' => $responder->name])
+        : __(':name menolak pembubaran Space', ['name' => $responder->name]);
+    $preheader = $approved
+        ? __(':name menyetujui permintaan pembubaran Space :space.', ['name' => $responder->name, 'space' => $space->title])
+        : __(':name menolak permintaan pembubaran Space :space.', ['name' => $responder->name, 'space' => $space->title]);
+    $accentColor = $approved ? '#f97316' : '#2563eb';
+@endphp
 
-        /* Approved State Colors */
-        .text-approved { color: #f97316; }
-        .header-approved { color: #dc2626; }
-        .reason-approved { background-color: #fee2e2; color: #7f1d1d; }
+@extends('emails.layouts.base', compact('appName', 'title', 'subtitle', 'subject', 'preheader'))
 
-        /* Rejected State Colors */
-        .text-rejected { color: #2563eb; }
-        .header-rejected { color: #2563eb; }
-        .reason-rejected { background-color: #dbeafe; color: #1d4ed8; }
-    </style>
-</head>
-<body class="body">
-    @php($approved = $decision === 'approved')
-    <div class="container">
-        <header class="header">
-            <p class="{{ $approved ? 'text-approved' : 'text-rejected' }}">
-                Tanggapan permintaan pembubaran
-            </p>
-            <h1 class="{{ $approved ? 'header-approved' : 'header-rejected' }}">
-                {{ $responder->name }} {{ $approved ? 'menyetujui' : 'menolak' }} permintaan
-            </h1>
-        </header>
+@section('content')
+    <p style="margin:0 0 18px; color:#1f2937;">
+        {{ __('Permintaan pembubaran untuk Space ":space" kini berstatus :status.', [
+            'space' => $space->title,
+            'status' => $approved ? __('disetujui') : __('ditolak'),
+        ]) }}
+    </p>
 
-        <p class="paragraph">
-            Permintaan pembubaran untuk Space <strong>“{{ $space->title }}”</strong> kini berstatus <strong>{{ $approved ? 'disetujui' : 'ditolak' }}</strong>.
-        </p>
+    @if ($reason)
+        <div style="margin:0 0 24px; padding:16px 0 0 16px; border-left:3px solid {{ $accentColor }}; color:#0f172a;">
+            <div style="font-size:12px; letter-spacing:0.18em; text-transform:uppercase; color:{{ $accentColor }}; margin-bottom:6px;">
+                {{ __('Pesan dari :name', ['name' => $responder->name]) }}
+            </div>
+            <div style="font-size:15px; line-height:1.7;">
+                {{ $reason }}
+            </div>
+        </div>
+    @endif
 
-        @if ($reason)
-            <p class="reason {{ $approved ? 'reason-approved' : 'reason-rejected' }}">
-                Pesan dari {{ $responder->name }}:<br>
-                <span>{{ $reason }}</span>
-            </p>
+    <p style="margin:0 0 24px; color:#1f2937;">
+        @if ($approved)
+            {{ __('Space akan otomatis dinonaktifkan. Kamu selalu bisa membuat Space baru kapan pun siap.') }}
+        @else
+            {{ __('Space tetap aktif. Silakan lanjutkan perjalanan kalian atau susun rencana baru bersama.') }}
         @endif
+    </p>
 
-        <p class="paragraph-alt">
-            @if ($approved)
-                Space akan otomatis dinonaktifkan. Kamu selalu bisa membuat Space baru kapan pun siap.
-            @else
-                Space tetap aktif. Lanjutkan perjalanan kalian atau susun rencana baru bersama.
-            @endif
-        </p>
+    <p style="margin:0 0 28px;">
+        <a href="{{ $spacesUrl }}" style="display:inline-block; padding:12px 22px; border-radius:999px; background-color:{{ $accentColor }}; color:#ffffff; text-decoration:none; font-weight:600; letter-spacing:0.02em;">
+            {{ __('Buka MySpaceLove') }}
+        </a>
+    </p>
 
-        <p class="button-container">
-            <a href="{{ $spacesUrl }}" class="button">
-                Buka MySpaceLove
-            </a>
-        </p>
-
-        <footer class="footer">
-            Dikirim otomatis oleh {{ $appName }}. Terima kasih sudah memberi keputusan.
-        </footer>
-    </div>
-</body>
-</html>
+    <p style="margin:0; color:#64748b;">
+        {{ __('Terima kasih sudah memberikan keputusan. Kami ikut mendoakan yang terbaik untuk kalian.') }}
+    </p>
+@endsection
