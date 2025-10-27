@@ -21,10 +21,12 @@ use App\Http\Controllers\NobarController;
 use App\Http\Controllers\SpotifyAuthController;
 use App\Http\Controllers\SpotifyController;
 use App\Http\Controllers\MemoryLaneConfigController;
+use App\Http\Controllers\ProfileController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Response;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
 use Inertia\Inertia;
@@ -102,8 +104,11 @@ Route::get('/surprise/{space:slug}/memory', function (\App\Models\Space $space) 
     $memoryContent['puzzle']['grid'] = $grid;
     $levels = collect($memoryContent['puzzle']['levels'] ?? [])->values();
 
-    $space->loadMissing('memoryLaneConfig');
-    $config = $space->memoryLaneConfig;
+    $config = null;
+    if (Schema::hasTable('memory_lane_configs')) {
+        $space->loadMissing('memoryLaneConfig');
+        $config = $space->memoryLaneConfig;
+    }
 
     if ($config) {
         $levelMappings = [
@@ -159,6 +164,12 @@ Route::get('/surprise/{space:slug}/memory', function (\App\Models\Space $space) 
         'memoryLane' => $memoryContent,
     ]);
 })->name('surprise.memory.space');
+
+Route::middleware('auth')->group(function () {
+    Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
+    Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
+    Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+});
 
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/locale', function (Request $request) {
@@ -241,17 +252,17 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('/spaces/{space:slug}/spotify/playback/join', [SpotifyController::class, 'joinPlayback'])->name('spotify.playback.join');
 
         Route::get('/spaces/{space:slug}/spotify-companion', function (\App\Models\Space $space) {
-            return Inertia::render('Spotify/LongDistanceSpotifyHub', [
-                'space' => [
-                    'id' => $space->id,
-                    'slug' => $space->slug,
-                    'title' => $space->title,
-                ],
-            ]);
-        })->name('spotify.companion');
+        return Inertia::render('Spotify/LongDistanceSpotifyHub', [
+            'space' => [
+                'id' => $space->id,
+                'slug' => $space->slug,
+                'title' => $space->title,
+            ],
+        ]);
+    })->name('spotify.companion');
 
-        Route::get('/spaces/{space:slug}/nobar', [NobarController::class, 'show'])->name('space.nobar');
-        Route::post('/spaces/{space:slug}/nobar/schedules', [NobarController::class, 'storeSchedule'])->name('space.nobar.schedules.store');
+    Route::get('/spaces/{space:slug}/nobar', [NobarController::class, 'show'])->name('space.nobar');
+    Route::post('/spaces/{space:slug}/nobar/schedules', [NobarController::class, 'storeSchedule'])->name('space.nobar.schedules.store');
 
         Route::get('/spaces/{space:slug}/roomjitsi', function (\App\Models\Space $space) {
             return Inertia::render('Room/Show', [

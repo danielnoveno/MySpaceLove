@@ -7,51 +7,76 @@ use App\Models\MediaGallery;
 use App\Models\Space;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Inertia\Inertia;
 
 class MediaGalleryApiController extends Controller
 {
+    private ?bool $collectionSupport = null;
+
     public function index(Space $space)
     {
         $this->authorizeSpace($space);
 
-        $records = MediaGallery::where('space_id', $space->id)
-            ->orderByDesc('created_at')
-            ->orderBy('collection_index')
-            ->get();
+        $hasCollections = $this->supportsCollections();
 
-        $collections = $records
-            ->groupBy(fn (MediaGallery $item) => $item->collection_key ?? (string) $item->id)
-            ->sortByDesc(function ($group) {
-                $first = $group->sortBy('collection_index')->first();
-                return optional($first?->created_at)->timestamp ?? 0;
-            })
-            ->values()
-            ->map(function ($group) {
-                /** @var \Illuminate\Support\Collection $group */
-                $sorted = $group->sortBy('collection_index')->values();
-                /** @var MediaGallery|null $cover */
-                $cover = $sorted->first();
+        $query = MediaGallery::where('space_id', $space->id)
+            ->orderByDesc('created_at');
 
-                return [
-                    'collection_key' => $cover?->collection_key,
-                    'title' => $cover?->title,
-                    'created_at' => optional($cover?->created_at)->toIso8601String(),
-                    'count' => $sorted->count(),
-                    'items' => $sorted->map(function (MediaGallery $item) {
-                        return [
-                            'id' => $item->id,
-                            'title' => $item->title,
-                            'file_path' => $item->file_path,
-                            'type' => $item->type,
-                            'url' => Storage::disk('public')->url($item->file_path),
-                            'collection_index' => $item->collection_index,
-                        ];
-                    })->values()->all(),
-                ];
-            });
+        if ($hasCollections) {
+            $query->orderBy('collection_index');
+        }
+
+        $records = $query->get();
+
+        $mapItem = static function (MediaGallery $item): array {
+            return [
+                'id' => $item->id,
+                'title' => $item->title,
+                'file_path' => $item->file_path,
+                'type' => $item->type,
+                'url' => Storage::disk('public')->url($item->file_path),
+                'collection_index' => $item->collection_index,
+            ];
+        };
+
+        if ($hasCollections) {
+            $collections = $records
+                ->groupBy(fn (MediaGallery $item) => $item->collection_key ?? (string) $item->id)
+                ->sortByDesc(function ($group) {
+                    $first = $group->sortBy('collection_index')->first();
+                    return optional($first?->created_at)->timestamp ?? 0;
+                })
+                ->values()
+                ->map(function ($group) use ($mapItem) {
+                    /** @var \Illuminate\Support\Collection $group */
+                    $sorted = $group->sortBy('collection_index')->values();
+                    /** @var MediaGallery|null $cover */
+                    $cover = $sorted->first();
+
+                    return [
+                        'collection_key' => $cover?->collection_key,
+                        'title' => $cover?->title,
+                        'created_at' => optional($cover?->created_at)->toIso8601String(),
+                        'count' => $sorted->count(),
+                        'items' => $sorted->map(fn (MediaGallery $item) => $mapItem($item))->values()->all(),
+                    ];
+                });
+        } else {
+            $collections = $records
+                ->map(function (MediaGallery $item) use ($mapItem) {
+                    return [
+                        'collection_key' => (string) $item->id,
+                        'title' => $item->title,
+                        'created_at' => optional($item->created_at)->toIso8601String(),
+                        'count' => 1,
+                        'items' => [$mapItem($item)],
+                    ];
+                })
+                ->values();
+        }
 
         return Inertia::render('MediaGallery/Index', [
             'collections' => $collections,
@@ -71,6 +96,7 @@ class MediaGalleryApiController extends Controller
     public function store(Request $r, Space $space)
     {
         $this->authorizeSpace($space);
+        $hasCollections = $this->supportsCollections();
 
         $data = $r->validate([
             'title' => 'nullable|string|max:255',
@@ -79,7 +105,7 @@ class MediaGalleryApiController extends Controller
         ]);
 
         $files = $r->file('files', []);
-        $collectionKey = (string) Str::uuid();
+        $collectionKey = $hasCollections ? (string) Str::uuid() : null;
         $baseTitle = isset($data['title']) ? trim($data['title']) : null;
 
         foreach ($files as $index => $file) {
@@ -88,15 +114,20 @@ class MediaGalleryApiController extends Controller
                 ? $baseTitle
                 : pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME);
 
-            MediaGallery::create([
+            $payload = [
                 'space_id' => $space->id,
                 'user_id' => Auth::id(),
                 'title' => $resolvedTitle,
                 'file_path' => $path,
                 'type' => $file->getClientMimeType(),
-                'collection_key' => $collectionKey,
-                'collection_index' => $index,
-            ]);
+            ];
+
+            if ($hasCollections) {
+                $payload['collection_key'] = $collectionKey;
+                $payload['collection_index'] = $index;
+            }
+
+            MediaGallery::create($payload);
         }
 
         return Inertia::location(route('gallery.index', ['space' => $space->slug]));
@@ -147,7 +178,7 @@ class MediaGalleryApiController extends Controller
         Storage::disk('public')->delete($media->file_path);
         $media->delete();
 
-        if ($collectionKey) {
+        if ($collectionKey && $this->supportsCollections()) {
             MediaGallery::where('space_id', $space->id)
                 ->where('collection_key', $collectionKey)
                 ->orderBy('collection_index')
@@ -165,6 +196,18 @@ class MediaGalleryApiController extends Controller
         return redirect()
             ->route('gallery.index', ['space' => $space->slug])
             ->with('success', __('Foto berhasil dihapus.'));
+    }
+
+    private function supportsCollections(): bool
+    {
+        if ($this->collectionSupport !== null) {
+            return $this->collectionSupport;
+        }
+
+        $this->collectionSupport = Schema::hasColumn('media_galleries', 'collection_key')
+            && Schema::hasColumn('media_galleries', 'collection_index');
+
+        return $this->collectionSupport;
     }
 
     private function authorizeSpace(Space $space)

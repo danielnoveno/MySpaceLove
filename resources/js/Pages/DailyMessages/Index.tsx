@@ -73,6 +73,7 @@ export default function DailyMessageIndex({
                 add_manual?: string;
                 regenerate_ai?: string;
                 send_email?: string;
+                regenerating?: string;
             };
             empty?: string;
             modal?: {
@@ -88,6 +89,9 @@ export default function DailyMessageIndex({
                 email_sent?: string;
                 email_failed?: string;
                 email_partner_missing?: string;
+                email_sending?: string;
+                regenerating?: string;
+                regenerate_failed?: string;
             };
         }>("daily_messages");
     const { t: tCommon } = useTranslation("common");
@@ -314,14 +318,20 @@ export default function DailyMessageIndex({
                         ref={containerRef}
                         className="grid grid-cols-1 md:grid-cols-3 gap-6 items-start"
                     >
-                        {springs.map(({ x, y }, i) => {
+                        {springs.map((spring, i) => {
+                            const { x, y, zIndex } = spring;
                             const message = messages[i];
                             const messageKey = String(message.id ?? message.date ?? i);
                             return (
                                 <animated.div
                                     {...bind(i)}
                                     key={message.id}
-                                    style={{ x, y, zIndex: springs[i].zIndex, touchAction: "none" }}
+                                    style={{
+                                        x,
+                                        y,
+                                        zIndex: zIndex.to((value) => Math.round(value)),
+                                        touchAction: "none",
+                                    }}
                                     className="p-4 bg-white shadow-md rounded-xl border border-gray-100 hover:shadow-xl transition duration-200 cursor-grab active:cursor-grabbing"
                                 >
                                     <h4 className="font-semibold text-gray-800">

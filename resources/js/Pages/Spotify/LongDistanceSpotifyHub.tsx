@@ -4,16 +4,18 @@ import { Head } from "@inertiajs/react";
 import axios from "axios";
 import {
     Calendar,
+    Check,
     Clock,
     Heart,
     Headphones,
     Loader2,
     Music,
     Play,
+    Plug,
     Sparkles,
     Users,
 } from "lucide-react";
-import { FormEvent, useCallback, useEffect, useMemo, useState } from "react";
+import { FormEvent, useCallback, useEffect, useMemo, useState, type CSSProperties } from "react";
 
 type SpaceInfo = {
     id: number;
@@ -99,6 +101,15 @@ type SpotifyDashboardResponse = {
     listening?: ListeningSnapshot | null;
     surpriseDrops?: SurpriseDrop[];
     memoryCapsules?: MemoryCapsule[];
+    connections?: ConnectionStatus[];
+};
+
+type ConnectionStatus = {
+    user_id: number | null;
+    name: string | null;
+    is_current_user: boolean;
+    connected: boolean;
+    connected_at?: string | null;
 };
 
 type Props = {
@@ -211,6 +222,9 @@ export default function LongDistanceSpotifyHub({ space }: Props) {
     const [surpriseError, setSurpriseError] = useState<string | null>(null);
     const [capsuleError, setCapsuleError] = useState<string | null>(null);
     const [joiningPlayback, setJoiningPlayback] = useState(false);
+    const loveHoverConnect = {
+        "--love-hover-color": "#8b5cf6",
+    } as CSSProperties;
 
     const authorizeHref = route("spotify.authorize", {
         space: space.slug,
@@ -229,6 +243,7 @@ export default function LongDistanceSpotifyHub({ space }: Props) {
                 route("spotify.dashboard", { space: space.slug }),
             );
             setDashboard(response.data);
+            setError(response.data.message ?? null);
             const firstMood = response.data.moods?.[0];
             setSelectedMoodId(firstMood?.id ?? null);
         } catch (err) {
@@ -434,6 +449,7 @@ export default function LongDistanceSpotifyHub({ space }: Props) {
         return playlist.sample_tracks.slice(0, 3);
     }, [playlist?.sample_tracks]);
 
+    const connections = dashboard?.connections ?? [];
     const moods = dashboard?.moods ?? [];
     const selectedMood = useMemo(() => {
         if (!moods.length) {
@@ -551,7 +567,78 @@ export default function LongDistanceSpotifyHub({ space }: Props) {
                     </div>
                 )}
 
-                {!isConnected && !loading && (
+                {connections.length > 0 && (
+                    <section className="rounded-3xl border border-purple-200 bg-white/90 p-6 shadow-sm">
+                        <div className="flex flex-col gap-2">
+                            <h3 className="text-lg font-semibold text-purple-900">Status Koneksi Spotify</h3>
+                            <p className="text-sm text-purple-600">
+                                Setiap akun perlu tersambung supaya playlist sinkron, mood tracking, dan kejutan berjalan optimal.
+                            </p>
+                        </div>
+                        <div className="mt-4 grid gap-4 md:grid-cols-2">
+                            {connections.map((connection, index) => {
+                                const connected = connection.connected;
+                                const cardClasses = connected
+                                    ? "border-emerald-200 bg-emerald-50/80"
+                                    : "border-rose-200 bg-rose-50/80";
+                                const displayName = connection.is_current_user
+                                    ? connection.name ?? "Kamu"
+                                    : connection.name ?? "Pasangan";
+                                const connectedAt = connection.connected_at
+                                    ? `Terhubung ${formatDateTime(connection.connected_at)}`
+                                    : connected
+                                      ? "Terhubung"
+                                      : "Belum tersambung";
+
+                                return (
+                                    <div
+                                        key={`${connection.user_id ?? "guest"}-${index}`}
+                                        className={`rounded-2xl border p-4 shadow-sm transition ${cardClasses}`}
+                                    >
+                                        <div className="flex items-start justify-between gap-3">
+                                            <div>
+                                                <p className="text-sm font-semibold text-purple-900">
+                                                    {displayName}
+                                                </p>
+                                                <p className="text-xs text-purple-500">{connectedAt}</p>
+                                            </div>
+                                            {connected ? (
+                                                <span className="inline-flex items-center gap-2 rounded-full bg-emerald-500/10 px-3 py-1 text-xs font-semibold text-emerald-600">
+                                                    <Check className="h-4 w-4" />
+                                                    Terhubung
+                                                </span>
+                                            ) : connection.is_current_user ? (
+                                                <button
+                                                    type="button"
+                                                    onClick={handleAuthorize}
+                                                    data-love-hover
+                                                    style={loveHoverConnect}
+                                                    className="inline-flex items-center gap-2 rounded-full bg-purple-600 px-3 py-1 text-xs font-semibold text-white shadow-sm transition hover:bg-purple-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-purple-300 focus-visible:ring-offset-2 focus-visible:ring-offset-white"
+                                                >
+                                                    <Plug className="h-4 w-4" />
+                                                    Sambungkan
+                                                </button>
+                                            ) : (
+                                                <span className="inline-flex items-center gap-2 rounded-full bg-rose-500/10 px-3 py-1 text-xs font-semibold text-rose-600">
+                                                    <Plug className="h-4 w-4" />
+                                                    Belum terhubung
+                                                </span>
+                                            )}
+                                        </div>
+                                    </div>
+                                );
+                            })}
+                        </div>
+
+                        {!isConnected && dashboard?.message && (
+                            <p className="mt-4 rounded-2xl bg-rose-50 px-4 py-3 text-sm text-rose-600">
+                                {dashboard.message}
+                            </p>
+                        )}
+                    </section>
+                )}
+
+                {!isConnected && !loading && connections.length === 0 && (
                     <section className="rounded-3xl border border-purple-200 bg-white p-6 shadow-sm">
                         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                             <div className="space-y-2">

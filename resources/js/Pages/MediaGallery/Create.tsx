@@ -1,4 +1,3 @@
-import LoveCursorCanvas from "@/Components/LoveCursorCanvas";
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout";
 import { useCurrentSpace } from "@/hooks/useCurrentSpace";
 import { Head, Link, useForm } from "@inertiajs/react";
@@ -87,6 +86,11 @@ export default function GalleryCreate() {
 
     return (
         <AuthenticatedLayout
+            loveCursor={{
+                color: "#10b981",
+                heartCount: 32,
+                className: "opacity-60",
+            }}
             header={
                 <div className="flex items-center gap-4">
                     <Link
@@ -105,7 +109,6 @@ export default function GalleryCreate() {
             <Head title={`Upload Galeri - ${spaceTitle}`} />
 
             <div className="relative min-h-screen overflow-hidden bg-gradient-to-br from-emerald-50 via-white to-green-50 py-10 px-4 sm:px-6 lg:px-8">
-                <LoveCursorCanvas color="#10b981" heartCount={32} className="opacity-60" />
 
                 <div className="relative mx-auto max-w-3xl">
                     <form

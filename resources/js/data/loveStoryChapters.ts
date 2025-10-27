@@ -30,6 +30,7 @@ export type StoryBookContent = {
     headTitle: string;
     secretGate: {
         code: string;
+        enabled?: boolean;
         accessLabel: string;
         title: string;
         description: string;

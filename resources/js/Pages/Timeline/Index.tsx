@@ -1,5 +1,4 @@
 import axios from "axios";
-import LoveCursorCanvas from "@/Components/LoveCursorCanvas";
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout";
 import { useCurrentSpace } from "@/hooks/useCurrentSpace";
 import { Head, Link, router } from "@inertiajs/react";
@@ -35,11 +34,6 @@ interface Props {
 type MediaOption = {
     path: string;
     url: string;
-};
-
-const rotationFromId = (id: number, spread = 4) => {
-    const base = (Math.sin(id * 73.137) + Math.cos(id * 19.31)) * spread;
-    return Math.max(-spread * 1.2, Math.min(base, spread * 1.2));
 };
 
 const buildMediaOptions = (item: TimelineItem): MediaOption[] => {
@@ -156,6 +150,11 @@ export default function TimelineIndex({ timelines }: Props) {
 
     return (
         <AuthenticatedLayout
+            loveCursor={{
+                color: "#f43f5e",
+                heartCount: 48,
+                className: "opacity-70",
+            }}
             header={
                 <div className="flex flex-col gap-1">
                     <p className="text-xs uppercase tracking-[0.4em] text-pink-400">
@@ -167,8 +166,7 @@ export default function TimelineIndex({ timelines }: Props) {
                 </div>
             }
         >
-            <Head title={`Timeline - ${spaceTitle}`} />
-            <LoveCursorCanvas color="#f43f5e" heartCount={48} className="opacity-70" />
+        <Head title={`Timeline - ${spaceTitle}`} />
 
             <div className="relative mx-auto max-w-6xl space-y-10 px-6 pb-16">
                 <section className="rounded-[28px] border border-pink-100/80 bg-white/90 p-8 shadow-sm backdrop-blur">
@@ -206,8 +204,6 @@ export default function TimelineIndex({ timelines }: Props) {
                 ) : (
                     <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
                         {itemsWithFallback.map((item) => {
-                            const rotation = rotationFromId(item.id);
-                            const backRotation = rotationFromId(item.id + 11, 6);
                             const media = item.media as MediaOption[];
 
                             return (
@@ -220,12 +216,10 @@ export default function TimelineIndex({ timelines }: Props) {
                                     <div className="relative grid gap-6 px-8 pb-10 pt-10">
                                         <div className="relative mx-auto w-full max-w-sm">
                                             <div
-                                                className="absolute inset-2 rounded-[24px] border border-pink-100/70 bg-white shadow-md transition group-hover:-rotate-3"
-                                                style={{ transform: `rotate(${backRotation}deg)` }}
+                                                className="absolute inset-2 rounded-[24px] border border-pink-100/70 bg-white shadow-md transition group-hover:shadow-lg"
                                             />
                                             <div
                                                 className="relative overflow-hidden rounded-[24px] border border-pink-100/80 bg-white shadow-lg transition group-hover:shadow-2xl"
-                                                style={{ transform: `rotate(${rotation}deg)` }}
                                             >
                                                 {item.coverUrl ? (
                                                     <img

@@ -1,4 +1,3 @@
-import LoveCursorCanvas from "@/Components/LoveCursorCanvas";
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout";
 import { Head, useForm, router, Link } from "@inertiajs/react";
 import { Calendar, ArrowLeft, Upload, X } from "lucide-react";
@@ -86,6 +85,11 @@ export default function TimelineCreate() {
 
     return (
         <AuthenticatedLayout
+            loveCursor={{
+                color: "#f43f5e",
+                heartCount: 42,
+                className: "opacity-70",
+            }}
             header={
                 <div className="flex items-center gap-4">
                     <Link
@@ -108,7 +112,6 @@ export default function TimelineCreate() {
             <Head title="Tambah Momen" />
 
             <div className="relative min-h-screen overflow-hidden bg-gradient-to-br from-pink-50 via-white to-rose-50 py-10 px-4 sm:px-6 lg:px-8">
-                <LoveCursorCanvas color="#f43f5e" heartCount={42} className="opacity-70" />
 
                 <div className="relative max-w-4xl mx-auto">
                     <form

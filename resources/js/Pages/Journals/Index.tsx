@@ -1,4 +1,3 @@
-import LoveCursorCanvas from "@/Components/LoveCursorCanvas";
 import ConfirmDialog from "@/Components/ConfirmDialog";
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout";
 import { Head, Link, router } from "@inertiajs/react";
@@ -71,6 +70,11 @@ export default function JournalIndex({ items, space }: Props) {
 
     return (
         <AuthenticatedLayout
+            loveCursor={{
+                color: "#f97316",
+                heartCount: 36,
+                className: "opacity-60",
+            }}
             header={
                 <div className="flex flex-col gap-1">
                     <p className="text-sm uppercase tracking-[0.35em] text-amber-500">
@@ -83,7 +87,6 @@ export default function JournalIndex({ items, space }: Props) {
             }
         >
             <Head title={`Journal - ${spaceTitle}`} />
-            <LoveCursorCanvas color="#f97316" heartCount={36} />
 
             <div className="relative mx-auto max-w-6xl space-y-10 px-6 pb-16">
                 <section className="relative overflow-hidden rounded-[28px] border border-amber-100/80 bg-gradient-to-r from-amber-50/70 via-white to-amber-50/70 p-8 shadow-sm backdrop-blur">

@@ -66,6 +66,7 @@ type DashboardTranslation = {
         quick_actions?: {
             title?: string;
             add_moment?: { label?: string; description?: string };
+            upcoming_event?: { label?: string; description?: string };
             upload_photo?: { label?: string; description?: string };
             daily_message?: { label?: string; description?: string };
             memory_lane?: { label?: string; description?: string };
@@ -261,6 +262,18 @@ export default function Dashboard({ dashboardData, spaceContext }: Props) {
                     "Catat momen spesial",
                 href: route("timeline.index", { space: spaceSlug }),
                 color: "from-pink-500 to-rose-500",
+                requiresPartner: true,
+            },
+            {
+                icon: Clock,
+                label:
+                    quickActionStrings?.upcoming_event?.label ??
+                    "Upcoming Event",
+                description:
+                    quickActionStrings?.upcoming_event?.description ??
+                    "Kelola countdown romantis",
+                href: route("countdown.index", { space: spaceSlug }),
+                color: "from-violet-500 to-indigo-500",
                 requiresPartner: true,
             },
             {
@@ -565,7 +578,7 @@ export default function Dashboard({ dashboardData, spaceContext }: Props) {
                                 ? coupleLockMessage
                                 : undefined;
                             const handleActionClick = ownerLocked
-                                ? (event: MouseEvent<HTMLAnchorElement>) => {
+                                ? (event: MouseEvent<Element>) => {
                                       event.preventDefault();
                                   }
                                 : partnerLocked

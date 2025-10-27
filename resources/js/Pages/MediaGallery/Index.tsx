@@ -1,4 +1,3 @@
-import LoveCursorCanvas from "@/Components/LoveCursorCanvas";
 import ConfirmDialog from "@/Components/ConfirmDialog";
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout";
 import { useCurrentSpace } from "@/hooks/useCurrentSpace";
@@ -106,6 +105,11 @@ export default function GalleryIndex({
 
     return (
         <AuthenticatedLayout
+            loveCursor={{
+                color: "#10b981",
+                heartCount: 28,
+                className: "opacity-60",
+            }}
             header={
                 <div className="flex flex-col gap-1">
                     <p className="text-xs uppercase tracking-[0.42em] text-emerald-400">
@@ -118,11 +122,6 @@ export default function GalleryIndex({
             }
         >
             <Head title={`Gallery - ${spaceTitle}`} />
-            <LoveCursorCanvas
-                color="#10b981"
-                heartCount={28}
-                className="opacity-60"
-            />
 
             <div className="relative mx-auto max-w-6xl space-y-10 px-4 pb-20 sm:px-6 lg:px-8">
                 <section className="rounded-[32px] border border-emerald-100/80 bg-white/90 p-8 shadow-sm backdrop-blur">

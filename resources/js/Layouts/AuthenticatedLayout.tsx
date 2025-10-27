@@ -5,11 +5,23 @@ import Dropdown from "@/Components/Dropdown";
 import ResponsiveNavLink from "@/Components/ResponsiveNavLink";
 import { Check, Globe, Lock } from "lucide-react";
 import { useTranslation } from "@/hooks/useTranslation";
+import LoveCursorCanvas from "@/Components/LoveCursorCanvas";
+
+type LoveCursorConfig = {
+    color?: string;
+    heartCount?: number;
+    className?: string;
+    trailColor?: string;
+};
 
 export default function Authenticated({
     header,
     children,
-}: PropsWithChildren<{ header?: React.ReactNode }>) {
+    loveCursor,
+}: PropsWithChildren<{
+    header?: React.ReactNode;
+    loveCursor?: LoveCursorConfig | false;
+}>) {
     const [showingNavigationDropdown, setShowingNavigationDropdown] =
         useState(false);
     const { props }: any = usePage();
@@ -90,9 +102,20 @@ export default function Authenticated({
                 : "text-gray-500 hover:text-gray-700 hover:border-gray-300 focus:outline-none focus:text-gray-700 focus:border-gray-300"
         }`;
     const currentYear = new Date().getFullYear();
+    const baseLoveCursor: LoveCursorConfig = {
+        color: "#f472b6",
+        heartCount: 30,
+        className: "opacity-45",
+    };
+    const loveCursorConfig: LoveCursorConfig =
+        loveCursor === undefined || loveCursor === false
+            ? baseLoveCursor
+            : loveCursor;
+    const showLoveCursor = loveCursor !== false;
 
     return (
         <div className="min-h-screen bg-gradient-to-br from-pink-50 via-white to-purple-50 flex flex-col">
+            {showLoveCursor && <LoveCursorCanvas {...loveCursorConfig} />}
             <nav className="bg-white border-b border-gray-100 shadow-sm">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                     <div className="flex justify-between h-16">

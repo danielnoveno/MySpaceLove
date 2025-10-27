@@ -1,3 +1,4 @@
+import Modal from "@/Components/Modal";
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout";
 import { Head } from "@inertiajs/react";
 import axios from "axios";
@@ -209,10 +210,12 @@ export default function MapView({
     const [isClient, setIsClient] = useState(false);
     const [isUpdating, setIsUpdating] = useState(false);
     const [isSharing, setIsSharing] = useState(false);
+    const [shareOptionsOpen, setShareOptionsOpen] = useState(false);
+    const [pendingShareUrl, setPendingShareUrl] =
+        useState<string | null>(null);
     const [isStopping, setIsStopping] = useState(false);
-    const [notification, setNotification] = useState<NotificationState | null>(
-        null
-    );
+    const [notification, setNotification] =
+        useState<NotificationState | null>(null);
     const [partner, setPartner] = useState<Partner | null>(initialPartner);
     const [isConnectingPartner, setIsConnectingPartner] = useState(false);
     const [showPartnerForm, setShowPartnerForm] = useState(false);
@@ -663,7 +666,7 @@ export default function MapView({
         void fetchRouteBetweenLocations(userLocation, partnerLocation);
     }, [fetchRouteBetweenLocations, isClient, partnerLocation, userLocation]);
 
-    const handleShareLocation = useCallback(async () => {
+    const handleShareLocation = useCallback(() => {
         if (!userLocation) {
             showNotification(
                 "Lokasi belum tersedia. Tekan update lokasi terlebih dahulu.",
@@ -679,31 +682,66 @@ export default function MapView({
             return;
         }
 
-        setIsSharing(true);
         const shareUrl = `${shareBaseUrl}?lat=${userLocation.latitude}&lng=${userLocation.longitude}`;
+        setPendingShareUrl(shareUrl);
+        setShareOptionsOpen(true);
+    }, [partner, shareBaseUrl, showNotification, userLocation]);
 
+    const closeShareOptions = useCallback(() => {
+        setShareOptionsOpen(false);
+        setPendingShareUrl(null);
+    }, []);
+
+    const handleCopyLocationLink = useCallback(async () => {
+        if (!userLocation || !pendingShareUrl) {
+            closeShareOptions();
+            return;
+        }
+
+        setIsSharing(true);
+        try {
+            await axios.post("/api/location/update", {
+                latitude: userLocation.latitude,
+                longitude: userLocation.longitude,
+            });
+
+            if (navigator.clipboard?.writeText) {
+                await navigator.clipboard.writeText(pendingShareUrl);
+            }
+
+            showNotification("Link lokasi tersalin ke clipboard!", "success");
+            closeShareOptions();
+        } catch (error) {
+            console.error("Failed to copy location link", error);
+            showNotification("Gagal menyalin link lokasi.", "error");
+        } finally {
+            setIsSharing(false);
+        }
+    }, [closeShareOptions, pendingShareUrl, showNotification, userLocation]);
+
+    const handleEmailLocationLink = useCallback(async () => {
+        if (!userLocation || !pendingShareUrl) {
+            closeShareOptions();
+            return;
+        }
+
+        setIsSharing(true);
         try {
             await axios.post(`/api/spaces/${space.slug}/location/share`, {
                 latitude: userLocation.latitude,
                 longitude: userLocation.longitude,
-                url: shareUrl,
+                url: pendingShareUrl,
             });
 
-            if (navigator.clipboard?.writeText) {
-                await navigator.clipboard.writeText(shareUrl);
-            }
-
-            showNotification(
-                "Link lokasi berhasil dikirim dan disalin! 💞",
-                "success"
-            );
+            showNotification("Link lokasi berhasil dikirim ke email pasangan.", "success");
+            closeShareOptions();
         } catch (error) {
-            console.error("Failed to share location", error);
-            showNotification("Gagal membagikan lokasi.", "error");
+            console.error("Failed to share location via email", error);
+            showNotification("Gagal mengirim email lokasi.", "error");
         } finally {
             setIsSharing(false);
         }
-    }, [partner, shareBaseUrl, showNotification, space.slug, userLocation]);
+    }, [closeShareOptions, pendingShareUrl, showNotification, space.slug, userLocation]);
 
     const handleStopSharing = useCallback(async () => {
         setIsStopping(true);
@@ -1000,24 +1038,65 @@ export default function MapView({
                         disabled={isUpdating}
                         className="inline-flex items-center gap-2 rounded-full bg-pink-500 px-5 py-2 text-white shadow transition hover:bg-pink-600 disabled:cursor-not-allowed disabled:bg-pink-300"
                     >
-                        {isUpdating ? "Memperbarui..." : "📍 Update Lokasi"}
+                        {isUpdating ? "Memperbarui..." : "?? Update Lokasi"}
                     </button>
                     <button
                         onClick={handleShareLocation}
                         disabled={isSharing}
                         className="inline-flex items-center gap-2 rounded-full bg-purple-500 px-5 py-2 text-white shadow transition hover:bg-purple-600 disabled:cursor-not-allowed disabled:bg-purple-300"
                     >
-                        {isSharing ? "Mengirim..." : "🔗 Share Lokasi"}
+                        {isSharing ? "Mengirim..." : "?? Share Lokasi"}
                     </button>
                     <button
                         onClick={handleStopSharing}
                         disabled={isStopping}
                         className="inline-flex items-center gap-2 rounded-full bg-gray-200 px-5 py-2 text-gray-700 shadow transition hover:bg-gray-300 disabled:cursor-not-allowed disabled:opacity-70"
                     >
-                        {isStopping ? "Memproses..." : "⛔ Stop Sharing"}
+                        {isStopping ? "Memproses..." : "? Stop Sharing"}
                     </button>
                 </div>
 
+                <Modal show={shareOptionsOpen} onClose={closeShareOptions} maxWidth="md">
+                    <div className="space-y-5 p-6">
+                        <div>
+                            <h3 className="text-lg font-semibold text-purple-900">Bagikan Lokasi</h3>
+                            <p className="text-sm text-purple-600">
+                                Pilih cara berbagi titik lokasi ini dengan pasanganmu.
+                            </p>
+                            {pendingShareUrl && (
+                                <p className="mt-3 break-words rounded-2xl bg-purple-50 px-3 py-2 text-xs text-purple-500">
+                                    {pendingShareUrl}
+                                </p>
+                            )}
+                        </div>
+                        <div className="grid gap-3 md:grid-cols-2">
+                            <button
+                                type="button"
+                                onClick={() => void handleCopyLocationLink()}
+                                disabled={isSharing}
+                                className="rounded-2xl border border-purple-200 bg-white px-4 py-3 text-sm font-semibold text-purple-600 shadow-sm transition hover:bg-purple-50 disabled:cursor-not-allowed disabled:opacity-60"
+                            >
+                                Salin Link
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => void handleEmailLocationLink()}
+                                disabled={isSharing}
+                                className="rounded-2xl border border-pink-200 bg-pink-500 px-4 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-pink-600 disabled:cursor-not-allowed disabled:opacity-60"
+                            >
+                                Kirim Email
+                            </button>
+                        </div>
+                        <button
+                            type="button"
+                            onClick={closeShareOptions}
+                            disabled={isSharing}
+                            className="w-full rounded-2xl border border-gray-200 px-4 py-3 text-sm font-semibold text-gray-600 transition hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-60"
+                        >
+                            Batal
+                        </button>
+                    </div>
+                </Modal>
                 {notification && (
                     <div
                         className={`fixed bottom-6 right-6 z-50 rounded-2xl px-4 py-3 text-sm shadow-lg transition ${
@@ -1035,3 +1114,4 @@ export default function MapView({
         </AuthenticatedLayout>
     );
 }
+
