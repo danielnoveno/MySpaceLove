@@ -123,6 +123,7 @@ export default function Room({ spaceId, space, schedules = [] }: Props) {
     const iframeRef = useRef<HTMLIFrameElement | null>(null);
     const [isScheduleOpen, setScheduleOpen] = useState(false);
     const [toastMessage, setToastMessage] = useState<string | null>(null);
+    const [iframeStatus, setIframeStatus] = useState<"loading" | "ready" | "error">("loading");
     const toastTimeoutRef = useRef<number | undefined>(undefined);
 
     const sortedSchedules = useMemo(() => {
@@ -295,8 +296,13 @@ export default function Room({ spaceId, space, schedules = [] }: Props) {
             params.set("avatarUrl", avatarUrl);
         }
 
-        return `${TUIROOMKIT_ENTRY_PATH}?${params.toString()}`;
+        const queryString = params.toString();
+        return `${TUIROOMKIT_ENTRY_PATH}?${queryString}#/home`;
     }, [avatarUrl, resolvedSpaceSlug, resolvedSpaceTitle, resolvedUserId, resolvedUserName, spaceId]);
+
+    useEffect(() => {
+        setIframeStatus("loading");
+    }, [iframeSrc]);
 
     return (
         <>
@@ -495,7 +501,23 @@ export default function Room({ spaceId, space, schedules = [] }: Props) {
                 </div>
             )}
 
-            <div className="h-screen bg-neutral-900">
+            <div className="relative h-screen bg-neutral-900">
+                {iframeStatus !== "ready" && (
+                    <div className="pointer-events-none absolute inset-0 z-10 flex flex-col items-center justify-center gap-3 bg-neutral-900/80 text-center text-sm text-slate-200">
+                        {iframeStatus === "loading" ? (
+                            <>
+                                <span className="inline-flex h-10 w-10 animate-spin items-center justify-center rounded-full border-2 border-slate-600 border-t-pink-400" aria-hidden="true" />
+                                <p>Menyiapkan ruang nobar kalian…</p>
+                                <p className="text-xs text-slate-400">Jika halaman tetap kosong lebih dari 10 detik, refresh tab ini.</p>
+                            </>
+                        ) : (
+                            <>
+                                <p className="text-base font-semibold text-rose-200">Gagal memuat TUIRoomKit</p>
+                                <p className="max-w-xs text-xs text-slate-300">Coba muat ulang halaman, pastikan koneksi internet stabil, atau bukalah kembali dari dashboard space.</p>
+                            </>
+                        )}
+                    </div>
+                )}
                 <iframe
                     ref={iframeRef}
                     title="Tencent Nobar Room"
@@ -503,6 +525,8 @@ export default function Room({ spaceId, space, schedules = [] }: Props) {
                     className="h-full w-full border-0 bg-neutral-900"
                     allowFullScreen
                     allow="microphone; camera; fullscreen; display-capture; clipboard-read; clipboard-write; speaker"
+                    onLoad={() => setIframeStatus("ready")}
+                    onError={() => setIframeStatus("error")}
                 />
             </div>
         </>

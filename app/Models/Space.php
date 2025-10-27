@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\MemoryLaneConfig;
 use App\Models\NobarSchedule;
 use App\Models\SpaceInvitation;
 use App\Models\SpaceSeparationRequest;
@@ -96,6 +97,11 @@ class Space extends Model
     public function nobarSchedules()
     {
         return $this->hasMany(NobarSchedule::class);
+    }
+
+    public function memoryLaneConfig()
+    {
+        return $this->hasOne(MemoryLaneConfig::class);
     }
 
     public function hasMember($userId)

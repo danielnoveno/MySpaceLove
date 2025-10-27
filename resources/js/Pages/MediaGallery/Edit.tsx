@@ -1,6 +1,6 @@
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout";
 import { Head, useForm, Link } from "@inertiajs/react";
-import { ArrowLeft, Upload, Image } from "lucide-react";
+import { ArrowLeft, Upload } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { useCurrentSpace } from "@/hooks/useCurrentSpace";
 
@@ -31,6 +31,10 @@ export default function GalleryEdit({ item }: { item: MediaGalleryItem }) {
     });
 
     const canvasRef = useRef<HTMLCanvasElement>(null);
+    const tempPreviewRef = useRef<string | null>(null);
+    const [previewUrl, setPreviewUrl] = useState<string>(
+        item.file_path ? `/storage/${item.file_path}` : ""
+    );
     const [parallaxPos, setParallaxPos] = useState({ x: 0, y: 0 });
     const [randomHearts] = useState(() =>
         Array.from({ length: 30 }, () => ({
@@ -45,6 +49,15 @@ export default function GalleryEdit({ item }: { item: MediaGalleryItem }) {
     const [showModal, setShowModal] = useState(false);
     const [modalImage, setModalImage] = useState<string | null>(null);
 
+    useEffect(() => {
+        return () => {
+            if (tempPreviewRef.current) {
+                URL.revokeObjectURL(tempPreviewRef.current);
+                tempPreviewRef.current = null;
+            }
+        };
+    }, []);
+
     const handleImageClick = (src: string) => {
         setModalImage(src);
         setShowModal(true);
@@ -53,6 +66,24 @@ export default function GalleryEdit({ item }: { item: MediaGalleryItem }) {
     const closeModal = () => {
         setShowModal(false);
         setModalImage(null);
+    };
+
+    const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+        const file = event.target.files?.[0] ?? null;
+        setData("file", file);
+
+        if (tempPreviewRef.current) {
+            URL.revokeObjectURL(tempPreviewRef.current);
+            tempPreviewRef.current = null;
+        }
+
+        if (file) {
+            const preview = URL.createObjectURL(file);
+            tempPreviewRef.current = preview;
+            setPreviewUrl(preview);
+        } else {
+            setPreviewUrl(item.file_path ? `/storage/${item.file_path}` : "");
+        }
     };
 
     function submit(e: React.FormEvent) {
@@ -219,26 +250,30 @@ export default function GalleryEdit({ item }: { item: MediaGalleryItem }) {
                         className="bg-white/80 backdrop-blur-sm rounded-3xl shadow-lg border border-gray-100 p-8 md:p-10 relative z-10 space-y-8"
                     >
                         {/* Current File Preview */}
-                        {item.file_path && (
-                            <div className="text-center relative">
-                                <img
-                                    src={`/storage/${item.file_path}`}
-                                    alt="Current File"
-                                    className="w-96 h-60 object-cover rounded-xl shadow mx-auto cursor-pointer"
-                                    onClick={() =>
-                                        handleImageClick(
-                                            `/storage/${item.file_path}`
-                                        )
-                                    }
-                                />
-                                <div className="absolute inset-0 bg-black bg-opacity-0 hover:bg-opacity-20 transition rounded-xl flex items-center justify-center pointer-events-none">
-                                    <Image className="w-8 h-8 text-white opacity-0 hover:opacity-100 transition" />
-                                </div>
-                                <p className="text-sm text-gray-500 mt-2">
-                                    File saat ini
-                                </p>
+                        <div>
+                            <label className="block text-base font-semibold text-gray-800 mb-2">
+                                Pratinjau Foto
+                            </label>
+                            <div className="relative overflow-hidden rounded-3xl border border-gray-200 bg-white shadow-lg">
+                                {previewUrl ? (
+                                    <img
+                                        src={previewUrl}
+                                        alt="Preview media"
+                                        className="h-72 w-full cursor-pointer object-cover"
+                                        onClick={() => handleImageClick(previewUrl)}
+                                    />
+                                ) : (
+                                    <div className="flex h-72 items-center justify-center text-sm text-gray-400">
+                                        Belum ada pratinjau tersedia.
+                                    </div>
+                                )}
                             </div>
-                        )}
+                            <p className="mt-3 text-center text-sm text-gray-500">
+                                {data.file
+                                    ? "Menampilkan file baru yang akan disimpan."
+                                    : "Menampilkan file saat ini."}
+                            </p>
+                        </div>
 
                         {/* Title */}
                         <div>
@@ -269,12 +304,7 @@ export default function GalleryEdit({ item }: { item: MediaGalleryItem }) {
                                 <Upload className="w-14 h-14 text-gray-400 mx-auto mb-4" />
                                 <input
                                     type="file"
-                                    onChange={(e) =>
-                                        setData(
-                                            "file",
-                                            e.target.files?.[0] || null
-                                        )
-                                    }
+                                    onChange={handleFileChange}
                                     className="hidden"
                                     id="file-upload"
                                 />

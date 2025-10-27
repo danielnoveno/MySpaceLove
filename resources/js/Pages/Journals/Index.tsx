@@ -1,6 +1,8 @@
 import LoveCursorCanvas from "@/Components/LoveCursorCanvas";
+import ConfirmDialog from "@/Components/ConfirmDialog";
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout";
 import { Head, Link, router } from "@inertiajs/react";
+import { useState } from "react";
 
 interface JournalItem {
     id: number;
@@ -31,6 +33,8 @@ const moodLabels: Record<string, string> = {
 export default function JournalIndex({ items, space }: Props) {
     const spaceSlug = space.slug;
     const spaceTitle = space.title;
+    const [pendingDelete, setPendingDelete] = useState<JournalItem | null>(null);
+    const [deleting, setDeleting] = useState(false);
 
     const formatDate = (value?: string) => {
         if (!value) return "";
@@ -43,6 +47,26 @@ export default function JournalIndex({ items, space }: Props) {
         } catch (error) {
             return value;
         }
+    };
+
+    const handleDelete = () => {
+        if (!pendingDelete) {
+            return;
+        }
+
+        setDeleting(true);
+        router.delete(
+            route("journal.destroy", {
+                space: spaceSlug,
+                id: pendingDelete.id,
+            }),
+            {
+                preserveScroll: true,
+                onSuccess: () => setPendingDelete(null),
+                onError: () => setPendingDelete(null),
+                onFinish: () => setDeleting(false),
+            },
+        );
     };
 
     return (
@@ -145,15 +169,8 @@ export default function JournalIndex({ items, space }: Props) {
                                                     Sunting
                                                 </Link>
                                                 <button
-                                                    onClick={() =>
-                                                        confirm("Yakin hapus?") &&
-                                                        router.delete(
-                                                            route("journal.destroy", {
-                                                                space: spaceSlug,
-                                                                id: item.id,
-                                                            }),
-                                                        )
-                                                    }
+                                                    type="button"
+                                                    onClick={() => setPendingDelete(item)}
                                                     className="rounded-full border border-rose-200 px-4 py-1 text-rose-500 transition hover:bg-rose-500 hover:text-white"
                                                 >
                                                     Hapus
@@ -166,6 +183,22 @@ export default function JournalIndex({ items, space }: Props) {
                         })}
                     </div>
                 )}
+
+                <ConfirmDialog
+                    open={pendingDelete !== null}
+                    title="Hapus catatan jurnal?"
+                    description="Catatan yang dihapus tidak dapat dipulihkan nanti."
+                    confirmLabel="Ya, hapus"
+                    cancelLabel="Batal"
+                    tone="danger"
+                    loading={deleting}
+                    onCancel={() => {
+                        if (!deleting) {
+                            setPendingDelete(null);
+                        }
+                    }}
+                    onConfirm={handleDelete}
+                />
             </div>
         </AuthenticatedLayout>
     );

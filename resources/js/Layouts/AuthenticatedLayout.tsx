@@ -29,6 +29,7 @@ export default function Authenticated({
                   slug: string;
                   title: string;
                   has_partner?: boolean;
+                  is_owner?: boolean;
               }
             | null
             | undefined) ?? null;
@@ -69,11 +70,18 @@ export default function Authenticated({
     const spotifyHref = currentSpace
         ? route("spotify.companion", { space: currentSpace.slug })
         : fallbackHref;
+    const memoryLaneManageHref = currentSpace
+        ? route("memory-lane.edit", { space: currentSpace.slug })
+        : fallbackHref;
+    const isSpaceOwner = currentSpace?.is_owner ?? false;
     const partnerFeaturesLocked =
         currentSpace !== null && currentSpace.has_partner === false;
     const lockedTooltip =
         navigation.locked_tooltip ??
         "Fitur couple akan aktif setelah pasanganmu bergabung.";
+    const ownerOnlyTooltip =
+        navigation.owner_only_tooltip ??
+        "Hanya pemilik space yang dapat mengakses menu ini.";
 
     const navClass = (locked: boolean) =>
         `inline-flex items-center px-1 pt-1 border-b-2 border-transparent text-sm font-medium leading-5 transition duration-150 ease-in-out ${
@@ -136,6 +144,18 @@ export default function Authenticated({
                                             <Lock className="h-3 w-3 text-gray-400" aria-hidden="true" />
                                         )}
                                         {navigation.gallery ?? "Gallery"}
+                                    </span>
+                                </Link>
+                                <Link
+                                    href={memoryLaneManageHref}
+                                    className={navClass(!isSpaceOwner)}
+                                    title={!isSpaceOwner ? ownerOnlyTooltip : undefined}
+                                >
+                                    <span className="flex items-center gap-1">
+                                        {!isSpaceOwner && (
+                                            <Lock className="h-3 w-3 text-gray-400" aria-hidden="true" />
+                                        )}
+                                        {navigation.memory_lane ?? "Memory Lane"}
                                     </span>
                                 </Link>
                                 <Link
@@ -409,6 +429,19 @@ export default function Authenticated({
                                     <Lock className="h-4 w-4 text-gray-400" aria-hidden="true" />
                                 )}
                                 {navigation.gallery ?? "Gallery"}
+                            </span>
+                        </ResponsiveNavLink>
+                        <ResponsiveNavLink
+                            href={memoryLaneManageHref}
+                            active={route().current("memory-lane.edit")}
+                            className={!isSpaceOwner ? "opacity-40 pointer-events-none" : ""}
+                            title={!isSpaceOwner ? ownerOnlyTooltip : undefined}
+                        >
+                            <span className="flex items-center gap-2">
+                                {!isSpaceOwner && (
+                                    <Lock className="h-4 w-4 text-gray-400" aria-hidden="true" />
+                                )}
+                                {navigation.memory_lane ?? "Memory Lane"}
                             </span>
                         </ResponsiveNavLink>
                         <ResponsiveNavLink

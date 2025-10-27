@@ -113,7 +113,9 @@ export default function GalleryCreate() {
                         className="relative z-10 space-y-8 rounded-3xl border border-emerald-100 bg-white/85 p-8 shadow-lg backdrop-blur-sm md:p-10"
                     >
                         <div>
-                            <label className="mb-2 block text-base font-semibold text-gray-800">Judul</label>
+                            <label className="mb-2 block text-base font-semibold text-gray-800">
+                                Judul Koleksi (opsional)
+                            </label>
                             <input
                                 type="text"
                                 value={data.title}
@@ -132,6 +134,9 @@ export default function GalleryCreate() {
                                 <Upload className="mx-auto mb-4 h-14 w-14 text-emerald-500" />
                                 <p className="mb-4 text-sm text-gray-600">
                                     Tarik dan letakkan file di sini atau pilih manual (maks. {MAX_FILES} file sekaligus)
+                                </p>
+                                <p className="mb-4 text-xs text-emerald-500">
+                                    Semua file yang dipilih sekaligus akan tersimpan sebagai satu koleksi.
                                 </p>
                                 <input
                                     type="file"

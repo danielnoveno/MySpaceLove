@@ -18,6 +18,21 @@ interface TimelineItem {
     media_paths: string[];
 }
 
+type ExistingMediaItem = {
+    kind: "existing";
+    path: string;
+    url: string;
+};
+
+type NewMediaItem = {
+    kind: "new";
+    id: string;
+    file: File;
+    url: string;
+};
+
+type MediaItem = ExistingMediaItem | NewMediaItem;
+
 export default function TimelineEdit({ item }: { item: TimelineItem }) {
     const currentSpace = useCurrentSpace();
 
@@ -27,20 +42,43 @@ export default function TimelineEdit({ item }: { item: TimelineItem }) {
 
     const spaceSlug = currentSpace.slug;
     const spaceTitle = currentSpace.title;
-    const { data, setData, post, processing, errors } = useForm({
-        title: item.title,
-        description: item.description,
+    const { data, setData, post, processing, errors } = useForm<{
+        title: string;
+        description: string;
+        date: string;
+        media: File[];
+        media_keys: string[];
+        removed: string[];
+        ordered: string[];
+    }>({
+        title: item.title ?? "",
+        description: item.description ?? "",
         date: item.date,
-        media: [] as File[],
-        removed: [] as string[],
+        media: [],
+        media_keys: [],
+        removed: [],
         ordered: item.media_paths || [],
     });
 
-    const [previews, setPreviews] = useState<string[]>(
-        item.media_paths?.map((path) => `/storage/${path}`) || []
+    const initialExistingMedia = (item.media_paths ?? []).map((path) => ({
+        kind: "existing" as const,
+        path,
+        url: `/storage/${path}`,
+    }));
+
+    const [mediaItems, setMediaItems] = useState<MediaItem[]>(
+        initialExistingMedia
     );
+    const createdPreviewUrls = useRef<string[]>([]);
     const [fileError, setFileError] = useState<string | null>(null);
     const [modalImage, setModalImage] = useState<string | null>(null);
+
+    useEffect(() => {
+        return () => {
+            createdPreviewUrls.current.forEach((url) => URL.revokeObjectURL(url));
+            createdPreviewUrls.current = [];
+        };
+    }, []);
 
     // Canvas background hearts
     const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -104,57 +142,110 @@ export default function TimelineEdit({ item }: { item: TimelineItem }) {
     // Handle image upload
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const files = Array.from(e.target.files || []);
-        const total = previews.length + files.length;
+        if (files.length === 0) {
+            return;
+        }
+
+        const total = mediaItems.length + files.length;
         if (total > 5) {
             setFileError("Maksimal 5 foto.");
             return;
         }
         setFileError(null);
-        setData("media", [...data.media, ...files]);
-        const newPreviews = files.map((f) => URL.createObjectURL(f));
-        setPreviews((p) => [...p, ...newPreviews]);
-        setData("ordered", [...data.ordered, ...newPreviews]);
+
+        const newMediaItems: NewMediaItem[] = files.map((file) => {
+            const id =
+                typeof crypto !== "undefined" && crypto.randomUUID
+                    ? crypto.randomUUID()
+                    : `new-${Date.now()}-${Math.random()
+                          .toString(16)
+                          .slice(2, 10)}`;
+            const url = URL.createObjectURL(file);
+            createdPreviewUrls.current.push(url);
+            return {
+                kind: "new",
+                id,
+                file,
+                url,
+            };
+        });
+
+        setMediaItems((prev) => [...prev, ...newMediaItems]);
+        setData((current) => ({
+            ...current,
+            media: [...current.media, ...files],
+            media_keys: [
+                ...current.media_keys,
+                ...newMediaItems.map((item) => item.id),
+            ],
+        }));
     };
 
     // Remove old or new image
     const handleRemove = (index: number) => {
-        const current = previews[index];
-        const oldIndex = item.media_paths.findIndex(
-            (p) => `/storage/${p}` === current
-        );
+        const target = mediaItems[index];
+        if (!target) {
+            return;
+        }
 
-        const newPreviews = [...previews];
-        newPreviews.splice(index, 1);
-        setPreviews(newPreviews);
+        setMediaItems((prev) => prev.filter((_, idx) => idx !== index));
 
-        if (oldIndex !== -1) {
-            // old image
-            const removedPath = item.media_paths[oldIndex];
-            setData("removed", [...data.removed, removedPath]);
-            setData(
-                "ordered",
-                data.ordered.filter((p) => p !== `/storage/${removedPath}`)
-            );
+        if (target.kind === "existing") {
+            setData((current) => ({
+                ...current,
+                removed: current.removed.includes(target.path)
+                    ? current.removed
+                    : [...current.removed, target.path],
+            }));
         } else {
-            // new image
-            const newFiles = [...data.media];
-            newFiles.splice(index - item.media_paths.length, 1);
-            setData("media", newFiles);
+            URL.revokeObjectURL(target.url);
+            createdPreviewUrls.current = createdPreviewUrls.current.filter(
+                (url) => url !== target.url
+            );
+
+            setData((current) => {
+                const keyIndex = current.media_keys.indexOf(target.id);
+                if (keyIndex === -1) {
+                    return current;
+                }
+                const nextMedia = [...current.media];
+                const nextKeys = [...current.media_keys];
+
+                nextMedia.splice(keyIndex, 1);
+                nextKeys.splice(keyIndex, 1);
+
+                return {
+                    ...current,
+                    media: nextMedia as File[],
+                    media_keys: nextKeys,
+                };
+            });
         }
     };
 
     // Drag reorder
     const onDragEnd = (result: DropResult) => {
         if (!result.destination) return;
-        const reordered = Array.from(previews);
-        const [removed] = reordered.splice(result.source.index, 1);
-        reordered.splice(result.destination.index, 0, removed);
-        setPreviews(reordered);
-
-        // update order for backend
-        const newOrdered = reordered.map((p) => p.replace("/storage/", ""));
-        setData("ordered", newOrdered);
+        const destinationIndex = result.destination.index;
+        setMediaItems((prev) => {
+            const reordered = Array.from(prev);
+            const [removed] = reordered.splice(result.source.index, 1);
+            if (!removed) {
+                return prev;
+            }
+            reordered.splice(destinationIndex, 0, removed);
+            return reordered;
+        });
     };
+
+    useEffect(() => {
+        setData((current) => ({
+            ...current,
+            ordered: mediaItems.map((media) =>
+                media.kind === "existing" ? media.path : media.id
+            ),
+        }));
+    }, [mediaItems, setData]);
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
@@ -262,43 +353,49 @@ export default function TimelineEdit({ item }: { item: TimelineItem }) {
                                             {...provided.droppableProps}
                                             ref={provided.innerRef}
                                         >
-                                            {previews.map((src, i) => (
-                                                <Draggable
-                                                    draggableId={src}
-                                                    index={i}
-                                                    key={src}
-                                                >
-                                                    {(prov) => (
-                                                        <div
-                                                            ref={prov.innerRef}
-                                                            {...prov.draggableProps}
-                                                            {...prov.dragHandleProps}
-                                                            className="relative group flex-shrink-0"
-                                                        >
-                                                            <img
-                                                                src={src}
-                                                                className="w-40 h-32 object-cover rounded-xl shadow cursor-move"
-                                                                onClick={() =>
-                                                                    setModalImage(
-                                                                        src
-                                                                    )
-                                                                }
-                                                            />
-                                                            <button
-                                                                type="button"
-                                                                onClick={() =>
-                                                                    handleRemove(
-                                                                        i
-                                                                    )
-                                                                }
-                                                                className="absolute top-2 right-2 bg-black/50 text-white p-1 rounded-full opacity-0 group-hover:opacity-100 transition"
+                                            {mediaItems.map((preview, index) => {
+                                                const dragId =
+                                                    preview.kind === "existing"
+                                                        ? `existing-${preview.path}`
+                                                        : `new-${preview.id}`;
+                                                return (
+                                                    <Draggable
+                                                        draggableId={dragId}
+                                                        index={index}
+                                                        key={dragId}
+                                                    >
+                                                        {(prov) => (
+                                                            <div
+                                                                ref={prov.innerRef}
+                                                                {...prov.draggableProps}
+                                                                {...prov.dragHandleProps}
+                                                                className="group relative flex-shrink-0"
                                                             >
-                                                                <X className="w-4 h-4" />
-                                                            </button>
-                                                        </div>
-                                                    )}
-                                                </Draggable>
-                                            ))}
+                                                                <img
+                                                                    src={preview.url}
+                                                                    className="h-32 w-40 cursor-move rounded-xl object-cover shadow"
+                                                                    onClick={() =>
+                                                                        setModalImage(
+                                                                            preview.url
+                                                                        )
+                                                                    }
+                                                                />
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={() =>
+                                                                        handleRemove(
+                                                                            index
+                                                                        )
+                                                                    }
+                                                                    className="absolute right-2 top-2 rounded-full bg-black/50 p-1 text-white opacity-0 transition group-hover:opacity-100"
+                                                                >
+                                                                    <X className="h-4 w-4" />
+                                                                </button>
+                                                            </div>
+                                                        )}
+                                                    </Draggable>
+                                                );
+                                            })}
                                             {provided.placeholder}
                                         </div>
                                     )}

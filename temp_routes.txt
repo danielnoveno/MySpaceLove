@@ -1,31 +1,10 @@
-<?php
-
-require __DIR__ . '/auth.php';
-
-use App\Http\Controllers\Api\CountdownApiController;
-use App\Http\Controllers\Api\DailyApiController;
-use App\Http\Controllers\Api\DailyMessageApiController;
-use App\Http\Controllers\Api\DocApiController;
-use App\Http\Controllers\Api\LoveJournalApiController;
-use App\Http\Controllers\Api\LoveTimelineApiController;
-use App\Http\Controllers\Api\MediaGalleryApiController;
-use App\Http\Controllers\Api\SpaceApiController;
-use App\Http\Controllers\Api\SurpriseNoteApiController;
-use App\Http\Controllers\Api\WishlistApiController;
-use App\Http\Controllers\Auth\AuthenticatedSessionController;
-use App\Http\Controllers\ChatController;
-use App\Http\Controllers\DashboardController;
-use App\Http\Controllers\LocationController;
-use App\Http\Controllers\SpaceController;
-use App\Http\Controllers\NobarController;
-use App\Http\Controllers\SpotifyAuthController;
-use App\Http\Controllers\SpotifyController;
-use App\Http\Controllers\MemoryLaneConfigController;
+use App\\Http\\Controllers\\SpotifyController;
+use App\\Http\\Controllers\\MemoryLaneConfigController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Response;
+use Illuminate\\Support\\Facades\\Response;
+use Illuminate\\Support\\Facades\\Storage;
 use Illuminate\Support\Facades\Route;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 
@@ -66,7 +45,6 @@ Route::get('/surprise/memory', function () {
     ]);
 
     $memoryContent['puzzle']['grid'] = $grid;
-    $memoryContent['puzzle']['levels'] = collect($memoryContent['puzzle']['levels'] ?? [])->values()->all();
     unset($memoryContent['defaults']);
 
     return Inertia::render('Surprise/MemoryLanePublic', [
@@ -306,9 +284,6 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     Route::post('/room/{id}/chat', [ChatController::class, 'send']);
 });
-
-
-
 
 
 

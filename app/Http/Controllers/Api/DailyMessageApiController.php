@@ -101,31 +101,49 @@ class DailyMessageApiController extends Controller
         return redirect(route('daily.index', ['space' => $space->slug]));
     }
 
-    public function regenerate(Space $space)
+    public function regenerate(Request $request, Space $space)
     {
         $this->authorizeSpace($space);
 
         $now = $this->currentDailyMessageNow();
-        $today = $now->toDateString();
+        $targetDate = $request->input('date') ?: $now->toDateString();
 
         DailyMessage::where('space_id', $space->id)
-            ->where('date', $today)
+            ->where('date', $targetDate)
             ->delete();
 
         [$fromName, $partnerName] = $this->resolveNamePair($space);
         $text = $this->dailyMessageGenerator->generate(null, null, $fromName, $partnerName);
 
         if (!$text) {
-            return response()->json(['error' => 'Gagal generate pesan AI'], 500);
+            if ($request->wantsJson()) {
+                return response()->json(['error' => 'Gagal generate pesan AI'], 500);
+            }
+
+            return redirect()
+                ->route('daily.index', ['space' => $space->slug])
+                ->with('error', __('Gagal generate pesan AI.'));
         }
 
-        $dailyMessage = $this->persistDailyMessage($space, $today, $text, 'ai');
+        $dailyMessage = $this->persistDailyMessage($space, $targetDate, $text, 'ai');
 
         if (!$dailyMessage) {
-            return response()->json(['error' => 'Pesan harian tidak dapat disimpan'], 500);
+            if ($request->wantsJson()) {
+                return response()->json(['error' => 'Pesan harian tidak dapat disimpan'], 500);
+            }
+
+            return redirect()
+                ->route('daily.index', ['space' => $space->slug])
+                ->with('error', __('Pesan harian tidak dapat disimpan.'));
         }
 
-        return response()->json(['message' => $dailyMessage]);
+        if ($request->wantsJson()) {
+            return response()->json(['message' => $dailyMessage]);
+        }
+
+        return redirect()
+            ->route('daily.index', ['space' => $space->slug])
+            ->with('success', __('Pesan harian berhasil digenerate ulang.'));
     }
 
     public function sendEmail(Request $request, Space $space, $id)

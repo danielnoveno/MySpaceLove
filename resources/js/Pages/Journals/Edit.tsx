@@ -1,5 +1,6 @@
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout";
 import { Head, useForm } from "@inertiajs/react";
+import { Loader2 } from "lucide-react";
 
 interface Props {
     journal: {
@@ -8,10 +9,14 @@ interface Props {
         content: string;
         mood: string;
     };
-    spaceId: number;
+    space: {
+        id: number;
+        slug: string;
+        title: string;
+    };
 }
 
-export default function JournalEdit({ journal, spaceId }: Props) {
+export default function JournalEdit({ journal, space }: Props) {
     const { data, setData, put, processing, errors } = useForm({
         title: journal.title || "",
         content: journal.content || "",
@@ -20,15 +25,20 @@ export default function JournalEdit({ journal, spaceId }: Props) {
 
     function submit(e: React.FormEvent) {
         e.preventDefault();
-        put(route("journal.update", {spaceId: spaceId, id: journal.id}));
+        put(route("journal.update", { space: space.slug, id: journal.id }));
     }
 
     return (
         <AuthenticatedLayout
             header={
-                <h2 className="font-semibold text-xl text-gray-800">
-                    Edit Jurnal
-                </h2>
+                <div>
+                    <h2 className="text-xl font-semibold text-gray-800">
+                        Edit Jurnal
+                    </h2>
+                    <p className="text-sm text-gray-500">
+                        {space.title}
+                    </p>
+                </div>
             }
         >
             <Head title="Edit Jurnal" />
@@ -94,9 +104,10 @@ export default function JournalEdit({ journal, spaceId }: Props) {
                     <button
                         type="submit"
                         disabled={processing}
-                        className="mt-6 bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg shadow-md transition duration-200 w-full"
+                        className="mt-6 flex w-full items-center justify-center gap-2 rounded-lg bg-blue-600 px-6 py-2 text-white shadow-md transition duration-200 hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-70"
                     >
-                        Update Jurnal
+                        {processing && <Loader2 className="h-4 w-4 animate-spin" />}
+                        {processing ? "Menyimpan..." : "Update Jurnal"}
                     </button>
                 </form>
             </div>

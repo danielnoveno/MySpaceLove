@@ -32,11 +32,13 @@ return [
             'daily_messages' => 'Daily Message',
             'gallery' => 'Gallery',
             'spotify' => 'Spotify Kit',
+            'memory_lane' => 'Memory Lane Kit',
             'choose_space' => 'Choose Space',
             'manage_spaces' => 'Manage Spaces',
             'profile' => 'Profile',
             'logout' => 'Log Out',
             'locked_tooltip' => 'Couple features unlock after your partner joins.',
+            'owner_only_tooltip' => 'Only the space owner can access this menu.',
             'mobile_title' => 'Navigation',
         ],
         'user' => [
@@ -96,6 +98,10 @@ return [
                     'label' => 'Memory Lane Kit',
                     'description' => 'Three-stage surprise guide + storybook',
                 ],
+                'memory_lane_setup' => [
+                    'label' => 'Configure Memory Lane',
+                    'description' => 'Upload puzzle photos & level messages',
+                ],
                 'spotify' => [
                     'label' => 'Spotify Companion',
                     'description' => 'Sync music and moods remotely',
@@ -125,6 +131,8 @@ return [
         ],
         'locks' => [
             'requires_partner' => 'Connect your partner first to unlock this feature.',
+            'requires_owner' => 'Only the space owner can manage this feature.',
+            'owner_badge' => 'Owner only',
         ],
     ],
     'spaces' => [

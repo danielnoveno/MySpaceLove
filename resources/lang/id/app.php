@@ -32,11 +32,13 @@ return [
             'daily_messages' => 'Daily Message',
             'gallery' => 'Galeri',
             'spotify' => 'Spotify Kit',
+            'memory_lane' => 'Memory Lane Kit',
             'choose_space' => 'Pilih Space',
             'manage_spaces' => 'Kelola Spaces',
             'profile' => 'Profil',
             'logout' => 'Keluar',
             'locked_tooltip' => 'Fitur couple akan aktif setelah pasanganmu bergabung.',
+            'owner_only_tooltip' => 'Hanya pemilik space yang dapat mengakses menu ini.',
             'mobile_title' => 'Navigasi',
         ],
         'user' => [
@@ -96,6 +98,10 @@ return [
                     'label' => 'Memory Lane Kit',
                     'description' => 'Panduan surprise 3 tahap + storybook',
                 ],
+                'memory_lane_setup' => [
+                    'label' => 'Atur Memory Lane',
+                    'description' => 'Upload foto puzzle & pesan tiap level',
+                ],
                 'spotify' => [
                     'label' => 'Spotify Companion',
                     'description' => 'Sinkronisasi musik & mood jarak jauh',
@@ -125,6 +131,8 @@ return [
         ],
         'locks' => [
             'requires_partner' => 'Hubungkan pasanganmu terlebih dahulu untuk membuka fitur ini.',
+            'requires_owner' => 'Hanya pemilik space yang dapat mengatur fitur ini.',
+            'owner_badge' => 'Khusus pemilik',
         ],
     ],
     'spaces' => [

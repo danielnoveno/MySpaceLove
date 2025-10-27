@@ -1,6 +1,7 @@
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout";
 import { Head, useForm } from "@inertiajs/react";
 import { useCurrentSpace } from "@/hooks/useCurrentSpace";
+import { Loader2 } from "lucide-react";
 
 export default function JournalCreate() {
     const currentSpace = useCurrentSpace();
@@ -94,9 +95,10 @@ export default function JournalCreate() {
                     <button
                         type="submit"
                         disabled={processing}
-                        className="mt-6 bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg shadow-md transition duration-200 w-full"
+                        className="mt-6 flex w-full items-center justify-center gap-2 rounded-lg bg-blue-600 px-6 py-2 text-white shadow-md transition duration-200 hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-70"
                     >
-                        Simpan Jurnal
+                        {processing && <Loader2 className="h-4 w-4 animate-spin" />}
+                        {processing ? "Menyimpan..." : "Simpan Jurnal"}
                     </button>
                 </form>
             </div>

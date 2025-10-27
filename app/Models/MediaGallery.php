@@ -13,7 +13,13 @@ class MediaGallery extends Model
         'user_id',
         'title',
         'file_path',
-        'type'
+        'type',
+        'collection_key',
+        'collection_index',
+    ];
+
+    protected $casts = [
+        'collection_index' => 'integer',
     ];
 
     public function space()

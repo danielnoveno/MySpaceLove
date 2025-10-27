@@ -2,9 +2,19 @@ import axios from "axios";
 import LoveCursorCanvas from "@/Components/LoveCursorCanvas";
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout";
 import { useCurrentSpace } from "@/hooks/useCurrentSpace";
-import { Head, Link } from "@inertiajs/react";
-import { Calendar, Edit, Heart, Images, Loader2, Plus, X } from "lucide-react";
+import { Head, Link, router } from "@inertiajs/react";
+import {
+    Calendar,
+    Edit,
+    Heart,
+    Images,
+    Loader2,
+    Plus,
+    Trash2,
+    X,
+} from "lucide-react";
 import { useCallback, useMemo, useState } from "react";
+import ConfirmDialog from "@/Components/ConfirmDialog";
 
 interface TimelineItem {
     id: number;
@@ -53,6 +63,8 @@ export default function TimelineIndex({ timelines }: Props) {
     const [selectedItem, setSelectedItem] = useState<TimelineItem | null>(null);
     const [previewImage, setPreviewImage] = useState<string | null>(null);
     const [thumbnailPending, setThumbnailPending] = useState<number | null>(null);
+    const [pendingDelete, setPendingDelete] = useState<TimelineItem | null>(null);
+    const [deleting, setDeleting] = useState(false);
 
     const spaceSlug = currentSpace.slug;
     const spaceTitle = currentSpace.title;
@@ -102,6 +114,32 @@ export default function TimelineIndex({ timelines }: Props) {
         },
         [spaceSlug],
     );
+
+    const confirmDelete = useCallback((item: TimelineItem) => {
+        setPendingDelete(item);
+    }, []);
+
+    const performDelete = useCallback(() => {
+        if (!pendingDelete) {
+            return;
+        }
+        setDeleting(true);
+        router.delete(
+            route("timeline.destroy", { space: spaceSlug, id: pendingDelete.id }),
+            {
+                preserveScroll: true,
+                onSuccess: () => {
+                    setPendingDelete(null);
+                },
+                onError: () => {
+                    setPendingDelete(null);
+                },
+                onFinish: () => {
+                    setDeleting(false);
+                },
+            },
+        );
+    }, [pendingDelete, spaceSlug]);
 
     const itemsWithFallback = useMemo(() => {
         return items.map((item) => {
@@ -287,17 +325,27 @@ export default function TimelineIndex({ timelines }: Props) {
                                                     </div>
                                                 </div>
                                             )}
-                                            <div className="mt-6 flex items-center justify-between text-sm font-medium text-pink-700">
-                                                <Link
-                                                    href={route("timeline.edit", {
-                                                        space: spaceSlug,
-                                                        id: item.id,
-                                                    })}
-                                                    className="inline-flex items-center gap-2 rounded-full border border-pink-200 px-4 py-1 transition hover:bg-pink-500 hover:text-white"
-                                                >
-                                                    <Edit className="h-4 w-4" />
-                                                    Sunting
-                                                </Link>
+                                            <div className="mt-6 flex flex-wrap items-center justify-between gap-3 text-sm font-medium text-pink-700">
+                                                <div className="flex flex-wrap items-center gap-3">
+                                                    <Link
+                                                        href={route("timeline.edit", {
+                                                            space: spaceSlug,
+                                                            id: item.id,
+                                                        })}
+                                                        className="inline-flex items-center gap-2 rounded-full border border-pink-200 px-4 py-1 transition hover:bg-pink-500 hover:text-white"
+                                                    >
+                                                        <Edit className="h-4 w-4" />
+                                                        Sunting
+                                                    </Link>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => confirmDelete(item)}
+                                                        className="inline-flex items-center gap-2 rounded-full border border-rose-200 px-4 py-1 text-rose-500 transition hover:bg-rose-500 hover:text-white"
+                                                    >
+                                                        <Trash2 className="h-4 w-4" />
+                                                        Hapus
+                                                    </button>
+                                                </div>
                                                 {media.length > 0 && (
                                                     <button
                                                         onClick={() => setSelectedItem(item)}
@@ -382,6 +430,22 @@ export default function TimelineIndex({ timelines }: Props) {
                     />
                 </div>
             )}
+
+            <ConfirmDialog
+                open={pendingDelete !== null}
+                title="Hapus momen dari timeline?"
+                description="Momen yang dihapus tidak bisa dikembalikan, tetapi kamu masih bisa menambahkannya lagi kapan saja."
+                confirmLabel="Ya, hapus momen"
+                cancelLabel="Batal"
+                tone="danger"
+                loading={deleting}
+                onCancel={() => {
+                    if (!deleting) {
+                        setPendingDelete(null);
+                    }
+                }}
+                onConfirm={performDelete}
+            />
         </AuthenticatedLayout>
     );
 }

@@ -14,8 +14,6 @@ return [
             'placeholder' => 'Contoh: 160825',
             'buttonLabel' => 'Buka Kit',
             'errorMessage' => 'Kode salah. Coba ingat lagi tanggal spesial kita.',
-            'hintLabel' => 'Hint',
-            'hint' => '160825',
             'inputLabel' => 'Secret Code',
         ],
         'puzzle' => [
@@ -31,18 +29,27 @@ return [
             'dragLabel' => 'Seret potongan ke slot yang pas.',
             'movesLabel' => 'Langkah',
             'resetLabel' => 'Acak ulang kepingan',
-            'options' => [
+            'levels' => [
                 [
-                    'label' => 'Memori Tajen',
-                    'value' => '/images/puzzle/example-image-tajen.jpg',
+                    'id' => 'flashback',
+                    'label' => 'Level 1 — Flashback',
+                    'image' => '/images/puzzle/example-image-tajen.jpg',
+                    'summaryTitle' => 'Flashback hangat',
+                    'summaryBody' => 'Mantap! Ceritain ulang kenangan di foto ini: apa yang terjadi, perasaanmu waktu itu, dan kenapa momen ini spesial buat kalian.',
                 ],
                 [
-                    'label' => 'Memori Sunset',
-                    'value' => '/images/puzzle/ea7c8d31ade2c25c5e5d06730def5933.jpg',
+                    'id' => 'affirmation',
+                    'label' => 'Level 2 — Affirmation',
+                    'image' => '/images/puzzle/ea7c8d31ade2c25c5e5d06730def5933.jpg',
+                    'summaryTitle' => 'Ucapan apresiasi',
+                    'summaryBody' => 'Tulis ucapan selamat atau apresiasi singkat untuk pasanganmu. Ceritakan hal kecil apa yang bikin kamu bersyukur hari ini.',
                 ],
                 [
-                    'label' => 'Memori Blossom',
-                    'value' => '/images/puzzle/1745990293808.jpeg',
+                    'id' => 'memory',
+                    'label' => 'Level 3 — Memory Capsule',
+                    'image' => '/images/puzzle/1745990293808.jpeg',
+                    'summaryTitle' => 'Memo kenangan',
+                    'summaryBody' => 'Tinggalkan memo, janji kecil, atau rencana seru untuk ke depan. Kamu baru saja melengkapi potongan terakhir Memory Lane hari ini.',
                 ],
             ],
         ],
@@ -107,6 +114,7 @@ return [
         ],
         'headTitle' => 'Cerita Ulang Tahun',
         'secretGate' => [
+            'enabled' => false,
             'code' => '160825',
             'accessLabel' => 'Akses Terbatas',
             'title' => 'Masukkan Tanggal Jadian Kita',
@@ -114,8 +122,6 @@ return [
             'placeholder' => 'Contoh: 160825',
             'buttonLabel' => 'Buka Cerita',
             'errorMessage' => 'Kode salah. Coba ingat lagi tanggal spesial kalian.',
-            'hintLabel' => 'Hint',
-            'hint' => '160825',
             'inputLabel' => 'Secret Code',
         ],
         'hero' => [
@@ -282,4 +288,3 @@ return [
         ],
     ],
 ];
-

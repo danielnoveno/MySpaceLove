@@ -49,13 +49,20 @@ class LoveJournalApiController extends Controller
         return Inertia::location(route('journal.index', ['space' => $space->slug]));
     }
 
-    public function destroy(Space $space, $id)
+    public function destroy(Request $request, Space $space, $id)
     {
         $this->authorizeSpace($space);
         $journal = LoveJournal::where('space_id', $space->id)->findOrFail($id);
         if ($journal->user_id !== Auth::id()) abort(403);
         $journal->delete();
-        return response()->json(['message' => 'deleted']);
+
+        if ($request->wantsJson()) {
+            return response()->json(['message' => 'deleted']);
+        }
+
+        return redirect()
+            ->route('journal.index', ['space' => $space->slug])
+            ->with('success', __('Jurnal berhasil dihapus.'));
     }
 
     public function create(Space $space)

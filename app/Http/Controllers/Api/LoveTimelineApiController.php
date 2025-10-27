@@ -112,32 +112,87 @@ class LoveTimelineApiController extends Controller
             'title' => 'required|string|max:255',
             'description' => 'nullable|string',
             'date' => 'required|date',
-            'media.*' => 'nullable|file|mimes:jpg,jpeg,png,gif,mp4,mov|max:20480'
+            'media' => 'nullable|array|max:5',
+            'media.*' => 'nullable|file|mimes:jpg,jpeg,png,gif,mp4,mov|max:20480',
+            'media_keys' => 'nullable|array',
+            'media_keys.*' => 'string',
+            'removed' => 'nullable|array',
+            'removed.*' => 'string',
+            'ordered' => 'nullable|array',
+            'ordered.*' => 'string',
         ]);
 
-        $paths = $item->media_paths ?? [];
+        $existingPaths = collect($item->media_paths ?? []);
+        $removed = collect($data['removed'] ?? [])->filter()->unique()->values();
+        $remainingExisting = $existingPaths
+            ->reject(fn ($path) => $removed->contains($path))
+            ->values()
+            ->all();
 
-        if ($r->hasFile('media')) {
-            // kalau mau replace semua, bisa hapus dulu file lama
-            foreach ($paths as $oldPath) {
-                Storage::disk('public')->delete($oldPath);
+        $incomingFiles = $r->file('media', []);
+        if (count($remainingExisting) + count($incomingFiles) > 5) {
+            return back()->withErrors([
+                'media' => __('Maksimal 5 media per momen.'),
+            ]);
+        }
+
+        $mediaKeys = $data['media_keys'] ?? [];
+        $newUploads = [];
+        foreach ($incomingFiles as $index => $file) {
+            $storedPath = $file->store("spaces/{$space->id}/timeline", 'public');
+            $newUploads[] = [
+                'key' => $mediaKeys[$index] ?? null,
+                'path' => $storedPath,
+            ];
+        }
+
+        foreach ($removed as $removedPath) {
+            if ($existingPaths->contains($removedPath)) {
+                Storage::disk('public')->delete($removedPath);
             }
-            $paths = [];
-            foreach ($r->file('media') as $file) {
-                $paths[] = $file->store("spaces/{$space->id}/timeline", 'public');
+        }
+
+        $orderedTokens = collect($data['ordered'] ?? [])->filter();
+        $finalPaths = [];
+
+        foreach ($orderedTokens as $token) {
+            $existingIndex = array_search($token, $remainingExisting, true);
+            if ($existingIndex !== false) {
+                $finalPaths[] = $token;
+                array_splice($remainingExisting, $existingIndex, 1);
+                continue;
+            }
+
+            foreach ($newUploads as $upload) {
+                if (($upload['key'] ?? null) === $token && !in_array($upload['path'], $finalPaths, true)) {
+                    $finalPaths[] = $upload['path'];
+                    break;
+                }
+            }
+        }
+
+        foreach ($remainingExisting as $path) {
+            if (!in_array($path, $finalPaths, true)) {
+                $finalPaths[] = $path;
+            }
+        }
+
+        foreach ($newUploads as $upload) {
+            if (!in_array($upload['path'], $finalPaths, true)) {
+                $finalPaths[] = $upload['path'];
             }
         }
 
         $thumbnailPath = $item->thumbnail_path;
-        if ($thumbnailPath && !in_array($thumbnailPath, $paths, true)) {
-            $thumbnailPath = $paths[0] ?? null;
+        if ($thumbnailPath && !in_array($thumbnailPath, $finalPaths, true)) {
+            $thumbnailPath = $finalPaths[0] ?? null;
         }
 
         $item->update([
             'title' => $data['title'],
             'description' => $data['description'] ?? null,
             'date' => $data['date'],
-            'media_paths' => $paths,
+            'media_paths' => $finalPaths,
             'thumbnail_path' => $thumbnailPath,
         ]);
 
@@ -145,7 +200,7 @@ class LoveTimelineApiController extends Controller
             ->with('success', 'Timeline berhasil diperbarui!');
     }
 
-    public function destroy(Space $space, $id)
+    public function destroy(Request $request, Space $space, $id)
     {
         $this->authorizeSpace($space);
 
@@ -161,7 +216,14 @@ class LoveTimelineApiController extends Controller
         }
 
         $item->delete();
-        return response()->json(['message' => 'deleted']);
+
+        if ($request->wantsJson()) {
+            return response()->json(['message' => 'deleted']);
+        }
+
+        return redirect()
+            ->route('timeline.index', ['space' => $space->slug])
+            ->with('success', __('Momen berhasil dihapus.'));
     }
 
     public function setThumbnail(Request $request, Space $space, LoveTimeline $timeline)

@@ -15,6 +15,7 @@ import {
     UserPlus,
     Lock,
     X,
+    Sparkles,
 } from "lucide-react";
 import { useTranslation } from "@/hooks/useTranslation";
 import { replacePlaceholders } from "@/utils/translation";
@@ -68,6 +69,7 @@ type DashboardTranslation = {
             upload_photo?: { label?: string; description?: string };
             daily_message?: { label?: string; description?: string };
             memory_lane?: { label?: string; description?: string };
+            memory_lane_setup?: { label?: string; description?: string };
             spotify?: { label?: string; description?: string };
             journal?: { label?: string; description?: string };
             nobar?: { label?: string; description?: string };
@@ -88,6 +90,8 @@ type DashboardTranslation = {
     };
     locks?: {
         requires_partner?: string;
+        requires_owner?: string;
+        owner_badge?: string;
     };
 };
 
@@ -120,6 +124,11 @@ export default function Dashboard({ dashboardData, spaceContext }: Props) {
     const coupleLockMessage =
         dashboardStrings.locks?.requires_partner ??
         "Hubungkan pasanganmu terlebih dahulu untuk membuka fitur ini.";
+    const ownerLockMessage =
+        dashboardStrings.locks?.requires_owner ??
+        "Hanya pemilik space yang dapat mengatur fitur ini.";
+    const ownerLockBadge =
+        dashboardStrings.locks?.owner_badge ?? "Owner only";
     const [dailyMessage, setDailyMessage] = useState<string | null>(null);
     const [showModal, setShowModal] = useState(false);
     const [expandedMessages, setExpandedMessages] = useState<
@@ -290,6 +299,18 @@ export default function Dashboard({ dashboardData, spaceContext }: Props) {
                 requiresPartner: true,
             },
             {
+                icon: Sparkles,
+                label:
+                    quickActionStrings?.memory_lane_setup?.label ??
+                    "Atur Memory Lane",
+                description:
+                    quickActionStrings?.memory_lane_setup?.description ??
+                    "Upload puzzle & pesan tiap level",
+                href: route("memory-lane.edit", { space: spaceSlug }),
+                color: "from-amber-500 to-orange-500",
+                requiresOwner: true,
+            },
+            {
                 icon: Music,
                 label:
                     quickActionStrings?.spotify?.label ?? "Spotify Companion",
@@ -323,7 +344,7 @@ export default function Dashboard({ dashboardData, spaceContext }: Props) {
                 requiresPartner: true,
             },
         ],
-        [quickActionStrings, spaceSlug]
+        [quickActionStrings, spaceSlug, isSpaceOwner]
     );
 
     const recentMessages = useMemo(
@@ -533,15 +554,30 @@ export default function Dashboard({ dashboardData, spaceContext }: Props) {
                     </h2>
                     <div className="mt-4 grid gap-4 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5">
                         {quickActions.map((action, index) => {
-                            const locked =
+                            const ownerLocked =
+                                action.requiresOwner && !isSpaceOwner;
+                            const partnerLocked =
                                 coupleFeaturesLocked && action.requiresPartner;
+                            const locked = ownerLocked || partnerLocked;
+                            const lockTitle = ownerLocked
+                                ? ownerLockMessage
+                                : partnerLocked
+                                ? coupleLockMessage
+                                : undefined;
+                            const handleActionClick = ownerLocked
+                                ? (event: MouseEvent<HTMLAnchorElement>) => {
+                                      event.preventDefault();
+                                  }
+                                : partnerLocked
+                                ? handleLockedNavigation
+                                : undefined;
 
                             return (
                                 <Link
                                     key={index}
                                     href={action.href}
-                                    onClick={locked ? handleLockedNavigation : undefined}
-                                    title={locked ? coupleLockMessage : undefined}
+                                    onClick={handleActionClick}
+                                    title={lockTitle}
                                     aria-disabled={locked}
                                     className={`group relative rounded-2xl border border-gray-100 bg-white p-6 shadow-sm transition ${
                                         locked
@@ -559,9 +595,11 @@ export default function Dashboard({ dashboardData, spaceContext }: Props) {
                                     <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
                                         {action.label}
                                         {locked && (
-                                            <span className="inline-flex items-center justify-center rounded-full bg-pink-100 px-2 py-0.5 text-xs font-semibold text-pink-500">
+                                            <span className="inline-flex items-center justify-center gap-1 rounded-full bg-pink-100 px-2 py-0.5 text-xs font-semibold text-pink-500">
                                                 <Lock className="h-3 w-3" />
-                                                {tCommon("states.locked", "Terkunci")}
+                                                {ownerLocked
+                                                    ? ownerLockBadge
+                                                    : tCommon("states.locked", "Terkunci")}
                                             </span>
                                         )}
                                     </h3>
