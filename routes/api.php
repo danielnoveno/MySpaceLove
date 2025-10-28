@@ -1,5 +1,6 @@
 <?php
 
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\{
     SpaceApiController,
@@ -74,4 +75,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('location/{user}', [LocationController::class, 'show']);
     Route::post('spaces/{space}/location/share', [LocationController::class, 'share']);
     Route::delete('location', [LocationController::class, 'destroy']);
+
+    Route::get('/roomkit/user', function (Request $request) {
+        return $request->user();
+    });
 });

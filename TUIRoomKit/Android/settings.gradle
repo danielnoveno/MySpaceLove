@@ -1,5 +1,0 @@
-include ':app'
-include ':debug'
-include ':timcommon'
-include ':tuichat'
-include ':tuiroomkit'
