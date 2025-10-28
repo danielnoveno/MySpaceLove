@@ -1,9 +1,18 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
+import { useTranslation } from '@/hooks/useTranslation';
 import { PageProps } from '@/types';
 import { Head } from '@inertiajs/react';
 import DeleteUserForm from './Partials/DeleteUserForm';
 import UpdatePasswordForm from './Partials/UpdatePasswordForm';
 import UpdateProfileInformationForm from './Partials/UpdateProfileInformationForm';
+
+type ProfileStrings = {
+    profile?: {
+        badge?: string;
+        title?: string;
+        subtitle?: string;
+    };
+};
 
 type ProfilePageProps = PageProps & {
     mustVerifyEmail: boolean;
@@ -14,33 +23,40 @@ export default function Edit({
     mustVerifyEmail,
     status,
 }: ProfilePageProps) {
+    const { translations } = useTranslation<ProfileStrings>('auth');
+    const profileStrings = translations.profile ?? {};
+
     return (
         <AuthenticatedLayout
             header={
-                <h2 className="text-xl font-semibold leading-tight text-gray-800">
-                    Profile
-                </h2>
+                <div className="flex flex-col gap-2">
+                    <span className="text-xs font-semibold uppercase tracking-[0.3em] text-rose-400">
+                        {profileStrings.badge ?? 'Account'}
+                    </span>
+                    <h1 className="text-3xl font-semibold text-gray-900">
+                        {profileStrings.title ?? 'Profile & Security'}
+                    </h1>
+                    <p className="max-w-2xl text-sm text-gray-600">
+                        {profileStrings.subtitle ??
+                            'Keep your identity current and guard your shared space with strong security.'}
+                    </p>
+                </div>
             }
+            loveCursor={{ color: '#fb7185', heartCount: 24, trailColor: 'rgba(251, 113, 133, 0.35)' }}
         >
             <Head title="Profile" />
 
-            <div className="py-12">
-                <div className="mx-auto max-w-7xl space-y-6 sm:px-6 lg:px-8">
-                    <div className="bg-white p-4 shadow sm:rounded-lg sm:p-8">
-                        <UpdateProfileInformationForm
-                            mustVerifyEmail={mustVerifyEmail}
-                            status={status}
-                            className="max-w-xl"
-                        />
-                    </div>
+            <div className="py-12 sm:py-16">
+                <div className="mx-auto flex max-w-5xl flex-col gap-8 px-4 sm:px-6 lg:px-0">
+                    <UpdateProfileInformationForm
+                        mustVerifyEmail={mustVerifyEmail}
+                        status={status}
+                        className="rounded-3xl border border-white/70 bg-white/80 p-6 shadow-lg backdrop-blur-lg sm:p-8"
+                    />
 
-                    <div className="bg-white p-4 shadow sm:rounded-lg sm:p-8">
-                        <UpdatePasswordForm className="max-w-xl" />
-                    </div>
+                    <UpdatePasswordForm className="rounded-3xl border border-white/70 bg-white/80 p-6 shadow-lg backdrop-blur-lg sm:p-8" />
 
-                    <div className="bg-white p-4 shadow sm:rounded-lg sm:p-8">
-                        <DeleteUserForm className="max-w-xl" />
-                    </div>
+                    <DeleteUserForm className="rounded-3xl border border-white/70 bg-white/80 p-6 shadow-lg backdrop-blur-lg sm:p-8" />
                 </div>
             </div>
         </AuthenticatedLayout>

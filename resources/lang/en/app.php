@@ -52,6 +52,120 @@ return [
             ],
         ],
     ],
+    'auth' => [
+        'layout' => [
+            'badge' => 'Designed for couples who want to feel close',
+            'title' => 'Create a living scrapbook for your love story.',
+            'subtitle' => 'MySpaceLove brings your rituals, surprises, and daily check-ins into one cozy space.',
+            'features' => [
+                'Share countdowns, playlists, journals, and galleries effortlessly.',
+                'Plan heartfelt surprises with guided Memory Lane kits.',
+                'Stay connected with daily prompts and real-time updates.',
+            ],
+            'footer' => 'Loved by couples in long-distance relationships and those who live together.',
+        ],
+        'common' => [
+            'email' => 'Email',
+            'password' => 'Password',
+            'name' => 'Full name',
+            'confirm_password' => 'Confirm password',
+            'remember_me' => 'Remember me',
+            'google' => 'Continue with Google',
+            'separator' => 'Email login',
+        ],
+        'login' => [
+            'meta_title' => 'Sign in',
+            'title' => 'Welcome back',
+            'subtitle' => 'Pick up where you left off and keep your shared spark alive.',
+            'submit' => 'Sign in',
+            'forgot_password' => 'Forgot password?',
+            'google' => 'Sign in with Google',
+            'register_prompt' => [
+                'text' => "Don't have an account?",
+                'cta' => 'Create one',
+            ],
+            'hero' => [
+                'badge' => 'Reconnect daily',
+                'title' => 'Bring your love story back online.',
+                'subtitle' => 'Sign in to sync moments, countdowns, and heartfelt rituals.',
+                'features' => [
+                    'Unlock your private dashboard with memories and messages.',
+                    'Write journals together and keep track of milestones.',
+                    'Share playlists, galleries, and surprises in one space.',
+                ],
+            ],
+        ],
+        'register' => [
+            'meta_title' => 'Create account',
+            'title' => 'Create your space',
+            'subtitle' => 'Start a shared sanctuary for every little moment that matters.',
+            'submit' => 'Create account',
+            'google' => 'Sign up with Google',
+            'login_prompt' => [
+                'text' => 'Already have an account?',
+                'cta' => 'Sign in',
+            ],
+            'hero' => [
+                'badge' => 'Start fresh together',
+                'title' => 'Build a space that grows with your relationship.',
+                'subtitle' => 'Invite your partner, craft surprises, and cherish every milestone.',
+                'features' => [
+                    'Personalise your couple dashboard in minutes.',
+                    'Connect playlists, countdowns, and love journals.',
+                    'Unlock guided surprise kits and remote rituals.',
+                ],
+            ],
+        ],
+        'profile' => [
+            'badge' => 'Settings',
+            'title' => 'Profile & security',
+            'subtitle' => 'Manage how you show up in your shared space and keep everything secure.',
+            'sections' => [
+                'information' => [
+                    'title' => 'Profile information',
+                    'description' => 'Refresh how your name and email appear across your shared experiences.',
+                    'fields' => [
+                        'name' => 'Display name',
+                        'email' => 'Email address',
+                    ],
+                    'verification' => [
+                        'notice' => 'Your email address is unverified.',
+                        'action' => 'Resend verification email.',
+                        'sent' => 'We sent a new verification link to your inbox.',
+                    ],
+                    'actions' => [
+                        'save' => 'Save changes',
+                        'saved' => 'Saved!',
+                    ],
+                ],
+                'password' => [
+                    'title' => 'Update password',
+                    'description' => 'Keep your shared space safe with a strong, unique password.',
+                    'fields' => [
+                        'current' => 'Current password',
+                        'new' => 'New password',
+                        'confirm' => 'Confirm new password',
+                    ],
+                    'actions' => [
+                        'save' => 'Update password',
+                        'saved' => 'Password updated!',
+                    ],
+                ],
+                'delete' => [
+                    'title' => 'Delete account',
+                    'description' => 'This action permanently removes your data from MySpaceLove. Consider downloading anything you want to keep first.',
+                    'cta' => 'Delete account',
+                    'modal' => [
+                        'title' => 'Are you sure you want to delete your account?',
+                        'description' => 'This action cannot be undone. Enter your password to confirm and permanently remove your account.',
+                        'password_placeholder' => 'Password',
+                        'cancel' => 'Cancel',
+                        'confirm' => 'Yes, delete account',
+                    ],
+                ],
+            ],
+        ],
+    ],
     'dashboard' => [
         'meta' => [
             'title' => 'Dashboard - :space',

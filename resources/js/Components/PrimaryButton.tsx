@@ -10,9 +10,9 @@ export default function PrimaryButton({
         <button
             {...props}
             className={
-                `inline-flex items-center rounded-md border border-transparent bg-gray-800 px-4 py-2 text-xs font-semibold uppercase tracking-widest text-white transition duration-150 ease-in-out hover:bg-gray-700 focus:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 active:bg-gray-900 ${
-                    disabled && 'opacity-25'
-                } ` + className
+                `inline-flex items-center justify-center rounded-full border border-transparent bg-gradient-to-r from-pink-500 via-rose-500 to-purple-500 px-5 py-3 text-sm font-semibold text-white shadow-lg transition duration-200 ease-in-out hover:from-pink-500 hover:via-rose-500 hover:to-pink-500 hover:shadow-xl focus:outline-none focus-visible:ring-2 focus-visible:ring-pink-300 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60 ${
+                    disabled ? 'pointer-events-none' : ''
+                } ${className}`
             }
             disabled={disabled}
         >

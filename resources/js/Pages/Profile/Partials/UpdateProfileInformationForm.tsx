@@ -1,11 +1,36 @@
-import InputError from "@/Components/InputError";
-import InputLabel from "@/Components/InputLabel";
-import PrimaryButton from "@/Components/PrimaryButton";
-import TextInput from "@/Components/TextInput";
-import { PageProps } from "@/types";
-import { Transition } from "@headlessui/react";
-import { Link, useForm, usePage } from "@inertiajs/react";
-import { FormEventHandler } from "react";
+import InputError from '@/Components/InputError';
+import InputLabel from '@/Components/InputLabel';
+import PrimaryButton from '@/Components/PrimaryButton';
+import TextInput from '@/Components/TextInput';
+import { useTranslation } from '@/hooks/useTranslation';
+import { PageProps } from '@/types';
+import { Transition } from '@headlessui/react';
+import { Link, useForm, usePage } from '@inertiajs/react';
+import { FormEventHandler } from 'react';
+
+type ProfileInformationStrings = {
+    profile?: {
+        sections?: {
+            information?: {
+                title?: string;
+                description?: string;
+                fields?: {
+                    name?: string;
+                    email?: string;
+                };
+                verification?: {
+                    notice?: string;
+                    action?: string;
+                    sent?: string;
+                };
+                actions?: {
+                    save?: string;
+                    saved?: string;
+                };
+            };
+        };
+    };
+};
 
 export default function UpdateProfileInformation({
     mustVerifyEmail,
@@ -18,6 +43,11 @@ export default function UpdateProfileInformation({
 }) {
     const { props } = usePage<PageProps>();
     const user = props.auth?.user;
+    const { translations } = useTranslation<ProfileInformationStrings>('auth');
+    const infoStrings = translations.profile?.sections?.information ?? {};
+    const fieldStrings = infoStrings.fields ?? {};
+    const verificationStrings = infoStrings.verification ?? {};
+    const actionStrings = infoStrings.actions ?? {};
 
     const { data, setData, patch, errors, processing, recentlySuccessful } =
         useForm({
@@ -33,23 +63,27 @@ export default function UpdateProfileInformation({
 
     return (
         <section className={className}>
-            <header>
-                <h2 className="text-lg font-medium text-gray-900">
-                    Profile Information
+            <header className="space-y-3">
+                <h2 className="text-2xl font-semibold text-gray-900">
+                    {infoStrings.title ?? 'Profile information'}
                 </h2>
 
-                <p className="mt-1 text-sm text-gray-600">
-                    Update your account's profile information and email address.
+                <p className="text-sm leading-relaxed text-gray-600">
+                    {infoStrings.description ??
+                        "Refresh how your name and email appear across your shared experiences."}
                 </p>
             </header>
 
             <form onSubmit={submit} className="mt-6 space-y-6">
                 <div>
-                    <InputLabel htmlFor="name" value="Name" />
+                    <InputLabel
+                        htmlFor="name"
+                        value={fieldStrings.name ?? 'Name'}
+                    />
 
                     <TextInput
                         id="name"
-                        className="mt-1 block w-full"
+                        className="mt-1 w-full rounded-xl border border-rose-100 bg-white/70 px-4 py-3 text-sm text-gray-900 shadow-sm focus:border-pink-400 focus:ring-pink-400"
                         value={data.name}
                         onChange={(e) => setData('name', e.target.value)}
                         required
@@ -61,12 +95,15 @@ export default function UpdateProfileInformation({
                 </div>
 
                 <div>
-                    <InputLabel htmlFor="email" value="Email" />
+                    <InputLabel
+                        htmlFor="email"
+                        value={fieldStrings.email ?? 'Email'}
+                    />
 
                     <TextInput
                         id="email"
                         type="email"
-                        className="mt-1 block w-full"
+                        className="mt-1 w-full rounded-xl border border-rose-100 bg-white/70 px-4 py-3 text-sm text-gray-900 shadow-sm focus:border-pink-400 focus:ring-pink-400"
                         value={data.email}
                         onChange={(e) => setData('email', e.target.value)}
                         required
@@ -78,29 +115,33 @@ export default function UpdateProfileInformation({
 
                 {mustVerifyEmail && user?.email_verified_at === null && (
                     <div>
-                        <p className="mt-2 text-sm text-gray-800">
-                            Your email address is unverified.
+                        <p className="mt-2 text-sm text-gray-700">
+                            {verificationStrings.notice ??
+                                'Your email address is unverified.'}
                             <Link
                                 href={route('verification.send')}
                                 method="post"
                                 as="button"
-                                className="rounded-md text-sm text-gray-600 underline hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+                                className="ml-1 rounded-md text-sm font-semibold text-pink-500 underline decoration-dotted underline-offset-4 transition hover:text-pink-400 focus:outline-none focus-visible:ring-2 focus-visible:ring-pink-300 focus-visible:ring-offset-2"
                             >
-                                Click here to re-send the verification email.
+                                {verificationStrings.action ??
+                                    'Resend verification email.'}
                             </Link>
                         </p>
 
                         {status === 'verification-link-sent' && (
-                            <div className="mt-2 text-sm font-medium text-green-600">
-                                A new verification link has been sent to your
-                                email address.
+                            <div className="mt-2 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm font-medium text-emerald-600">
+                                {verificationStrings.sent ??
+                                    'We sent a new verification link to your inbox.'}
                             </div>
                         )}
                     </div>
                 )}
 
                 <div className="flex items-center gap-4">
-                    <PrimaryButton disabled={processing}>Save</PrimaryButton>
+                    <PrimaryButton disabled={processing}>
+                        {actionStrings.save ?? 'Save changes'}
+                    </PrimaryButton>
 
                     <Transition
                         show={recentlySuccessful}
@@ -109,8 +150,8 @@ export default function UpdateProfileInformation({
                         leave="transition ease-in-out"
                         leaveTo="opacity-0"
                     >
-                        <p className="text-sm text-gray-600">
-                            Saved.
+                        <p className="text-sm text-pink-500">
+                            {actionStrings.saved ?? 'Saved!'}
                         </p>
                     </Transition>
                 </div>

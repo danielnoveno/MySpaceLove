@@ -2,9 +2,30 @@ import InputError from '@/Components/InputError';
 import InputLabel from '@/Components/InputLabel';
 import PrimaryButton from '@/Components/PrimaryButton';
 import TextInput from '@/Components/TextInput';
+import { useTranslation } from '@/hooks/useTranslation';
 import { Transition } from '@headlessui/react';
 import { useForm } from '@inertiajs/react';
 import { FormEventHandler, useRef } from 'react';
+
+type PasswordStrings = {
+    profile?: {
+        sections?: {
+            password?: {
+                title?: string;
+                description?: string;
+                fields?: {
+                    current?: string;
+                    new?: string;
+                    confirm?: string;
+                };
+                actions?: {
+                    save?: string;
+                    saved?: string;
+                };
+            };
+        };
+    };
+};
 
 export default function UpdatePasswordForm({
     className = '',
@@ -13,6 +34,10 @@ export default function UpdatePasswordForm({
 }) {
     const passwordInput = useRef<HTMLInputElement>(null);
     const currentPasswordInput = useRef<HTMLInputElement>(null);
+    const { translations } = useTranslation<PasswordStrings>('auth');
+    const passwordStrings = translations.profile?.sections?.password ?? {};
+    const fieldStrings = passwordStrings.fields ?? {};
+    const actionStrings = passwordStrings.actions ?? {};
 
     const {
         data,
@@ -50,14 +75,14 @@ export default function UpdatePasswordForm({
 
     return (
         <section className={className}>
-            <header>
-                <h2 className="text-lg font-medium text-gray-900">
-                    Update Password
+            <header className="space-y-3">
+                <h2 className="text-2xl font-semibold text-gray-900">
+                    {passwordStrings.title ?? 'Update password'}
                 </h2>
 
-                <p className="mt-1 text-sm text-gray-600">
-                    Ensure your account is using a long, random password to stay
-                    secure.
+                <p className="text-sm leading-relaxed text-gray-600">
+                    {passwordStrings.description ??
+                        'Keep your shared space safe with a strong, unique password.'}
                 </p>
             </header>
 
@@ -65,7 +90,7 @@ export default function UpdatePasswordForm({
                 <div>
                     <InputLabel
                         htmlFor="current_password"
-                        value="Current Password"
+                        value={fieldStrings.current ?? 'Current password'}
                     />
 
                     <TextInput
@@ -76,7 +101,7 @@ export default function UpdatePasswordForm({
                             setData('current_password', e.target.value)
                         }
                         type="password"
-                        className="mt-1 block w-full"
+                        className="mt-1 w-full rounded-xl border border-rose-100 bg-white/70 px-4 py-3 text-sm text-gray-900 shadow-sm focus:border-pink-400 focus:ring-pink-400"
                         autoComplete="current-password"
                     />
 
@@ -87,7 +112,10 @@ export default function UpdatePasswordForm({
                 </div>
 
                 <div>
-                    <InputLabel htmlFor="password" value="New Password" />
+                    <InputLabel
+                        htmlFor="password"
+                        value={fieldStrings.new ?? 'New password'}
+                    />
 
                     <TextInput
                         id="password"
@@ -95,7 +123,7 @@ export default function UpdatePasswordForm({
                         value={data.password}
                         onChange={(e) => setData('password', e.target.value)}
                         type="password"
-                        className="mt-1 block w-full"
+                        className="mt-1 w-full rounded-xl border border-rose-100 bg-white/70 px-4 py-3 text-sm text-gray-900 shadow-sm focus:border-pink-400 focus:ring-pink-400"
                         autoComplete="new-password"
                     />
 
@@ -105,7 +133,7 @@ export default function UpdatePasswordForm({
                 <div>
                     <InputLabel
                         htmlFor="password_confirmation"
-                        value="Confirm Password"
+                        value={fieldStrings.confirm ?? 'Confirm password'}
                     />
 
                     <TextInput
@@ -115,7 +143,7 @@ export default function UpdatePasswordForm({
                             setData('password_confirmation', e.target.value)
                         }
                         type="password"
-                        className="mt-1 block w-full"
+                        className="mt-1 w-full rounded-xl border border-rose-100 bg-white/70 px-4 py-3 text-sm text-gray-900 shadow-sm focus:border-pink-400 focus:ring-pink-400"
                         autoComplete="new-password"
                     />
 
@@ -126,7 +154,9 @@ export default function UpdatePasswordForm({
                 </div>
 
                 <div className="flex items-center gap-4">
-                    <PrimaryButton disabled={processing}>Save</PrimaryButton>
+                    <PrimaryButton disabled={processing}>
+                        {actionStrings.save ?? 'Update password'}
+                    </PrimaryButton>
 
                     <Transition
                         show={recentlySuccessful}
@@ -135,8 +165,8 @@ export default function UpdatePasswordForm({
                         leave="transition ease-in-out"
                         leaveTo="opacity-0"
                     >
-                        <p className="text-sm text-gray-600">
-                            Saved.
+                        <p className="text-sm text-pink-500">
+                            {actionStrings.saved ?? 'Password updated!'}
                         </p>
                     </Transition>
                 </div>
