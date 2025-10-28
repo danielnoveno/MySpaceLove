@@ -1,10 +1,13 @@
-export default function GoogleIcon(props) {
+import { SVGAttributes } from 'react';
+
+export default function GoogleIcon(props: SVGAttributes<SVGSVGElement>) {
     return (
         <svg
             {...props}
             xmlns="http://www.w3.org/2000/svg"
             viewBox="0 0 24 24"
             aria-hidden="true"
+            role="img"
         >
             <path
                 fill="#EA4335"

@@ -4,8 +4,28 @@ import InputLabel from '@/Components/InputLabel';
 import Modal from '@/Components/Modal';
 import SecondaryButton from '@/Components/SecondaryButton';
 import TextInput from '@/Components/TextInput';
+import { useTranslation } from '@/hooks/useTranslation';
 import { useForm } from '@inertiajs/react';
 import { FormEventHandler, useRef, useState } from 'react';
+
+type DeleteAccountStrings = {
+    profile?: {
+        sections?: {
+            delete?: {
+                title?: string;
+                description?: string;
+                cta?: string;
+                modal?: {
+                    title?: string;
+                    description?: string;
+                    password_placeholder?: string;
+                    cancel?: string;
+                    confirm?: string;
+                };
+            };
+        };
+    };
+};
 
 export default function DeleteUserForm({
     className = '',
@@ -14,6 +34,9 @@ export default function DeleteUserForm({
 }) {
     const [confirmingUserDeletion, setConfirmingUserDeletion] = useState(false);
     const passwordInput = useRef<HTMLInputElement>(null);
+    const { translations } = useTranslation<DeleteAccountStrings>('auth');
+    const deleteStrings = translations.profile?.sections?.delete ?? {};
+    const modalStrings = deleteStrings.modal ?? {};
 
     const {
         data,
@@ -51,37 +74,36 @@ export default function DeleteUserForm({
 
     return (
         <section className={`space-y-6 ${className}`}>
-            <header>
-                <h2 className="text-lg font-medium text-gray-900">
-                    Delete Account
+            <header className="space-y-3">
+                <h2 className="text-2xl font-semibold text-gray-900">
+                    {deleteStrings.title ?? 'Delete account'}
                 </h2>
 
-                <p className="mt-1 text-sm text-gray-600">
-                    Once your account is deleted, all of its resources and data
-                    will be permanently deleted. Before deleting your account,
-                    please download any data or information that you wish to
-                    retain.
+                <p className="text-sm leading-relaxed text-gray-600">
+                    {deleteStrings.description ??
+                        'This action permanently removes your data from MySpaceLove. Consider downloading anything you want to keep first.'}
                 </p>
             </header>
 
             <DangerButton onClick={confirmUserDeletion}>
-                Delete Account
+                {deleteStrings.cta ?? 'Delete account'}
             </DangerButton>
 
             <Modal show={confirmingUserDeletion} onClose={closeModal}>
-                <form onSubmit={deleteUser} className="p-6">
-                    <h2 className="text-lg font-medium text-gray-900">
-                        Are you sure you want to delete your account?
-                    </h2>
+                <form onSubmit={deleteUser} className="space-y-6 p-6">
+                    <div className="space-y-2">
+                        <h2 className="text-xl font-semibold text-gray-900">
+                            {modalStrings.title ??
+                                'Are you sure you want to delete your account?'}
+                        </h2>
 
-                    <p className="mt-1 text-sm text-gray-600">
-                        Once your account is deleted, all of its resources and
-                        data will be permanently deleted. Please enter your
-                        password to confirm you would like to permanently delete
-                        your account.
-                    </p>
+                        <p className="text-sm leading-relaxed text-gray-600">
+                            {modalStrings.description ??
+                                'This action cannot be undone. Enter your password to confirm and permanently remove your account.'}
+                        </p>
+                    </div>
 
-                    <div className="mt-6">
+                    <div className="space-y-2">
                         <InputLabel
                             htmlFor="password"
                             value="Password"
@@ -97,24 +119,26 @@ export default function DeleteUserForm({
                             onChange={(e) =>
                                 setData('password', e.target.value)
                             }
-                            className="mt-1 block w-3/4"
+                            className="mt-1 w-full rounded-xl border border-rose-100 bg-white/70 px-4 py-3 text-sm text-gray-900 shadow-sm focus:border-pink-400 focus:ring-pink-400"
                             isFocused
-                            placeholder="Password"
+                            placeholder={
+                                modalStrings.password_placeholder ?? 'Password'
+                            }
                         />
 
                         <InputError
                             message={errors.password}
-                            className="mt-2"
+                            className="text-sm"
                         />
                     </div>
 
-                    <div className="mt-6 flex justify-end">
+                    <div className="flex justify-end gap-3">
                         <SecondaryButton onClick={closeModal}>
-                            Cancel
+                            {modalStrings.cancel ?? 'Cancel'}
                         </SecondaryButton>
 
-                        <DangerButton className="ms-3" disabled={processing}>
-                            Delete Account
+                        <DangerButton disabled={processing}>
+                            {modalStrings.confirm ?? 'Yes, delete account'}
                         </DangerButton>
                     </div>
                 </form>
