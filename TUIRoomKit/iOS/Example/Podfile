@@ -1,0 +1,52 @@
+use_frameworks!
+
+platform :ios, '13.0'
+
+def ui
+  pod 'SnapKit'
+end
+
+def tool
+  pod 'Alamofire'
+  pod 'TUICore'
+  pod 'TUIChat'
+  pod 'RTCRoomEngine','~> 3.0.0'
+  pod 'TXLiteAVSDK_TRTC'
+  pod 'TXAppBasic'
+  pod 'TIMCommon'
+  pod 'TUIBeauty'
+  pod 'TIMPush'
+end
+
+def local
+  pod 'TUIRoomKit', :path => "../TUIRoomKit/"
+end
+
+
+target 'DemoApp' do
+  ui
+  tool
+  local
+  
+  target 'TXReplayKit_Screen' do
+    inherit! :search_paths
+    pod 'TXLiteAVSDK_TRTC/ReplayKitExt'
+  end
+end
+
+post_install do |installer|
+  installer.pods_project.targets.each do |target|
+    target.build_configurations.each do |config|
+      config.build_settings['ENABLE_BITCODE'] = 'NO'
+      config.build_settings['ONLY_ACTIVE_ARCH'] = 'NO'
+      config.build_settings['VALID_ARCHS'] = 'arm64 arm64e armv7 armv7s x86_64 i386'
+      config.build_settings['EXCLUDED_ARCHS[sdk=iphonesimulator*]'] = 'arm64'
+      config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = 13.0
+      if target.respond_to?(:product_type) and target.product_type == "com.apple.product-type.bundle"
+        target.build_configurations.each do |config|
+            config.build_settings['CODE_SIGNING_ALLOWED'] = 'NO'
+        end
+      end
+    end
+  end
+end
