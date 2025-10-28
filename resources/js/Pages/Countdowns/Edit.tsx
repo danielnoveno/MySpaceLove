@@ -62,17 +62,18 @@ export default function CountdownEdit({
         [countdown?.activities],
     );
 
-    const { data, setData, post, processing, errors, clearErrors } =
-        useForm<FormData>({
-            event_name: countdown?.event_name ?? "",
-            event_date: countdown?.event_date
-                ? new Date(countdown.event_date).toISOString().split("T")[0]
-                : new Date().toISOString().split("T")[0],
-            description: countdown?.description ?? "",
-            activities: initialActivities,
-            image: null,
-            _method: "PUT",
-        });
+    const form = useForm<FormData>({
+        event_name: countdown?.event_name ?? "",
+        event_date: countdown?.event_date
+            ? new Date(countdown.event_date).toISOString().split("T")[0]
+            : new Date().toISOString().split("T")[0],
+        description: countdown?.description ?? "",
+        activities: initialActivities,
+        image: null,
+        _method: "PUT",
+    });
+
+    const { data, setData, post, processing, errors, clearErrors } = form;
 
     const [imagePreview, setImagePreview] = useState<string | null>(null);
 
@@ -110,6 +111,22 @@ export default function CountdownEdit({
     const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
         event.preventDefault();
         clearErrors();
+        form.transform((payload) => {
+            const prunedActivities = payload.activities
+                .map((activity) => activity.trim())
+                .filter((activity) => activity.length > 0);
+
+            const transformed: Record<string, unknown> = {
+                ...payload,
+                activities: prunedActivities,
+            };
+
+            if (!(payload.image instanceof File)) {
+                delete transformed.image;
+            }
+
+            return transformed;
+        });
         post(
             route("countdown.update", {
                 space: spaceSlug,

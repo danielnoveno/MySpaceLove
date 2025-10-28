@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Auth\LoginRequest;
+use App\Support\GoogleOAuth;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -65,8 +66,6 @@ class AuthenticatedSessionController extends Controller
 
     private function googleCredentialsConfigured(): bool
     {
-        return filled(config('services.google.client_id'))
-            && filled(config('services.google.client_secret'))
-            && filled(config('services.google.redirect'));
+        return GoogleOAuth::isConfigured();
     }
 }

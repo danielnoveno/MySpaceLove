@@ -1,4 +1,5 @@
 import { Head, useForm, usePage } from "@inertiajs/react";
+import axios from "axios";
 import {
     FormEvent,
     useCallback,
@@ -26,6 +27,12 @@ interface Props {
         title: string;
     };
     schedules?: NobarSchedulePayload[];
+}
+
+interface TuiRoomCredentials {
+    sdkAppId: number;
+    userId: string;
+    userSig: string;
 }
 
 const TUIROOMKIT_ENTRY_PATH = "/tuiroomkit/index.html";
@@ -102,9 +109,6 @@ export default function Room({ spaceId, space, schedules = [] }: Props) {
     const resolvedSpaceSlug = space?.slug ?? currentSpace?.slug ?? `space-${spaceId}`;
     const resolvedSpaceTitle = space?.title ?? currentSpace?.title ?? `Space #${spaceId}`;
 
-    const resolvedUserId = currentUser?.id
-        ? `user-${String(currentUser.id)}`
-        : `guest-${spaceId}`;
     const resolvedUserName = (() => {
         const baseName = currentUser?.name ?? currentUser?.email ?? "Guest";
         const trimmed = String(baseName).trim();
@@ -121,9 +125,13 @@ export default function Room({ spaceId, space, schedules = [] }: Props) {
         : undefined;
 
     const iframeRef = useRef<HTMLIFrameElement | null>(null);
+    const [credentials, setCredentials] = useState<TuiRoomCredentials | null>(null);
+    const [credentialError, setCredentialError] = useState<string | null>(null);
+    const [credentialLoading, setCredentialLoading] = useState(false);
+    const [credentialNonce, setCredentialNonce] = useState(0);
     const [isScheduleOpen, setScheduleOpen] = useState(false);
     const [toastMessage, setToastMessage] = useState<string | null>(null);
-    const [iframeStatus, setIframeStatus] = useState<"loading" | "ready" | "error">("loading");
+    const [iframeStatus, setIframeStatus] = useState<"idle" | "loading" | "ready" | "error">("idle");
     const toastTimeoutRef = useRef<number | undefined>(undefined);
 
     const sortedSchedules = useMemo(() => {
@@ -153,6 +161,76 @@ export default function Room({ spaceId, space, schedules = [] }: Props) {
         description: "",
         timezone: "",
     });
+
+    useEffect(() => {
+        if (!resolvedSpaceSlug || !currentUser?.id) {
+            return;
+        }
+
+        let active = true;
+
+        setCredentialLoading(true);
+        setCredentialError(null);
+        setCredentials(null);
+
+        axios
+            .post(
+                route("space.nobar.credentials", { space: resolvedSpaceSlug }),
+                {},
+                {
+                    headers: {
+                        "X-Requested-With": "XMLHttpRequest",
+                    },
+                },
+            )
+            .then((response) => {
+                if (!active) {
+                    return;
+                }
+
+                const payload = response?.data ?? {};
+                const sdkAppId = Number(payload.sdkAppId ?? payload.appId ?? 0);
+                const userSig = typeof payload.userSig === "string" ? payload.userSig : "";
+                const userId =
+                    typeof payload.userId === "string"
+                        ? payload.userId
+                        : `user-${currentUser.id}`;
+
+                if (!sdkAppId || userSig.trim().length === 0) {
+                    throw new Error("Invalid TUIRoomKit credential payload");
+                }
+
+                setCredentials({
+                    sdkAppId,
+                    userId,
+                    userSig,
+                });
+            })
+            .catch((error) => {
+                if (!active) {
+                    return;
+                }
+
+                console.error("Failed to load TUIRoomKit credentials", error);
+                setCredentialError(
+                    "Gagal memuat kredensial nobar Tencent. Coba muat ulang halaman atau hubungi admin.",
+                );
+                setCredentials(null);
+            })
+            .finally(() => {
+                if (active) {
+                    setCredentialLoading(false);
+                }
+            });
+
+        return () => {
+            active = false;
+        };
+    }, [currentUser?.id, resolvedSpaceSlug, credentialNonce]);
+
+    const handleRetryCredentials = () => {
+        setCredentialNonce((value) => value + 1);
+    };
 
     useEffect(() => {
         if (!data.timezone) {
@@ -282,26 +360,35 @@ export default function Room({ spaceId, space, schedules = [] }: Props) {
     };
 
     const iframeSrc = useMemo(() => {
+        if (!credentials) {
+            return null;
+        }
+
         const params = new URLSearchParams({
             roomId: `space-${spaceId}`,
-            userId: resolvedUserId,
+            userId: credentials.userId,
             userName: resolvedUserName,
             lang: "id-ID",
             spaceSlug: resolvedSpaceSlug,
             spaceTitle: resolvedSpaceTitle,
             dashboardUrl: `/spaces/${resolvedSpaceSlug}/dashboard`,
+            sdkAppId: String(credentials.sdkAppId),
+            userSig: credentials.userSig,
         });
 
         if (avatarUrl) {
             params.set("avatarUrl", avatarUrl);
         }
 
-        const queryString = params.toString();
-        return `${TUIROOMKIT_ENTRY_PATH}?${queryString}#/home`;
-    }, [avatarUrl, resolvedSpaceSlug, resolvedSpaceTitle, resolvedUserId, resolvedUserName, spaceId]);
+        return `${TUIROOMKIT_ENTRY_PATH}?${params.toString()}#/home`;
+    }, [avatarUrl, credentials, resolvedSpaceSlug, resolvedSpaceTitle, resolvedUserName, spaceId]);
 
     useEffect(() => {
-        setIframeStatus("loading");
+        if (iframeSrc) {
+            setIframeStatus("loading");
+        } else {
+            setIframeStatus("idle");
+        }
     }, [iframeSrc]);
 
     return (
@@ -502,7 +589,38 @@ export default function Room({ spaceId, space, schedules = [] }: Props) {
             )}
 
             <div className="relative h-screen bg-neutral-900">
-                {iframeStatus !== "ready" && (
+                {!iframeSrc && (
+                    <div className="absolute inset-0 z-20 flex flex-col items-center justify-center gap-4 bg-neutral-900 text-center text-sm text-slate-200">
+                        {credentialLoading ? (
+                            <>
+                                <span className="inline-flex h-10 w-10 animate-spin items-center justify-center rounded-full border-2 border-slate-600 border-t-pink-400" aria-hidden="true" />
+                                <p>Menyiapkan kredensial nobar kalian.</p>
+                                <p className="text-xs text-slate-400">Tunggu sebentar, kami sedang terhubung ke Tencent RTC.</p>
+                            </>
+                        ) : (
+                            <>
+                                <p className="text-base font-semibold text-rose-200">
+                                    {credentialError ??
+                                        "Kredensial nobar belum tersedia. Hubungi admin untuk mengaktifkan TUIRoomKit."}
+                                </p>
+                                <div className="flex flex-col items-center gap-2">
+                                    <button
+                                        type="button"
+                                        onClick={handleRetryCredentials}
+                                        className="inline-flex items-center gap-2 rounded-full border border-rose-300/70 bg-white/10 px-4 py-2 text-xs font-semibold text-rose-100 transition hover:bg-white/20 focus:outline-none focus-visible:ring-2 focus-visible:ring-rose-200"
+                                    >
+                                        <Sparkles className="h-3.5 w-3.5" aria-hidden="true" />
+                                        Coba muat ulang kredensial
+                                    </button>
+                                    <p className="max-w-xs text-[11px] text-slate-400">
+                                        Jika masalah berlanjut, pastikan konfigurasi Tencent Cloud sudah tersimpan di dashboard admin.
+                                    </p>
+                                </div>
+                            </>
+                        )}
+                    </div>
+                )}
+                {iframeSrc && iframeStatus !== "ready" && (
                     <div className="pointer-events-none absolute inset-0 z-10 flex flex-col items-center justify-center gap-3 bg-neutral-900/80 text-center text-sm text-slate-200">
                         {iframeStatus === "loading" ? (
                             <>
@@ -518,16 +636,21 @@ export default function Room({ spaceId, space, schedules = [] }: Props) {
                         )}
                     </div>
                 )}
-                <iframe
-                    ref={iframeRef}
-                    title="Tencent Nobar Room"
-                    src={iframeSrc}
-                    className="h-full w-full border-0 bg-neutral-900"
-                    allowFullScreen
-                    allow="microphone; camera; fullscreen; display-capture; clipboard-read; clipboard-write; speaker"
-                    onLoad={() => setIframeStatus("ready")}
-                    onError={() => setIframeStatus("error")}
-                />
+                {iframeSrc ? (
+                    <iframe
+                        key={iframeSrc}
+                        ref={iframeRef}
+                        title="Tencent Nobar Room"
+                        src={iframeSrc}
+                        className="h-full w-full border-0 bg-neutral-900"
+                        allowFullScreen
+                        allow="microphone; camera; fullscreen; display-capture; clipboard-read; clipboard-write; speaker"
+                        onLoad={() => setIframeStatus("ready")}
+                        onError={() => setIframeStatus("error")}
+                    />
+                ) : (
+                    <div className="h-full w-full bg-neutral-900" aria-hidden="true" />
+                )}
             </div>
         </>
     );

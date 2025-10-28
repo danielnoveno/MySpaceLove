@@ -13,6 +13,7 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Validation\Rules;
 use Illuminate\Support\Str;
+use App\Support\GoogleOAuth;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -95,8 +96,6 @@ class RegisteredUserController extends Controller
 
     private function googleCredentialsConfigured(): bool
     {
-        return filled(config('services.google.client_id'))
-            && filled(config('services.google.client_secret'))
-            && filled(config('services.google.redirect'));
+        return GoogleOAuth::isConfigured();
     }
 }

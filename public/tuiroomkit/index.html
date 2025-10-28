@@ -39,11 +39,17 @@
         var userId = params.get('userId');
         var userName = params.get('userName');
         var avatarUrl = params.get('avatarUrl');
+        var sdkAppIdParam = params.get('sdkAppId');
+        var userSigParam = params.get('userSig');
+        var sdkAppId = sdkAppIdParam && /^\d+$/.test(sdkAppIdParam) ? parseInt(sdkAppIdParam, 10) : undefined;
+        var userSig = userSigParam && userSigParam.trim() ? userSigParam.trim() : undefined;
 
         window.__MYSPACE_ROOM__ = {
           userId: userId && userId.trim() ? userId.trim() : undefined,
           userName: userName && userName.trim() ? userName.trim() : undefined,
           avatarUrl: avatarUrl && avatarUrl.trim() ? avatarUrl.trim() : undefined,
+          sdkAppId: sdkAppId,
+          userSig: userSig,
         };
       })();
     </script>
@@ -221,6 +227,8 @@
           userId: userId && userId.trim() ? userId.trim() : undefined,
           userName: userName && userName.trim() ? userName.trim() : undefined,
           avatarUrl: avatarUrl && avatarUrl.trim() ? avatarUrl.trim() : undefined,
+          sdkAppId: sdkAppId,
+          userSig: userSig,
           spaceSlug: sanitizedSlug || null,
           spaceTitle: spaceTitle && spaceTitle.trim() ? spaceTitle.trim() : 'MySpaceLove',
           dashboardUrl: baseDashboard,

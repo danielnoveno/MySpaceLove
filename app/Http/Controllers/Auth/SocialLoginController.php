@@ -12,6 +12,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 use Laravel\Socialite\Facades\Socialite;
+use App\Support\GoogleOAuth;
 use Throwable;
 
 class SocialLoginController extends Controller
@@ -23,6 +24,11 @@ class SocialLoginController extends Controller
     {
         $scopes = ['openid', 'profile', 'email'];
         $driver = Socialite::driver('google')->scopes($scopes);
+        $redirectUri = GoogleOAuth::redirectUri();
+
+        if ($redirectUri) {
+            $driver->redirectUrl($redirectUri);
+        }
         $allowedDomain = $this->allowedGoogleDomain();
 
         if ($allowedDomain) {
@@ -38,7 +44,14 @@ class SocialLoginController extends Controller
     public function handleGoogleCallback(): RedirectResponse
     {
         try {
-            $googleUser = Socialite::driver('google')->user();
+            $driver = Socialite::driver('google');
+            $redirectUri = GoogleOAuth::redirectUri();
+
+            if ($redirectUri) {
+                $driver->redirectUrl($redirectUri);
+            }
+
+            $googleUser = $driver->user();
         } catch (Throwable $exception) {
             report($exception);
 

@@ -28,7 +28,11 @@ class LoveJournalApiController extends Controller
     {
         $this->authorizeSpace($space);
 
-        $data = $r->validate(['title' => 'required|string|max:255', 'content' => 'required|string', 'mood' => 'nullable|in:happy,sad,miss,excited']);
+        $data = $r->validate([
+            'title' => 'required|string|max:255',
+            'content' => 'required|string',
+            'mood' => 'nullable|in:happy,sad,miss,excited,grateful,melancholy',
+        ]);
         $data['space_id'] = $space->id;
         $data['user_id'] = Auth::id();
 
@@ -44,7 +48,11 @@ class LoveJournalApiController extends Controller
         // only allow author to update their own journal
         if ($journal->user_id !== Auth::id()) abort(403);
 
-        $data = $r->validate(['title' => 'required|string|max:255', 'content' => 'required|string', 'mood' => 'nullable|in:happy,sad,miss,excited']);
+        $data = $r->validate([
+            'title' => 'required|string|max:255',
+            'content' => 'required|string',
+            'mood' => 'nullable|in:happy,sad,miss,excited,grateful,melancholy',
+        ]);
         $journal->update($data);
         return Inertia::location(route('journal.index', ['space' => $space->slug]));
     }
