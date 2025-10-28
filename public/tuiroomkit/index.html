@@ -102,6 +102,84 @@
         --uikit-color-error: #ef4444;
         --uikit-text-color: #1f2937;
         --uikit-font-family: 'Figtree', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+
+        --bg-color-default: #ffffff;
+        --bg-color-dialog: #ffffff;
+        --bg-color-dialog-module: rgba(252, 231, 243, 0.55);
+        --bg-color-function: rgba(252, 231, 243, 0.75);
+        --bg-color-operate: rgba(236, 72, 153, 0.12);
+        --bg-color-topbar: rgba(255, 255, 255, 0.92);
+        --bg-color-bottombar: rgba(12, 10, 19, 0.75);
+        --bg-color-mask: rgba(15, 23, 42, 0.68);
+        --bg-color-entrycard: rgba(253, 242, 248, 0.92);
+        --bg-color-element-mask: rgba(236, 72, 153, 0.14);
+        --bg-color-tag-mask: rgba(236, 72, 153, 0.12);
+        --bg-color-bubble-own: rgba(236, 72, 153, 0.16);
+        --bg-color-bubble-reciprocal: rgba(148, 163, 184, 0.22);
+        --bg-color-input: rgba(255, 255, 255, 0.88);
+
+        --text-color-primary: #1f2937;
+        --text-color-secondary: #475569;
+        --text-color-tertiary: #94a3b8;
+        --text-color-success: #16a34a;
+        --text-color-warning: #d97706;
+        --text-color-error: #ef4444;
+        --text-color-link: #ec4899;
+        --text-color-link-hover: #db2777;
+        --text-color-link-active: #be185d;
+        --text-color-link-disabled: rgba(236, 72, 153, 0.4);
+        --text-color-anti-primary: #ffffff;
+        --text-color-anti-secondary: rgba(255, 255, 255, 0.78);
+        --text-color-button: #ffffff;
+        --text-color-button-disabled: rgba(255, 255, 255, 0.65);
+
+        --button-color-primary-default: #ec4899;
+        --button-color-primary-hover: #db2777;
+        --button-color-primary-active: #be185d;
+        --button-color-primary-disabled: #fbcfe8;
+        --button-color-secondary-default: rgba(252, 231, 243, 0.9);
+        --button-color-secondary-hover: rgba(249, 168, 212, 0.9);
+        --button-color-secondary-active: rgba(236, 72, 153, 0.18);
+        --button-color-secondary-disabled: rgba(148, 163, 184, 0.18);
+
+        --checkbox-color-selected: #ec4899;
+        --switch-color-on: #ec4899;
+        --switch-color-off: rgba(148, 163, 184, 0.5);
+        --switch-color-button: #ffffff;
+        --slider-color-filled: #ec4899;
+        --slider-color-empty: rgba(148, 163, 184, 0.22);
+        --slider-color-button: #ec4899;
+
+        --list-color-default: rgba(15, 23, 42, 0.04);
+        --list-color-hover: rgba(236, 72, 153, 0.12);
+        --list-color-focused: rgba(236, 72, 153, 0.2);
+        --dropdown-color-default: rgba(148, 163, 184, 0.12);
+        --dropdown-color-hover: rgba(236, 72, 153, 0.15);
+        --dropdown-color-active: rgba(236, 72, 153, 0.25);
+
+        --tab-color-unselected: #94a3b8;
+        --tab-color-selected: #ec4899;
+        --tab-color-option: rgba(253, 242, 248, 0.75);
+
+        --toast-color-default: rgba(15, 23, 42, 0.88);
+        --toast-color-success: rgba(16, 185, 129, 0.9);
+        --toast-color-error: rgba(239, 68, 68, 0.92);
+        --toast-color-warning: rgba(234, 179, 8, 0.9);
+
+        --scroll-bar-color-default: rgba(236, 72, 153, 0.18);
+        --scroll-bar-color-hover: rgba(236, 72, 153, 0.35);
+
+        --stroke-color-primary: rgba(236, 72, 153, 0.22);
+        --stroke-color-secondary: rgba(148, 163, 184, 0.28);
+        --stroke-color-module: rgba(236, 72, 153, 0.12);
+
+        --shadow-color: rgba(236, 72, 153, 0.18);
+
+        --tui-button-active-bg-blue-default: #ec4899;
+        --tui-button-active-bg-blue-primary: #db2777;
+        --tui-button-active-border-blue-default: transparent;
+        --tui-button-active-border-blue-primary: transparent;
+        --tui-button-active-text-blue-default: #ffffff;
       }
 
       .tui-theme-dark {
@@ -135,6 +213,16 @@
         backdrop-filter: blur(18px);
         background: rgba(255, 255, 255, 0.85);
         border-bottom: 1px solid rgba(236, 72, 153, 0.12);
+      }
+
+      .myspace-navbar__brand::after {
+        content: '';
+        display: block;
+        height: 2px;
+        width: 64px;
+        margin-top: 6px;
+        background: linear-gradient(90deg, rgba(236, 72, 153, 0.9), rgba(244, 63, 94, 0.45));
+        border-radius: 9999px;
       }
 
       .myspace-navbar__inner {
@@ -174,6 +262,33 @@
       .myspace-navbar__links a:hover {
         color: #ec4899;
         transform: translateY(-1px);
+      }
+
+      .myspace-navbar__links a[data-active="true"] {
+        color: #ec4899;
+        font-weight: 600;
+      }
+
+      .myspace-navbar__links a[data-active="true"]::after {
+        content: '';
+        display: block;
+        height: 2px;
+        margin-top: 6px;
+        background: rgba(236, 72, 153, 0.65);
+        border-radius: 9999px;
+        transform-origin: center;
+        animation: nav-underline 0.4s ease;
+      }
+
+      @keyframes nav-underline {
+        from {
+          transform: scaleX(0.35);
+          opacity: 0;
+        }
+        to {
+          transform: scaleX(1);
+          opacity: 1;
+        }
       }
     </style>
   </head>
@@ -245,6 +360,9 @@
             var link = document.querySelector('[data-nav="' + key + '"]');
             if (link) {
               link.setAttribute('href', navLinks[key]);
+              if (key === 'dashboard') {
+                link.setAttribute('data-active', 'true');
+              }
             }
           });
         });

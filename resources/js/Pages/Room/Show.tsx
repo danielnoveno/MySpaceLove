@@ -588,18 +588,23 @@ export default function Room({ spaceId, space, schedules = [] }: Props) {
                 </div>
             )}
 
-            <div className="relative h-screen bg-neutral-900">
+            <div className="relative h-screen bg-gradient-to-br from-rose-950 via-slate-950 to-slate-900">
                 {!iframeSrc && (
-                    <div className="absolute inset-0 z-20 flex flex-col items-center justify-center gap-4 bg-neutral-900 text-center text-sm text-slate-200">
+                    <div className="absolute inset-0 z-20 flex flex-col items-center justify-center gap-4 bg-slate-950/95 text-center text-sm text-rose-100">
                         {credentialLoading ? (
                             <>
-                                <span className="inline-flex h-10 w-10 animate-spin items-center justify-center rounded-full border-2 border-slate-600 border-t-pink-400" aria-hidden="true" />
-                                <p>Menyiapkan kredensial nobar kalian.</p>
-                                <p className="text-xs text-slate-400">Tunggu sebentar, kami sedang terhubung ke Tencent RTC.</p>
+                                <span
+                                    className="inline-flex h-12 w-12 animate-spin items-center justify-center rounded-full border-2 border-rose-300/50 border-t-rose-400"
+                                    aria-hidden="true"
+                                />
+                                <p className="text-base font-semibold text-rose-50">Menyiapkan kredensial nobar kalian.</p>
+                                <p className="text-xs text-rose-200/70">
+                                    Tunggu sebentar, kami sedang terhubung ke Tencent RTC.
+                                </p>
                             </>
                         ) : (
                             <>
-                                <p className="text-base font-semibold text-rose-200">
+                                <p className="text-base font-semibold text-rose-100">
                                     {credentialError ??
                                         "Kredensial nobar belum tersedia. Hubungi admin untuk mengaktifkan TUIRoomKit."}
                                 </p>
@@ -607,12 +612,12 @@ export default function Room({ spaceId, space, schedules = [] }: Props) {
                                     <button
                                         type="button"
                                         onClick={handleRetryCredentials}
-                                        className="inline-flex items-center gap-2 rounded-full border border-rose-300/70 bg-white/10 px-4 py-2 text-xs font-semibold text-rose-100 transition hover:bg-white/20 focus:outline-none focus-visible:ring-2 focus-visible:ring-rose-200"
+                                        className="inline-flex items-center gap-2 rounded-full border border-rose-400/60 bg-rose-500/10 px-4 py-2 text-xs font-semibold text-rose-100 transition hover:bg-rose-500/20 focus:outline-none focus-visible:ring-2 focus-visible:ring-rose-200/80"
                                     >
                                         <Sparkles className="h-3.5 w-3.5" aria-hidden="true" />
                                         Coba muat ulang kredensial
                                     </button>
-                                    <p className="max-w-xs text-[11px] text-slate-400">
+                                    <p className="max-w-xs text-[11px] text-rose-200/60">
                                         Jika masalah berlanjut, pastikan konfigurasi Tencent Cloud sudah tersimpan di dashboard admin.
                                     </p>
                                 </div>
@@ -621,17 +626,20 @@ export default function Room({ spaceId, space, schedules = [] }: Props) {
                     </div>
                 )}
                 {iframeSrc && iframeStatus !== "ready" && (
-                    <div className="pointer-events-none absolute inset-0 z-10 flex flex-col items-center justify-center gap-3 bg-neutral-900/80 text-center text-sm text-slate-200">
+                    <div className="pointer-events-none absolute inset-0 z-10 flex flex-col items-center justify-center gap-3 bg-slate-950/85 text-center text-sm text-rose-100">
                         {iframeStatus === "loading" ? (
                             <>
-                                <span className="inline-flex h-10 w-10 animate-spin items-center justify-center rounded-full border-2 border-slate-600 border-t-pink-400" aria-hidden="true" />
-                                <p>Menyiapkan ruang nobar kalian…</p>
-                                <p className="text-xs text-slate-400">Jika halaman tetap kosong lebih dari 10 detik, refresh tab ini.</p>
+                                <span
+                                    className="inline-flex h-12 w-12 animate-spin items-center justify-center rounded-full border-2 border-rose-300/50 border-t-rose-400"
+                                    aria-hidden="true"
+                                />
+                                <p className="text-base font-semibold">Menyiapkan ruang nobar kalian…</p>
+                                <p className="text-xs text-rose-200/70">Jika halaman tetap kosong lebih dari 10 detik, refresh tab ini.</p>
                             </>
                         ) : (
                             <>
-                                <p className="text-base font-semibold text-rose-200">Gagal memuat TUIRoomKit</p>
-                                <p className="max-w-xs text-xs text-slate-300">Coba muat ulang halaman, pastikan koneksi internet stabil, atau bukalah kembali dari dashboard space.</p>
+                                <p className="text-base font-semibold text-rose-100">Gagal memuat TUIRoomKit</p>
+                                <p className="max-w-xs text-xs text-rose-200/70">Coba muat ulang halaman, pastikan koneksi internet stabil, atau bukalah kembali dari dashboard space.</p>
                             </>
                         )}
                     </div>
