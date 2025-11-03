@@ -2,16 +2,28 @@
   <div class="control-container">
     <div class="container-button-group">
       <div class="button-item" @click="enterRoom">
-        <svg-icon style="display: flex" class="button-icon" :icon="EnterRoomIcon" />
-        <span>{{ t('Join Room') }}</span>
+        <svg-icon
+          style="display: flex"
+          class="button-icon"
+          :icon="EnterRoomIcon"
+        />
+        <span>{{ t("Join Room") }}</span>
       </div>
       <div class="button-item" @click="createRoom">
-        <svg-icon style="display: flex" class="button-icon" :icon="CreateRoomIcon" />
-        <span>{{ t('New Room') }}</span>
+        <svg-icon
+          style="display: flex"
+          class="button-icon"
+          :icon="CreateRoomIcon"
+        />
+        <span>{{ t("New Room") }}</span>
       </div>
       <div class="button-item" @click="scheduleRoom">
-        <svg-icon style="display: flex" class="button-icon" :icon="ScheduleRoomIcon" />
-        <span>{{ t('Schedule') }}</span>
+        <svg-icon
+          style="display: flex"
+          class="button-icon"
+          :icon="ScheduleRoomIcon"
+        />
+        <span>{{ t("Schedule") }}</span>
       </div>
     </div>
     <div class="conference-list-container">
@@ -28,14 +40,14 @@
         <span
           v-if="isJoinRoom || hasGivenRoomId"
           class="room-detail-header-title"
-          >{{ t('Join Room') }}
+          >{{ t("Join Room") }}
         </span>
-        <span v-else class="room-detail-header-title">{{ t('New Room') }}</span>
+        <span v-else class="room-detail-header-title">{{ t("New Room") }}</span>
       </div>
       <div class="room-detail-middle">
         <div class="room-detail-info">
           <div v-if="isJoinRoom || hasGivenRoomId" class="room-detail-info-box">
-            <span class="room-detail-title"> {{ t('Room ID') }}</span>
+            <span class="room-detail-title"> {{ t("Room ID") }}</span>
             <input
               v-model="roomId"
               class="roomid-input"
@@ -47,7 +59,7 @@
             />
           </div>
           <div v-else class="room-detail-info-box" @click="chooseRoomType">
-            <span class="room-detail-title"> {{ t('Room Type') }}</span>
+            <span class="room-detail-title"> {{ t("Room Type") }}</span>
             <div class="room-show-title">
               <span class="room-show-title">{{ roomType }}</span>
             </div>
@@ -58,13 +70,13 @@
             />
           </div>
           <div class="room-detail-info-box">
-            <span class="room-detail-title">{{ t('Your Name') }}</span>
+            <span class="room-detail-title">{{ t("Your Name") }}</span>
             <span class="roomid-input"> {{ currentUserName }} </span>
           </div>
         </div>
         <div class="room-detail-setting">
           <div class="room-detail-setting-list">
-            {{ t('Turn on the microphone') }}
+            {{ t("Turn on the microphone") }}
             <div
               @tap="() => toggle('isMicOn')"
               class="slider-box"
@@ -74,7 +86,7 @@
             </div>
           </div>
           <div class="room-detail-setting-list">
-            {{ t('Turn on the video') }}
+            {{ t("Turn on the video") }}
             <div
               @tap="() => toggle('isCamerOn')"
               class="slider-box"
@@ -90,10 +102,10 @@
           v-if="isJoinRoom || hasGivenRoomId"
           @tap="() => handleRoomOption('Join')"
           class="button"
-          >{{ t('Join Room') }}
+          >{{ t("Join Room") }}
         </span>
         <span v-else @tap="() => handleRoomOption('New')" class="button">{{
-          t('New Room')
+          t("New Room")
         }}</span>
       </div>
     </div>
@@ -106,10 +118,10 @@
       >
         <div class="room-choose-button">
           <span class="choose-cancel" @click="showMoreType = false">{{
-            t('Cancel')
+            t("Cancel")
           }}</span>
           <span @tap="handleConfirm" class="choose-confirm">{{
-            t('Sure')
+            t("Sure")
           }}</span>
         </div>
         <div class="room-type-hidden">
@@ -117,13 +129,13 @@
             @tap="() => chooseCurrentType('FreeToSpeak')"
             :class="[mode === 'FreeToSpeak' && 'room-current-title']"
             class="room-choose-title"
-            >{{ t('Free Speech Room') }}
+            >{{ t("Free Speech Room") }}
           </span>
           <span
             @tap="() => chooseCurrentType('SpeakAfterTakingSeat')"
             :class="[mode === 'SpeakAfterTakingSeat' && 'room-current-title']"
             class="room-choose-title"
-            >{{ t('On-stage Speaking Room') }}
+            >{{ t("On-stage Speaking Room") }}
           </span>
         </div>
       </div>
@@ -145,18 +157,18 @@ import {
   defineEmits,
   defineProps,
   defineExpose,
-} from 'vue';
-import SvgIcon from '../../common/base/SvgIcon.vue';
-import { useRoomStore } from '../../../stores/room';
-import useRoomControl from './useRoomControlHooks';
-import CreateRoomIcon from '../../../assets/icons/CreateRoomIcon.svg';
-import EnterRoomIcon from '../../../assets/icons/EnterRoomIcon.svg';
-import ArrowStrokeBackIcon from '../../../assets/icons/ArrowStrokeBackIcon.svg';
-import ArrowStrokeSelectDownIcon from '../../../assets/icons/ArrowStrokeSelectDownIcon.svg';
-import ScheduleRoomIcon from '../../../assets/icons/ScheduleRoomIcon.svg';
-import ScheduleRoomList from '../../ScheduleConference/ScheduleRoomList.vue';
-import ScheduleConferencePanel from '../../ScheduleConference/ScheduleConferencePanel/index.vue';
-import TUIMessage from '../../common/base/Message/index';
+} from "vue";
+import SvgIcon from "../../common/base/SvgIcon.vue";
+import { useRoomStore } from "../../../stores/room";
+import useRoomControl from "./useRoomControlHooks";
+import CreateRoomIcon from "../../../assets/icons/CreateRoomIcon.svg";
+import EnterRoomIcon from "../../../assets/icons/EnterRoomIcon.svg";
+import ArrowStrokeBackIcon from "../../../assets/icons/ArrowStrokeBackIcon.svg";
+import ArrowStrokeSelectDownIcon from "../../../assets/icons/ArrowStrokeSelectDownIcon.svg";
+import ScheduleRoomIcon from "../../../assets/icons/ScheduleRoomIcon.svg";
+import ScheduleRoomList from "../../ScheduleConference/ScheduleRoomList.vue";
+import ScheduleConferencePanel from "../../ScheduleConference/ScheduleConferencePanel/index.vue";
+import TUIMessage from "../../common/base/Message/index";
 
 const { t } = useRoomControl();
 
@@ -167,22 +179,22 @@ const showMoreType = ref(false);
 const showScheduleRoom = ref(false);
 const isJoinRoom = ref(false);
 const roomType = computed(() =>
-  mode.value === 'FreeToSpeak'
-    ? t('Free Speech Room')
-    : t('On-stage Speaking Room')
+  mode.value === "FreeToSpeak"
+    ? t("Free Speech Room")
+    : t("On-stage Speaking Room")
 );
 const isMicOn = ref(true);
 const isCamerOn = ref(true);
-const mode = ref('FreeToSpeak');
-const roomId = ref('');
+const mode = ref("FreeToSpeak");
+const roomId = ref("");
 const tuiRoomParam = {
   isOpenCamera: true,
   isOpenMicrophone: true,
-  defaultCameraId: '',
-  defaultMicrophoneId: '',
-  defaultSpeakerId: '',
+  defaultCameraId: "",
+  defaultMicrophoneId: "",
+  defaultSpeakerId: "",
 };
-const emit = defineEmits(['create-room', 'enter-room', 'update-user-name']);
+const emit = defineEmits(["create-room", "enter-room", "update-user-name"]);
 
 interface Props {
   userName: string;
@@ -196,14 +208,14 @@ const currentUserName = ref();
 
 watch(
   () => props.userName,
-  val => {
+  (val) => {
     currentUserName.value = val ? val : `user_${Math.ceil(Math.random() * 10)}`;
   },
   { immediate: true }
 );
 
 const hasGivenRoomId = computed(
-  () => typeof props.givenRoomId === 'string' && props.givenRoomId !== ''
+  () => typeof props.givenRoomId === "string" && props.givenRoomId !== ""
 );
 
 function createRoom() {
@@ -233,11 +245,11 @@ function handleClose() {
 }
 function toggle(type: string) {
   switch (type) {
-    case 'isMicOn':
+    case "isMicOn":
       isMicOn.value = !isMicOn.value;
       tuiRoomParam.isOpenMicrophone = isMicOn.value;
       break;
-    case 'isCamerOn':
+    case "isCamerOn":
       isCamerOn.value = !isCamerOn.value;
       tuiRoomParam.isOpenCamera = isCamerOn.value;
       break;
@@ -274,27 +286,27 @@ function handleRoomOption(
 ) {
   const roomParam = getRoomParam();
   switch (type) {
-    case 'Join':
+    case "Join":
       if (!roomId.value && !params?.roomId) {
         TUIMessage({
-          type: 'error',
-          message: t('Please enter the room number'),
+          type: "error",
+          message: t("Please enter the room number"),
         });
         return;
       }
       emit(
-        'enter-room',
+        "enter-room",
         params || {
           roomId: String(roomId.value),
           roomParam,
         }
       );
       break;
-    case 'New':
-      emit('create-room', {
+    case "New":
+      emit("create-room", {
         roomMode: mode.value,
         roomParam,
-        isSeatEnabled: Boolean(mode.value === 'SpeakAfterTakingSeat'),
+        isSeatEnabled: Boolean(mode.value === "SpeakAfterTakingSeat"),
       });
       break;
     default:
@@ -303,11 +315,11 @@ function handleRoomOption(
 }
 
 onMounted(() => {
-  document?.addEventListener('click', handleDocumentClick, true);
+  document?.addEventListener("click", handleDocumentClick, true);
 });
 
 onUnmounted(() => {
-  document?.removeEventListener('click', handleDocumentClick, true);
+  document?.removeEventListener("click", handleDocumentClick, true);
 });
 </script>
 <style lang="scss" scoped>

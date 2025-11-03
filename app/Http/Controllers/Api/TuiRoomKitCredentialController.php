@@ -17,6 +17,12 @@ class TuiRoomKitCredentialController extends Controller
     {
         $this->authorizeSpace($space);
 
+        if (!config('features.nobar_enabled', false)) {
+            return response()->json([
+                'error' => 'Fitur nobar masih dalam pengembangan. Nantikan segera!',
+            ], 423);
+        }
+
         $user = $request->user();
 
         if (! $user) {

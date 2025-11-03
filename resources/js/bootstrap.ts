@@ -13,6 +13,19 @@ const applyXsrfHeader = () => {
     }
 };
 
+const ensureCsrfCookie = async () => {
+    if (readXsrfToken()) {
+        return;
+    }
+
+    try {
+        await window.axios.get('/sanctum/csrf-cookie', { withCredentials: true });
+        applyXsrfHeader();
+    } catch (error) {
+        console.error('Unable to fetch CSRF cookie during bootstrap.', error);
+    }
+};
+
 window.axios.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest';
 window.axios.defaults.withCredentials = true; // Ensure cookies are sent
 const csrfToken = document.head.querySelector('meta[name="csrf-token"]');
@@ -32,6 +45,8 @@ declare module 'axios' {
 }
 
 if (typeof window !== 'undefined') {
+    void ensureCsrfCookie();
+
     window.axios.interceptors.response.use(
         (response) => response,
         async (error: AxiosError) => {

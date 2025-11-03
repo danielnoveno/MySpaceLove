@@ -5,8 +5,8 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue';
-import defaultAvatar from '../../assets/imgs/avatar.png';
+import { ref, computed } from "vue";
+import defaultAvatar from "../../assets/imgs/avatar.png";
 
 interface Props {
   imgSrc?: string | undefined;

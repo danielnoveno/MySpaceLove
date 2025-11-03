@@ -11,32 +11,40 @@
 </template>
 
 <script setup lang="ts">
-import { PreConferenceView, conference, RoomEvent, LanguageOption, ThemeOption } from '@tencentcloud/roomkit-web-vue3';
-import { getBasicInfo } from '@/config/basic-info-config';
-import router from '@/router';
-import { useRoute } from 'vue-router';
-import { Ref, ref, reactive, onMounted, onUnmounted } from 'vue';
-import i18n from '../locales/index';
-import { getLanguage, getTheme } from  '../utils/utils';
-import { useUIKit } from '@tencentcloud/uikit-base-component-vue3';
+import {
+  PreConferenceView,
+  conference,
+  RoomEvent,
+  LanguageOption,
+  ThemeOption,
+} from "@tencentcloud/roomkit-web-vue3";
+import { getBasicInfo } from "@/config/basic-info-config";
+import router from "@/router";
+import { useRoute } from "vue-router";
+import { Ref, ref, reactive, onMounted, onUnmounted } from "vue";
+import i18n from "../locales/index";
+import { getLanguage, getTheme } from "../utils/utils";
+import { useUIKit } from "@tencentcloud/uikit-base-component-vue3";
 
 const { theme } = useUIKit();
 const route = useRoute();
 const { roomId } = route.query;
-const givenRoomId: Ref<string> = ref((roomId) as string);
+const givenRoomId: Ref<string> = ref(roomId as string);
 
 const userInfo = reactive({
-  userId: '',
-  userName: '',
-  avatarUrl: '',
+  userId: "",
+  userName: "",
+  avatarUrl: "",
 });
 
-
 function setTUIRoomData(action: string, roomOption: Record<string, any>) {
-  sessionStorage.setItem('tuiRoom-roomInfo', JSON.stringify({
-    action,
-    ...roomOption,
-  }));
+  sessionStorage.setItem(
+    "tuiRoom-roomInfo",
+    JSON.stringify({
+      action,
+      ...roomOption,
+    }),
+  );
 }
 
 async function checkRoomExistWhenCreateRoom(roomId: string) {
@@ -53,7 +61,7 @@ async function checkRoomExistWhenCreateRoom(roomId: string) {
 
 /**
  * Generate room number when creating a room
-**/
+ **/
 async function generateRoomId(): Promise<string> {
   const roomId = String(Math.ceil(Math.random() * 1000000));
   const isRoomExist = await checkRoomExistWhenCreateRoom(String(roomId));
@@ -65,12 +73,12 @@ async function generateRoomId(): Promise<string> {
 
 /**
  * Processing Click [Create Room]
-**/
+ **/
 async function handleCreateRoom(roomOption: Record<string, any>) {
-  setTUIRoomData('createRoom', roomOption);
+  setTUIRoomData("createRoom", roomOption);
   const roomId = await generateRoomId();
   router.push({
-    path: 'room',
+    path: "room",
     query: {
       roomId,
     },
@@ -79,11 +87,11 @@ async function handleCreateRoom(roomOption: Record<string, any>) {
 
 /**
  * Processing Click [Enter Room]
-**/
+ **/
 async function handleEnterRoom(roomOption: Record<string, any>) {
-  setTUIRoomData('enterRoom', roomOption);
+  setTUIRoomData("enterRoom", roomOption);
   router.push({
-    path: 'room',
+    path: "room",
     query: {
       roomId: roomOption.roomId,
     },
@@ -92,33 +100,35 @@ async function handleEnterRoom(roomOption: Record<string, any>) {
 
 function handleUpdateUserName(userName: string) {
   try {
-    const currentUserInfo = JSON.parse(sessionStorage.getItem('tuiRoom-userInfo') as string);
+    const currentUserInfo = JSON.parse(
+      sessionStorage.getItem("tuiRoom-userInfo") as string,
+    );
     currentUserInfo.userName = userName;
-    sessionStorage.setItem('tuiRoom-userInfo', JSON.stringify(currentUserInfo));
+    sessionStorage.setItem("tuiRoom-userInfo", JSON.stringify(currentUserInfo));
   } catch (error) {
-    console.log('sessionStorage error', error);
+    console.log("sessionStorage error", error);
   }
 }
 
 /**
  * Processing users click [Logout Login] in the upper left corner of the page
-**/
+ **/
 async function handleLogOut() {
-/**
- * The accessor handles the logout method
-**/
+  /**
+   * The accessor handles the logout method
+   **/
 }
 
 async function handleInit() {
-  sessionStorage.removeItem('tuiRoom-roomInfo');
-  sessionStorage.removeItem('tuiRoom-userInfo');
+  sessionStorage.removeItem("tuiRoom-roomInfo");
+  sessionStorage.removeItem("tuiRoom-userInfo");
   conference.setLanguage(getLanguage() as LanguageOption);
   !theme.value && conference.setTheme(getTheme() as ThemeOption);
   const currentUserInfo = getBasicInfo();
   if (!currentUserInfo) {
     return;
   }
-  sessionStorage.setItem('tuiRoom-userInfo', JSON.stringify(currentUserInfo));
+  sessionStorage.setItem("tuiRoom-userInfo", JSON.stringify(currentUserInfo));
   userInfo.userId = currentUserInfo.userId;
   userInfo.userName = currentUserInfo.userName;
   userInfo.avatarUrl = currentUserInfo.avatarUrl;
@@ -129,10 +139,10 @@ async function handleInit() {
 
 const changeLanguage = (language: LanguageOption) => {
   i18n.global.locale.value = language;
-  localStorage.setItem('tuiRoom-language', language);
+  localStorage.setItem("tuiRoom-language", language);
 };
 const changeTheme = (theme: ThemeOption) => {
-  localStorage.setItem('tuiRoom-currentTheme', theme);
+  localStorage.setItem("tuiRoom-currentTheme", theme);
 };
 const handleAcceptedInvitation = async (roomId: string) => {
   await handleEnterRoom({
@@ -146,15 +156,20 @@ const handleAcceptedInvitation = async (roomId: string) => {
 onMounted(() => {
   conference.on(RoomEvent.LANGUAGE_CHANGED, changeLanguage);
   conference.on(RoomEvent.THEME_CHANGED, changeTheme);
-  conference.on(RoomEvent.CONFERENCE_INVITATION_ACCEPTED, handleAcceptedInvitation);
+  conference.on(
+    RoomEvent.CONFERENCE_INVITATION_ACCEPTED,
+    handleAcceptedInvitation,
+  );
 });
 
 onUnmounted(() => {
   conference.off(RoomEvent.LANGUAGE_CHANGED, changeLanguage);
   conference.off(RoomEvent.THEME_CHANGED, changeTheme);
-  conference.off(RoomEvent.CONFERENCE_INVITATION_ACCEPTED, handleAcceptedInvitation);
+  conference.off(
+    RoomEvent.CONFERENCE_INVITATION_ACCEPTED,
+    handleAcceptedInvitation,
+  );
 });
 
 handleInit();
-
 </script>

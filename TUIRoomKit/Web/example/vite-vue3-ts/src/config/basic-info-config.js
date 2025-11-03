@@ -2,7 +2,7 @@
  * @Description: Basic information configuration for TUIRoomKit applications
  */
 
-import LibGenerateTestUserSig from './lib-generate-test-usersig-es.min';
+import LibGenerateTestUserSig from "./lib-generate-test-usersig-es.min";
 
 /**
  * Tencent Cloud SDKAppId, which should be replaced with user's SDKAppId.
@@ -12,7 +12,7 @@ import LibGenerateTestUserSig from './lib-generate-test-usersig-es.min';
  *
  */
 
-export const SDKAPPID = 0;
+export const SDKAPPID = 20028292;
 
 /**
  * Encryption key for calculating signature, which can be obtained in the following steps:
@@ -29,7 +29,8 @@ export const SDKAPPID = 0;
  * Document: https://intl.cloud.tencent.com/document/product/647/35166#Server
  *
  */
-export const SDKSECRETKEY = '';
+export const SDKSECRETKEY =
+  "0cb3df3ee41b7202fe0ec84e9cfe4889fae598ff10de7b78dadb07af56ab2fcc";
 
 /**
  * Signature expiration time, which should not be too short
@@ -47,17 +48,21 @@ export const userInfo = {
   // UserId
   userId: `user_${Math.ceil(Math.random() * 100000)}`,
   // UserName
-  userName: 'myName',
+  userName: "myName",
   // UserAvatar
-  avatarUrl: '',
+  avatarUrl: "",
 };
 
 export function getBasicInfo() {
-  if (SDKAPPID === Number(0) || SDKSECRETKEY === String('')) {
-    alert('Please configure your SDKAPPID in config/basic-info-config.js');
+  if (SDKAPPID === Number(0) || SDKSECRETKEY === String("")) {
+    alert("Please configure your SDKAPPID in config/basic-info-config.js");
     return;
   }
-  const generator = new LibGenerateTestUserSig(SDKAPPID, SDKSECRETKEY, EXPIRETIME);
+  const generator = new LibGenerateTestUserSig(
+    SDKAPPID,
+    SDKSECRETKEY,
+    EXPIRETIME,
+  );
   const userSig = generator.genTestUserSig(userInfo.userId);
   const { userId, userName, avatarUrl } = userInfo;
   return {
@@ -67,4 +72,4 @@ export function getBasicInfo() {
     userName,
     avatarUrl,
   };
-};
+}

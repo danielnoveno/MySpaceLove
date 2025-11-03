@@ -27,6 +27,9 @@
       @tap="() => handleControlClick('moreControl')"
       @show-overlay="handleShowOverlay"
     />
+    <div class="copyright-text">
+      Made by Peng for Winnie
+    </div>
   </div>
 </template>
 <script setup lang="ts">
@@ -67,5 +70,13 @@ function handleShowOverlay(data: { name: string; visible: boolean }) {
   padding: 0.7rem;
   background-color: var(--bg-color-topbar);
   box-shadow: 0 -8px 30px var(--uikit-color-black-8);
+
+  .copyright-text {
+    width: 100%;
+    text-align: center;
+    margin-top: 0.5rem;
+    font-size: 12px;
+    color: var(--font-color-4);
+  }
 }
 </style>
