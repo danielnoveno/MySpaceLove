@@ -216,7 +216,7 @@ class SpaceController extends Controller
 
         return redirect()
             ->route('spaces.dashboard', ['space' => $space->slug])
-            ->with('status', 'Space berhasil dibuat! Kamu bisa mengundang pasanganmu kapan saja.');
+            ->with('status', __('app.spaces.flash.created'));
     }
 
     /**

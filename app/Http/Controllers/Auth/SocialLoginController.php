@@ -122,7 +122,7 @@ class SocialLoginController extends Controller
 
             if (Str::startsWith($intendedPath, '/api/')) {
                 return redirect()->route('dashboard', absolute: false)
-                    ->with('status', 'Berhasil masuk dengan Google.');
+                    ->with('status', __('app.auth.flash.google_login_success'));
             }
 
             session()->put('url.intended', $intended);
@@ -130,7 +130,7 @@ class SocialLoginController extends Controller
 
         return redirect()
             ->intended(route('dashboard', absolute: false))
-            ->with('status', 'Berhasil masuk dengan Google.');
+            ->with('status', __('app.auth.flash.google_login_success'));
     }
 
     private function createUserFromGoogle(object $googleUser): User
@@ -206,7 +206,7 @@ class SocialLoginController extends Controller
 
         return redirect()
             ->route('spaces.dashboard', ['space' => $space->slug])
-            ->with('status', 'Selamat! Kamu sudah bergabung ke Space pasanganmu.');
+            ->with('status', __('app.auth.flash.space_joined'));
     }
 
     private function allowedGoogleDomain(): ?string

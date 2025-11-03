@@ -6,6 +6,7 @@ use App\Mail\LocationShared;
 use App\Models\Location;
 use App\Models\Space;
 use App\Models\User;
+use App\Services\ActivityLogger;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Mail;
@@ -15,6 +16,10 @@ use Inertia\Response;
 
 class LocationController extends Controller
 {
+    public function __construct(private readonly ActivityLogger $activityLogger)
+    {
+    }
+
     public function index(Request $request, Space $space): Response
     {
         $user = $request->user();
@@ -93,8 +98,19 @@ class LocationController extends Controller
             ]
         )->fresh();
 
+        $this->logActivity(
+            $user,
+            'location.updated',
+            __('app.notifications.events.location_updated.title'),
+            __('app.notifications.events.location_updated.body'),
+            [
+                'latitude' => $location->latitude,
+                'longitude' => $location->longitude,
+            ]
+        );
+
         return response()->json([
-            'message' => 'Lokasi berhasil diperbarui.',
+            'message' => __('app.location.update_success'),
             'location' => [
                 'latitude' => $location->latitude,
                 'longitude' => $location->longitude,
@@ -108,7 +124,7 @@ class LocationController extends Controller
         $viewer = $request->user();
 
         if (!$viewer || !$this->arePartners($viewer, $user)) {
-            abort(403, 'Tidak memiliki akses ke lokasi pasangan.');
+            abort(403, __('app.location.forbidden'));
         }
 
         $location = $user->location;
@@ -127,8 +143,16 @@ class LocationController extends Controller
         $user = $request->user();
         $user?->location()?->delete();
 
+        $this->logActivity(
+            $user,
+            'location.stopped',
+            __('app.notifications.events.location_stopped.title'),
+            __('app.notifications.events.location_stopped.body'),
+            []
+        );
+
         return response()->json([
-            'message' => 'Berhenti membagikan lokasi.',
+            'message' => __('app.location.stop_success'),
         ]);
     }
 
@@ -145,7 +169,7 @@ class LocationController extends Controller
 
         if (!$partner) {
             return response()->json([
-                'message' => 'Pasangan belum terhubung di MySpaceLove.',
+                'message' => __('app.location.partner_missing'),
             ], 422);
         }
 
@@ -165,8 +189,34 @@ class LocationController extends Controller
             $location->longitude,
         ));
 
+        $partnerName = $partner->name ?? __('app.layout.user.fallback_name');
+        $actorName = $user->name ?? __('app.layout.user.fallback_name');
+
+        $activityData = [
+            'space_id' => $space->id,
+            'share_url' => $data['url'],
+            'latitude' => $location->latitude,
+            'longitude' => $location->longitude,
+        ];
+
+        $this->logActivity(
+            $user,
+            'location.shared',
+            __('app.notifications.events.location_shared_self.title', ['partner' => $partnerName]),
+            __('app.notifications.events.location_shared_self.body', ['partner' => $partnerName]),
+            $activityData
+        );
+
+        $this->logActivity(
+            $partner,
+            'location.shared.received',
+            __('app.notifications.events.location_shared_partner.title', ['name' => $actorName]),
+            __('app.notifications.events.location_shared_partner.body'),
+            $activityData + ['from_user_id' => $user->id]
+        );
+
         return response()->json([
-            'message' => 'Link lokasi berhasil dikirim ke pasangan.',
+            'message' => __('app.location.share_success'),
             'share_url' => $data['url'],
         ]);
     }
@@ -194,5 +244,14 @@ class LocationController extends Controller
         $partner = $this->findPartner($viewer, $space);
 
         return $partner?->id === $target->id;
+    }
+
+    private function logActivity($recipients, string $event, string $title, string $body, array $data = [], bool $sendMail = false): void
+    {
+        if (!Schema::hasTable('notifications')) {
+            return;
+        }
+
+        $this->activityLogger->log($recipients, $event, $title, $body, $data, $sendMail);
     }
 }

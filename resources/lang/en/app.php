@@ -32,6 +32,7 @@ return [
             'daily_messages' => 'Daily Message',
             'gallery' => 'Gallery',
             'spotify' => 'Spotify Kit',
+            'notifications' => 'Notifications',
             'memory_lane' => 'Memory Lane Kit',
             'choose_space' => 'Choose Space',
             'manage_spaces' => 'Manage Spaces',
@@ -72,6 +73,11 @@ return [
             'remember_me' => 'Remember me',
             'google' => 'Continue with Google',
             'separator' => 'Email login',
+        ],
+        'flash' => [
+            'google_login_success' => 'Signed in with Google successfully.',
+            'space_joined' => 'You\'re now connected to your partner\'s space. 💖',
+            'space_welcome' => 'Welcome! Create your first space or join your partner using their code.',
         ],
         'login' => [
             'meta_title' => 'Sign in',
@@ -256,6 +262,73 @@ return [
         'header' => [
             'title' => 'Manage Spaces',
             'subtitle' => 'Create, join, and manage your couple spaces.',
+        ],
+        'flash' => [
+            'created' => 'Space created successfully! Invite your partner anytime.',
+        ],
+    ],
+    'location' => [
+        'update_success' => 'Location updated successfully.',
+        'forbidden' => "You don't have permission to view your partner's location.",
+        'stop_success' => 'Stopped sharing your location.',
+        'partner_missing' => 'Your partner has not connected to MySpaceLove yet.',
+        'share_success' => 'Location link sent to your partner.',
+    ],
+    'notifications' => [
+        'meta' => [
+            'title' => 'Activity notifications',
+        ],
+        'header' => [
+            'title' => 'Activity center',
+            'subtitle' => 'All of your shared milestones, updates, and invitations in one place.',
+        ],
+        'actions' => [
+            'mark_all_read' => 'Mark all as read',
+            'filter_all' => 'All',
+            'filter_unread' => 'Unread',
+            'mark_read' => 'Mark as read',
+        ],
+        'summary' => [
+            'recent' => 'Recent activity',
+            'unread_count' => ':count unread notifications',
+        ],
+        'empty' => [
+            'title' => 'No notifications yet',
+            'body' => 'We will store every activity from your space right here.',
+        ],
+        'view' => [
+            'opened_at' => 'Opened :date',
+        ],
+        'flash' => [
+            'marked' => 'Notification marked as read.',
+            'marked_all' => 'All notifications marked as read.',
+        ],
+        'mail' => [
+            'greeting' => 'Hi :name,',
+            'action' => 'View activity',
+            'footer' => 'Thank you for staying connected with MySpaceLove 💖',
+        ],
+        'events' => [
+            'account_registered' => [
+                'title' => 'Welcome to MySpaceLove, :name!',
+                'body' => 'Your account is ready. Invite your partner to start sharing memories.',
+            ],
+            'location_shared_self' => [
+                'title' => 'You shared your location with :partner',
+                'body' => 'We saved the link and coordinates so you can revisit the moment anytime.',
+            ],
+            'location_shared_partner' => [
+                'title' => ':name just shared their location with you',
+                'body' => 'Open the shared link to explore their latest location together.',
+            ],
+            'location_updated' => [
+                'title' => 'Location updated',
+                'body' => 'We refreshed your latest coordinates for your shared map.',
+            ],
+            'location_stopped' => [
+                'title' => 'Location sharing paused',
+                'body' => 'We stopped sharing your live location with your partner.',
+            ],
         ],
     ],
     'daily_messages' => [

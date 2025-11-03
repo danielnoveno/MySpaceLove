@@ -32,6 +32,7 @@ return [
             'daily_messages' => 'Daily Message',
             'gallery' => 'Galeri',
             'spotify' => 'Spotify Kit',
+            'notifications' => 'Notifikasi',
             'memory_lane' => 'Memory Lane Kit',
             'choose_space' => 'Pilih Space',
             'manage_spaces' => 'Kelola Spaces',
@@ -72,6 +73,11 @@ return [
             'remember_me' => 'Ingat saya',
             'google' => 'Lanjut dengan Google',
             'separator' => 'Masuk dengan email',
+        ],
+        'flash' => [
+            'google_login_success' => 'Berhasil masuk dengan Google.',
+            'space_joined' => 'Selamat! Kamu sudah terhubung dengan Space pasanganmu.',
+            'space_welcome' => 'Selamat datang! Buat Space pertama atau gabung memakai kode pasanganmu.',
         ],
         'login' => [
             'meta_title' => 'Masuk',
@@ -256,6 +262,73 @@ return [
         'header' => [
             'title' => 'Kelola Spaces',
             'subtitle' => 'Buat, gabung, dan kelola space couple kalian.',
+        ],
+        'flash' => [
+            'created' => 'Space berhasil dibuat! Kamu bisa mengundang pasangan kapan saja.',
+        ],
+    ],
+    'location' => [
+        'update_success' => 'Lokasi berhasil diperbarui.',
+        'forbidden' => 'Kamu tidak memiliki izin untuk melihat lokasi pasangan.',
+        'stop_success' => 'Berhasil menghentikan berbagi lokasi.',
+        'partner_missing' => 'Pasanganmu belum terhubung di MySpaceLove.',
+        'share_success' => 'Link lokasi berhasil dikirim ke pasanganmu.',
+    ],
+    'notifications' => [
+        'meta' => [
+            'title' => 'Notifikasi aktivitas',
+        ],
+        'header' => [
+            'title' => 'Pusat aktivitas',
+            'subtitle' => 'Semua momen, pembaruan, dan undangan kalian tersimpan rapi di sini.',
+        ],
+        'actions' => [
+            'mark_all_read' => 'Tandai semua sudah dibaca',
+            'filter_all' => 'Semua',
+            'filter_unread' => 'Belum dibaca',
+            'mark_read' => 'Tandai sudah dibaca',
+        ],
+        'summary' => [
+            'recent' => 'Aktivitas terbaru',
+            'unread_count' => ':count notifikasi belum dibaca',
+        ],
+        'empty' => [
+            'title' => 'Belum ada notifikasi',
+            'body' => 'Setiap aktivitas di space kalian akan tampil di sini.',
+        ],
+        'view' => [
+            'opened_at' => 'Dibuka :date',
+        ],
+        'flash' => [
+            'marked' => 'Notifikasi ditandai sudah dibaca.',
+            'marked_all' => 'Semua notifikasi ditandai sudah dibaca.',
+        ],
+        'mail' => [
+            'greeting' => 'Hai :name,',
+            'action' => 'Lihat aktivitas',
+            'footer' => 'Terima kasih sudah tetap terhubung dengan MySpaceLove 💖',
+        ],
+        'events' => [
+            'account_registered' => [
+                'title' => 'Selamat datang di MySpaceLove, :name!',
+                'body' => 'Akunmu siap dipakai. Ajak pasangan untuk mulai berbagi momen.',
+            ],
+            'location_shared_self' => [
+                'title' => 'Kamu membagikan lokasi ke :partner',
+                'body' => 'Link dan koordinatnya kami simpan supaya bisa kamu lihat kapan saja.',
+            ],
+            'location_shared_partner' => [
+                'title' => ':name baru saja membagikan lokasinya untukmu',
+                'body' => 'Buka link yang dikirim untuk melihat lokasi terbarunya.',
+            ],
+            'location_updated' => [
+                'title' => 'Lokasi diperbarui',
+                'body' => 'Koordinat terakhirmu sudah diperbarui di peta bersama.',
+            ],
+            'location_stopped' => [
+                'title' => 'Berbagi lokasi dijeda',
+                'body' => 'Kami menghentikan berbagi lokasi real-time ke pasanganmu.',
+            ],
         ],
     ],
     'daily_messages' => [
