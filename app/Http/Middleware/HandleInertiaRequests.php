@@ -37,9 +37,12 @@ class HandleInertiaRequests extends Middleware
         $spaces = [];
         $currentSpace = null;
 
+        $notificationSummary = null;
+
         if ($user) {
             $hasInvitationTable = Schema::hasTable('space_invitations');
             $hasSeparationTable = Schema::hasTable('space_separation_requests');
+            $hasNotificationsTable = Schema::hasTable('notifications');
 
             $spacesQuery = Space::query()
                 ->where(function ($query) use ($user): void {
@@ -127,6 +130,23 @@ class HandleInertiaRequests extends Middleware
                     $currentSpace = $space;
                 }
             }
+            if ($hasNotificationsTable) {
+                $latestNotifications = $user->notifications()
+                    ->latest()
+                    ->limit(5)
+                    ->get();
+
+                $notificationSummary = [
+                    'unread_count' => $user->unreadNotifications()->count(),
+                    'latest' => $latestNotifications->map(fn ($notification): array => [
+                        'id' => $notification->id,
+                        'title' => data_get($notification->data, 'title'),
+                        'body' => data_get($notification->data, 'body'),
+                        'created_at' => optional($notification->created_at)->toIso8601String(),
+                        'read_at' => optional($notification->read_at)->toIso8601String(),
+                    ])->all(),
+                ];
+            }
         }
 
         return [
@@ -139,6 +159,7 @@ class HandleInertiaRequests extends Middleware
             'locale' => app()->getLocale(),
             'availableLocales' => config('app.available_locales'),
             'translations' => Lang::get('app'),
+            'notificationSummary' => $notificationSummary,
         ];
     }
 }

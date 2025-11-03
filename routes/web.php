@@ -2,6 +2,7 @@
 
 require __DIR__ . '/auth.php';
 
+use App\Http\Controllers\ActivityNotificationController;
 use App\Http\Controllers\Api\CountdownApiController;
 use App\Http\Controllers\Api\DailyApiController;
 use App\Http\Controllers\Api\DailyMessageApiController;
@@ -187,6 +188,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
         return back()->withCookie(cookie()->forever('locale', $locale));
     })->name('locale.switch');
+
+    Route::get('/notifications', [ActivityNotificationController::class, 'index'])->name('notifications.index');
+    Route::post('/notifications/read-all', [ActivityNotificationController::class, 'markAllAsRead'])->name('notifications.readAll');
+    Route::post('/notifications/{notification}/read', [ActivityNotificationController::class, 'markAsRead'])->name('notifications.read');
 
     // Profile Routes
 

@@ -28,6 +28,9 @@ export default function AuthenticatedLayout({ header, children }) {
         languageOptions[activeLocale] ?? activeLocale.toUpperCase();
 
     const fallbackHref = route("spaces.index");
+    const notificationSummary = props?.notificationSummary ?? null;
+    const unreadNotificationCount = notificationSummary?.unread_count ?? 0;
+    const hasUnreadNotifications = unreadNotificationCount > 0;
 
     const dashboardHref = currentSpace
         ? route("spaces.dashboard", { space: currentSpace.slug })
@@ -44,6 +47,7 @@ export default function AuthenticatedLayout({ header, children }) {
     const spotifyHref = currentSpace
         ? route("spotify.companion", { space: currentSpace.slug })
         : fallbackHref;
+    const notificationsHref = route("notifications.index");
     const partnerFeaturesLocked =
         currentSpace !== null && currentSpace.has_partner === false;
     const lockedTooltip =
@@ -122,6 +126,19 @@ export default function AuthenticatedLayout({ header, children }) {
                                             <Lock className="h-3 w-3 text-gray-400" aria-hidden="true" />
                                         )}
                                         {navigation.spotify ?? "Spotify Kit"}
+                                    </span>
+                                </Link>
+                                <Link
+                                    href={notificationsHref}
+                                    className={navClass(false)}
+                                >
+                                    <span className="flex items-center gap-2">
+                                        {navigation.notifications ?? "Notifications"}
+                                        {hasUnreadNotifications && (
+                                            <span className="inline-flex min-w-[1.25rem] justify-center rounded-full bg-pink-500 px-1.5 text-xs font-semibold text-white">
+                                                {unreadNotificationCount > 99 ? "99+" : unreadNotificationCount}
+                                            </span>
+                                        )}
                                     </span>
                                 </Link>
                             </div>
@@ -407,6 +424,19 @@ export default function AuthenticatedLayout({ header, children }) {
                                     <Lock className="h-4 w-4 text-gray-400" aria-hidden="true" />
                                 )}
                                 {navigation.spotify ?? "Spotify Kit"}
+                            </span>
+                        </ResponsiveNavLink>
+                        <ResponsiveNavLink
+                            href={notificationsHref}
+                            active={route().current("notifications.index")}
+                        >
+                            <span className="flex items-center gap-2">
+                                {navigation.notifications ?? "Notifications"}
+                                {hasUnreadNotifications && (
+                                    <span className="inline-flex min-w-[1.5rem] justify-center rounded-full bg-pink-500 px-1.5 text-xs font-semibold text-white">
+                                        {unreadNotificationCount > 99 ? "99+" : unreadNotificationCount}
+                                    </span>
+                                )}
                             </span>
                         </ResponsiveNavLink>
                     </div>
