@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Space;
 use App\Models\SpaceInvitation;
 use App\Models\SpaceSeparationRequest;
+use App\Notifications\SpaceCreated;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -213,6 +214,8 @@ class SpaceController extends Controller
             'user_one_id' => $user->id,
             'bio' => $data['bio'] ?? null,
         ]);
+
+        $user->notify(new SpaceCreated($space));
 
         return redirect()
             ->route('spaces.dashboard', ['space' => $space->slug])

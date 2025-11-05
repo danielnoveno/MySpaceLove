@@ -39,8 +39,6 @@ class HandleInertiaRequests extends Middleware
 
         $notificationSummary = null;
 
-        $activeSpaceId = null;
-
         if ($user) {
             $hasInvitationTable = Schema::hasTable('space_invitations');
             $hasSeparationTable = Schema::hasTable('space_separation_requests');
@@ -125,54 +123,28 @@ class HandleInertiaRequests extends Middleware
                         'awaiting_partner' => $routeSpace->pendingSeparationRequest->partner_confirmed_at === null,
                     ] : null,
                 ];
-
-                $activeSpaceId = $routeSpace->id;
             } elseif (is_string($routeSpace)) {
                 $space = collect($spaces)->firstWhere('slug', $routeSpace);
 
                 if ($space) {
                     $currentSpace = $space;
-                    $activeSpaceId = $space['id'];
                 }
             }
             if ($hasNotificationsTable) {
-                $notificationsCollection = $user->notifications()
+                $latestNotifications = $user->notifications()
                     ->latest()
-                    ->limit(20)
+                    ->limit(5)
                     ->get();
 
-                $filteredNotifications = $notificationsCollection;
-
-                if ($activeSpaceId !== null) {
-                    $filteredNotifications = $filteredNotifications
-                        ->filter(function ($notification) use ($activeSpaceId) {
-                            return (int) data_get($notification->data, 'space_id') === (int) $activeSpaceId;
-                        })
-                        ->values();
-                }
-
-                $unreadNotifications = $user->unreadNotifications()->get();
-
-                if ($activeSpaceId !== null) {
-                    $unreadNotifications = $unreadNotifications
-                        ->filter(function ($notification) use ($activeSpaceId) {
-                            return (int) data_get($notification->data, 'space_id') === (int) $activeSpaceId;
-                        })
-                        ->values();
-                }
-
                 $notificationSummary = [
-                    'unread_count' => $unreadNotifications->count(),
-                    'latest' => $filteredNotifications
-                        ->take(5)
-                        ->map(fn ($notification): array => [
-                            'id' => $notification->id,
-                            'title' => data_get($notification->data, 'title'),
-                            'body' => data_get($notification->data, 'body'),
-                            'created_at' => optional($notification->created_at)->toIso8601String(),
-                            'read_at' => optional($notification->read_at)->toIso8601String(),
-                        ])
-                        ->all(),
+                    'unread_count' => $user->unreadNotifications()->count(),
+                    'latest' => $latestNotifications->map(fn ($notification): array => [
+                        'id' => $notification->id,
+                        'title' => data_get($notification->data, 'title'),
+                        'body' => data_get($notification->data, 'body'),
+                        'created_at' => optional($notification->created_at)->toIso8601String(),
+                        'read_at' => optional($notification->read_at)->toIso8601String(),
+                    ])->all(),
                 ];
             }
         }
@@ -191,3 +163,4 @@ class HandleInertiaRequests extends Middleware
         ];
     }
 }
+

@@ -1,4 +1,3 @@
-import Modal from "@/Components/Modal";
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout";
 import { Head } from "@inertiajs/react";
 import axios from "axios";
@@ -16,6 +15,7 @@ import {
     TileLayer,
     useMap,
 } from "react-leaflet";
+import { LocateFixed, Share2, OctagonX, MapPin } from "lucide-react";
 import {
     FormEvent,
     useCallback,
@@ -213,10 +213,26 @@ export default function MapView({
     const [shareOptionsOpen, setShareOptionsOpen] = useState(false);
     const [pendingShareUrl, setPendingShareUrl] =
         useState<string | null>(null);
+    const resolvedShareBaseUrl = useMemo(() => {
+        if (typeof window === "undefined") {
+            return shareBaseUrl;
+        }
+
+        try {
+            const url = new URL(shareBaseUrl);
+            url.protocol = window.location.protocol;
+            url.host = window.location.host;
+            return url.toString();
+        } catch (error) {
+            console.warn("Unable to normalise share base URL", error);
+            return `${window.location.origin}/location/${space.slug}`;
+        }
+    }, [shareBaseUrl, space.slug]);
     const [isStopping, setIsStopping] = useState(false);
     const [notification, setNotification] =
         useState<NotificationState | null>(null);
     const [partner, setPartner] = useState<Partner | null>(initialPartner);
+    const canSendEmail = Boolean(partner?.email);
     const [isConnectingPartner, setIsConnectingPartner] = useState(false);
     const [showPartnerForm, setShowPartnerForm] = useState(false);
     const [partnerNameInput, setPartnerNameInput] = useState("");
@@ -674,18 +690,18 @@ export default function MapView({
             );
             return;
         }
+
         if (!partner) {
             showNotification(
-                "Pasangan belum terhubung di MySpaceLove.",
+                "Pasangan belum terhubung di MySpaceLove. Kamu masih bisa menyalin link lokasi.",
                 "warning"
             );
-            return;
         }
 
-        const shareUrl = `${shareBaseUrl}?lat=${userLocation.latitude}&lng=${userLocation.longitude}`;
+        const shareUrl = `${resolvedShareBaseUrl}?lat=${userLocation.latitude}&lng=${userLocation.longitude}`;
         setPendingShareUrl(shareUrl);
         setShareOptionsOpen(true);
-    }, [partner, shareBaseUrl, showNotification, userLocation]);
+    }, [partner, resolvedShareBaseUrl, showNotification, userLocation]);
 
     const closeShareOptions = useCallback(() => {
         setShareOptionsOpen(false);
@@ -705,12 +721,42 @@ export default function MapView({
                 longitude: userLocation.longitude,
             });
 
+            let copied = false;
+
             if (navigator.clipboard?.writeText) {
-                await navigator.clipboard.writeText(pendingShareUrl);
+                try {
+                    await navigator.clipboard.writeText(pendingShareUrl);
+                    copied = true;
+                } catch (clipboardError) {
+                    console.warn("Secure clipboard write failed", clipboardError);
+                }
             }
 
-            showNotification("Link lokasi tersalin ke clipboard!", "success");
-            closeShareOptions();
+            if (!copied) {
+                try {
+                    const fallback = document.createElement("textarea");
+                    fallback.value = pendingShareUrl;
+                    fallback.style.position = "fixed";
+                    fallback.style.opacity = "0";
+                    document.body.appendChild(fallback);
+                    fallback.focus();
+                    fallback.select();
+                    copied = document.execCommand("copy");
+                    document.body.removeChild(fallback);
+                } catch (fallbackError) {
+                    console.error("Clipboard fallback failed", fallbackError);
+                }
+            }
+
+            if (copied) {
+                showNotification("Link lokasi tersalin ke clipboard!", "success");
+                closeShareOptions();
+            } else {
+                showNotification(
+                    "Tidak bisa menyalin otomatis. Salin link secara manual dari kotak di atas.",
+                    "warning"
+                );
+            }
         } catch (error) {
             console.error("Failed to copy location link", error);
             showNotification("Gagal menyalin link lokasi.", "error");
@@ -722,6 +768,14 @@ export default function MapView({
     const handleEmailLocationLink = useCallback(async () => {
         if (!userLocation || !pendingShareUrl) {
             closeShareOptions();
+            return;
+        }
+
+        if (!partner?.email) {
+            showNotification(
+                "Tidak ada email pasangan yang terhubung. Salin link lokasi sebagai gantinya.",
+                "warning"
+            );
             return;
         }
 
@@ -741,7 +795,7 @@ export default function MapView({
         } finally {
             setIsSharing(false);
         }
-    }, [closeShareOptions, pendingShareUrl, showNotification, space.slug, userLocation]);
+    }, [closeShareOptions, partner?.email, pendingShareUrl, showNotification, space.slug, userLocation]);
 
     const handleStopSharing = useCallback(async () => {
         setIsStopping(true);
@@ -776,8 +830,9 @@ export default function MapView({
             <div className="max-w-6xl mx-auto px-4 py-8 space-y-6">
                 <div className="grid gap-4 md:grid-cols-2">
                     <div className="rounded-2xl bg-white p-4 shadow-sm border border-pink-100">
-                        <h3 className="font-semibold text-gray-800 mb-1">
-                            Kamu di sini 💖
+                        <h3 className="mb-1 flex items-center gap-2 font-semibold text-gray-800">
+                            <MapPin className="h-4 w-4 text-pink-500" />
+                            Kamu di sini
                         </h3>
                         <p className="text-sm text-gray-600">
                             {userLocation
@@ -793,8 +848,9 @@ export default function MapView({
                         </p>
                     </div>
                     <div className="rounded-2xl bg-white p-4 shadow-sm border border-violet-100">
-                        <h3 className="font-semibold text-gray-800 mb-1">
-                            Pasanganmu 💕
+                        <h3 className="mb-1 flex items-center gap-2 font-semibold text-gray-800">
+                            <MapPin className="h-4 w-4 text-purple-500" />
+                            Pasanganmu
                         </h3>
                         {partner ? (
                             <>
@@ -962,8 +1018,9 @@ export default function MapView({
                                             closeOnClick={false}
                                             autoPan={false}
                                         >
-                                            <span className="font-semibold text-pink-500">
-                                                Kamu di sini 💖
+                                            <span className="inline-flex items-center gap-1 font-semibold text-pink-500">
+                                                <MapPin className="h-4 w-4" />
+                                                Kamu di sini
                                             </span>
                                             <br />
                                             {formattedUserUpdated
@@ -987,8 +1044,9 @@ export default function MapView({
                                             closeOnClick={false}
                                             autoPan={false}
                                         >
-                                            <span className="font-semibold text-purple-500">
-                                                Pasanganmu 💕
+                                            <span className="inline-flex items-center gap-1 font-semibold text-purple-500">
+                                                <MapPin className="h-4 w-4" />
+                                                Pasanganmu
                                             </span>
                                             <br />
                                             {formattedPartnerUpdated
@@ -1038,65 +1096,95 @@ export default function MapView({
                         disabled={isUpdating}
                         className="inline-flex items-center gap-2 rounded-full bg-pink-500 px-5 py-2 text-white shadow transition hover:bg-pink-600 disabled:cursor-not-allowed disabled:bg-pink-300"
                     >
-                        {isUpdating ? "Memperbarui..." : "?? Update Lokasi"}
+                        {isUpdating ? (
+                            "Memperbarui..."
+                        ) : (
+                            <>
+                                <LocateFixed className="h-4 w-4" />
+                                Update Lokasi
+                            </>
+                        )}
                     </button>
                     <button
                         onClick={handleShareLocation}
                         disabled={isSharing}
                         className="inline-flex items-center gap-2 rounded-full bg-purple-500 px-5 py-2 text-white shadow transition hover:bg-purple-600 disabled:cursor-not-allowed disabled:bg-purple-300"
                     >
-                        {isSharing ? "Mengirim..." : "?? Share Lokasi"}
+                        {isSharing ? (
+                            "Mengirim..."
+                        ) : (
+                            <>
+                                <Share2 className="h-4 w-4" />
+                                Share Lokasi
+                            </>
+                        )}
                     </button>
                     <button
                         onClick={handleStopSharing}
                         disabled={isStopping}
                         className="inline-flex items-center gap-2 rounded-full bg-gray-200 px-5 py-2 text-gray-700 shadow transition hover:bg-gray-300 disabled:cursor-not-allowed disabled:opacity-70"
                     >
-                        {isStopping ? "Memproses..." : "? Stop Sharing"}
+                        {isStopping ? (
+                            "Memproses..."
+                        ) : (
+                            <>
+                                <OctagonX className="h-4 w-4" />
+                                Stop Sharing
+                            </>
+                        )}
                     </button>
                 </div>
 
-                <Modal show={shareOptionsOpen} onClose={closeShareOptions} maxWidth="md">
-                    <div className="space-y-5 p-6">
-                        <div>
-                            <h3 className="text-lg font-semibold text-purple-900">Bagikan Lokasi</h3>
-                            <p className="text-sm text-purple-600">
-                                Pilih cara berbagi titik lokasi ini dengan pasanganmu.
-                            </p>
+                {shareOptionsOpen && (
+                    <div className="mt-4 w-full max-w-md rounded-2xl border border-purple-100 bg-white p-6 shadow-md">
+                        <div className="space-y-3">
+                            <div>
+                                <h3 className="text-lg font-semibold text-purple-900">
+                                    Bagikan Lokasi
+                                </h3>
+                                <p className="text-sm text-purple-600">
+                                    Pilih cara berbagi titik lokasi ini dengan pasanganmu.
+                                </p>
+                            </div>
                             {pendingShareUrl && (
-                                <p className="mt-3 break-words rounded-2xl bg-purple-50 px-3 py-2 text-xs text-purple-500">
+                                <p className="break-words rounded-2xl bg-purple-50 px-3 py-2 text-xs text-purple-500">
                                     {pendingShareUrl}
                                 </p>
                             )}
-                        </div>
-                        <div className="grid gap-3 md:grid-cols-2">
+                            <div className="grid gap-3 md:grid-cols-2">
+                                <button
+                                    type="button"
+                                    onClick={() => void handleCopyLocationLink()}
+                                    disabled={isSharing}
+                                    className="rounded-2xl border border-purple-200 bg-white px-4 py-3 text-sm font-semibold text-purple-600 shadow-sm transition hover:bg-purple-50 disabled:cursor-not-allowed disabled:opacity-60"
+                                >
+                                    Salin Link
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => void handleEmailLocationLink()}
+                                    disabled={isSharing || !canSendEmail}
+                                    className="rounded-2xl border border-pink-200 bg-pink-500 px-4 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-pink-600 disabled:cursor-not-allowed disabled:opacity-60"
+                                >
+                                    Kirim Email
+                                </button>
+                            </div>
+                            {!canSendEmail && (
+                                <p className="text-xs text-gray-500">
+                                    Hubungkan pasangan dan pastikan email-nya terisi untuk mengirim email otomatis.
+                                </p>
+                            )}
                             <button
                                 type="button"
-                                onClick={() => void handleCopyLocationLink()}
+                                onClick={closeShareOptions}
                                 disabled={isSharing}
-                                className="rounded-2xl border border-purple-200 bg-white px-4 py-3 text-sm font-semibold text-purple-600 shadow-sm transition hover:bg-purple-50 disabled:cursor-not-allowed disabled:opacity-60"
+                                className="w-full rounded-2xl border border-gray-200 px-4 py-3 text-sm font-semibold text-gray-600 transition hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-60"
                             >
-                                Salin Link
-                            </button>
-                            <button
-                                type="button"
-                                onClick={() => void handleEmailLocationLink()}
-                                disabled={isSharing}
-                                className="rounded-2xl border border-pink-200 bg-pink-500 px-4 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-pink-600 disabled:cursor-not-allowed disabled:opacity-60"
-                            >
-                                Kirim Email
+                                Tutup
                             </button>
                         </div>
-                        <button
-                            type="button"
-                            onClick={closeShareOptions}
-                            disabled={isSharing}
-                            className="w-full rounded-2xl border border-gray-200 px-4 py-3 text-sm font-semibold text-gray-600 transition hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-60"
-                        >
-                            Batal
-                        </button>
                     </div>
-                </Modal>
+                )}
                 {notification && (
                     <div
                         className={`fixed bottom-6 right-6 z-50 rounded-2xl px-4 py-3 text-sm shadow-lg transition ${

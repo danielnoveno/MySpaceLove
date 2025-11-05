@@ -13,6 +13,7 @@ import {
     X,
 } from "lucide-react";
 import { useCallback, useMemo, useState } from "react";
+import type { MouseEvent as ReactMouseEvent } from "react";
 import ConfirmDialog from "@/Components/ConfirmDialog";
 
 interface TimelineItem {
@@ -34,6 +35,13 @@ interface Props {
 type MediaOption = {
     path: string;
     url: string;
+};
+
+type AnchorPosition = {
+    top: number;
+    left: number;
+    width: number;
+    height: number;
 };
 
 const buildMediaOptions = (item: TimelineItem): MediaOption[] => {
@@ -58,6 +66,7 @@ export default function TimelineIndex({ timelines }: Props) {
     const [previewImage, setPreviewImage] = useState<string | null>(null);
     const [thumbnailPending, setThumbnailPending] = useState<number | null>(null);
     const [pendingDelete, setPendingDelete] = useState<TimelineItem | null>(null);
+    const [deleteAnchor, setDeleteAnchor] = useState<AnchorPosition | null>(null);
     const [deleting, setDeleting] = useState(false);
 
     const spaceSlug = currentSpace.slug;
@@ -109,28 +118,51 @@ export default function TimelineIndex({ timelines }: Props) {
         [spaceSlug],
     );
 
-    const confirmDelete = useCallback((item: TimelineItem) => {
-        setPendingDelete(item);
-    }, []);
+    const confirmDelete = useCallback(
+        (item: TimelineItem, event: ReactMouseEvent<HTMLButtonElement>) => {
+            const rect = event.currentTarget.getBoundingClientRect();
+            setPendingDelete(item);
+            setDeleteAnchor({
+                top: rect.top,
+                left: rect.left,
+                width: rect.width,
+                height: rect.height,
+            });
+        },
+        [],
+    );
 
     const performDelete = useCallback(() => {
         if (!pendingDelete) {
             return;
         }
         setDeleting(true);
+
         router.delete(
-            route("timeline.destroy", { space: spaceSlug, id: pendingDelete.id }),
+            route("timeline.destroy", {
+                space: spaceSlug,
+                id: pendingDelete.id,
+            }),
             {
                 preserveScroll: true,
                 onSuccess: () => {
                     setPendingDelete(null);
+                    setDeleteAnchor(null);
+                    router.visit(
+                        route("timeline.index", {
+                            space: spaceSlug,
+                        }),
+                        {
+                            preserveScroll: true,
+                            replace: true,
+                        },
+                    );
                 },
                 onError: () => {
                     setPendingDelete(null);
+                    setDeleteAnchor(null);
                 },
-                onFinish: () => {
-                    setDeleting(false);
-                },
+                onFinish: () => setDeleting(false),
             },
         );
     }, [pendingDelete, spaceSlug]);
@@ -333,7 +365,7 @@ export default function TimelineIndex({ timelines }: Props) {
                                                     </Link>
                                                     <button
                                                         type="button"
-                                                        onClick={() => confirmDelete(item)}
+                                                        onClick={(event) => confirmDelete(item, event)}
                                                         className="inline-flex items-center gap-2 rounded-full border border-rose-200 px-4 py-1 text-rose-500 transition hover:bg-rose-500 hover:text-white"
                                                     >
                                                         <Trash2 className="h-4 w-4" />
@@ -414,7 +446,7 @@ export default function TimelineIndex({ timelines }: Props) {
 
             {previewImage && (
                 <div
-                    className="fixed inset-0 z-60 flex items-center justify-center bg-black/80 p-4"
+                    className="fixed inset-0 z-[70] flex items-center justify-center bg-black/80 p-4"
                     onClick={() => setPreviewImage(null)}
                 >
                     <img
@@ -433,9 +465,11 @@ export default function TimelineIndex({ timelines }: Props) {
                 cancelLabel="Batal"
                 tone="danger"
                 loading={deleting}
+                anchor={deleteAnchor}
                 onCancel={() => {
                     if (!deleting) {
                         setPendingDelete(null);
+                        setDeleteAnchor(null);
                     }
                 }}
                 onConfirm={performDelete}

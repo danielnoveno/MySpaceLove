@@ -1,80 +1,36 @@
-import { PropsWithChildren, useState } from "react";
+import { useState } from "react";
 import { Link, usePage } from "@inertiajs/react";
 import ApplicationLogo from "@/Components/ApplicationLogo";
 import Dropdown from "@/Components/Dropdown";
 import ResponsiveNavLink from "@/Components/ResponsiveNavLink";
 import { Check, Globe, Lock } from "lucide-react";
 import { useTranslation } from "@/hooks/useTranslation";
-import LoveCursorCanvas from "@/Components/LoveCursorCanvas";
 
-type LoveCursorConfig = {
-    color?: string;
-    heartCount?: number;
-    className?: string;
-    trailColor?: string;
-};
-
-export default function Authenticated({
-    header,
-    children,
-    loveCursor,
-}: PropsWithChildren<{
-    header?: React.ReactNode;
-    loveCursor?: LoveCursorConfig | false;
-}>) {
+export default function AuthenticatedLayout({ header, children }) {
     const [showingNavigationDropdown, setShowingNavigationDropdown] =
         useState(false);
-    const { props }: any = usePage();
-    const user = props.auth?.user;
-    const spaces =
-        (props.spaces as Array<{
-            id: number;
-            slug: string;
-            title: string;
-            has_partner?: boolean;
-        }>) ??
-        [];
-    const currentSpace =
-        (props.currentSpace as
-            | {
-                  id: number;
-                  slug: string;
-                  title: string;
-                  has_partner?: boolean;
-                  is_owner?: boolean;
-              }
-            | null
-            | undefined) ?? null;
+    const { props } = usePage();
+    const user = props?.auth?.user;
+    const spaces = props?.spaces ?? [];
+    const currentSpace = props?.currentSpace ?? null;
 
-    const { translations: layoutTranslations } =
-        useTranslation<{
-            navigation?: Record<string, string>;
-            user?: { fallback_name?: string };
-            language?: { label?: string; options?: Record<string, string> };
-        }>("layout");
+    const { translations: layoutTranslations } = useTranslation("layout");
 
     const navigation = layoutTranslations.navigation ?? {};
     const userStrings = layoutTranslations.user ?? {};
     const languageStrings = layoutTranslations.language ?? {};
 
-    const availableLocales =
-        (props.availableLocales as string[] | undefined) ?? [];
-    const activeLocale = (props.locale as string | undefined) ?? "en";
+    const availableLocales = props?.availableLocales ?? [];
+    const activeLocale = props?.locale ?? "en";
     const languageOptions = languageStrings.options ?? {};
     const languageLabel = languageStrings.label ?? "Language";
     const activeLanguageLabel =
         languageOptions[activeLocale] ?? activeLocale.toUpperCase();
 
     const fallbackHref = route("spaces.index");
-    const notificationSummary = props.notificationSummary ?? null;
-    const rawUnread = Number(notificationSummary?.unread_count ?? 0) || 0;
-    const unreadNotificationCount = rawUnread > 0 ? rawUnread : 0;
+    const notificationSummary = props?.notificationSummary ?? null;
+    const unreadNotificationCount = notificationSummary?.unread_count ?? 0;
     const hasUnreadNotifications = unreadNotificationCount > 0;
-
-    const notificationsActive = Boolean(
-        route().current("spaces.notifications.index") ||
-        route().current("notifications.index")
-    );
 
     const dashboardHref = currentSpace
         ? route("spaces.dashboard", { space: currentSpace.slug })
@@ -93,41 +49,22 @@ export default function Authenticated({
         : fallbackHref;
     const notificationsHref = currentSpace
         ? route("spaces.notifications.index", { space: currentSpace.slug })
-        : route("notifications.index");
-    const memoryLaneManageHref = currentSpace
-        ? route("memory-lane.edit", { space: currentSpace.slug })
         : fallbackHref;
-    const isSpaceOwner = currentSpace?.is_owner ?? false;
     const partnerFeaturesLocked =
         currentSpace !== null && currentSpace.has_partner === false;
     const lockedTooltip =
         navigation.locked_tooltip ??
         "Fitur couple akan aktif setelah pasanganmu bergabung.";
-    const ownerOnlyTooltip =
-        navigation.owner_only_tooltip ??
-        "Hanya pemilik space yang dapat mengakses menu ini.";
 
-    const navClass = (locked: boolean) =>
+    const navClass = (locked) =>
         `inline-flex items-center px-1 pt-1 border-b-2 border-transparent text-sm font-medium leading-5 transition duration-150 ease-in-out ${
             locked
                 ? "cursor-not-allowed text-gray-300 pointer-events-none"
                 : "text-gray-500 hover:text-gray-700 hover:border-gray-300 focus:outline-none focus:text-gray-700 focus:border-gray-300"
         }`;
-    const currentYear = new Date().getFullYear();
-    const baseLoveCursor: LoveCursorConfig = {
-        color: "#f472b6",
-        heartCount: 30,
-        className: "opacity-45",
-    };
-    const loveCursorConfig: LoveCursorConfig =
-        loveCursor === undefined || loveCursor === false
-            ? baseLoveCursor
-            : loveCursor;
-    const showLoveCursor = loveCursor !== false;
 
     return (
         <div className="min-h-screen bg-gradient-to-br from-pink-50 via-white to-purple-50 flex flex-col">
-            {showLoveCursor && <LoveCursorCanvas {...loveCursorConfig} />}
             <nav className="bg-white border-b border-gray-100 shadow-sm">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                     <div className="flex justify-between h-16">
@@ -182,18 +119,6 @@ export default function Authenticated({
                                     </span>
                                 </Link>
                                 <Link
-                                    href={memoryLaneManageHref}
-                                    className={navClass(!isSpaceOwner)}
-                                    title={!isSpaceOwner ? ownerOnlyTooltip : undefined}
-                                >
-                                    <span className="flex items-center gap-1">
-                                        {!isSpaceOwner && (
-                                            <Lock className="h-3 w-3 text-gray-400" aria-hidden="true" />
-                                        )}
-                                        {navigation.memory_lane ?? "Memory Lane"}
-                                    </span>
-                                </Link>
-                                <Link
                                     href={spotifyHref}
                                     className={navClass(partnerFeaturesLocked)}
                                     title={partnerFeaturesLocked ? lockedTooltip : undefined}
@@ -207,17 +132,13 @@ export default function Authenticated({
                                 </Link>
                                 <Link
                                     href={notificationsHref}
-                                    className={`${navClass(false)} ${
-                                        notificationsActive
-                                            ? "border-pink-500 text-pink-600"
-                                            : ""
-                                    }`}
+                                    className={navClass(false)}
                                 >
                                     <span className="flex items-center gap-2">
                                         {navigation.notifications ?? "Notifications"}
                                         {hasUnreadNotifications && (
                                             <span className="inline-flex min-w-[1.25rem] justify-center rounded-full bg-pink-500 px-1.5 text-xs font-semibold text-white">
-                                                {unreadNotificationCount > 99 ? '99+' : unreadNotificationCount}
+                                                {unreadNotificationCount > 99 ? "99+" : unreadNotificationCount}
                                             </span>
                                         )}
                                     </span>
@@ -258,17 +179,14 @@ export default function Authenticated({
                                             {spaces.map((space) => (
                                                 <Dropdown.Link
                                                     key={space.id}
-                                                    href={route(
-                                                        "spaces.dashboard",
-                                                        { space: space.slug },
-                                                    )}
+                                                    href={route("spaces.dashboard", {
+                                                        space: space.slug,
+                                                    })}
                                                 >
                                                     {space.title}
                                                 </Dropdown.Link>
                                             ))}
-                                            <Dropdown.Link
-                                                href={route("spaces.index")}
-                                            >
+                                            <Dropdown.Link href={route("spaces.index")}>
                                                 + {navigation.manage_spaces ?? "Kelola Spaces"}
                                             </Dropdown.Link>
                                         </Dropdown.Content>
@@ -350,7 +268,7 @@ export default function Authenticated({
                                                 className="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-gray-500 bg-white hover:text-gray-700 focus:outline-none transition ease-in-out duration-150"
                                             >
                                                 {`${
-                                                    props.auth?.user?.name ||
+                                                    user?.name ||
                                                     userStrings.fallback_name ||
                                                     "User"
                                                 }`}
@@ -371,9 +289,7 @@ export default function Authenticated({
                                     </Dropdown.Trigger>
 
                                     <Dropdown.Content>
-                                        <Dropdown.Link
-                                            href={route("profile.edit")}
-                                        >
+                                        <Dropdown.Link href={route("profile.edit")}>
                                             {navigation.profile ?? "Profile"}
                                         </Dropdown.Link>
                                         <Dropdown.Link
@@ -447,7 +363,11 @@ export default function Authenticated({
                         <ResponsiveNavLink
                             href={timelineHref}
                             active={route().current("timeline.index")}
-                            className={partnerFeaturesLocked ? "opacity-40 pointer-events-none" : ""}
+                            className={
+                                partnerFeaturesLocked
+                                    ? "opacity-40 pointer-events-none"
+                                    : ""
+                            }
                             title={partnerFeaturesLocked ? lockedTooltip : undefined}
                         >
                             <span className="flex items-center gap-2">
@@ -460,7 +380,11 @@ export default function Authenticated({
                         <ResponsiveNavLink
                             href={dailyHref}
                             active={route().current("daily.index")}
-                            className={partnerFeaturesLocked ? "opacity-40 pointer-events-none" : ""}
+                            className={
+                                partnerFeaturesLocked
+                                    ? "opacity-40 pointer-events-none"
+                                    : ""
+                            }
                             title={partnerFeaturesLocked ? lockedTooltip : undefined}
                         >
                             <span className="flex items-center gap-2">
@@ -473,7 +397,11 @@ export default function Authenticated({
                         <ResponsiveNavLink
                             href={galleryHref}
                             active={route().current("gallery.index")}
-                            className={partnerFeaturesLocked ? "opacity-40 pointer-events-none" : ""}
+                            className={
+                                partnerFeaturesLocked
+                                    ? "opacity-40 pointer-events-none"
+                                    : ""
+                            }
                             title={partnerFeaturesLocked ? lockedTooltip : undefined}
                         >
                             <span className="flex items-center gap-2">
@@ -484,22 +412,13 @@ export default function Authenticated({
                             </span>
                         </ResponsiveNavLink>
                         <ResponsiveNavLink
-                            href={memoryLaneManageHref}
-                            active={route().current("memory-lane.edit")}
-                            className={!isSpaceOwner ? "opacity-40 pointer-events-none" : ""}
-                            title={!isSpaceOwner ? ownerOnlyTooltip : undefined}
-                        >
-                            <span className="flex items-center gap-2">
-                                {!isSpaceOwner && (
-                                    <Lock className="h-4 w-4 text-gray-400" aria-hidden="true" />
-                                )}
-                                {navigation.memory_lane ?? "Memory Lane"}
-                            </span>
-                        </ResponsiveNavLink>
-                        <ResponsiveNavLink
                             href={spotifyHref}
                             active={route().current("spotify.companion")}
-                            className={partnerFeaturesLocked ? "opacity-40 pointer-events-none" : ""}
+                            className={
+                                partnerFeaturesLocked
+                                    ? "opacity-40 pointer-events-none"
+                                    : ""
+                            }
                             title={partnerFeaturesLocked ? lockedTooltip : undefined}
                         >
                             <span className="flex items-center gap-2">
@@ -511,13 +430,13 @@ export default function Authenticated({
                         </ResponsiveNavLink>
                         <ResponsiveNavLink
                             href={notificationsHref}
-                            active={notificationsActive}
+                            active={route().current("spaces.notifications.index")}
                         >
                             <span className="flex items-center gap-2">
                                 {navigation.notifications ?? "Notifications"}
                                 {hasUnreadNotifications && (
                                     <span className="inline-flex min-w-[1.5rem] justify-center rounded-full bg-pink-500 px-1.5 text-xs font-semibold text-white">
-                                        {unreadNotificationCount > 99 ? '99+' : unreadNotificationCount}
+                                        {unreadNotificationCount > 99 ? "99+" : unreadNotificationCount}
                                     </span>
                                 )}
                             </span>
@@ -592,12 +511,13 @@ export default function Authenticated({
                     </header>
                 )}
 
-                <main className="flex-1 pt-8 pb-6">{children}</main>
+                <main className="flex-1 py-8">{children}</main>
             </div>
 
-            <footer className="mt-auto w-full border-t border-pink-100 bg-white/90 py-3 text-center text-sm text-gray-600">
-                <span className="font-medium text-pink-500">MySpaceLove</span> © {currentYear} • Made with ❤️ by Peng for Winnie
+            <footer className="mt-auto w-full border-t border-pink-100 bg-white/80 py-4 text-center text-sm text-gray-600">
+                Made with ❤️ by Peng for Winnie © 2025
             </footer>
         </div>
     );
 }
+

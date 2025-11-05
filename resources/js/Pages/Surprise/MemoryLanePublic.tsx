@@ -2,6 +2,7 @@ import { Head, Link } from "@inertiajs/react";
 import { useMemo, useState } from "react";
 import { Gift } from "lucide-react";
 import SecretCodeGate from "@/Components/Surprise/SecretCodeGate";
+import LoveCursorCanvas from "@/Components/LoveCursorCanvas";
 import JigsawPuzzleGate from "@/Components/Surprise/JigsawPuzzleGate";
 import type { MemoryLaneContent } from "@/data/memoryLaneKit";
 
@@ -14,11 +15,13 @@ type SpaceInfo = {
 type MemoryLanePublicProps = {
     memoryLane: MemoryLaneContent;
     space?: SpaceInfo;
+    skipPuzzle?: boolean;
 };
 
 export default function MemoryLanePublic({
     memoryLane,
     space,
+    skipPuzzle = false,
 }: MemoryLanePublicProps): JSX.Element {
     const storyHref = space?.slug
         ? route("surprise.story.space", { space: space.slug })
@@ -29,7 +32,7 @@ export default function MemoryLanePublic({
     const levels = memoryLane.puzzle.levels ?? [];
     const [currentLevelIndex, setCurrentLevelIndex] = useState(0);
     const [completedLevels, setCompletedLevels] = useState<number[]>([]);
-    const [kitUnlocked, setKitUnlocked] = useState(levels.length === 0);
+    const [kitUnlocked, setKitUnlocked] = useState(skipPuzzle || levels.length === 0);
 
     const activeLevel = !kitUnlocked ? levels[currentLevelIndex] ?? null : null;
 
@@ -165,6 +168,7 @@ export default function MemoryLanePublic({
             <div className="absolute inset-0 -z-20 bg-gradient-to-br from-rose-500/30 via-slate-900 to-amber-500/40" />
             <div className="absolute left-[-120px] top-[-160px] -z-10 h-[500px] w-[500px] rounded-full bg-rose-400/30 blur-3xl" />
             <div className="absolute right-[-160px] bottom-[-200px] -z-10 h-[560px] w-[560px] rounded-full bg-purple-500/30 blur-3xl" />
+            <LoveCursorCanvas color="#f97316" heartCount={34} className="opacity-55" />
 
             <SecretCodeGate
                 code={memoryLane.secretGate.code}
@@ -248,3 +252,4 @@ export default function MemoryLanePublic({
         </div>
     );
 }
+

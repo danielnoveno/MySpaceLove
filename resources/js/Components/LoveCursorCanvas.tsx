@@ -39,7 +39,7 @@ const LoveCursorCanvas = ({
 
         let animationFrame: number;
         const hearts: HeartParticle[] = [];
-        const maxHearts = Math.max(heartCount, 15);
+        const maxHearts = Math.max(heartCount, 20);
 
         const resize = () => {
             canvas.width = window.innerWidth;
@@ -163,9 +163,11 @@ const LoveCursorCanvas = ({
     return (
         <canvas
             ref={canvasRef}
-            className={`pointer-events-none fixed inset-0 -z-10 h-full w-full ${className ?? ""}`}
+            className={`pointer-events-none fixed inset-0 z-10 h-full w-full mix-blend-screen ${className ?? ""}`}
         />
     );
 };
 
 export default LoveCursorCanvas;
+
+

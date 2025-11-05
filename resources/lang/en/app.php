@@ -329,6 +329,16 @@ return [
                 'title' => 'Location sharing paused',
                 'body' => 'We stopped sharing your live location with your partner.',
             ],
+            'timeline_created' => [
+                'title' => ':actor added a new memory to the timeline',
+                'body' => '":title" is ready to relive together on :date.',
+                'action' => 'Open timeline',
+            ],
+            'countdown_created' => [
+                'title' => ':actor planned a new upcoming event',
+                'body' => 'Countdown ":title" is scheduled for :date. Get prepared for the surprise!',
+                'action' => 'View countdowns',
+            ],
         ],
     ],
     'daily_messages' => [

@@ -329,6 +329,16 @@ return [
                 'title' => 'Berbagi lokasi dijeda',
                 'body' => 'Kami menghentikan berbagi lokasi real-time ke pasanganmu.',
             ],
+            'timeline_created' => [
+                'title' => ':actor menambahkan momen baru ke timeline',
+                'body' => '":title" siap dikenang bersama pada :date.',
+                'action' => 'Buka timeline',
+            ],
+            'countdown_created' => [
+                'title' => ':actor merencanakan event spesial baru',
+                'body' => 'Countdown ":title" dijadwalkan pada :date. Siapkan kejutan terbaikmu!',
+                'action' => 'Lihat countdown',
+            ],
         ],
     ],
     'daily_messages' => [

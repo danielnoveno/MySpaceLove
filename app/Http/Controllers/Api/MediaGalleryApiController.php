@@ -5,8 +5,10 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\MediaGallery;
 use App\Models\Space;
+use App\Services\UploadedFileProcessor;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
@@ -15,6 +17,10 @@ use Inertia\Inertia;
 class MediaGalleryApiController extends Controller
 {
     private ?bool $collectionSupport = null;
+
+    public function __construct(private readonly UploadedFileProcessor $fileProcessor)
+    {
+    }
 
     public function index(Space $space)
     {
@@ -98,6 +104,15 @@ class MediaGalleryApiController extends Controller
         $this->authorizeSpace($space);
         $hasCollections = $this->supportsCollections();
 
+        Log::info('Gallery upload attempt', [
+            'space_id' => $space->id,
+            'space_slug' => $space->slug,
+            'user_id' => Auth::id(),
+            'file_count' => count($r->file('files', [])),
+            'has_collections' => $hasCollections,
+            'payload' => $r->only(['title']),
+        ]);
+
         $data = $r->validate([
             'title' => 'nullable|string|max:255',
             'files' => 'required|array|min:1|max:12',
@@ -108,26 +123,44 @@ class MediaGalleryApiController extends Controller
         $collectionKey = $hasCollections ? (string) Str::uuid() : null;
         $baseTitle = isset($data['title']) ? trim($data['title']) : null;
 
-        foreach ($files as $index => $file) {
-            $path = $file->store("spaces/{$space->slug}/media", 'public');
-            $resolvedTitle = $baseTitle !== null && $baseTitle !== ''
-                ? $baseTitle
-                : pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME);
+        try {
+            foreach ($files as $index => $file) {
+                $stored = $this->fileProcessor->store($file, "spaces/{$space->slug}/media");
+                $path = $stored['path'];
+                $resolvedTitle = $baseTitle !== null && $baseTitle !== ''
+                    ? $baseTitle
+                    : pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME);
 
-            $payload = [
-                'space_id' => $space->id,
-                'user_id' => Auth::id(),
-                'title' => $resolvedTitle,
-                'file_path' => $path,
-                'type' => $file->getClientMimeType(),
-            ];
+                $payload = [
+                    'space_id' => $space->id,
+                    'user_id' => Auth::id(),
+                    'title' => $resolvedTitle,
+                    'file_path' => $path,
+                    'type' => $stored['mime'],
+                ];
 
-            if ($hasCollections) {
-                $payload['collection_key'] = $collectionKey;
-                $payload['collection_index'] = $index;
+                if ($hasCollections) {
+                    $payload['collection_key'] = $collectionKey;
+                    $payload['collection_index'] = $index;
+                }
+
+                MediaGallery::create($payload);
             }
 
-            MediaGallery::create($payload);
+            Log::info('Gallery upload saved', [
+                'space_id' => $space->id,
+                'space_slug' => $space->slug,
+                'created' => count($files),
+                'collection_key' => $collectionKey,
+            ]);
+        } catch (\Throwable $exception) {
+            Log::error('Gallery upload failed', [
+                'space_id' => $space->id,
+                'user_id' => Auth::id(),
+                'message' => $exception->getMessage(),
+            ]);
+
+            throw $exception;
         }
 
         return Inertia::location(route('gallery.index', ['space' => $space->slug]));
@@ -157,12 +190,18 @@ class MediaGalleryApiController extends Controller
             'file'  => 'nullable|file|mimes:jpg,jpeg,png,gif,mp4,mov|max:30720',
         ]);
 
+        $updates = [
+            'title' => $data['title'] ?? $media->title,
+        ];
+
         if ($r->hasFile('file')) {
             Storage::disk('public')->delete($media->file_path);
-            $media->file_path = $r->file('file')->store("spaces/{$space->slug}/media", 'public');
+            $stored = $this->fileProcessor->store($r->file('file'), "spaces/{$space->slug}/media");
+            $updates['file_path'] = $stored['path'];
+            $updates['type'] = $stored['mime'];
         }
 
-        $media->update(['title' => $data['title'] ?? $media->title, 'file_path' => $media->file_path]);
+        $media->update($updates);
         return Inertia::location(route('gallery.index', ['space' => $space->slug]));
     }
 

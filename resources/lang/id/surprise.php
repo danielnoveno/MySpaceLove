@@ -144,6 +144,12 @@ return [
             'finishMessage' => 'Terima kasih sudah jadi rumah ternyaman. Aku cinta kamu every single day.',
             'nextButton' => 'Next',
         ],
+        'scrapbook' => [
+            'title' => 'Digital scrapbook',
+            'subtitle' => 'Setiap misi Memory Lane berubah jadi kartu kenangan yang bisa kamu buka kapan saja.',
+            'empty' => 'Kalian belum menyiapkan konten Memory Lane khusus.',
+            'cta' => 'Atur Memory Lane Kit',
+        ],
         'chapters' => [
             [
                 'id' => 'first-hello',

@@ -7,12 +7,24 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\Countdown;
 use App\Models\Space;
+use App\Models\User;
+use App\Services\ActivityLogger;
+use App\Services\UploadedFileProcessor;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Schema;
 use Inertia\Inertia;
 
 class CountdownApiController extends Controller
 {
+    public function __construct(
+        private readonly ActivityLogger $activityLogger,
+        private readonly UploadedFileProcessor $fileProcessor
+    )
+    {
+    }
+
     public function index(Space $space)
     {
         $this->authorizeSpace($space);
@@ -47,11 +59,13 @@ class CountdownApiController extends Controller
         $data['space_id'] = $space->id;
 
         if ($r->hasFile('image')) {
-            $path = $r->file('image')->store('countdowns', 'public');
-            $data['image'] = $path;
+            $stored = $this->fileProcessor->store($r->file('image'), 'countdowns');
+            $data['image'] = $stored['path'];
         }
 
-        Countdown::create($data);
+        $countdown = Countdown::create($data);
+
+        $this->notifyCountdownCreated($space, $countdown, $r->user());
 
         return Inertia::location(route('countdown.index', ['space' => $space->slug]));
     }
@@ -81,20 +95,81 @@ class CountdownApiController extends Controller
         ]);
 
         if ($r->hasFile('image')) {
-            $path = $r->file('image')->store('countdowns', 'public');
-            $data['image'] = $path;
+            $stored = $this->fileProcessor->store($r->file('image'), 'countdowns');
+            $data['image'] = $stored['path'];
         }
 
         $count->update($data);
         return Inertia::location(route('countdown.index', ['space' => $space->slug]));
     }
 
-    public function destroy(Space $space, $id)
+    private function notifyCountdownCreated(Space $space, Countdown $countdown, ?User $actor): void
+    {
+        if (!Schema::hasTable('notifications')) {
+            return;
+        }
+
+        $space->loadMissing(['userOne', 'userTwo']);
+
+        $recipients = collect([$space->userOne, $space->userTwo])
+            ->filter()
+            ->unique(fn ($user) => $user?->id)
+            ->values();
+
+        if ($recipients->isEmpty()) {
+            return;
+        }
+
+        $actorName = $actor?->name ?? __('app.layout.user.fallback_name');
+        $eventDate = $countdown->event_date
+            ? Carbon::parse($countdown->event_date)->translatedFormat('d F Y')
+            : now()->translatedFormat('d F Y');
+
+        $title = __('app.notifications.events.countdown_created.title', [
+            'actor' => $actorName,
+        ]);
+
+        $body = __('app.notifications.events.countdown_created.body', [
+            'actor' => $actorName,
+            'title' => $countdown->event_name,
+            'date' => $eventDate,
+        ]);
+
+        $data = [
+            'space_id' => $space->id,
+            'space_slug' => $space->slug,
+            'countdown_id' => $countdown->id,
+            'countdown_title' => $countdown->event_name,
+            'countdown_date' => $countdown->event_date,
+            'actor_id' => $actor?->id,
+            'actor_name' => $actorName,
+            'action_url' => route('countdown.index', ['space' => $space->slug]),
+            'action_label' => __('app.notifications.events.countdown_created.action'),
+        ];
+
+        $this->activityLogger->log(
+            $recipients->all(),
+            'countdown.created',
+            $title,
+            $body,
+            $data,
+            true
+        );
+    }
+
+    public function destroy(Request $request, Space $space, $id)
     {
         $this->authorizeSpace($space);
         $count = Countdown::where('space_id', $space->id)->findOrFail($id);
         $count->delete();
-        return response()->json(['message' => 'deleted']);
+
+        if ($request->wantsJson()) {
+            return response()->json(['message' => 'deleted']);
+        }
+
+        return redirect()
+            ->route('countdown.index', ['space' => $space->slug])
+            ->with('success', __('Event countdown berhasil dihapus.'));
     }
 
     private function authorizeSpace(Space $space)

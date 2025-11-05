@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\Log;
 use App\Http\Controllers\Controller;
 use App\Mail\DailyMessageMail;
 use App\Models\DailyMessage;
+use App\Notifications\DailyMessageSent;
 use App\Models\Space;
 use App\Models\User;
 use App\Services\DailyMessageGenerator;
@@ -162,12 +163,15 @@ class DailyMessageApiController extends Controller
             ], 422);
         }
 
+        /** @var \App\Models\User $sender */
         $sender = Auth::user();
 
         try {
             Mail::to($partner->email)->send(
                 new DailyMessageMail($space, $dailyMessage, $sender, $partner)
             );
+
+            $sender->notify(new DailyMessageSent($dailyMessage));
         } catch (Throwable $exception) {
             Log::error('Failed to send daily message email.', [
                 'space_id' => $space->id,

@@ -37,7 +37,7 @@ export default function Modal({
             <Dialog
                 as="div"
                 id="modal"
-                className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto"
+                className="fixed inset-0 z-[9999] flex items-center justify-center overflow-y-auto"
                 onClose={close}
             >
                 <TransitionChild
@@ -48,7 +48,7 @@ export default function Modal({
                     leaveFrom="opacity-100"
                     leaveTo="opacity-0"
                 >
-                    <div className="fixed inset-0 bg-gray-900/70" />
+                    <div className="fixed inset-0 z-[9998] bg-gray-900/70" />
                 </TransitionChild>
 
                 <div className="flex min-h-full w-full items-center justify-center p-4 sm:p-6">

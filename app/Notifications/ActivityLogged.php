@@ -39,14 +39,21 @@ class ActivityLogged extends Notification
             'name' => $notifiable->name ?? __('app.layout.user.fallback_name'),
         ]);
 
-        $actionLabel = __('app.notifications.mail.action');
+        $actionLabel = $this->data['action_label'] ?? __('app.notifications.mail.action');
+        $spaceSlug = $this->data['space_slug'] ?? null;
+        $actionUrl = $this->data['action_url']
+            ?? ($spaceSlug ? route('spaces.notifications.index', ['space' => $spaceSlug]) : route('spaces.index'));
 
-        return (new MailMessage())
+        $mail = (new MailMessage())
             ->subject($this->title)
             ->greeting($greeting)
-            ->line($this->body)
-            ->action($actionLabel, url(route('notifications.index')))
-            ->line(__('app.notifications.mail.footer'));
+            ->line($this->body);
+
+        if ($actionUrl) {
+            $mail->action($actionLabel, $actionUrl);
+        }
+
+        return $mail->line(__('app.notifications.mail.footer'));
     }
 
     /**
@@ -54,11 +61,22 @@ class ActivityLogged extends Notification
      */
     public function toArray(object $notifiable): array
     {
-        return [
+        $payload = [
             'event' => $this->event,
             'title' => $this->title,
             'body' => $this->body,
-            'data' => $this->data,
         ];
+
+        if (is_array($this->data)) {
+            $payload['meta'] = $this->data;
+
+            foreach ($this->data as $key => $value) {
+                if (!array_key_exists($key, $payload) && (is_scalar($value) || $value === null)) {
+                    $payload[$key] = $value;
+                }
+            }
+        }
+
+        return $payload;
     }
 }

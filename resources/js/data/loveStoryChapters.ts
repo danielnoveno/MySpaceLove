@@ -26,9 +26,26 @@ export type LoveStoryChapter = {
     decorations: LoveStoryDecoration[];
 };
 
+export type ScrapbookPage = {
+    id: string;
+    label?: string;
+    title: string;
+    body?: string;
+    image?: string | null;
+};
+
+export type ScrapbookContent = {
+    title?: string;
+    subtitle?: string;
+    empty?: string;
+    cta?: string;
+    manage_url?: string | null;
+    pages: ScrapbookPage[];
+};
+
 export type StoryBookContent = {
     headTitle: string;
-    secretGate: {
+    secretGate?: {
         code: string;
         enabled?: boolean;
         accessLabel: string;
@@ -60,5 +77,6 @@ export type StoryBookContent = {
         finishMessage: string;
         nextButton: string;
     };
+    scrapbook?: ScrapbookContent;
     chapters: LoveStoryChapter[];
 };

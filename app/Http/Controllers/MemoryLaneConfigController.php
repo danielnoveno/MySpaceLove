@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Models\MemoryLaneConfig;
 use App\Models\Space;
+use App\Services\MemoryLaneContentService;
+use App\Services\UploadedFileProcessor;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
@@ -11,34 +13,18 @@ use Inertia\Inertia;
 
 class MemoryLaneConfigController extends Controller
 {
+    public function __construct(
+        private readonly MemoryLaneContentService $memoryLaneContentService,
+        private readonly UploadedFileProcessor $fileProcessor
+    )
+    {
+    }
+
     public function edit(Space $space)
     {
         $this->authorizeSpace($space);
 
-        $space->loadMissing('memoryLaneConfig');
-        $config = $space->memoryLaneConfig;
-
-        $defaults = __('surprise.memory_lane.puzzle.levels');
-
-        $levels = collect(range(1, 3))->map(function (int $index) use ($config, $defaults, $space) {
-            $default = $defaults[$index - 1] ?? null;
-            $imageAttribute = "level_{$index}_image";
-            $titleAttribute = "level_{$index}_title";
-            $bodyAttribute = "level_{$index}_body";
-
-            $storedPath = $config?->{$imageAttribute};
-            $resolvedImage = $storedPath ? Storage::disk('public')->url($storedPath) : null;
-
-            return [
-                'key' => "level_{$index}",
-                'label' => $default['label'] ?? "Level {$index}",
-                'image' => $resolvedImage,
-                'image_path' => $storedPath,
-                'default_image' => $default['image'] ?? null,
-                'title' => $config?->{$titleAttribute} ?? $default['summaryTitle'] ?? null,
-                'body' => $config?->{$bodyAttribute} ?? $default['summaryBody'] ?? null,
-            ];
-        });
+        $levels = $this->memoryLaneContentService->editorLevels($space);
 
         return Inertia::render('Surprise/MemoryLaneConfig', [
             'space' => [
@@ -73,13 +59,19 @@ class MemoryLaneConfigController extends Controller
         $storagePath = "spaces/{$space->id}/memory-lane";
 
         foreach ([1, 2, 3] as $index) {
-            $imageField = "level_{$index}_image";
-            $resetField = "level_{$index}_reset";
+            $levelWord = match ($index) {
+                1 => 'one',
+                2 => 'two',
+                3 => 'three',
+            };
+            $imageField = "level_{$levelWord}_image";
+            $resetField = "level_{$levelWord}_reset";
             if ($request->hasFile($imageField)) {
                 if (!empty($config->{$imageField})) {
                     Storage::disk('public')->delete($config->{$imageField});
                 }
-                $config->{$imageField} = $request->file($imageField)->store($storagePath, 'public');
+                $stored = $this->fileProcessor->store($request->file($imageField), $storagePath);
+                $config->{$imageField} = $stored['path'];
             } elseif ($request->boolean($resetField)) {
                 if (!empty($config->{$imageField})) {
                     Storage::disk('public')->delete($config->{$imageField});
@@ -87,8 +79,8 @@ class MemoryLaneConfigController extends Controller
                 $config->{$imageField} = null;
             }
 
-            $titleField = "level_{$index}_title";
-            $bodyField = "level_{$index}_body";
+            $titleField = "level_{$levelWord}_title";
+            $bodyField = "level_{$levelWord}_body";
 
             if (array_key_exists($titleField, $validated)) {
                 $config->{$titleField} = filled($validated[$titleField])

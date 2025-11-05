@@ -37,8 +37,13 @@ export default function TimelineCreate() {
         clearErrors();
         post(route("timeline.store", { space: spaceSlug }), {
             forceFormData: true,
-            onSuccess: () =>
-                router.visit(route("timeline.index", { space: spaceSlug })),
+            onSuccess: () => {
+                console.info("Timeline created", { space: spaceSlug });
+                router.visit(route("timeline.index", { space: spaceSlug }));
+            },
+            onError: (errorBag) => {
+                console.error("Timeline create failed", errorBag);
+            },
         });
     };
 

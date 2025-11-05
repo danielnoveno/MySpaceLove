@@ -3,12 +3,8 @@ import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout";
 import { useCurrentSpace } from "@/hooks/useCurrentSpace";
 import { Head, Link, router } from "@inertiajs/react";
 import { Calendar, Edit, Sparkles, Trash2 } from "lucide-react";
-import {
-    useCallback,
-    useMemo,
-    useState,
-    type CSSProperties,
-} from "react";
+import { useCallback, useMemo, useState, type CSSProperties } from "react";
+import type { MouseEvent as ReactMouseEvent } from "react";
 
 interface CountdownItem {
     id: number;
@@ -25,12 +21,20 @@ interface Props {
 
 type CountdownTone = "future" | "present" | "past" | "unset";
 
+type AnchorPosition = {
+    top: number;
+    left: number;
+    width: number;
+    height: number;
+};
+
 const toneClasses: Record<CountdownTone, string> = {
     future: "border-emerald-200 bg-emerald-50 text-emerald-600",
     present: "border-amber-200 bg-amber-50 text-amber-700",
     past: "border-slate-200 bg-slate-100 text-slate-600",
     unset: "border-violet-200 bg-violet-50 text-violet-600",
 };
+
 
 const parseDateValue = (value?: string | null): Date | null => {
     if (!value) {
@@ -57,6 +61,9 @@ export default function CountdownIndex({ items }: Props) {
         null,
     );
     const [deleting, setDeleting] = useState(false);
+    const [deleteAnchor, setDeleteAnchor] = useState<AnchorPosition | null>(
+        null,
+    );
 
     const formatEventDate = useCallback((value?: string | null) => {
         const date = parseDateValue(value);
@@ -202,15 +209,24 @@ export default function CountdownIndex({ items }: Props) {
         "--love-hover-color": "#ef4444",
     } as CSSProperties;
 
-    const confirmDelete = (item: CountdownItem) => {
-        setPendingDelete(item);
-    };
+    const confirmDelete = useCallback(
+        (item: CountdownItem, event: ReactMouseEvent<HTMLButtonElement>) => {
+            const rect = event.currentTarget.getBoundingClientRect();
+            setPendingDelete(item);
+            setDeleteAnchor({
+                top: rect.top,
+                left: rect.left,
+                width: rect.width,
+                height: rect.height,
+            });
+        },
+        [],
+    );
 
     const handleDelete = () => {
         if (!pendingDelete) {
             return;
         }
-
         setDeleting(true);
 
         router.delete(
@@ -220,8 +236,14 @@ export default function CountdownIndex({ items }: Props) {
             }),
             {
                 preserveScroll: true,
-                onSuccess: () => setPendingDelete(null),
-                onError: () => setPendingDelete(null),
+                onSuccess: () => {
+                    setPendingDelete(null);
+                    setDeleteAnchor(null);
+                },
+                onError: () => {
+                    setPendingDelete(null);
+                    setDeleteAnchor(null);
+                },
                 onFinish: () => setDeleting(false),
             },
         );
@@ -304,7 +326,7 @@ export default function CountdownIndex({ items }: Props) {
                         </Link>
                         <button
                             type="button"
-                            onClick={() => confirmDelete(event)}
+                            onClick={(clickEvent) => confirmDelete(event, clickEvent)}
                             data-love-hover
                             style={loveHoverDelete}
                             className="inline-flex items-center gap-2 rounded-full border border-rose-200 px-4 py-2 text-sm font-medium text-rose-600 transition hover:bg-rose-500 hover:text-white"
@@ -492,9 +514,11 @@ export default function CountdownIndex({ items }: Props) {
                 cancelLabel="Batal"
                 tone="danger"
                 loading={deleting}
+                anchor={deleteAnchor}
                 onCancel={() => {
                     if (!deleting) {
                         setPendingDelete(null);
+                        setDeleteAnchor(null);
                     }
                 }}
                 onConfirm={handleDelete}
@@ -502,3 +526,9 @@ export default function CountdownIndex({ items }: Props) {
         </AuthenticatedLayout>
     );
 }
+
+
+
+
+
+

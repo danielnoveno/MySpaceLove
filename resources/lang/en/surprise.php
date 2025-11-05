@@ -144,6 +144,12 @@ return [
             'finishMessage' => 'Thank you for being my safest home. I love you every single day.',
             'nextButton' => 'Next',
         ],
+        'scrapbook' => [
+            'title' => 'Digital scrapbook',
+            'subtitle' => 'Each Memory Lane mission becomes a keepsake page you can revisit anytime.',
+            'empty' => 'You have not prepared custom Memory Lane content yet.',
+            'cta' => 'Configure Memory Lane Kit',
+        ],
         'chapters' => [
             [
                 'id' => 'first-hello',

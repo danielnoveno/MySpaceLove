@@ -2,7 +2,7 @@
 
 require __DIR__ . '/auth.php';
 
-use App\Http\Controllers\ActivityNotificationController;
+use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\Api\CountdownApiController;
 use App\Http\Controllers\Api\DailyApiController;
 use App\Http\Controllers\Api\DailyMessageApiController;
@@ -24,12 +24,11 @@ use App\Http\Controllers\SpotifyAuthController;
 use App\Http\Controllers\SpotifyController;
 use App\Http\Controllers\MemoryLaneConfigController;
 use App\Http\Controllers\ProfileController;
+use App\Services\MemoryLaneContentService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Response;
 use Illuminate\Support\Facades\Route;
-use Illuminate\Support\Facades\Schema;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 
@@ -44,7 +43,7 @@ Route::get('/about', function () {
 })->name('about');
 
 Route::get('/location/{space:slug}', [LocationController::class, 'publicView'])->name('location.public');
-Route::get('/surprise/story', function () {
+Route::get('/surprise/story', function (MemoryLaneContentService $memoryLane) {
     $storyBase = __('surprise.story_book');
     $defaultSpaceTitle = data_get($storyBase, 'defaults.spaceTitle', 'My Favorite Person');
 
@@ -52,36 +51,50 @@ Route::get('/surprise/story', function () {
         'spaceTitle' => $defaultSpaceTitle,
     ]);
 
+    $scrapbookMeta = data_get($storyContent, 'scrapbook', []);
+    $scrapbookPages = $memoryLane->scrapbookPages();
+
+    $storyContent['scrapbook'] = [
+        'title' => $scrapbookMeta['title'] ?? 'Digital scrapbook',
+        'subtitle' => $scrapbookMeta['subtitle'] ?? '',
+        'empty' => $scrapbookMeta['empty'] ?? '',
+        'cta' => $scrapbookMeta['cta'] ?? null,
+        'manage_url' => null,
+        'pages' => $scrapbookPages,
+    ];
+
     unset($storyContent['defaults']);
 
     return Inertia::render('Surprise/StoryBook', [
         'storyBook' => $storyContent,
     ]);
 })->name('surprise.story');
-Route::get('/surprise/memory', function () {
-    $memoryBase = __('surprise.memory_lane');
-    $defaultSpaceTitle = data_get($memoryBase, 'defaults.spaceTitle', 'kita');
-    $grid = data_get($memoryBase, 'puzzle.grid', ['rows' => 4, 'cols' => 4]);
-
-    $memoryContent = __('surprise.memory_lane', [
-        'spaceTitle' => $defaultSpaceTitle,
-        'rows' => $grid['rows'] ?? 4,
-        'cols' => $grid['cols'] ?? 4,
-    ]);
-
-    $memoryContent['puzzle']['grid'] = $grid;
-    $memoryContent['puzzle']['levels'] = collect($memoryContent['puzzle']['levels'] ?? [])->values()->all();
-    unset($memoryContent['defaults']);
+Route::get('/surprise/memory', function (MemoryLaneContentService $memoryLane, Request $request) {
+    $memoryContent = $memoryLane->resolve();
+    $skipPuzzle = config('app.debug') || $request->boolean('skipPuzzle');
 
     return Inertia::render('Surprise/MemoryLanePublic', [
         'memoryLane' => $memoryContent,
+        'skipPuzzle' => $skipPuzzle,
     ]);
 })->name('surprise.memory');
-Route::get('/surprise/{space:slug}/story', function (\App\Models\Space $space) {
+Route::get('/surprise/{space:slug}/story', function (\App\Models\Space $space, MemoryLaneContentService $memoryLane) {
     $storyBase = __('surprise.story_book');
     $storyContent = __('surprise.story_book', [
         'spaceTitle' => $space->title ?? data_get($storyBase, 'defaults.spaceTitle', 'My Favorite Person'),
     ]);
+
+    $scrapbookMeta = data_get($storyContent, 'scrapbook', []);
+    $scrapbookPages = $memoryLane->scrapbookPages($space);
+
+    $storyContent['scrapbook'] = [
+        'title' => $scrapbookMeta['title'] ?? 'Digital scrapbook',
+        'subtitle' => $scrapbookMeta['subtitle'] ?? '',
+        'empty' => $scrapbookMeta['empty'] ?? '',
+        'cta' => $scrapbookMeta['cta'] ?? null,
+        'manage_url' => route('memory-lane.edit', ['space' => $space->slug]),
+        'pages' => $scrapbookPages,
+    ];
 
     unset($storyContent['defaults']);
 
@@ -94,68 +107,9 @@ Route::get('/surprise/{space:slug}/story', function (\App\Models\Space $space) {
         'storyBook' => $storyContent,
     ]);
 })->name('surprise.story.space');
-Route::get('/surprise/{space:slug}/memory', function (\App\Models\Space $space) {
-    $memoryBase = __('surprise.memory_lane');
-    $grid = data_get($memoryBase, 'puzzle.grid', ['rows' => 4, 'cols' => 4]);
-    $memoryContent = __('surprise.memory_lane', [
-        'spaceTitle' => $space->title ?? data_get($memoryBase, 'defaults.spaceTitle', 'kita'),
-        'rows' => $grid['rows'] ?? 4,
-        'cols' => $grid['cols'] ?? 4,
-    ]);
-
-    $memoryContent['puzzle']['grid'] = $grid;
-    $levels = collect($memoryContent['puzzle']['levels'] ?? [])->values();
-
-    $config = null;
-    if (Schema::hasTable('memory_lane_configs')) {
-        $space->loadMissing('memoryLaneConfig');
-        $config = $space->memoryLaneConfig;
-    }
-
-    if ($config) {
-        $levelMappings = [
-            [
-                'image' => $config->level_one_image,
-                'title' => $config->level_one_title,
-                'body' => $config->level_one_body,
-            ],
-            [
-                'image' => $config->level_two_image,
-                'title' => $config->level_two_title,
-                'body' => $config->level_two_body,
-            ],
-            [
-                'image' => $config->level_three_image,
-                'title' => $config->level_three_title,
-                'body' => $config->level_three_body,
-            ],
-        ];
-
-        $levels = $levels->map(function (array $level, int $index) use ($levelMappings) {
-            $mapping = $levelMappings[$index] ?? null;
-
-            if (!$mapping) {
-                return $level;
-            }
-
-            if (!empty($mapping['image'])) {
-                $level['image'] = Storage::disk('public')->url($mapping['image']);
-            }
-
-            if (!empty($mapping['title'])) {
-                $level['summaryTitle'] = $mapping['title'];
-            }
-
-            if (!empty($mapping['body'])) {
-                $level['summaryBody'] = $mapping['body'];
-            }
-
-            return $level;
-        });
-    }
-
-    $memoryContent['puzzle']['levels'] = $levels->all();
-    unset($memoryContent['defaults']);
+Route::get('/surprise/{space:slug}/memory', function (\App\Models\Space $space, MemoryLaneContentService $memoryLane, Request $request) {
+    $memoryContent = $memoryLane->resolve($space);
+    $skipPuzzle = config('app.debug') || $request->boolean('skipPuzzle');
 
     return Inertia::render('Surprise/MemoryLanePublic', [
         'space' => [
@@ -164,6 +118,7 @@ Route::get('/surprise/{space:slug}/memory', function (\App\Models\Space $space) 
             'title' => $space->title,
         ],
         'memoryLane' => $memoryContent,
+        'skipPuzzle' => $skipPuzzle,
     ]);
 })->name('surprise.memory.space');
 
@@ -189,10 +144,6 @@ Route::middleware(['auth', 'verified'])->group(function () {
         return back()->withCookie(cookie()->forever('locale', $locale));
     })->name('locale.switch');
 
-    Route::get('/notifications', [ActivityNotificationController::class, 'index'])->name('notifications.index');
-    Route::post('/notifications/read-all', [ActivityNotificationController::class, 'markAllAsRead'])->name('notifications.readAll');
-    Route::post('/notifications/{notification}/read', [ActivityNotificationController::class, 'markAsRead'])->name('notifications.read');
-
     // Profile Routes
 
     Route::get('/oauth/spotify/callback', [SpotifyAuthController::class, 'callback'])->name('spotify.callback');
@@ -203,6 +154,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/spaces', [SpaceController::class, 'store'])->name('spaces.store');
 
     Route::middleware('space.access')->group(function () {
+        Route::get('/spaces/{space:slug}/notifications', [NotificationController::class, 'index'])->name('spaces.notifications.index');
+        Route::post('/spaces/{space:slug}/notifications/read-all', [NotificationController::class, 'markAllAsRead'])->name('spaces.notifications.readAll');
+        Route::post('/spaces/{space:slug}/notifications/{notification}/read', [NotificationController::class, 'markAsRead'])->name('spaces.notifications.read');
+        Route::delete('/spaces/{space:slug}/notifications/{notification}', [NotificationController::class, 'destroy'])->name('spaces.notifications.destroy');
+
         Route::get('/spaces/{space:slug}/dashboard', [DashboardController::class, 'show'])->name('spaces.dashboard');
 
         Route::get('/spaces/{space:slug}/location', [LocationController::class, 'index'])->name('location.map');
@@ -324,14 +280,4 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     Route::post('/room/{id}/chat', [ChatController::class, 'send']);
 });
-
-
-
-
-
-
-
-
-
-
 

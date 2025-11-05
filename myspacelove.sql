@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Oct 28, 2025 at 03:03 AM
+-- Generation Time: Nov 04, 2025 at 03:23 AM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -283,7 +283,9 @@ INSERT INTO `migrations` (`id`, `migration`, `batch`) VALUES
 (25, '2025_10_30_121500_update_spotify_token_column_lengths', 1),
 (26, '2025_10_30_131000_create_space_invitations_table', 1),
 (27, '2025_10_30_140000_create_space_separation_requests_table', 1),
-(28, '2025_10_30_150000_create_nobar_schedules_table', 1);
+(28, '2025_10_30_150000_create_nobar_schedules_table', 1),
+(29, '2025_11_01_000000_create_notifications_table', 1),
+(30, '2025_11_03_121211_add_level_images_to_memory_lane_configs_table', 1);
 
 -- --------------------------------------------------------
 
@@ -298,6 +300,24 @@ CREATE TABLE `nobar_schedules` (
   `title` varchar(255) NOT NULL,
   `description` text DEFAULT NULL,
   `scheduled_for` datetime NOT NULL,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `notifications`
+--
+
+CREATE TABLE `notifications` (
+  `id` char(36) NOT NULL,
+  `user_id` bigint(20) UNSIGNED NOT NULL,
+  `type` varchar(255) NOT NULL,
+  `notifiable_type` varchar(255) NOT NULL,
+  `notifiable_id` bigint(20) UNSIGNED NOT NULL,
+  `data` text NOT NULL,
+  `read_at` timestamp NULL DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -353,7 +373,7 @@ CREATE TABLE `spaces` (
 --
 
 INSERT INTO `spaces` (`id`, `slug`, `title`, `user_one_id`, `user_two_id`, `is_public`, `theme_id`, `bio`, `created_at`, `updated_at`) VALUES
-(1, 'my-space', 'My Space', 1, 2, 0, NULL, 'This is my personal space.', '2025-10-27 19:00:09', '2025-10-27 19:00:09');
+(1, 'my-space', 'My Space', 1, 2, 0, NULL, 'This is my personal space.', '2025-11-03 19:13:45', '2025-11-03 19:13:45');
 
 -- --------------------------------------------------------
 
@@ -497,11 +517,11 @@ CREATE TABLE `themes` (
 --
 
 INSERT INTO `themes` (`id`, `name`, `primary_color`, `secondary_color`, `background_color`, `font_family`, `created_at`, `updated_at`) VALUES
-(1, 'Classic Love', '#E63946', '#F1FAEE', '#FFF0F3', 'Georgia', '2025-10-27 19:00:08', '2025-10-27 19:00:08'),
-(2, 'Ocean Breeze', '#1D3557', '#A8DADC', '#F1FAEE', 'Montserrat', '2025-10-27 19:00:08', '2025-10-27 19:00:08'),
-(3, 'Forest Harmony', '#2A9D8F', '#E9C46A', '#F4F1DE', 'Roboto', '2025-10-27 19:00:08', '2025-10-27 19:00:08'),
-(4, 'Minimal White', '#222222', '#555555', '#FFFFFF', 'Helvetica', '2025-10-27 19:00:09', '2025-10-27 19:00:09'),
-(5, 'Romantic Pastel', '#FFB6B9', '#FAE3D9', '#FFF5E1', 'Poppins', '2025-10-27 19:00:09', '2025-10-27 19:00:09');
+(1, 'Classic Love', '#E63946', '#F1FAEE', '#FFF0F3', 'Georgia', '2025-11-03 19:13:45', '2025-11-03 19:13:45'),
+(2, 'Ocean Breeze', '#1D3557', '#A8DADC', '#F1FAEE', 'Montserrat', '2025-11-03 19:13:45', '2025-11-03 19:13:45'),
+(3, 'Forest Harmony', '#2A9D8F', '#E9C46A', '#F4F1DE', 'Roboto', '2025-11-03 19:13:45', '2025-11-03 19:13:45'),
+(4, 'Minimal White', '#222222', '#555555', '#FFFFFF', 'Helvetica', '2025-11-03 19:13:45', '2025-11-03 19:13:45'),
+(5, 'Romantic Pastel', '#FFB6B9', '#FAE3D9', '#FFF5E1', 'Poppins', '2025-11-03 19:13:45', '2025-11-03 19:13:45');
 
 -- --------------------------------------------------------
 
@@ -546,8 +566,8 @@ CREATE TABLE `users` (
 --
 
 INSERT INTO `users` (`id`, `name`, `email`, `email_verified_at`, `password`, `username`, `partner_code`, `auth_provider`, `provider_id`, `provider_avatar`, `remember_token`, `created_at`, `updated_at`) VALUES
-(1, 'Admin', 'admin@example.com', NULL, '$2y$12$CLHBWXXP9rv7rn4MkgVBnO6FdGfc5NzlHdigMiXaR9JmV4wL7mxJ6', 'admin', NULL, NULL, NULL, NULL, NULL, '2025-10-27 19:00:08', '2025-10-27 19:00:08'),
-(2, 'Daniel', 'dnw022003@gmail.com', NULL, '$2y$12$tkJdc1f4/svA4qykSTu67eHEzJiwUb6TBD5EiuCHXMBHvWh/pJ3Hy', 'daniel', NULL, NULL, NULL, NULL, NULL, '2025-10-27 19:00:08', '2025-10-27 19:00:08');
+(1, 'Admin', 'admin@example.com', NULL, '$2y$12$1hVZKDp9XvpwMmfl5bqxCuUxGcxqaLBHELbKd0/bpKqdT5M9FY2Ji', 'admin', NULL, NULL, NULL, NULL, NULL, '2025-11-03 19:13:44', '2025-11-03 19:13:44'),
+(2, 'Daniel', 'dnw022003@gmail.com', NULL, '$2y$12$Vd.stKVPggJbZxFmq/5A4ewwE7wwWISJpLQv.AYvlyFObzDIYUzFi', 'daniel', NULL, NULL, NULL, NULL, NULL, '2025-11-03 19:13:44', '2025-11-03 19:13:44');
 
 -- --------------------------------------------------------
 
@@ -677,6 +697,14 @@ ALTER TABLE `nobar_schedules`
   ADD PRIMARY KEY (`id`),
   ADD KEY `nobar_schedules_space_id_foreign` (`space_id`),
   ADD KEY `nobar_schedules_created_by_foreign` (`created_by`);
+
+--
+-- Indexes for table `notifications`
+--
+ALTER TABLE `notifications`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `notifications_user_id_foreign` (`user_id`),
+  ADD KEY `notifications_notifiable_type_notifiable_id_index` (`notifiable_type`,`notifiable_id`);
 
 --
 -- Indexes for table `password_reset_tokens`
@@ -851,7 +879,7 @@ ALTER TABLE `memory_lane_configs`
 -- AUTO_INCREMENT for table `migrations`
 --
 ALTER TABLE `migrations`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=29;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=31;
 
 --
 -- AUTO_INCREMENT for table `nobar_schedules`
@@ -986,6 +1014,12 @@ ALTER TABLE `memory_lane_configs`
 ALTER TABLE `nobar_schedules`
   ADD CONSTRAINT `nobar_schedules_created_by_foreign` FOREIGN KEY (`created_by`) REFERENCES `users` (`id`) ON DELETE SET NULL,
   ADD CONSTRAINT `nobar_schedules_space_id_foreign` FOREIGN KEY (`space_id`) REFERENCES `spaces` (`id`) ON DELETE CASCADE;
+
+--
+-- Constraints for table `notifications`
+--
+ALTER TABLE `notifications`
+  ADD CONSTRAINT `notifications_user_id_foreign` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE;
 
 --
 -- Constraints for table `spaces`

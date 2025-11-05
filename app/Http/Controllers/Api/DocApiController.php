@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Doc;
+use App\Services\UploadedFileProcessor;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
@@ -11,6 +12,10 @@ use Inertia\Inertia;
 
 class DocApiController extends Controller
 {
+    public function __construct(private readonly UploadedFileProcessor $fileProcessor)
+    {
+    }
+
     public function index()
     {
         $docs = Doc::where('user_id', Auth::id())->latest()->get();
@@ -33,13 +38,13 @@ class DocApiController extends Controller
             'notes' => 'nullable|string|max:1000',
         ]);
 
-        $path = $request->file('file')->store('docs', 'public');
+        $stored = $this->fileProcessor->store($request->file('file'), 'docs');
 
         Doc::create([
             'space_id'  => $request->user()->spaces()->first()->id ?? null,
             'user_id'   => Auth::id(),
             'title'     => $data['title'] ?? pathinfo($request->file('file')->getClientOriginalName(), PATHINFO_FILENAME),
-            'file_path' => $path,
+            'file_path' => $stored['path'],
             'notes'     => $data['notes'] ?? null,
         ]);
 
@@ -64,7 +69,8 @@ class DocApiController extends Controller
 
         if ($request->hasFile('file')) {
             Storage::disk('public')->delete($doc->file_path);
-            $data['file_path'] = $request->file('file')->store('docs', 'public');
+            $stored = $this->fileProcessor->store($request->file('file'), 'docs');
+            $data['file_path'] = $stored['path'];
         }
 
         $doc->update($data);

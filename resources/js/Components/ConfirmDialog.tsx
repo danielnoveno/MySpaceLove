@@ -1,5 +1,6 @@
-import { ReactNode } from "react";
+import { ReactNode, useEffect, useMemo, useRef } from "react";
 import { Loader2 } from "lucide-react";
+import { createPortal } from "react-dom";
 import Modal from "./Modal";
 
 type ConfirmDialogProps = {
@@ -13,6 +14,12 @@ type ConfirmDialogProps = {
     loading?: boolean;
     onConfirm: () => void;
     onCancel: () => void;
+    anchor?: {
+        top: number;
+        left: number;
+        width: number;
+        height: number;
+    } | null;
 };
 
 const toneClasses: Record<
@@ -47,6 +54,27 @@ const toneClasses: Record<
     },
 };
 
+const anchorToneClasses: Record<
+    NonNullable<ConfirmDialogProps["tone"]>,
+    {
+        border: string;
+        badge: string;
+    }
+> = {
+    danger: {
+        border: "border-rose-200 shadow-rose-200/40",
+        badge: "text-rose-500",
+    },
+    primary: {
+        border: "border-indigo-200 shadow-indigo-200/40",
+        badge: "text-indigo-500",
+    },
+    neutral: {
+        border: "border-slate-200 shadow-slate-200/40",
+        badge: "text-slate-500",
+    },
+};
+
 export default function ConfirmDialog({
     open,
     title,
@@ -58,8 +86,114 @@ export default function ConfirmDialog({
     loading = false,
     onConfirm,
     onCancel,
+    anchor = null,
 }: ConfirmDialogProps) {
     const colors = toneClasses[tone];
+    const anchorColors = anchorToneClasses[tone];
+    const anchorRef = useRef<HTMLDivElement | null>(null);
+
+    useEffect(() => {
+        if (!open || !anchor) {
+            return;
+        }
+
+        const handleClickOutside = (event: MouseEvent) => {
+            if (
+                anchorRef.current &&
+                !anchorRef.current.contains(event.target as Node)
+            ) {
+                onCancel();
+            }
+        };
+
+        const handleEscape = (event: KeyboardEvent) => {
+            if (event.key === "Escape") {
+                onCancel();
+            }
+        };
+
+        document.addEventListener("mousedown", handleClickOutside);
+        window.addEventListener("keydown", handleEscape);
+
+        return () => {
+            document.removeEventListener("mousedown", handleClickOutside);
+            window.removeEventListener("keydown", handleEscape);
+        };
+    }, [open, anchor, onCancel]);
+
+    const anchorPosition = useMemo(() => {
+        if (!anchor) {
+            return null;
+        }
+
+        const scrollX = window.scrollX ?? 0;
+        const scrollY = window.scrollY ?? 0;
+
+        return {
+            top: anchor.top + scrollY,
+            left: anchor.left + scrollX + anchor.width / 2,
+        };
+    }, [anchor]);
+
+    if (!open) {
+        return null;
+    }
+
+    if (anchor && anchorPosition) {
+        return createPortal(
+            <div className="pointer-events-none fixed inset-0 z-[80]">
+                <div
+                    ref={anchorRef}
+                    className="pointer-events-auto absolute z-[95] max-w-xs"
+                    style={{
+                        top: anchorPosition.top,
+                        left: anchorPosition.left,
+                        transform: "translate(-50%, calc(-100% - 16px))",
+                    }}
+                >
+                    <div
+                        className={`overflow-hidden rounded-2xl border bg-white p-4 shadow-xl ${anchorColors.border}`}
+                    >
+                        <p
+                            className={`text-[0.65rem] font-semibold uppercase tracking-[0.38em] ${anchorColors.badge}`}
+                        >
+                            Konfirmasi
+                        </p>
+                        <h3 className="mt-2 text-base font-semibold text-slate-900">
+                            {title}
+                        </h3>
+                        {description && (
+                            <p className="mt-1 text-sm text-slate-600">
+                                {description}
+                            </p>
+                        )}
+                        <div className="mt-4 flex items-center justify-end gap-2">
+                            <button
+                                type="button"
+                                onClick={onCancel}
+                                disabled={loading}
+                                className="inline-flex items-center justify-center rounded-full border border-slate-200 px-3 py-1.5 text-xs font-medium text-slate-600 transition hover:bg-slate-50 disabled:opacity-50"
+                            >
+                                {cancelLabel}
+                            </button>
+                            <button
+                                type="button"
+                                onClick={onConfirm}
+                                disabled={loading}
+                                className={`inline-flex items-center justify-center gap-2 rounded-full px-4 py-1.5 text-xs font-semibold text-white shadow transition focus-visible:outline-none focus-visible:ring-2 ${colors.confirm} ${colors.confirmRing} disabled:cursor-not-allowed disabled:opacity-70`}
+                            >
+                                {loading && (
+                                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                                )}
+                                {confirmLabel}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>,
+            document.body,
+        );
+    }
 
     return (
         <Modal show={open} maxWidth="sm" onClose={onCancel}>

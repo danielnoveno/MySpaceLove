@@ -11,7 +11,8 @@ import {
     Trash2,
     X,
 } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
+import type { MouseEvent as ReactMouseEvent } from "react";
 
 type GalleryMediaItem = {
     id: number;
@@ -29,6 +30,13 @@ type GalleryCollection = {
     count: number;
     items: GalleryMediaItem[];
 };
+type AnchorPosition = {
+    top: number;
+    left: number;
+    width: number;
+    height: number;
+};
+
 
 const formatFullDate = (value?: string | null) => {
     if (!value) {
@@ -58,6 +66,9 @@ export default function GalleryIndex({
         null,
     );
     const [deleting, setDeleting] = useState(false);
+    const [deleteAnchor, setDeleteAnchor] = useState<AnchorPosition | null>(
+        null,
+    );
 
     if (!currentSpace) {
         return null;
@@ -92,9 +103,11 @@ export default function GalleryIndex({
                 preserveScroll: true,
                 onSuccess: () => {
                     setPendingDelete(null);
+                    setDeleteAnchor(null);
                 },
                 onError: () => {
                     setPendingDelete(null);
+                    setDeleteAnchor(null);
                 },
                 onFinish: () => {
                     setDeleting(false);
@@ -102,6 +115,20 @@ export default function GalleryIndex({
             },
         );
     };
+    const promptDelete = useCallback(
+        (item: GalleryMediaItem, event: ReactMouseEvent<HTMLButtonElement>) => {
+            const rect = event.currentTarget.getBoundingClientRect();
+            setPendingDelete(item);
+            setDeleteAnchor({
+                top: rect.top,
+                left: rect.left,
+                width: rect.width,
+                height: rect.height,
+            });
+        },
+        [],
+    );
+
 
     return (
         <AuthenticatedLayout
@@ -331,9 +358,11 @@ export default function GalleryIndex({
                 cancelLabel="Batal"
                 tone="danger"
                 loading={deleting}
+                anchor={deleteAnchor}
                 onCancel={() => {
                     if (!deleting) {
                         setPendingDelete(null);
+                        setDeleteAnchor(null);
                     }
                 }}
                 onConfirm={performDelete}
@@ -341,3 +370,8 @@ export default function GalleryIndex({
         </AuthenticatedLayout>
     );
 }
+
+
+
+
+

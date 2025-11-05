@@ -29,8 +29,13 @@ export default function AuthenticatedLayout({ header, children }) {
 
     const fallbackHref = route("spaces.index");
     const notificationSummary = props?.notificationSummary ?? null;
-    const unreadNotificationCount = notificationSummary?.unread_count ?? 0;
-    const hasUnreadNotifications = unreadNotificationCount > 0;
+    const rawUnread = Number(notificationSummary?.unread_count ?? 0) || 0;
+    const unreadNotificationCount = rawUnread > 0 ? rawUnread : 0;
+        const hasUnreadNotifications = unreadNotificationCount > 0;
+    const notificationsActive = Boolean(
+        route().current("spaces.notifications.index") ||
+        route().current("notifications.index")
+    );
 
     const dashboardHref = currentSpace
         ? route("spaces.dashboard", { space: currentSpace.slug })
@@ -47,7 +52,9 @@ export default function AuthenticatedLayout({ header, children }) {
     const spotifyHref = currentSpace
         ? route("spotify.companion", { space: currentSpace.slug })
         : fallbackHref;
-    const notificationsHref = route("notifications.index");
+        const notificationsHref = currentSpace
+        ? route("spaces.notifications.index", { space: currentSpace.slug })
+        : route("notifications.index");
     const partnerFeaturesLocked =
         currentSpace !== null && currentSpace.has_partner === false;
     const lockedTooltip =
@@ -130,7 +137,7 @@ export default function AuthenticatedLayout({ header, children }) {
                                 </Link>
                                 <Link
                                     href={notificationsHref}
-                                    className={navClass(false)}
+                                    className={`${navClass(false)} ${notificationsActive ? "border-pink-500 text-pink-600" : ""}`}
                                 >
                                     <span className="flex items-center gap-2">
                                         {navigation.notifications ?? "Notifications"}
@@ -428,7 +435,7 @@ export default function AuthenticatedLayout({ header, children }) {
                         </ResponsiveNavLink>
                         <ResponsiveNavLink
                             href={notificationsHref}
-                            active={route().current("notifications.index")}
+                            active={notificationsActive}
                         >
                             <span className="flex items-center gap-2">
                                 {navigation.notifications ?? "Notifications"}
@@ -518,3 +525,7 @@ export default function AuthenticatedLayout({ header, children }) {
         </div>
     );
 }
+
+
+
+

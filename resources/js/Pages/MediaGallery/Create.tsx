@@ -76,10 +76,17 @@ export default function GalleryCreate() {
         post(route("gallery.store", { space: spaceSlug }), {
             forceFormData: true,
             onSuccess: () => {
+                console.info("Gallery upload completed", {
+                    space: spaceSlug,
+                    uploaded: data.files.length,
+                });
                 createdPreviewUrls.current.forEach((url) => URL.revokeObjectURL(url));
                 createdPreviewUrls.current = [];
                 setPreviewUrls([]);
                 reset();
+            },
+            onError: (errorBag) => {
+                console.error("Gallery upload failed", errorBag);
             },
         });
     };

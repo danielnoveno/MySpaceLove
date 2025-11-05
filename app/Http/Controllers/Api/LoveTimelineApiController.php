@@ -5,13 +5,23 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\LoveTimeline;
 use App\Models\Space;
+use App\Services\ActivityLogger;
+use App\Services\UploadedFileProcessor;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 
 class LoveTimelineApiController extends Controller
 {
+    public function __construct(
+        private readonly UploadedFileProcessor $fileProcessor,
+        private readonly ActivityLogger $activityLogger
+    )
+    {
+    }
+
     public function index(Space $space)
     {
         $this->authorizeSpace($space);
@@ -39,7 +49,7 @@ class LoveTimelineApiController extends Controller
                     'media_paths' => $mediaPaths,
                     'thumbnail_path' => $thumbnail,
                     'thumbnail_url' => $resolvedThumbnail,
-                    'media_urls' => collect($mediaPaths)->map(fn ($path) => Storage::disk('public')->url($path))->all(),
+                    'media_urls' => collect($mediaPaths)->map(fn ($path) => asset('storage/' . $path))->all(),
                 ];
             });
 
@@ -77,13 +87,15 @@ class LoveTimelineApiController extends Controller
         $paths = [];
         if ($request->hasFile('media')) {
             foreach ($request->file('media') as $file) {
-                $paths[] = $file->store("spaces/{$space->id}/timeline", 'public');
+                $stored = $this->fileProcessor->store($file, "spaces/{$space->id}/timeline");
+                $paths[] = $stored['path'];
             }
         }
 
         $timeline->media_paths = $paths;
         $timeline->thumbnail_path = $paths[0] ?? null;
         $timeline->save();
+        $this->notifyTimelineEvent($space, $timeline, 'created');
 
         return redirect()
             ->route('timeline.index', ['space' => $space->slug])
@@ -139,10 +151,10 @@ class LoveTimelineApiController extends Controller
         $mediaKeys = $data['media_keys'] ?? [];
         $newUploads = [];
         foreach ($incomingFiles as $index => $file) {
-            $storedPath = $file->store("spaces/{$space->id}/timeline", 'public');
+            $stored = $this->fileProcessor->store($file, "spaces/{$space->id}/timeline");
             $newUploads[] = [
                 'key' => $mediaKeys[$index] ?? null,
-                'path' => $storedPath,
+                'path' => $stored['path'],
             ];
         }
 
@@ -195,6 +207,7 @@ class LoveTimelineApiController extends Controller
             'media_paths' => $finalPaths,
             'thumbnail_path' => $thumbnailPath,
         ]);
+        $this->notifyTimelineEvent($space, $item, 'updated');
 
         return redirect()->route('timeline.index', ['space' => $space->slug])
             ->with('success', 'Timeline berhasil diperbarui!');
@@ -216,6 +229,7 @@ class LoveTimelineApiController extends Controller
         }
 
         $item->delete();
+        $this->notifyTimelineEvent($space, $item, 'deleted');
 
         if ($request->wantsJson()) {
             return response()->json(['message' => 'deleted']);
@@ -254,8 +268,79 @@ class LoveTimelineApiController extends Controller
         return response()->json([
             'message' => 'Thumbnail berhasil diperbarui.',
             'thumbnail_path' => $path,
-            'thumbnail_url' => $path ? Storage::disk('public')->url($path) : null,
+            'thumbnail_url' => $path ? asset('storage/' . $path) : null,
         ]);
+    }
+
+    private function notifyTimelineEvent(Space $space, LoveTimeline $timeline, string $action): void
+    {
+        if (!Schema::hasTable('notifications')) {
+            return;
+        }
+
+        $space->loadMissing(['userOne', 'userTwo']);
+
+        $recipients = collect([$space->userOne, $space->userTwo])
+            ->filter()
+            ->unique(fn ($user) => $user?->id)
+            ->values();
+
+        if ($recipients->isEmpty()) {
+            return;
+        }
+
+        $actor = Auth::user();
+        $actorName = $actor?->name ?? __('app.layout.user.fallback_name');
+        $dateLabel = optional($timeline->date)->translatedFormat('d F Y');
+
+        $messages = [
+            'created' => [
+                'event' => 'timeline.created',
+                'title' => __(':actor menambahkan momen baru', ['actor' => $actorName]),
+                'body' => __('Momen ":title" ditambahkan untuk tanggal :date.', [
+                    'title' => $timeline->title,
+                    'date' => $dateLabel ?? __('Tanggal belum ditetapkan'),
+                ]),
+            ],
+            'updated' => [
+                'event' => 'timeline.updated',
+                'title' => __(':actor memperbarui momen timeline', ['actor' => $actorName]),
+                'body' => __('Momen ":title" diperbarui. Periksa detail terbarunya.', [
+                    'title' => $timeline->title,
+                ]),
+            ],
+            'deleted' => [
+                'event' => 'timeline.deleted',
+                'title' => __(':actor menghapus sebuah momen', ['actor' => $actorName]),
+                'body' => __('Momen ":title" telah dihapus dari timeline.', [
+                    'title' => $timeline->title,
+                ]),
+            ],
+        ];
+
+        $message = $messages[$action] ?? null;
+        if ($message === null) {
+            return;
+        }
+
+        $data = [
+            'space_id' => $space->id,
+            'space_slug' => $space->slug,
+            'timeline_id' => $timeline->id,
+            'timeline_title' => $timeline->title,
+            'timeline_date' => optional($timeline->date)->toDateString(),
+            'action_url' => route('timeline.index', ['space' => $space->slug]),
+            'action_label' => __('Lihat timeline'),
+        ];
+
+        $this->activityLogger->log(
+            $recipients->all(),
+            $message['event'],
+            $message['title'],
+            $message['body'],
+            $data,
+            sendMail: true
+        );
     }
 
     private function authorizeSpace(Space $space)
