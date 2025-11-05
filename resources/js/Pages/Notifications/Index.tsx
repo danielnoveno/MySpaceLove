@@ -334,58 +334,16 @@ export default function NotificationsIndex() {
                                         : null) ??
                                     "Activity update";
 
-                                let derivedBody: string | null = null;
-
-                                if (payload.event === "Countdown.Created") {
-                                    const actorName =
-                                        payload.actor_name ?? "Someone";
-                                    const countdownTitle =
-                                        payload.countdown_title ??
-                                        "a new event";
-                                    const countdownDate =
-                                        payload.countdown_date;
-
-                                    let message = `${actorName} planned a new upcoming event. Countdown "${countdownTitle}" is scheduled for ${countdownDate}. Get prepared for the surprise!`;
-
-                                    if (
-                                        countdownDate &&
-                                        typeof countdownDate === "string"
-                                    ) {
-                                        try {
-                                            const date = new Date(
-                                                countdownDate
-                                            );
-                                            const formattedDate =
-                                                new Intl.DateTimeFormat(
-                                                    locale,
-                                                    {
-                                                        dateStyle: "long",
-                                                        timeZone: "UTC",
-                                                    }
-                                                ).format(date);
-                                            message = `${actorName} merencanakan acara baru yang akan datang. Hitung mundur "${countdownTitle}" dijadwalkan pada ${formattedDate}. Bersiaplah untuk kejutan!`;
-                                        } catch (e) {
-                                            // Date formatting failed, use original message
-                                        }
-                                    }
-                                    derivedBody = message;
-                                } else {
-                                    derivedBody =
-                                        (typeof payload.status_message ===
-                                            "string" &&
-                                        payload.status_message.trim().length > 0
-                                            ? payload.status_message.trim()
-                                            : null) ??
-                                        (typeof payload.body === "string" &&
-                                        payload.body.trim().length > 0
-                                            ? payload.body.trim()
-                                            : null) ??
-                                        (typeof payload.message === "string" &&
-                                        payload.message.trim().length > 0
-                                            ? payload.message.trim()
-                                            : null) ??
-                                        null;
-                                }
+                                const derivedBody =
+                                    (typeof payload.body === "string" &&
+                                    payload.body.trim().length > 0
+                                        ? payload.body.trim()
+                                        : null) ??
+                                    (typeof payload.message === "string" &&
+                                    payload.message.trim().length > 0
+                                        ? payload.message.trim()
+                                        : null) ??
+                                    null;
 
                                 const actionButton =
                                     typeof payload.action_url === "string" &&
@@ -612,25 +570,6 @@ export default function NotificationsIndex() {
                                                 </div>
                                             </div>
                                         </div>
-                                        {detailItems.length > 0 && (
-                                            <div className="mt-3 rounded-xl bg-white/80 px-4 py-3">
-                                                {detailItems.map(
-                                                    (item, index) => (
-                                                        <div
-                                                            key={`${notification.id}-${item.label}-${index}`}
-                                                            className="flex flex-col gap-0.5"
-                                                        >
-                                                            <p className="text-xs font-semibold uppercase tracking-wide text-gray-400">
-                                                                {item.label}
-                                                            </p>
-                                                            <p className="text-sm text-gray-700 whitespace-pre-wrap">
-                                                                {item.value}
-                                                            </p>
-                                                        </div>
-                                                    )
-                                                )}
-                                            </div>
-                                        )}
                                     </li>
                                 );
                             })}

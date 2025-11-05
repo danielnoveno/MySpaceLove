@@ -38,8 +38,8 @@ class LoveTimelineApiController extends Controller
                 }
 
                 $resolvedThumbnail = $thumbnail
-                    ? Storage::disk('public')->url($thumbnail)
-                    : ($mediaPaths ? Storage::disk('public')->url($mediaPaths[0]) : null);
+                    ? asset('storage/' . $thumbnail)
+                    : ($mediaPaths ? asset('storage/' . $mediaPaths[0]) : null);
 
                 return [
                     'id' => $timeline->id,

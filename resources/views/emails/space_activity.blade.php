@@ -17,7 +17,13 @@
             $actorName = $activityData['meta']['actor_name'] ?? 'Seseorang';
             $event = $activityData['event'];
             $meta = $activityData['meta'];
+            if (is_string($meta)) {
+                $meta = json_decode($meta, true) ?? [];
+            }
             $messageBody = '';
+
+            // Re-assign actorName just in case it was inside the JSON meta
+            $actorName = $meta['actor_name'] ?? $actorName;
 
             switch ($event) {
                 case 'Countdown.Created':
