@@ -3,6 +3,7 @@ import InputError from '@/Components/InputError';
 import InputLabel from '@/Components/InputLabel';
 import PrimaryButton from '@/Components/PrimaryButton';
 import TextInput from '@/Components/TextInput';
+import PasswordInput from '@/Components/PasswordInput';
 import GuestLayout from '@/Layouts/GuestLayout';
 import { useTranslation } from '@/hooks/useTranslation';
 import { Head, Link, useForm } from '@inertiajs/react';
@@ -136,9 +137,8 @@ export default function Register({ canUseGoogleAuth = false }: RegisterProps) {
                     <div className="space-y-2 text-left">
                         <InputLabel htmlFor="password" value={commonStrings.password ?? 'Password'} />
 
-                        <TextInput
+                        <PasswordInput
                             id="password"
-                            type="password"
                             name="password"
                             value={data.password}
                             className="mt-1 w-full rounded-xl border border-rose-100 bg-white/70 px-4 py-3 text-sm text-gray-900 shadow-sm focus:border-pink-400 focus:ring-pink-400"
@@ -156,9 +156,8 @@ export default function Register({ canUseGoogleAuth = false }: RegisterProps) {
                             value={commonStrings.confirm_password ?? 'Confirm password'}
                         />
 
-                        <TextInput
+                        <PasswordInput
                             id="password_confirmation"
-                            type="password"
                             name="password_confirmation"
                             value={data.password_confirmation}
                             className="mt-1 w-full rounded-xl border border-rose-100 bg-white/70 px-4 py-3 text-sm text-gray-900 shadow-sm focus:border-pink-400 focus:ring-pink-400"

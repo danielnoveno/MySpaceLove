@@ -22,8 +22,13 @@ class JournalCreated extends Notification implements ShouldQueue
     /**
      * Create a new notification instance.
      */
-    public function __construct(LoveJournal $journal, Space $space, string $action)
-    {
+    public function __construct(
+        LoveJournal $journal,
+        Space $space,
+        string $action,
+        public string $senderName,
+        public bool $isSenderNotification = false
+    ) {
         $this->journal = $journal;
         $this->space = $space;
         $this->action = $action;
@@ -52,12 +57,20 @@ class JournalCreated extends Notification implements ShouldQueue
 
         switch ($this->action) {
             case 'created':
-                $subject = __('New Journal Entry Created!');
-                $greeting = __('Hello!');
-                $body = __('A new journal entry ":title" has been created in your space ":space_title".', [
-                    'title' => $this->journal->title,
-                    'space_title' => $this->space->title,
-                ]);
+                if ($this->isSenderNotification) {
+                    $subject = __('Journal Entry Created!');
+                    $greeting = __('Hello!');
+                    $body = __('Your journal entry ":title" has been successfully created.', [
+                        'title' => $this->journal->title,
+                    ]);
+                } else {
+                    $subject = __('New Journal Entry Created!');
+                    $greeting = __('Hello!');
+                    $body = __('A new journal entry ":title" has been created in your space ":space_title".', [
+                        'title' => $this->journal->title,
+                        'space_title' => $this->space->title,
+                    ]);
+                }
                 $actionText = __('View Journal');
                 $actionUrl = route('journal.index', ['space' => $this->space->slug]);
                 break;
@@ -82,15 +95,24 @@ class JournalCreated extends Notification implements ShouldQueue
      */
     public function toArray(object $notifiable): array
     {
+        $title = $this->isSenderNotification
+            ? __('Jurnal berhasil dibuat!')
+            : __('Jurnal baru telah dibuat oleh :user', ['user' => $this->senderName]);
+
+        $body = $this->isSenderNotification
+            ? __('Jurnal Anda ":title" telah berhasil disimpan.', ['title' => $this->journal->title])
+            : __('Jurnal baru berjudul ":title" telah dibuat di ruang Anda.', ['title' => $this->journal->title]);
+
         return [
             'journal_id' => $this->journal->id,
             'space_id' => $this->space->id,
-            'title' => $this->journal->title,
-            'content' => $this->journal->content,
+            'title' => $title,
+            'body' => $body,
             'mood' => $this->journal->mood,
             'action' => $this->action,
             'space_slug' => $this->space->slug,
             'space_title' => $this->space->title,
+            'url' => route('journal.index', ['space' => $this->space->slug]),
         ];
     }
 }

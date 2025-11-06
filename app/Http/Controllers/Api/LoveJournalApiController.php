@@ -10,10 +10,15 @@ use App\Notifications\JournalDeleted;
 use App\Notifications\JournalUpdated;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use App\Services\ActivityLogger;
 use Inertia\Inertia;
 
 class LoveJournalApiController extends Controller
 {
+    public function __construct(private readonly ActivityLogger $activityLogger)
+    {
+    }
+
     public function index(Space $space)
     {
         $this->authorizeSpace($space);
@@ -42,9 +47,37 @@ class LoveJournalApiController extends Controller
         $journal = LoveJournal::create($data);
 
         $partner = $space->partner();
+        $senderName = Auth::user()->name ?? 'Pasangan';
+        $data = [
+            'space_id' => $space->id,
+            'space_slug' => $space->slug,
+            'journal_id' => $journal->id,
+            'journal_title' => $journal->title,
+            'action_url' => route('journal.index', ['space' => $space->slug]),
+            'action_label' => __('Lihat Jurnal'),
+        ];
+
         if ($partner) {
-            $partner->notify(new JournalCreated($journal, $space, 'created'));
+            $this->activityLogger->log(
+                $partner,
+                'journal.created',
+                __(':actor membuat jurnal baru', ['actor' => $senderName]),
+                __('Jurnal ":title" baru ditambahkan.', ['title' => $journal->title]),
+                $data,
+                sendMail: true
+            );
+            $partner->notify(new JournalCreated($journal, $space, 'created', $senderName));
         }
+
+
+        $this->activityLogger->log(
+            Auth::user(),
+            'journal.created',
+            __('Jurnal Anda berhasil dibuat'),
+            __('Jurnal ":title" Anda telah berhasil disimpan.', ['title' => $journal->title]),
+            $data,
+            sendMail: false // Sender already gets JournalCreated, only log activity for them
+        );
 
         return Inertia::location(route('journal.index', ['space' => $space->slug]));
     }
@@ -65,9 +98,11 @@ class LoveJournalApiController extends Controller
         $journal->update($data);
 
         $partner = $space->partner();
+        $senderName = Auth::user()->name ?? 'Pasangan';
         if ($partner) {
-            $partner->notify(new JournalUpdated($journal, $space, 'updated'));
+            $partner->notify(new JournalUpdated($journal, $space, 'updated', $senderName));
         }
+
 
         return Inertia::location(route('journal.index', ['space' => $space->slug]));
     }
@@ -81,9 +116,11 @@ class LoveJournalApiController extends Controller
         $journal->delete();
 
         $partner = $space->partner();
+        $senderName = Auth::user()->name ?? 'Pasangan';
         if ($partner) {
-            $partner->notify(new JournalDeleted($journal, $space, 'deleted'));
+            $partner->notify(new JournalDeleted($journal, $space, 'deleted', $senderName));
         }
+
 
         if ($request->wantsJson()) {
             return response()->json(['message' => 'deleted']);

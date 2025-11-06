@@ -24,11 +24,18 @@ type SpaceInvitationHistory = {
     cancelled_at: string | null;
 };
 
+type UserProfile = {
+    id: number;
+    name: string;
+    profile_photo_url: string;
+};
+
 type SpaceListItem = {
     id: number;
     slug: string;
     title: string;
     has_partner: boolean;
+    users: (UserProfile | null)[];
     pending_invitation: {
         id: number;
         email: string;
@@ -132,7 +139,9 @@ export default function SpacesIndex({
         Record<number, { type: "success" | "error"; message: string } | null>
     >({});
     const [inviteLoadingId, setInviteLoadingId] = useState<number | null>(null);
-    const [cancelInvitationLoadingId, setCancelInvitationLoadingId] = useState<number | null>(null);
+    const [cancelInvitationLoadingId, setCancelInvitationLoadingId] = useState<
+        number | null
+    >(null);
     const [separationInputs, setSeparationInputs] = useState<
         Record<number, { phrase: string; reason: string }>
     >({});
@@ -196,7 +205,7 @@ export default function SpacesIndex({
                 };
             });
         },
-        [],
+        []
     );
 
     const getInvitationStatusClasses = (status: string): string => {
@@ -214,6 +223,33 @@ export default function SpacesIndex({
             default:
                 return "border border-gray-200 bg-gray-50 text-gray-600";
         }
+    };
+
+    const getUserInitials = (name: string): string => {
+        const parts = name.split(" ").filter((p) => p.length > 0);
+        if (parts.length === 0) return "";
+
+        if (parts.length === 1) {
+            return parts[0].charAt(0).toUpperCase();
+        }
+
+        return (
+            parts[0].charAt(0).toUpperCase() +
+            parts[parts.length - 1].charAt(0).toUpperCase()
+        );
+    };
+
+    const getAvatarFallbackClasses = (userId: number): string => {
+        const colors = [
+            "bg-pink-100 text-pink-800",
+            "bg-purple-100 text-purple-800",
+            "bg-indigo-100 text-indigo-800",
+            "bg-blue-100 text-blue-800",
+            "bg-green-100 text-green-800",
+            "bg-yellow-100 text-yellow-800",
+            "bg-red-100 text-red-800",
+        ];
+        return colors[userId % colors.length];
     };
 
     const getInviteAlertClasses = useCallback((type: "success" | "error") => {
@@ -379,17 +415,17 @@ export default function SpacesIndex({
                       }
                     | undefined;
 
-                const fieldError = data?.errors?.partner_code?.[0];
+                const fieldError = data?.errors?.partner_code;
 
                 if (fieldError) {
-                    setJoinCodeError(fieldError);
+                    setJoinCodeError(fieldError.join(", "));
                 }
 
                 setJoinAlert({
                     type: "error",
                     message:
                         data?.message ??
-                        fieldError ??
+                        (fieldError ? fieldError.join(", ") : undefined) ??
                         "Gagal mengajukan permintaan bergabung.",
                 });
             } else {
@@ -507,8 +543,8 @@ export default function SpacesIndex({
                 setInviteFieldErrors((previous) => ({
                     ...previous,
                     [space.id]: {
-                        partner_name: fieldErrors.partner_name?.[0],
-                        partner_email: fieldErrors.partner_email?.[0],
+                        partner_name: fieldErrors.partner_name?.join(", "),
+                        partner_email: fieldErrors.partner_email?.join(", "),
                     },
                 }));
 
@@ -518,8 +554,8 @@ export default function SpacesIndex({
                         type: "error",
                         message:
                             data?.message ??
-                            fieldErrors.partner_name?.[0] ??
-                            fieldErrors.partner_email?.[0] ??
+                            fieldErrors.partner_name?.join(", ") ??
+                            fieldErrors.partner_email?.join(", ") ??
                             "Gagal mengirim undangan. Silakan coba lagi.",
                     },
                 }));
@@ -939,6 +975,44 @@ export default function SpacesIndex({
                                                 ? "Pasangan sudah terhubung. Nikmati semua fitur berdua."
                                                 : "Belum ada pasangan. Kamu bisa mengundang pasangan kapan saja."}
                                         </p>
+                                        <div className="mt-2 flex flex-wrap items-center gap-4">
+                                            {space.users
+                                                .filter((user) => user !== null)
+                                                .map((user) => (
+                                                    <div
+                                                        key={user!.id}
+                                                        className="flex items-center gap-2"
+                                                    >
+                                                        {user!
+                                                            .profile_photo_url ? (
+                                                            <img
+                                                                className="h-8 w-8 rounded-full object-cover flex-shrink-0"
+                                                                src={
+                                                                    user!
+                                                                        .profile_photo_url
+                                                                }
+                                                                alt={user!.name}
+                                                            />
+                                                        ) : (
+                                                            <div
+                                                                className={`h-8 w-8 rounded-full flex-shrink-0 flex items-center justify-center text-sm font-semibold ${getAvatarFallbackClasses(
+                                                                    user!.id
+                                                                )}`}
+                                                                title={
+                                                                    user!.name
+                                                                }
+                                                            >
+                                                                {getUserInitials(
+                                                                    user!.name
+                                                                )}
+                                                            </div>
+                                                        )}
+                                                        <span className="text-sm font-medium text-gray-700">
+                                                            {user!.name}
+                                                        </span>
+                                                    </div>
+                                                ))}
+                                        </div>
                                         {pendingInvitation && (
                                             <p className="mt-1 text-xs text-gray-400">
                                                 {pendingInvitation.status_label}{" "}
@@ -976,7 +1050,11 @@ export default function SpacesIndex({
                                 {!space.has_partner && (
                                     <div className="mt-4 space-y-3">
                                         {inviteAlert && (
-                                            <div className={getInviteAlertClasses(inviteAlert.type)}>
+                                            <div
+                                                className={getInviteAlertClasses(
+                                                    inviteAlert.type
+                                                )}
+                                            >
                                                 {inviteAlert.message}
                                             </div>
                                         )}
@@ -984,20 +1062,33 @@ export default function SpacesIndex({
                                         {pendingInvitation ? (
                                             <div className="rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800">
                                                 <p>
-                                                    Undangan sedang menunggu konfirmasi dari {" "}
+                                                    Undangan sedang menunggu
+                                                    konfirmasi dari{" "}
                                                     <span className="font-semibold">
-                                                        {pendingInvitation.email}
+                                                        {
+                                                            pendingInvitation.email
+                                                        }
                                                     </span>
-                                                    . Batalkan undangan ini jika ingin mengundang akun lain.
+                                                    . Batalkan undangan ini jika
+                                                    ingin mengundang akun lain.
                                                 </p>
                                                 <div className="mt-3 flex flex-wrap gap-2">
                                                     <PrimaryButton
                                                         type="button"
-                                                        disabled={cancelInvitationLoadingId === pendingInvitation.id}
-                                                        onClick={() => void handleCancelInvitation(space, pendingInvitation.id)}
+                                                        disabled={
+                                                            cancelInvitationLoadingId ===
+                                                            pendingInvitation.id
+                                                        }
+                                                        onClick={() =>
+                                                            void handleCancelInvitation(
+                                                                space,
+                                                                pendingInvitation.id
+                                                            )
+                                                        }
                                                         className="bg-amber-500 hover:bg-amber-600 disabled:opacity-70"
                                                     >
-                                                        {cancelInvitationLoadingId === pendingInvitation.id
+                                                        {cancelInvitationLoadingId ===
+                                                        pendingInvitation.id
                                                             ? "Membatalkan..."
                                                             : "Batalkan Undangan"}
                                                     </PrimaryButton>
@@ -1007,7 +1098,11 @@ export default function SpacesIndex({
                                             <>
                                                 <button
                                                     type="button"
-                                                    onClick={() => toggleInviteForm(space.id)}
+                                                    onClick={() =>
+                                                        toggleInviteForm(
+                                                            space.id
+                                                        )
+                                                    }
                                                     className="inline-flex items-center justify-center rounded-full border border-pink-200 px-4 py-2 text-sm font-semibold text-pink-600 transition hover:bg-pink-50"
                                                 >
                                                     {isInviteOpen
@@ -1020,7 +1115,9 @@ export default function SpacesIndex({
                                                         className="space-y-4 rounded-lg border border-pink-100 bg-pink-50 p-4"
                                                         onSubmit={(event) => {
                                                             event.preventDefault();
-                                                            void handleInviteSubmit(space);
+                                                            void handleInviteSubmit(
+                                                                space
+                                                            );
                                                         }}
                                                     >
                                                         <div>
@@ -1030,16 +1127,28 @@ export default function SpacesIndex({
                                                             />
                                                             <TextInput
                                                                 id={`partner_name_${space.id}`}
-                                                                value={inviteForm.name}
+                                                                value={
+                                                                    inviteForm.name
+                                                                }
                                                                 className="mt-1 block w-full"
-                                                                onChange={(event) =>
-                                                                    updateInviteForm(space.id, "name", event.target.value)
+                                                                onChange={(
+                                                                    event
+                                                                ) =>
+                                                                    updateInviteForm(
+                                                                        space.id,
+                                                                        "name",
+                                                                        event
+                                                                            .target
+                                                                            .value
+                                                                    )
                                                                 }
                                                                 placeholder="Contoh: Aulia Rahma"
                                                                 autoComplete="off"
                                                             />
                                                             <InputError
-                                                                message={inviteErrors.partner_name}
+                                                                message={
+                                                                    inviteErrors.partner_name
+                                                                }
                                                                 className="mt-1"
                                                             />
                                                         </div>
@@ -1052,16 +1161,28 @@ export default function SpacesIndex({
                                                             <TextInput
                                                                 id={`partner_email_${space.id}`}
                                                                 type="email"
-                                                                value={inviteForm.email}
+                                                                value={
+                                                                    inviteForm.email
+                                                                }
                                                                 className="mt-1 block w-full"
-                                                                onChange={(event) =>
-                                                                    updateInviteForm(space.id, "email", event.target.value)
+                                                                onChange={(
+                                                                    event
+                                                                ) =>
+                                                                    updateInviteForm(
+                                                                        space.id,
+                                                                        "email",
+                                                                        event
+                                                                            .target
+                                                                            .value
+                                                                    )
                                                                 }
                                                                 placeholder="nama@email.com"
                                                                 autoComplete="off"
                                                             />
                                                             <InputError
-                                                                message={inviteErrors.partner_email}
+                                                                message={
+                                                                    inviteErrors.partner_email
+                                                                }
                                                                 className="mt-1"
                                                             />
                                                         </div>
@@ -1069,15 +1190,23 @@ export default function SpacesIndex({
                                                         <PrimaryButton
                                                             type="submit"
                                                             className="w-full justify-center"
-                                                            disabled={inviteLoadingId === space.id}
+                                                            disabled={
+                                                                inviteLoadingId ===
+                                                                space.id
+                                                            }
                                                         >
-                                                            {inviteLoadingId === space.id
+                                                            {inviteLoadingId ===
+                                                            space.id
                                                                 ? "Mengirim undangan..."
                                                                 : "Kirim Undangan"}
                                                         </PrimaryButton>
 
                                                         <p className="text-xs text-pink-600">
-                                                            Pasanganmu akan melihat undangan ini saat mereka masuk menggunakan email di atas.
+                                                            Pasanganmu akan
+                                                            melihat undangan ini
+                                                            saat mereka masuk
+                                                            menggunakan email di
+                                                            atas.
                                                         </p>
                                                     </form>
                                                 )}
@@ -1092,47 +1221,62 @@ export default function SpacesIndex({
                                             Riwayat undangan
                                         </p>
                                         <div className="space-y-2">
-                                            {space.invitations.map((invitation) => (
-                                                <div
-                                                    key={invitation.id}
-                                                    className="rounded-lg border border-gray-100 bg-gray-50 p-3"
-                                                >
-                                                    <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-                                                        <div>
-                                                            <p className="text-sm font-medium text-gray-900">
-                                                                {invitation.email}
-                                                            </p>
-                                                            <p className="text-xs text-gray-500">
-                                                                Dikirim {invitation.sent_at ?? "waktu tidak diketahui"}
-                                                            </p>
-                                                            {invitation.responded_at && (
-                                                                <p className="text-xs text-gray-500">
-                                                                    Ditanggapi {invitation.responded_at}
+                                            {space.invitations.map(
+                                                (invitation) => (
+                                                    <div
+                                                        key={invitation.id}
+                                                        className="rounded-lg border border-gray-100 bg-gray-50 p-3"
+                                                    >
+                                                        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                                                            <div>
+                                                                <p className="text-sm font-medium text-gray-900">
+                                                                    {
+                                                                        invitation.email
+                                                                    }
                                                                 </p>
-                                                            )}
-                                                            {invitation.cancelled_at && (
                                                                 <p className="text-xs text-gray-500">
-                                                                    Dibatalkan {invitation.cancelled_at}
+                                                                    Dikirim{" "}
+                                                                    {invitation.sent_at ??
+                                                                        "waktu tidak diketahui"}
                                                                 </p>
-                                                            )}
-                                                        </div>
-                                                        <div className="flex items-start sm:flex-col sm:items-end">
-                                                            <span
-                                                                className={
-                                                                    "inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold " +
-                                                                    getInvitationStatusClasses(invitation.status)
-                                                                }
-                                                            >
-                                                                {invitation.status_label}
-                                                            </span>
+                                                                {invitation.responded_at && (
+                                                                    <p className="text-xs text-gray-500">
+                                                                        Ditanggapi{" "}
+                                                                        {
+                                                                            invitation.responded_at
+                                                                        }
+                                                                    </p>
+                                                                )}
+                                                                {invitation.cancelled_at && (
+                                                                    <p className="text-xs text-gray-500">
+                                                                        Dibatalkan{" "}
+                                                                        {
+                                                                            invitation.cancelled_at
+                                                                        }
+                                                                    </p>
+                                                                )}
+                                                            </div>
+                                                            <div className="flex items-start sm:flex-col sm:items-end">
+                                                                <span
+                                                                    className={
+                                                                        "inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold " +
+                                                                        getInvitationStatusClasses(
+                                                                            invitation.status
+                                                                        )
+                                                                    }
+                                                                >
+                                                                    {
+                                                                        invitation.status_label
+                                                                    }
+                                                                </span>
+                                                            </div>
                                                         </div>
                                                     </div>
-                                                </div>
-                                            ))}
+                                                )
+                                            )}
                                         </div>
                                     </div>
                                 )}
-
                             </div>
                         );
                     })}
@@ -1162,14 +1306,14 @@ export default function SpacesIndex({
                             <h3 className="text-lg font-semibold text-gray-900">
                                 Permintaan Pembubaran Sedang Berjalan
                             </h3>
-                            <p className="mt-1 text-sm text-gray-600">
-                                {pending.initiated_by_you
+                            <p>
+                                {pending?.initiated_by_you
                                     ? "Kamu sudah mengajukan permintaan untuk mengakhiri Space. Pasanganmu harus mengetik frasa konfirmasi agar proses selesai."
-                                    : pending.requires_your_confirmation
+                                    : pending?.requires_your_confirmation
                                     ? "Pasanganmu meminta untuk mengakhiri Space ini. Pastikan kamu mempertimbangkan baik-baik sebelum mengambil keputusan."
                                     : "Permintaan pembubaran sedang diproses."}
                             </p>
-                            {pending.created_at && (
+                            {pending?.created_at && (
                                 <p className="mt-1 text-xs text-gray-400">
                                     Diajukan pada{" "}
                                     {new Date(
@@ -1180,28 +1324,30 @@ export default function SpacesIndex({
                         </div>
                     </div>
 
-                    {(pending.reason.initiator || pending.reason.partner) && (
-                        <div className="rounded-xl border border-red-100 bg-red-50 p-4 text-sm text-red-700 space-y-1">
-                            {pending.reason.initiator && (
-                                <p>
-                                    <span className="font-semibold">
-                                        Alasan pengaju:
-                                    </span>{" "}
-                                    {pending.reason.initiator}
-                                </p>
-                            )}
-                            {pending.reason.partner && (
-                                <p>
-                                    <span className="font-semibold">
-                                        Catatan pasangan:
-                                    </span>{" "}
-                                    {pending.reason.partner}
-                                </p>
-                            )}
-                        </div>
-                    )}
+                    {pending?.reason &&
+                        (pending.reason.initiator ||
+                            pending.reason.partner) && (
+                            <div className="rounded-xl border border-red-100 bg-red-50 p-4 text-sm text-red-700 space-y-1">
+                                {pending.reason.initiator && (
+                                    <p>
+                                        <span className="font-semibold">
+                                            Alasan pengaju:
+                                        </span>{" "}
+                                        {pending.reason.initiator}
+                                    </p>
+                                )}
+                                {pending.reason.partner && (
+                                    <p>
+                                        <span className="font-semibold">
+                                            Catatan pasangan:
+                                        </span>{" "}
+                                        {pending.reason.partner}
+                                    </p>
+                                )}
+                            </div>
+                        )}
 
-                    {pending.initiated_by_you && (
+                    {pending?.initiated_by_you && (
                         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between rounded-xl border border-dashed border-red-200 bg-red-50 p-4">
                             <div className="text-sm text-red-700">
                                 Kamu masih bisa membatalkan permintaan ini jika
@@ -1220,7 +1366,7 @@ export default function SpacesIndex({
                         </div>
                     )}
 
-                    {pending.requires_your_confirmation && (
+                    {pending?.requires_your_confirmation && (
                         <div className="space-y-4">
                             <div>
                                 <InputLabel
@@ -1258,9 +1404,9 @@ export default function SpacesIndex({
                                     placeholder={separationConfirmationPhrase}
                                 />
                                 <p className="mt-1 text-xs text-gray-500">
-                                    Ketik persis{" "}
-                                    {`"${separationConfirmationPhrase}"`} untuk
-                                    mengonfirmasi keputusanmu.
+                                    Ketik persis {'"'}
+                                    {separationConfirmationPhrase}
+                                    {'"'} untuk mengonfirmasi keputusanmu.
                                 </p>
                             </div>
 
@@ -1397,9 +1543,9 @@ export default function SpacesIndex({
                                     placeholder={separationConfirmationPhrase}
                                 />
                                 <p className="mt-1 text-xs text-gray-500">
-                                    Ketik persis{" "}
-                                    {`"${separationConfirmationPhrase}"`} untuk
-                                    mengirim permintaan.
+                                    Ketik persis {'"'}
+                                    {separationConfirmationPhrase}
+                                    {'"'} untuk mengirim permintaan.
                                 </p>
                             </div>
 
@@ -1429,154 +1575,147 @@ export default function SpacesIndex({
             </div>
         );
     };
-
     return (
         <AuthenticatedLayout
             header={
-                <h2 className="font-semibold text-xl text-gray-800">Spaces</h2>
+                <h2 className="text-xl font-semibold leading-tight text-gray-800">
+                    Daftar Space
+                </h2>
             }
         >
             <Head title="Spaces" />
 
-            <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6 pt-4">
-                {status && (
-                    <div className="rounded-lg border border-pink-100 bg-pink-50 px-4 py-3 text-sm text-pink-700">
-                        {status}
-                    </div>
-                )}
-
-                {joinAlert && (
-                    <div
-                        className={`rounded-lg border px-4 py-3 text-sm ${
-                            joinAlert.type === "success"
-                                ? "border-emerald-100 bg-emerald-50 text-emerald-700"
-                                : "border-red-100 bg-red-50 text-red-700"
-                        }`}
-                    >
-                        {joinAlert.message}
-                    </div>
-                )}
-
-                {separationAlert && (
-                    <div
-                        className={`rounded-lg border px-4 py-3 text-sm ${
-                            separationAlert.type === "success"
-                                ? "border-amber-100 bg-amber-50 text-amber-700"
-                                : "border-red-100 bg-red-50 text-red-700"
-                        }`}
-                    >
-                        {separationAlert.message}
-                    </div>
-                )}
-
-                {acceptError && (
-                    <div className="rounded-lg border border-red-100 bg-red-50 px-4 py-3 text-sm text-red-700">
-                        {acceptError}
-                    </div>
-                )}
-
-                {awaitingYourDecision.length > 0 && (
-                    <div className="rounded-xl border border-red-100 bg-red-50 px-4 py-3 text-sm text-red-700 flex items-start gap-3">
-                        <AlertTriangle className="mt-0.5 h-5 w-5 flex-shrink-0" />
-                        <div>
-                            <p className="font-semibold">Perlu keputusanmu</p>
-                            <p className="mt-1 text-xs text-red-600">
-                                Ada permintaan pembubaran Space yang menunggu
-                                persetujuanmu. Gulir ke bawah untuk
-                                menindaklanjuti.
-                            </p>
-                        </div>
-                    </div>
-                )}
-
-                {hasPendingInvitations && (
-                    <div className="bg-white shadow-sm rounded-xl p-6 space-y-4">
-                        <div>
-                            <h3 className="text-lg font-semibold text-gray-900">
-                                Undangan Space untuk Kamu
-                            </h3>
-                            <p className="text-sm text-gray-500">
-                                Terima undangan berikut untuk bergabung dengan
-                                Space pasanganmu.
-                            </p>
-                        </div>
-
-                        <div className="space-y-3">
-                            {pendingInvitations.map((invitation) => (
-                                <div
-                                    key={invitation.id}
-                                    className="rounded-lg border border-purple-100 bg-purple-50 px-4 py-3"
-                                >
-                                    <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-                                        <div>
-                                            <p className="text-sm font-medium text-gray-900">
-                                                {invitation.space.title}
-                                            </p>
-                                            <p className="text-xs text-gray-600">
-                                                Diundang menggunakan email{" "}
-                                                <span className="font-semibold">
-                                                    {invitation.email}
-                                                </span>
-                                            </p>
-                                        </div>
-                                        <PrimaryButton
-                                            type="button"
-                                            disabled={
-                                                acceptingInvitationId ===
-                                                invitation.id
-                                            }
-                                            onClick={() =>
-                                                handleAcceptInvitation(
-                                                    invitation
-                                                )
-                                            }
-                                            className="justify-center"
-                                        >
-                                            {acceptingInvitationId ===
-                                            invitation.id
-                                                ? "Mengonfirmasi..."
-                                                : "Terima Undangan"}
-                                        </PrimaryButton>
-                                    </div>
+            <div className="py-12">
+                <div className="mx-auto max-w-7xl sm:px-6 lg:px-8">
+                    <div className="flex flex-col gap-6 lg:flex-row lg:gap-8">
+                        <div className="flex-1 space-y-6">
+                            {hasSpaces && renderSpacesList()}
+                            {hasSpaces &&
+                                spaces.map((space) =>
+                                    renderSeparationBlock(space)
+                                )}
+                            {!hasSpaces && (
+                                <div className="space-y-6">
+                                    {canCreate && renderCreateSpaceBlock()}
+                                    {!canCreate && renderJoinSpaceBlock()}
                                 </div>
-                            ))}
-                        </div>
-                    </div>
-                )}
-
-                {!hasSpaces ? (
-                    <>
-                        <div className="bg-white shadow-sm rounded-xl p-8 space-y-6">
-                            <div>
-                                <h3 className="text-2xl font-bold text-gray-900">
-                                    Selamat datang di LoveSpace!
-                                </h3>
-                                <p className="mt-2 text-gray-600">
-                                    Kamu sudah berhasil membuat akun. Pilih
-                                    salah satu opsi di bawah ini untuk mulai
-                                    menggunakan LoveSpace bersama pasanganmu.
-                                </p>
-                            </div>
-                        </div>
-
-                        <div className="grid gap-6 md:grid-cols-2">
-                            {renderJoinSpaceBlock()}
-                            {renderCreateSpaceBlock()}
-                        </div>
-                    </>
-                ) : (
-                    <>
-                        <div className="pt-4 grid gap-6">
-                            {renderSpacesList()}
-                            {renderCreateSpaceBlock()}
-                        </div>
-                        <div className="grid gap-6">
-                            {spaces.map((space) =>
-                                renderSeparationBlock(space)
                             )}
                         </div>
-                    </>
-                )}
+
+                        <div className="lg:w-80 space-y-6">
+                            {!hasSpaces && canCreate && renderJoinSpaceBlock()}
+                            {hasPendingInvitations && (
+                                <div className="bg-white shadow-sm rounded-xl p-6 space-y-4">
+                                    <h3 className="text-lg font-semibold text-gray-900">
+                                        Undangan Menunggu
+                                    </h3>
+                                    <p className="text-sm text-gray-500">
+                                        Kamu menerima undangan untuk bergabung
+                                        ke Space berikut.
+                                    </p>
+                                    <div className="space-y-3">
+                                        {pendingInvitations.map(
+                                            (invitation) => (
+                                                <div
+                                                    key={invitation.id}
+                                                    className="rounded-lg border border-pink-100 bg-pink-50 p-3"
+                                                >
+                                                    <p className="text-sm font-medium text-gray-900">
+                                                        {invitation.space.title}
+                                                    </p>
+                                                    <p className="text-xs text-gray-500">
+                                                        Dari: {invitation.email}
+                                                    </p>
+                                                    <div className="mt-2 flex gap-2">
+                                                        <PrimaryButton
+                                                            type="button"
+                                                            onClick={() =>
+                                                                handleAcceptInvitation(
+                                                                    invitation
+                                                                )
+                                                            }
+                                                            disabled={
+                                                                acceptingInvitationId ===
+                                                                invitation.id
+                                                            }
+                                                            className="flex-1 justify-center bg-pink-600 hover:bg-pink-700"
+                                                        >
+                                                            {acceptingInvitationId ===
+                                                            invitation.id
+                                                                ? "Menerima..."
+                                                                : "Terima"}
+                                                        </PrimaryButton>
+                                                    </div>
+                                                    {acceptError && (
+                                                        <p className="mt-2 text-xs text-red-600">
+                                                            {acceptError}
+                                                        </p>
+                                                    )}
+                                                </div>
+                                            )
+                                        )}
+                                    </div>
+                                </div>
+                            )}
+
+                            {awaitingYourDecision.length > 0 && (
+                                <div className="bg-white shadow-sm rounded-xl p-6 space-y-4">
+                                    <h3 className="text-lg font-semibold text-gray-900">
+                                        Tunggu Keputusanmu
+                                    </h3>
+                                    <p className="text-sm text-gray-500">
+                                        Ada permintaan pembubaran Space yang
+                                        membutuhkan persetujuanmu.
+                                    </p>
+                                    <div className="space-y-3">
+                                        {awaitingYourDecision.map((request) => (
+                                            <div
+                                                key={request.id}
+                                                className="rounded-lg border border-red-100 bg-red-50 p-3"
+                                            >
+                                                <p className="text-sm font-medium text-gray-900">
+                                                    {request.space?.title ??
+                                                        "Space Tidak Ditemukan"}
+                                                </p>
+                                                <p className="text-xs text-gray-500">
+                                                    Diajukan oleh:{" "}
+                                                    {request.initiator?.name ??
+                                                        "Tidak Diketahui"}
+                                                </p>
+                                                <div className="mt-2 flex gap-2">
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => {
+                                                            toggleSeparationSection(
+                                                                request.id
+                                                            );
+                                                            setActiveSeparationSpaceId(
+                                                                request.id
+                                                            );
+                                                        }}
+                                                        className="flex-1 justify-center rounded-full bg-white px-4 py-2 text-sm font-semibold text-gray-600 ring-1 ring-inset ring-gray-200 transition hover:bg-gray-100"
+                                                    >
+                                                        Tinjau & Putuskan
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+
+                            {separationAlert && (
+                                <div
+                                    className={getInviteAlertClasses(
+                                        separationAlert.type
+                                    )}
+                                >
+                                    {separationAlert.message}
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                </div>
             </div>
         </AuthenticatedLayout>
     );

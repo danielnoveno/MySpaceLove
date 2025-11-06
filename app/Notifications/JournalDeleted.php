@@ -22,8 +22,13 @@ class JournalDeleted extends Notification implements ShouldQueue
 
     public string $action;
 
-    public function __construct(LoveJournal $journal, Space $space, string $action)
-    {
+    public function __construct(
+        LoveJournal $journal,
+        Space $space,
+        string $action,
+        public string $senderName,
+        public bool $isSenderNotification = false
+    ) {
         $this->journal = $journal;
         $this->space = $space;
         $this->action = $action;
@@ -52,12 +57,20 @@ class JournalDeleted extends Notification implements ShouldQueue
 
         switch ($this->action) {
             case 'deleted':
-                $subject = __('Journal Entry Deleted!');
-                $greeting = __('Hello!');
-                $body = __('The journal entry ":title" in your space ":space_title" has been deleted.', [
-                    'title' => $this->journal->title,
-                    'space_title' => $this->space->title,
-                ]);
+                if ($this->isSenderNotification) {
+                    $subject = __('Journal Entry Deleted!');
+                    $greeting = __('Hello!');
+                    $body = __('Your journal entry ":title" has been successfully deleted.', [
+                        'title' => $this->journal->title,
+                    ]);
+                } else {
+                    $subject = __('Journal Entry Deleted!');
+                    $greeting = __('Hello!');
+                    $body = __('The journal entry ":title" in your space ":space_title" has been deleted.', [
+                        'title' => $this->journal->title,
+                        'space_title' => $this->space->title,
+                    ]);
+                }
                 break;
         }
 
@@ -80,11 +93,19 @@ class JournalDeleted extends Notification implements ShouldQueue
      */
     public function toArray(object $notifiable): array
     {
+        $title = $this->isSenderNotification
+            ? __('Jurnal berhasil dihapus!')
+            : __('Jurnal ":title" telah dihapus oleh :user', ['title' => $this->journal->title, 'user' => $this->senderName]);
+
+        $body = $this->isSenderNotification
+            ? __('Jurnal Anda ":title" telah berhasil dihapus.', ['title' => $this->journal->title])
+            : __('Jurnal berjudul ":title" telah dihapus dari ruang Anda.', ['title' => $this->journal->title]);
+
         return [
             'journal_id' => $this->journal->id,
             'space_id' => $this->space->id,
-            'title' => $this->journal->title,
-            'content' => $this->journal->content,
+            'title' => $title,
+            'body' => $body,
             'mood' => $this->journal->mood,
             'action' => $this->action,
             'space_slug' => $this->space->slug,

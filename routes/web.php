@@ -280,3 +280,5 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     Route::post('/room/{id}/chat', [ChatController::class, 'send']);
 });
+
+Route::get('/oauth/spotify/callback', [SpotifyAuthController::class, 'callback'])->name('spotify.callback');

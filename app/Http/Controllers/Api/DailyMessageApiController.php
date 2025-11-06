@@ -171,7 +171,7 @@ class DailyMessageApiController extends Controller
                 new DailyMessageMail($space, $dailyMessage, $sender, $partner)
             );
 
-            $sender->notify(new DailyMessageSent($dailyMessage));
+            $sender->notify(new DailyMessageSent($dailyMessage, $sender));
         } catch (Throwable $exception) {
             Log::error('Failed to send daily message email.', [
                 'space_id' => $space->id,

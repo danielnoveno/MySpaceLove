@@ -31,7 +31,11 @@ class NotificationController extends Controller
             ->latest()
             ->get()
             ->filter(function ($notification) use ($space) {
-                return (int) data_get($notification->data, 'space_id') === (int) $space->id;
+                $data = $notification->data;
+                // Check for direct 'space_id' (Gallery/Journal) or nested 'meta.space_id' (Timeline via ActivityLogged)
+                $spaceId = (int) ($data['space_id'] ?? data_get($data, 'meta.space_id'));
+
+                return $spaceId === (int) $space->id;
             })
             ->values();
 

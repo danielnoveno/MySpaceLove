@@ -78,7 +78,7 @@ export default function Authenticated({
 
     const dashboardHref = currentSpace
         ? route("spaces.dashboard", { space: currentSpace.slug })
-        : route("spaces.index");
+        : route("dashboard");
     const timelineHref = currentSpace
         ? route("timeline.index", { space: currentSpace.slug })
         : route("spaces.index");
@@ -147,7 +147,7 @@ export default function Authenticated({
                                 </Link>
                                 <Link
                                     href={timelineHref}
-                                    className={navClass(partnerFeaturesLocked)}
+                                    className={navClass(partnerFeaturesLocked || currentSpace === null)}
                                     title={partnerFeaturesLocked ? lockedTooltip : undefined}
                                 >
                                     <span className="flex items-center gap-1">
@@ -159,7 +159,7 @@ export default function Authenticated({
                                 </Link>
                                 <Link
                                     href={dailyHref}
-                                    className={navClass(partnerFeaturesLocked)}
+                                    className={navClass(partnerFeaturesLocked || currentSpace === null)}
                                     title={partnerFeaturesLocked ? lockedTooltip : undefined}
                                 >
                                     <span className="flex items-center gap-1">
@@ -171,7 +171,7 @@ export default function Authenticated({
                                 </Link>
                                 <Link
                                     href={galleryHref}
-                                    className={navClass(partnerFeaturesLocked)}
+                                    className={navClass(partnerFeaturesLocked || currentSpace === null)}
                                     title={partnerFeaturesLocked ? lockedTooltip : undefined}
                                 >
                                     <span className="flex items-center gap-1">
@@ -183,7 +183,7 @@ export default function Authenticated({
                                 </Link>
                                 <Link
                                     href={memoryLaneManageHref}
-                                    className={navClass(!isSpaceOwner)}
+                                    className={navClass(!isSpaceOwner || currentSpace === null)}
                                     title={!isSpaceOwner ? ownerOnlyTooltip : undefined}
                                 >
                                     <span className="flex items-center gap-1">
@@ -195,7 +195,7 @@ export default function Authenticated({
                                 </Link>
                                 <Link
                                     href={spotifyHref}
-                                    className={navClass(partnerFeaturesLocked)}
+                                    className={navClass(partnerFeaturesLocked || currentSpace === null)}
                                     title={partnerFeaturesLocked ? lockedTooltip : undefined}
                                 >
                                     <span className="flex items-center gap-1">

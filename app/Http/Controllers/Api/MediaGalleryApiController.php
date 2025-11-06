@@ -5,6 +5,8 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\MediaGallery;
 use App\Models\Space;
+use App\Models\User;
+use App\Notifications\MediaGalleryCreated;
 use App\Services\ActivityNotifier;
 use App\Services\UploadedFileProcessor;
 use Illuminate\Http\Request;
@@ -156,7 +158,10 @@ class MediaGalleryApiController extends Controller
                     $payload['collection_index'] = $nextIndex + $index;
                 }
 
-                MediaGallery::create($payload);
+                $mediaItem = MediaGallery::create($payload);
+                if ($index === 0) {
+                    $firstMediaItem = $mediaItem;
+                }
             }
 
             Log::info('Gallery upload saved', [
@@ -172,6 +177,19 @@ class MediaGalleryApiController extends Controller
                 'gallery_create',
                 ['count' => count($files)]
             );
+
+            /** @var \App\Models\User $sender */
+            $sender = Auth::user();
+            $partner = $this->resolvePartnerUser($space);
+
+            if ($partner && isset($firstMediaItem)) {
+                $partner->notify(new MediaGalleryCreated($firstMediaItem, $sender, count($files)));
+            }
+
+            // Notify sender for confirmation
+            if (isset($firstMediaItem)) {
+                $sender->notify(new MediaGalleryCreated($firstMediaItem, $sender, count($files), true));
+            }
         } catch (\Throwable $exception) {
             Log::error('Gallery upload failed', [
                 'space_id' => $space->id,
@@ -282,5 +300,22 @@ class MediaGalleryApiController extends Controller
             'slug' => $space->slug,
             'title' => $space->title,
         ];
+    }
+
+    private function resolvePartnerUser(Space $space): ?User
+    {
+        $space->loadMissing(['userOne', 'userTwo']);
+
+        $currentUserId = Auth::id();
+
+        if ($currentUserId && $currentUserId === $space->user_one_id) {
+            return $space->userTwo;
+        }
+
+        if ($currentUserId && $currentUserId === $space->user_two_id) {
+            return $space->userOne;
+        }
+
+        return null;
     }
 }

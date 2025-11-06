@@ -146,7 +146,6 @@ export default function GalleryIndex({
         router.post(
             route("gallery.store", { space: spaceSlug }),
             {
-                // @ts-expect-error inertia-react file upload typing is weird
                 files: files,
                 collection_key: activeCollection.collection_key,
             },
