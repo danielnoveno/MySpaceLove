@@ -124,7 +124,7 @@ Route::get('/surprise/{space:slug}/memory', function (\App\Models\Space $space, 
 
 Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
-    Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
+    Route::match(['patch', 'post'], '/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 });
 
@@ -146,7 +146,6 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     // Profile Routes
 
-    Route::get('/oauth/spotify/callback', [SpotifyAuthController::class, 'callback'])->name('spotify.callback');
 
     // Dashboard & Space selection
     Route::get('/dashboard', [DashboardController::class, 'redirect'])->name('dashboard');
@@ -158,6 +157,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('/spaces/{space:slug}/notifications/read-all', [NotificationController::class, 'markAllAsRead'])->name('spaces.notifications.readAll');
         Route::post('/spaces/{space:slug}/notifications/{notification}/read', [NotificationController::class, 'markAsRead'])->name('spaces.notifications.read');
         Route::delete('/spaces/{space:slug}/notifications/{notification}', [NotificationController::class, 'destroy'])->name('spaces.notifications.destroy');
+        Route::post('/spaces/{space:slug}/notifications/destroy-multiple', [NotificationController::class, 'destroyMultiple'])->name('spaces.notifications.destroyMultiple');
 
         Route::get('/spaces/{space:slug}/dashboard', [DashboardController::class, 'show'])->name('spaces.dashboard');
 
@@ -280,4 +280,3 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     Route::post('/room/{id}/chat', [ChatController::class, 'send']);
 });
-

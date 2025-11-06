@@ -5,6 +5,9 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\LoveJournal;
 use App\Models\Space;
+use App\Notifications\JournalCreated;
+use App\Notifications\JournalDeleted;
+use App\Notifications\JournalUpdated;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
@@ -37,6 +40,12 @@ class LoveJournalApiController extends Controller
         $data['user_id'] = Auth::id();
 
         $journal = LoveJournal::create($data);
+
+        $partner = $space->partner();
+        if ($partner) {
+            $partner->notify(new JournalCreated($journal, $space, 'created'));
+        }
+
         return Inertia::location(route('journal.index', ['space' => $space->slug]));
     }
 
@@ -54,6 +63,12 @@ class LoveJournalApiController extends Controller
             'mood' => 'nullable|in:happy,sad,miss,excited,grateful,melancholy',
         ]);
         $journal->update($data);
+
+        $partner = $space->partner();
+        if ($partner) {
+            $partner->notify(new JournalUpdated($journal, $space, 'updated'));
+        }
+
         return Inertia::location(route('journal.index', ['space' => $space->slug]));
     }
 
@@ -62,7 +77,13 @@ class LoveJournalApiController extends Controller
         $this->authorizeSpace($space);
         $journal = LoveJournal::where('space_id', $space->id)->findOrFail($id);
         if ($journal->user_id !== Auth::id()) abort(403);
+        $journalId = $journal->id;
         $journal->delete();
+
+        $partner = $space->partner();
+        if ($partner) {
+            $partner->notify(new JournalDeleted($journal, $space, 'deleted'));
+        }
 
         if ($request->wantsJson()) {
             return response()->json(['message' => 'deleted']);

@@ -295,10 +295,8 @@ class SpotifyController extends Controller
                     'owner' => null,
                     'external_url' => null,
                     'total_tracks' => 0,
-                    'new_this_week' => 0,
                     'average_energy' => 0,
                     'last_added' => null,
-                    'target_weekly' => 6,
                 ];
             }
 
@@ -310,10 +308,8 @@ class SpotifyController extends Controller
                     'owner' => null,
                     'external_url' => null,
                     'total_tracks' => 0,
-                    'new_this_week' => 0,
                     'average_energy' => 0,
                     'last_added' => null,
-                    'target_weekly' => 6,
                 ];
             }
 
@@ -326,10 +322,8 @@ class SpotifyController extends Controller
                     'owner' => null,
                     'external_url' => null,
                     'total_tracks' => 0,
-                    'new_this_week' => 0,
                     'average_energy' => 0,
                     'last_added' => null,
-                    'target_weekly' => 6,
                 ];
             }
         }
@@ -384,15 +378,13 @@ class SpotifyController extends Controller
             'owner' => Arr::get($playlistInfo, 'owner.display_name'),
             'external_url' => Arr::get($playlistInfo, 'external_urls.spotify'),
             'total_tracks' => Arr::get($playlistInfo, 'tracks.total', $tracks->count()),
-            'new_this_week' => $newThisWeek,
             'average_energy' => $averageEnergy,
             'last_added' => $lastAdded ? [
                 'title' => $lastAdded['name'],
                 'artists' => $lastAdded['artists'],
                 'added_at' => $lastAdded['added_at'],
             ] : null,
-            'sample_tracks' => $tracks->take(5)->values()->all(),
-            'target_weekly' => 6,
+            'sample_tracks' => $tracks->values()->all(),
         ];
     }
 

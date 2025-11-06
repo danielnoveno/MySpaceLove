@@ -11,7 +11,13 @@
     $preheader = \Illuminate\Support\Str::limit(strip_tags($dailyMessage->message), 120, '…');
 @endphp
 
-@extends('emails.layouts.base', compact('appName', 'title', 'subtitle', 'subject', 'preheader'))
+@extends('emails.layouts.base', [
+    'appName' => $appName,
+    'title' => $title,
+    'subtitle' => $subtitle,
+    'subject' => $subject,
+    'preheader' => $preheader,
+])
 
 @section('content')
     <p style="margin:0 0 18px; color:#1f2937;">

@@ -108,4 +108,13 @@ class Space extends Model
     {
         return $this->user_one_id == $userId || $this->user_two_id == $userId;
     }
+
+    public function partner()
+    {
+        if ($this->user_one_id === \Illuminate\Support\Facades\Auth::id()) {
+            return $this->userTwo;
+        }
+
+        return $this->userOne;
+    }
 }

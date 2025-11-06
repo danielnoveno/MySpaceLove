@@ -188,6 +188,7 @@ class HandleInertiaRequests extends Middleware
             'availableLocales' => config('app.available_locales'),
             'translations' => Lang::get('app'),
             'notificationSummary' => $notificationSummary,
+            'unreadNotificationsCount' => data_get($notificationSummary, 'unread_count', 0),
         ];
     }
 }

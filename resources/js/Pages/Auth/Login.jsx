@@ -1,5 +1,4 @@
 import Checkbox from '@/Components/Checkbox';
-import GoogleIcon from '@/Components/Icons/GoogleIcon';
 import InputError from '@/Components/InputError';
 import InputLabel from '@/Components/InputLabel';
 import PrimaryButton from '@/Components/PrimaryButton';
@@ -7,7 +6,7 @@ import TextInput from '@/Components/TextInput';
 import GuestLayout from '@/Layouts/GuestLayout';
 import { Head, Link, useForm } from '@inertiajs/react';
 
-export default function Login({ status, canResetPassword, canUseGoogleAuth }) {
+export default function Login({ status, canResetPassword }) {
     const { data, setData, post, processing, errors, reset } = useForm({
         email: '',
         password: '',
@@ -32,31 +31,6 @@ export default function Login({ status, canResetPassword, canUseGoogleAuth }) {
                 </div>
             )}
 
-            {errors.google && (
-                <InputError
-                    message={errors.google}
-                    className="mb-4 text-center"
-                />
-            )}
-
-            {canUseGoogleAuth && (
-                <>
-                    <a
-                        href={route('login.google')}
-                        className="flex w-full items-center justify-center gap-2 rounded-md border border-gray-300 bg-white px-4 py-3 text-sm font-semibold text-gray-700 transition hover:bg-gray-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
-                    >
-                        <GoogleIcon className="h-5 w-5" />
-                        Masuk dengan Google
-                    </a>
-                    <div className="my-6 flex items-center gap-4 text-gray-400">
-                        <span className="h-px flex-1 bg-gray-200" aria-hidden="true" />
-                        <span className="text-xs uppercase tracking-[0.3em]">
-                            atau
-                        </span>
-                        <span className="h-px flex-1 bg-gray-200" aria-hidden="true" />
-                    </div>
-                </>
-            )}
 
             <form onSubmit={submit}>
                 <div>

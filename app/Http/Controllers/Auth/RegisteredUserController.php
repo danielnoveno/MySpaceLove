@@ -13,7 +13,6 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Validation\Rules;
 use Illuminate\Support\Str;
-use App\Support\GoogleOAuth;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -25,7 +24,6 @@ class RegisteredUserController extends Controller
     public function create(): Response
     {
         return Inertia::render('Auth/Register', [
-            'canUseGoogleAuth' => $this->googleCredentialsConfigured(),
         ]);
     }
 
@@ -94,8 +92,4 @@ class RegisteredUserController extends Controller
             ->with('status', __('app.auth.flash.space_welcome'));
     }
 
-    private function googleCredentialsConfigured(): bool
-    {
-        return GoogleOAuth::isConfigured();
-    }
 }

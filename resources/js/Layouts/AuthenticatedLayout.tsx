@@ -65,7 +65,7 @@ export default function Authenticated({
     const activeLanguageLabel =
         languageOptions[activeLocale] ?? activeLocale.toUpperCase();
 
-    const fallbackHref = route("spaces.index");
+    const fallbackHref = route("dashboard");
     const notificationSummary = props.notificationSummary ?? null;
     const rawUnread = Number(notificationSummary?.unread_count ?? 0) || 0;
     const unreadNotificationCount = rawUnread > 0 ? rawUnread : 0;
@@ -78,25 +78,25 @@ export default function Authenticated({
 
     const dashboardHref = currentSpace
         ? route("spaces.dashboard", { space: currentSpace.slug })
-        : fallbackHref;
+        : route("spaces.index");
     const timelineHref = currentSpace
         ? route("timeline.index", { space: currentSpace.slug })
-        : fallbackHref;
+        : route("spaces.index");
     const dailyHref = currentSpace
         ? route("daily.index", { space: currentSpace.slug })
-        : fallbackHref;
+        : route("spaces.index");
     const galleryHref = currentSpace
         ? route("gallery.index", { space: currentSpace.slug })
-        : fallbackHref;
+        : route("spaces.index");
     const spotifyHref = currentSpace
         ? route("spotify.companion", { space: currentSpace.slug })
-        : fallbackHref;
+        : route("spaces.index");
     const notificationsHref = currentSpace
         ? route("spaces.notifications.index", { space: currentSpace.slug })
         : route("notifications.index");
     const memoryLaneManageHref = currentSpace
         ? route("memory-lane.edit", { space: currentSpace.slug })
-        : fallbackHref;
+        : route("spaces.index");
     const isSpaceOwner = currentSpace?.is_owner ?? false;
     const partnerFeaturesLocked =
         currentSpace !== null && currentSpace.has_partner === false;

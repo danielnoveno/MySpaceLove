@@ -118,11 +118,28 @@ export default function NotificationsIndex() {
 
     const [processingId, setProcessingId] = useState<string | null>(null);
     const [processingAll, setProcessingAll] = useState(false);
+    const [selectedNotifications, setSelectedNotifications] = useState<string[]>(
+        []
+    );
 
     const unreadOnPage = useMemo(
         () => notifications.data.filter((item) => !item.read_at).length,
         [notifications.data]
     );
+
+    const allNotificationsOnPage = useMemo(
+        () => notifications.data.map((item) => item.id),
+        [notifications.data]
+    );
+
+    const isAllSelected = useMemo(() => {
+        if (notifications.data.length === 0) {
+            return false;
+        }
+        return allNotificationsOnPage.every((id) =>
+            selectedNotifications.includes(id)
+        );
+    }, [allNotificationsOnPage, selectedNotifications, notifications.data.length]);
 
     const headerTitle = translations?.header?.title ?? "Activity center";
     const headerSubtitle =
@@ -193,6 +210,41 @@ export default function NotificationsIndex() {
                 preserveScroll: true,
                 onStart: () => setProcessingId(notificationId),
                 onFinish: () => setProcessingId(null),
+            }
+        );
+    };
+
+    const handleToggleSelect = (notificationId: string) => {
+        setSelectedNotifications((prevSelected) =>
+            prevSelected.includes(notificationId)
+                ? prevSelected.filter((id) => id !== notificationId)
+                : [...prevSelected, notificationId]
+        );
+    };
+
+    const handleSelectAll = () => {
+        if (isAllSelected) {
+            setSelectedNotifications([]);
+        } else {
+            setSelectedNotifications(allNotificationsOnPage);
+        }
+    };
+
+    const handleDeleteSelected = () => {
+        if (selectedNotifications.length === 0) {
+            return;
+        }
+
+        router.post(
+            route("spaces.notifications.destroyMultiple", { space: spaceSlug }),
+            { notifications: selectedNotifications },
+            {
+                preserveScroll: true,
+                onStart: () => setProcessingAll(true),
+                onFinish: () => {
+                    setProcessingAll(false);
+                    setSelectedNotifications([]);
+                },
             }
         );
     };
@@ -276,6 +328,31 @@ export default function NotificationsIndex() {
                                 aria-hidden="true"
                             />
                             {markAllLabel}
+                        </button>
+                        <button
+                            type="button"
+                            onClick={handleSelectAll}
+                            disabled={notifications.data.length === 0}
+                            className="inline-flex items-center gap-2 rounded-full border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-500 shadow-sm transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-60"
+                        >
+                            <input
+                                type="checkbox"
+                                checked={isAllSelected}
+                                onChange={() => {}} // Handled by onClick
+                                className="h-4 w-4 rounded border-gray-300 text-pink-600 focus:ring-pink-500"
+                            />
+                            Select All
+                        </button>
+                        <button
+                            type="button"
+                            onClick={handleDeleteSelected}
+                            disabled={
+                                processingAll || selectedNotifications.length === 0
+                            }
+                            className="inline-flex items-center gap-2 rounded-full border border-red-200 bg-white px-4 py-2 text-sm font-medium text-red-500 shadow-sm transition hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-60"
+                        >
+                            <Trash2 className="h-4 w-4" aria-hidden="true" />
+                            Delete Selected ({selectedNotifications.length})
                         </button>
                     </div>
                 </div>
@@ -498,75 +575,91 @@ export default function NotificationsIndex() {
                                                 : "border-pink-200 bg-pink-50/60"
                                         }`}
                                     >
-                                        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                                            <div className="flex flex-1 flex-col gap-1">
-                                                <div className="flex items-center gap-2">
-                                                    <MailOpen
-                                                        className={`h-4 w-4 ${
-                                                            notification.read_at
-                                                                ? "text-gray-300"
-                                                                : "text-pink-500"
-                                                        }`}
-                                                        aria-hidden="true"
-                                                    />
-                                                    <h3 className="text-base font-semibold text-gray-900">
-                                                        {derivedTitle}
-                                                    </h3>
+                                        <div className="flex items-start gap-3">
+                                            <input
+                                                type="checkbox"
+                                                checked={selectedNotifications.includes(
+                                                    notification.id
+                                                )}
+                                                onChange={() =>
+                                                    handleToggleSelect(
+                                                        notification.id
+                                                    )
+                                                }
+                                                className="mt-1 h-4 w-4 rounded border-gray-300 text-pink-600 focus:ring-pink-500"
+                                            />
+                                            <div className="flex flex-1 flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                                                <div className="flex flex-1 flex-col gap-1">
+                                                    <div className="flex items-center gap-2">
+                                                        <MailOpen
+                                                            className={`h-4 w-4 ${
+                                                                notification.read_at
+                                                                    ? "text-gray-300"
+                                                                    : "text-pink-500"
+                                                            }`}
+                                                            aria-hidden="true"
+                                                        />
+                                                        <h3 className="text-base font-semibold text-gray-900">
+                                                            {derivedTitle}
+                                                        </h3>
+                                                    </div>
+                                                    {derivedBody && (
+                                                        <p className="text-sm text-gray-600 whitespace-pre-line">
+                                                            {derivedBody}
+                                                        </p>
+                                                    )}
+                                                    {formattedRead && (
+                                                        <p className="text-xs text-gray-400">
+                                                            {formattedRead}
+                                                        </p>
+                                                    )}
                                                 </div>
-                                                {derivedBody && (
-                                                    <p className="text-sm text-gray-600 whitespace-pre-line">
-                                                        {derivedBody}
-                                                    </p>
-                                                )}
-                                                {formattedRead && (
-                                                    <p className="text-xs text-gray-400">
-                                                        {formattedRead}
-                                                    </p>
-                                                )}
-                                            </div>
-                                            <div className="flex flex-col items-end gap-2">
-                                                {formattedCreated && (
-                                                    <span className="text-xs font-medium uppercase tracking-wide text-gray-400">
-                                                        {formattedCreated}
-                                                    </span>
-                                                )}
-                                                <div className="flex items-center gap-2">
-                                                    {actionButton}
-                                                    {!notification.read_at && (
+                                                <div className="flex flex-col items-end gap-2">
+                                                    {formattedCreated && (
+                                                        <span className="text-xs font-medium uppercase tracking-wide text-gray-400">
+                                                            {formattedCreated}
+                                                        </span>
+                                                    )}
+                                                    <div className="flex items-center gap-2">
+                                                        {actionButton}
+                                                        {!notification.read_at && (
+                                                            <button
+                                                                type="button"
+                                                                onClick={() =>
+                                                                    handleMarkAsRead(
+                                                                        notification.id
+                                                                    )
+                                                                }
+                                                                disabled={
+                                                                    isProcessing
+                                                                }
+                                                                className="inline-flex items-center gap-2 rounded-full border border-pink-200 bg-white px-4 py-2 text-xs font-semibold text-pink-500 shadow-sm transition hover:bg-pink-50 disabled:cursor-not-allowed disabled:opacity-60"
+                                                            >
+                                                                <CheckCircle2
+                                                                    className="h-4 w-4"
+                                                                    aria-hidden="true"
+                                                                />
+                                                                {markReadLabel}
+                                                            </button>
+                                                        )}
                                                         <button
                                                             type="button"
                                                             onClick={() =>
-                                                                handleMarkAsRead(
+                                                                handleDelete(
                                                                     notification.id
                                                                 )
                                                             }
                                                             disabled={
                                                                 isProcessing
                                                             }
-                                                            className="inline-flex items-center gap-2 rounded-full border border-pink-200 bg-white px-4 py-2 text-xs font-semibold text-pink-500 shadow-sm transition hover:bg-pink-50 disabled:cursor-not-allowed disabled:opacity-60"
+                                                            className="inline-flex items-center gap-2 rounded-full border border-gray-200 bg-white px-4 py-2 text-xs font-semibold text-gray-500 shadow-sm transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-60"
                                                         >
-                                                            <CheckCircle2
+                                                            <Trash2
                                                                 className="h-4 w-4"
                                                                 aria-hidden="true"
                                                             />
-                                                            {markReadLabel}
                                                         </button>
-                                                    )}
-                                                    <button
-                                                        type="button"
-                                                        onClick={() =>
-                                                            handleDelete(
-                                                                notification.id
-                                                            )
-                                                        }
-                                                        disabled={isProcessing}
-                                                        className="inline-flex items-center gap-2 rounded-full border border-gray-200 bg-white px-4 py-2 text-xs font-semibold text-gray-500 shadow-sm transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-60"
-                                                    >
-                                                        <Trash2
-                                                            className="h-4 w-4"
-                                                            aria-hidden="true"
-                                                        />
-                                                    </button>
+                                                    </div>
                                                 </div>
                                             </div>
                                         </div>

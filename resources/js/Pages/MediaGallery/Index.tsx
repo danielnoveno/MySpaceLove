@@ -11,8 +11,8 @@ import {
     Trash2,
     X,
 } from "lucide-react";
-import { useCallback, useMemo, useState } from "react";
-import type { MouseEvent as ReactMouseEvent } from "react";
+import { useCallback, useMemo, useState, useRef } from "react";
+import type { MouseEvent as ReactMouseEvent, ChangeEvent } from "react";
 
 type GalleryMediaItem = {
     id: number;
@@ -69,6 +69,8 @@ export default function GalleryIndex({
     const [deleteAnchor, setDeleteAnchor] = useState<AnchorPosition | null>(
         null,
     );
+    const [uploading, setUploading] = useState(false);
+    const fileInputRef = useRef<HTMLInputElement>(null);
 
     if (!currentSpace) {
         return null;
@@ -128,6 +130,71 @@ export default function GalleryIndex({
         },
         [],
     );
+
+    const handleFileSelect = (event: ChangeEvent<HTMLInputElement>) => {
+        if (
+            !event.target.files ||
+            event.target.files.length === 0 ||
+            !activeCollection?.collection_key
+        ) {
+            return;
+        }
+
+        const files = Array.from(event.target.files);
+        setUploading(true);
+
+        router.post(
+            route("gallery.store", { space: spaceSlug }),
+            {
+                // @ts-expect-error inertia-react file upload typing is weird
+                files: files,
+                collection_key: activeCollection.collection_key,
+            },
+            {
+                preserveScroll: true,
+                onSuccess: (page) => {
+                    const updatedCollections = (page.props as any)
+                        .collections as GalleryCollection[];
+                    const updatedCollection = updatedCollections.find(
+                        (c) =>
+                            c.collection_key === activeCollection.collection_key,
+                    );
+                    if (updatedCollection) {
+                        setActiveCollection(updatedCollection);
+                    }
+                },
+                onFinish: () => {
+                    setUploading(false);
+                    if (event.target) {
+                        event.target.value = "";
+                    }
+                },
+            },
+        );
+    };
+
+    const [pendingDeleteCollection, setPendingDeleteCollection] = useState<GalleryCollection | null>(null);
+    const [deletingCollection, setDeletingCollection] = useState(false);
+
+    const performDeleteCollection = () => {
+        if (!pendingDeleteCollection) {
+            return;
+        }
+        setDeletingCollection(true);
+        const promises = pendingDeleteCollection.items.map((item) => {
+            return router.delete(
+                route("gallery.destroy", { space: spaceSlug, id: item.id }),
+                {
+                    preserveScroll: true,
+                }
+            );
+        });
+        Promise.all(promises).then(() => {
+            setPendingDeleteCollection(null);
+            setDeletingCollection(false);
+        });
+    };
+
 
 
     return (
@@ -230,12 +297,20 @@ export default function GalleryIndex({
                                         </div>
                                     </button>
 
-                                    <div className="flex items-center justify-between px-4 pb-4 pt-3 text-xs text-slate-500">
+                                    <div className="flex items-center justify-between px-3 pb-3 pt-2 text-xs text-slate-500">
                                         <div className="inline-flex items-center gap-2 rounded-full bg-emerald-50 px-3 py-1 font-medium text-emerald-700">
                                             <ImagePlus className="h-3.5 w-3.5" />
                                             Koleksi
                                         </div>
-                                        <div className="flex items-center gap-3">
+                                        <div className="flex items-center gap-1">
+                                            <button
+                                                type="button"
+                                                onClick={() => setPendingDeleteCollection(collection)}
+                                                className="inline-flex items-center gap-1 rounded-full border border-slate-200 px-3 py-1 text-xs font-medium text-slate-600 transition hover:border-rose-200 hover:bg-rose-50 hover:text-rose-700"
+                                            >
+                                                <Trash2 className="h-3.5 w-3.5" />
+                                                Hapus
+                                            </button>
                                             <Link
                                                 href={route("gallery.edit", {
                                                     space: spaceSlug,
@@ -244,7 +319,7 @@ export default function GalleryIndex({
                                                 className="inline-flex items-center gap-1 rounded-full border border-slate-200 px-3 py-1 text-xs font-medium text-slate-600 transition hover:border-emerald-200 hover:bg-emerald-50 hover:text-emerald-700"
                                             >
                                                 <Edit className="h-3.5 w-3.5" />
-                                                Edit Sampul
+                                                Edit
                                             </Link>
                                         </div>
                                     </div>
@@ -289,13 +364,36 @@ export default function GalleryIndex({
                             </div>
                             <div className="flex flex-col gap-5">
                                 <div>
-                                    <p className="text-xs uppercase tracking-[0.36em] text-emerald-400">
-                                        Koleksi foto
-                                    </p>
-                                    <h3 className="mt-2 text-2xl font-semibold text-slate-900">
-                                        {activeCollection.title?.trim() ||
-                                            "Koleksi tanpa judul"}
-                                    </h3>
+                                    <div className="flex items-start justify-between gap-4">
+                                        <div>
+                                            <p className="text-xs uppercase tracking-[0.36em] text-emerald-400">
+                                                Koleksi foto
+                                            </p>
+                                            <h3 className="mt-2 text-2xl font-semibold text-slate-900">
+                                                {activeCollection.title?.trim() ||
+                                                    "Koleksi tanpa judul"}
+                                            </h3>
+                                        </div>
+                                        <div>
+                                            <button
+                                                type="button"
+                                                disabled={uploading}
+                                                onClick={() => fileInputRef.current?.click()}
+                                                className="inline-flex shrink-0 items-center gap-2 rounded-full bg-emerald-50 px-4 py-2 text-sm font-semibold text-emerald-700 shadow-sm transition hover:bg-emerald-100 disabled:opacity-60"
+                                            >
+                                                <ImagePlus className="h-4 w-4" />
+                                                {uploading ? "Mengunggah..." : "Tambah Foto"}
+                                            </button>
+                                            <input
+                                                type="file"
+                                                multiple
+                                                ref={fileInputRef}
+                                                className="hidden"
+                                                onChange={handleFileSelect}
+                                                accept="image/jpeg,image/png,image/gif,video/mp4,video/quicktime"
+                                            />
+                                        </div>
+                                    </div>
                                     <p className="mt-2 inline-flex items-center gap-2 text-sm text-slate-500">
                                         <Calendar className="h-4 w-4 text-emerald-500" />
                                         {formatFullDate(activeCollection.created_at)}
@@ -317,7 +415,7 @@ export default function GalleryIndex({
                                                 className="h-32 w-full object-cover transition duration-300 group-hover:scale-105"
                                             />
                                             <div className="absolute inset-0 bg-black/30 opacity-0 transition group-hover:opacity-100" />
-                                            <div className="absolute inset-x-2 bottom-2 flex items-center justify-between gap-2 text-[11px] font-medium text-white opacity-0 transition group-hover:opacity-100">
+                                            <div className="absolute inset-x-2 bottom-2 flex items-center justify-between gap-2 text-[11px] font-medium text-white transition">
                                                 <button
                                                     type="button"
                                                     onClick={(event) => {
@@ -366,6 +464,22 @@ export default function GalleryIndex({
                     }
                 }}
                 onConfirm={performDelete}
+            />
+
+            <ConfirmDialog
+                open={pendingDeleteCollection !== null}
+                title="Hapus koleksi dari galeri?"
+                description="Semua foto dalam koleksi ini akan dihapus dan tidak dapat dikembalikan."
+                confirmLabel="Ya, hapus koleksi"
+                cancelLabel="Batal"
+                tone="danger"
+                loading={deletingCollection}
+                onCancel={() => {
+                    if (!deletingCollection) {
+                        setPendingDeleteCollection(null);
+                    }
+                }}
+                onConfirm={performDeleteCollection}
             />
         </AuthenticatedLayout>
     );

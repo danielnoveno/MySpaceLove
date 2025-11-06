@@ -33,6 +33,7 @@ class User extends Authenticatable
         'auth_provider',
         'provider_id',
         'provider_avatar',
+        'profile_image',
     ];
 
     /**

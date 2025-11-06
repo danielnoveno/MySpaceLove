@@ -4,7 +4,6 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Auth\LoginRequest;
-use App\Support\GoogleOAuth;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -22,7 +21,6 @@ class AuthenticatedSessionController extends Controller
         return Inertia::render('Auth/Login', [
             'canResetPassword' => Route::has('password.request'),
             'status' => session('status'),
-            'canUseGoogleAuth' => $this->googleCredentialsConfigured(),
         ]);
     }
 
@@ -41,13 +39,13 @@ class AuthenticatedSessionController extends Controller
             $intendedPath = parse_url($intended, PHP_URL_PATH) ?? '';
 
             if (str_starts_with($intendedPath, '/api/')) {
-                return redirect()->route('dashboard', absolute: false);
+                return redirect()->route('dashboard');
             }
 
             $request->session()->put('url.intended', $intended);
         }
 
-        return redirect()->intended(route('dashboard', absolute: false));
+        return redirect()->intended(route('dashboard'));
     }
 
     /**
@@ -64,8 +62,4 @@ class AuthenticatedSessionController extends Controller
         return redirect('/');
     }
 
-    private function googleCredentialsConfigured(): bool
-    {
-        return GoogleOAuth::isConfigured();
-    }
 }

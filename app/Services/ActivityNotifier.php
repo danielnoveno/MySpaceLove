@@ -18,6 +18,10 @@ class ActivityNotifier
     {
         $space->loadMissing(['userOne', 'userTwo']);
 
+        if (! str_contains($type, 'create')) {
+            return;
+        }
+
         $recipients = collect([
             $space->userOne,
             $space->userTwo,
@@ -63,6 +67,9 @@ class ActivityNotifier
      */
     public static function notifyUser(User $user, string $type, array $context = [], ?Space $space = null): void
     {
+        if (! str_contains($type, 'create')) {
+            return;
+        }
         if (! filter_var($user->email, FILTER_VALIDATE_EMAIL)) {
             return;
         }

@@ -5,6 +5,7 @@ namespace App\Notifications;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use App\Models\DailyMessage;
+use App\Models\User;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 
@@ -15,7 +16,7 @@ class DailyMessageSent extends Notification
     /**
      * Create a new notification instance.
      */
-    public function __construct(public DailyMessage $dailyMessage)
+    public function __construct(public DailyMessage $dailyMessage, public User $user)
     {
         //
     }
@@ -51,6 +52,7 @@ class DailyMessageSent extends Notification
         return [
             'daily_message_id' => $this->dailyMessage->id,
             'space_id' => $this->dailyMessage->space_id,
+            'sender_name' => $this->user->name,
             'title' => 'Pesan Harian Terkirim!',
             'body' => $this->dailyMessage->message,
             'status_message' => 'Pesan harianmu telah berhasil dikirim. Semoga harimu menyenangkan!',

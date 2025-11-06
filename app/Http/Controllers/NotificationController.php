@@ -19,7 +19,15 @@ class NotificationController extends Controller
         $perPage = 10;
         $page = LengthAwarePaginator::resolveCurrentPage() ?: 1;
 
-        $notifications = $user->notifications()
+        $status = $request->input('status', 'all');
+
+        $query = $user->notifications();
+
+        if ($status === 'unread') {
+            $query = $user->unreadNotifications();
+        }
+
+        $notifications = $query
             ->latest()
             ->get()
             ->filter(function ($notification) use ($space) {
@@ -41,6 +49,9 @@ class NotificationController extends Controller
         return Inertia::render('Notifications/Index', [
             'notifications' => $paginated,
             'space' => $space,
+            'filters' => [
+                'status' => $status,
+            ],
         ]);
     }
 
@@ -83,6 +94,21 @@ class NotificationController extends Controller
         ) {
             $notification->delete();
         }
+
+        return back();
+    }
+
+    public function destroyMultiple(Request $request, Space $space): RedirectResponse
+    {
+        /** @var \App\Models\User $user */
+        $user = Auth::user();
+        $notificationIds = $request->input('notifications', []);
+
+        $user->notifications()
+            ->whereIn('id', $notificationIds)
+            ->get()
+            ->filter(fn ($notification) => (int) data_get($notification->data, 'space_id') === (int) $space->id)
+            ->each->delete();
 
         return back();
     }

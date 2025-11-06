@@ -36,7 +36,11 @@ export default function JournalCreate() {
 
     const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
         event.preventDefault();
-        post(route("journal.store", { space: spaceSlug }));
+        post(route("journal.store", { space: spaceSlug }), {
+            onSuccess: () => {
+                //
+            },
+        });
     };
 
     return (

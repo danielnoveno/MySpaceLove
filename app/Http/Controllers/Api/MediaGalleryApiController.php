@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\MediaGallery;
 use App\Models\Space;
+use App\Services\ActivityNotifier;
 use App\Services\UploadedFileProcessor;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -43,7 +44,7 @@ class MediaGalleryApiController extends Controller
                 'title' => $item->title,
                 'file_path' => $item->file_path,
                 'type' => $item->type,
-                'url' => Storage::disk('public')->url($item->file_path),
+                'url' => $item->file_path ? Storage::disk('public')->url($item->file_path) : null,
                 'collection_index' => $item->collection_index,
             ];
         };
@@ -117,11 +118,22 @@ class MediaGalleryApiController extends Controller
             'title' => 'nullable|string|max:255',
             'files' => 'required|array|min:1|max:12',
             'files.*' => 'required|file|mimes:jpg,jpeg,png,gif,mp4,mov|max:30720',
+            'collection_key' => 'nullable|string|exists:media_galleries,collection_key',
         ]);
 
         $files = $r->file('files', []);
-        $collectionKey = $hasCollections ? (string) Str::uuid() : null;
-        $baseTitle = isset($data['title']) ? trim($data['title']) : null;
+        $collectionKey = $data['collection_key'] ?? null;
+        $isNewUpload = $collectionKey === null;
+
+        if ($isNewUpload) {
+            $collectionKey = $hasCollections ? (string) Str::uuid() : null;
+            $baseTitle = isset($data['title']) ? trim($data['title']) : null;
+            $nextIndex = 0;
+        } else {
+            $baseTitle = MediaGallery::where('collection_key', $collectionKey)->first()?->title ?? null;
+            $nextIndex = MediaGallery::where('collection_key', $collectionKey)->max('collection_index') + 1;
+        }
+
 
         try {
             foreach ($files as $index => $file) {
@@ -141,7 +153,7 @@ class MediaGalleryApiController extends Controller
 
                 if ($hasCollections) {
                     $payload['collection_key'] = $collectionKey;
-                    $payload['collection_index'] = $index;
+                    $payload['collection_index'] = $nextIndex + $index;
                 }
 
                 MediaGallery::create($payload);
@@ -153,6 +165,13 @@ class MediaGalleryApiController extends Controller
                 'created' => count($files),
                 'collection_key' => $collectionKey,
             ]);
+
+            ActivityNotifier::notifySpace(
+                $space,
+                Auth::user(),
+                'gallery_create',
+                ['count' => count($files)]
+            );
         } catch (\Throwable $exception) {
             Log::error('Gallery upload failed', [
                 'space_id' => $space->id,
@@ -214,7 +233,9 @@ class MediaGalleryApiController extends Controller
 
         $collectionKey = $media->collection_key;
 
-        Storage::disk('public')->delete($media->file_path);
+        if ($media->file_path) {
+            Storage::disk('public')->delete($media->file_path);
+        }
         $media->delete();
 
         if ($collectionKey && $this->supportsCollections()) {

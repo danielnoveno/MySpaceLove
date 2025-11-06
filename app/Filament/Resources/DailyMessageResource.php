@@ -26,7 +26,9 @@ class DailyMessageResource extends Resource
     {
         return $form->schema([
             Select::make('space_id')->relationship('space', 'title')->required(),
-            DatePicker::make('date')->required(),
+            DatePicker::make('date')
+                ->required()
+                ->disabled(fn (string $operation): bool => $operation === 'create'),
             Textarea::make('message')->rows(4)->required(),
             // generated_by managed by backend normally
         ]);

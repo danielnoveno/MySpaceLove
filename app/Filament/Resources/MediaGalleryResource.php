@@ -29,14 +29,14 @@ class MediaGalleryResource extends Resource
             Select::make('space_id')->relationship('space', 'title')->required(),
             Select::make('user_id')->relationship('user', 'name')->required()->label('Uploader'),
             TextInput::make('title')->nullable()->maxLength(255),
-            FileUpload::make('file_path')->label('File')->directory('media')->required(),
+            FileUpload::make('file_path')->label('Files')->multiple()->directory('media')->nullable(),
         ]);
     }
 
     public static function table(Table $table): Table
     {
         return $table->columns([
-            ImageColumn::make('file_path')->label('Preview')->square(),
+            ImageColumn::make('file_path')->label('Preview')->square()->limit(3)->stacked(),
             TextColumn::make('title')->limit(30),
             TextColumn::make('space.title')->label('Space'),
             TextColumn::make('user.name')->label('Uploader'),

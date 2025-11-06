@@ -3,7 +3,7 @@ import { Link, usePage } from "@inertiajs/react";
 import ApplicationLogo from "@/Components/ApplicationLogo";
 import Dropdown from "@/Components/Dropdown";
 import ResponsiveNavLink from "@/Components/ResponsiveNavLink";
-import { Check, Globe, Lock } from "lucide-react";
+import { Check, Globe, Lock, Bell } from "lucide-react";
 import { useTranslation } from "@/hooks/useTranslation";
 
 export default function AuthenticatedLayout({ header, children }) {
@@ -13,6 +13,7 @@ export default function AuthenticatedLayout({ header, children }) {
     const user = props?.auth?.user;
     const spaces = props?.spaces ?? [];
     const currentSpace = props?.currentSpace ?? null;
+    const unreadNotificationsCount = props?.unreadNotificationsCount ?? 0;
 
     const { translations: layoutTranslations } = useTranslation("layout");
 
@@ -28,14 +29,6 @@ export default function AuthenticatedLayout({ header, children }) {
         languageOptions[activeLocale] ?? activeLocale.toUpperCase();
 
     const fallbackHref = route("spaces.index");
-    const notificationSummary = props?.notificationSummary ?? null;
-    const rawUnread = Number(notificationSummary?.unread_count ?? 0) || 0;
-    const unreadNotificationCount = rawUnread > 0 ? rawUnread : 0;
-        const hasUnreadNotifications = unreadNotificationCount > 0;
-    const notificationsActive = Boolean(
-        route().current("spaces.notifications.index") ||
-        route().current("notifications.index")
-    );
 
     const dashboardHref = currentSpace
         ? route("spaces.dashboard", { space: currentSpace.slug })
@@ -52,11 +45,11 @@ export default function AuthenticatedLayout({ header, children }) {
     const spotifyHref = currentSpace
         ? route("spotify.companion", { space: currentSpace.slug })
         : fallbackHref;
-        const notificationsHref = currentSpace
-        ? route("spaces.notifications.index", { space: currentSpace.slug })
-        : route("notifications.index");
     const partnerFeaturesLocked =
         currentSpace !== null && currentSpace.has_partner === false;
+    const notificationsHref = currentSpace
+        ? route("spaces.notifications.index", { space: currentSpace.slug })
+        : fallbackHref;
     const lockedTooltip =
         navigation.locked_tooltip ??
         "Fitur couple akan aktif setelah pasanganmu bergabung.";
@@ -133,19 +126,6 @@ export default function AuthenticatedLayout({ header, children }) {
                                             <Lock className="h-3 w-3 text-gray-400" aria-hidden="true" />
                                         )}
                                         {navigation.spotify ?? "Spotify Kit"}
-                                    </span>
-                                </Link>
-                                <Link
-                                    href={notificationsHref}
-                                    className={`${navClass(false)} ${notificationsActive ? "border-pink-500 text-pink-600" : ""}`}
-                                >
-                                    <span className="flex items-center gap-2">
-                                        {navigation.notifications ?? "Notifications"}
-                                        {hasUnreadNotifications && (
-                                            <span className="inline-flex min-w-[1.25rem] justify-center rounded-full bg-pink-500 px-1.5 text-xs font-semibold text-white">
-                                                {unreadNotificationCount > 99 ? "99+" : unreadNotificationCount}
-                                            </span>
-                                        )}
                                     </span>
                                 </Link>
                             </div>
@@ -264,6 +244,21 @@ export default function AuthenticatedLayout({ header, children }) {
                                     </Dropdown>
                                 </div>
                             )}
+                            <div className="hidden sm:flex sm:items-center sm:ml-6">
+                                <Link
+                                    href={notificationsHref}
+                                    className="mr-4 text-gray-500 hover:text-gray-700 focus:outline-none"
+                                >
+                                    <span className="relative inline-block">
+                                        <Bell className="h-6 w-6 text-pink-500" />
+                                        {unreadNotificationsCount > 0 && (
+                                            <span className="absolute top-0 right-0 inline-flex items-center justify-center w-5 h-5 text-xs font-bold leading-none text-white transform translate-x-1/2 -translate-y-1/2 bg-pink-600 rounded-full">
+                                                {unreadNotificationsCount}
+                                            </span>
+                                        )}
+                                    </span>
+                                </Link>
+                            </div>
                             <div className="ml-3 relative">
                                 <Dropdown>
                                     <Dropdown.Trigger>
@@ -435,13 +430,22 @@ export default function AuthenticatedLayout({ header, children }) {
                         </ResponsiveNavLink>
                         <ResponsiveNavLink
                             href={notificationsHref}
-                            active={notificationsActive}
+                            active={route().current("spaces.notifications.index")}
+                            className={
+                                currentSpace === null
+                                    ? "opacity-40 pointer-events-none"
+                                    : ""
+                            }
+                            title={currentSpace === null ? (navigation.choose_space ?? "Pilih Space") : undefined}
                         >
-                            <span className="flex items-center gap-2">
-                                {navigation.notifications ?? "Notifications"}
-                                {hasUnreadNotifications && (
-                                    <span className="inline-flex min-w-[1.5rem] justify-center rounded-full bg-pink-500 px-1.5 text-xs font-semibold text-white">
-                                        {unreadNotificationCount > 99 ? "99+" : unreadNotificationCount}
+                            <span className="flex items-center justify-between w-full gap-2">
+                                <span className="flex items-center gap-2">
+                                    <Bell className="h-5 w-5 text-pink-500" aria-hidden="true" />
+                                    {navigation.notifications ?? "Notifications"}
+                                </span>
+                                {unreadNotificationsCount > 0 && (
+                                    <span className="inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-red-100 bg-red-600 rounded-full">
+                                        {unreadNotificationsCount}
                                     </span>
                                 )}
                             </span>
