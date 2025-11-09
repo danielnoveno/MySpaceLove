@@ -22,15 +22,33 @@ interface SpaceSummary {
 interface Props {
     space: SpaceSummary;
     levels: LevelConfig[];
+    pin: string | null;
+    contentSet: boolean;
 }
 
 type LevelKey = "level_one" | "level_two" | "level_three";
 
-export default function MemoryLaneConfig({ space, levels }: Props) {
+interface FormData {
+    level_one_title: string;
+    level_one_body: string;
+    level_one_image: File | null;
+    level_one_reset: boolean;
+    level_two_title: string;
+    level_two_body: string;
+    level_two_image: File | null;
+    level_two_reset: boolean;
+    level_three_title: string;
+    level_three_body: string;
+    level_three_image: File | null;
+    level_three_reset: boolean;
+    pin: string;
+}
+
+export default function MemoryLaneConfig({ space, levels, pin, contentSet }: Props) {
     const page = usePage();
     const flash = page.props.flash as { success?: string; error?: string } | undefined;
 
-    const createFormState = (source: LevelConfig[]) => ({
+    const createFormState = (source: LevelConfig[], initialPin: string | null): FormData => ({
         level_one_title: source[0]?.title ?? "",
         level_one_body: source[0]?.body ?? "",
         level_one_image: null as File | null,
@@ -43,9 +61,10 @@ export default function MemoryLaneConfig({ space, levels }: Props) {
         level_three_body: source[2]?.body ?? "",
         level_three_image: null as File | null,
         level_three_reset: false,
+        pin: initialPin ?? "",
     });
 
-    const { data, setData, post, processing, errors } = useForm(createFormState(levels));
+    const { data, setData, post, processing, errors } = useForm<FormData>(() => createFormState(levels, pin));
 
     const [previews, setPreviews] = useState<Record<LevelKey, string | null>>({
         level_one: levels[0]?.image ?? levels[0]?.default_image ?? null,
@@ -78,9 +97,9 @@ export default function MemoryLaneConfig({ space, levels }: Props) {
 
         setData((current) => ({
             ...current,
-            ...createFormState(levels),
+            ...createFormState(levels, pin),
         }));
-    }, [levels, setData]);
+    }, [levels, pin, setData]);
 
     const handleFileChange = (event: ChangeEvent<HTMLInputElement>, key: LevelKey) => {
         const file = event.target.files?.[0] ?? null;
@@ -154,6 +173,35 @@ export default function MemoryLaneConfig({ space, levels }: Props) {
                     onSubmit={handleSubmit}
                     className="space-y-10 rounded-3xl border border-slate-100 bg-white/90 p-6 shadow-lg backdrop-blur"
                 >
+                    <section className="space-y-4">
+                        <header className="space-y-2">
+                            <h3 className="text-xl font-semibold text-slate-900">Pengaturan Akses</h3>
+                            <p className="text-sm text-slate-500">
+                                Atur PIN untuk Memory Lane Kit Anda. Jika diatur, pengunjung harus memasukkan PIN untuk melihat konten.
+                            </p>
+                        </header>
+                        <div>
+                            <label htmlFor="pin" className="block text-sm font-medium text-slate-700">
+                                PIN Akses (kosongkan untuk tanpa PIN)
+                            </label>
+                            <input
+                                id="pin"
+                                type="text"
+                                value={data.pin}
+                                onChange={(e) => setData("pin", e.target.value)}
+                                className="mt-1 w-full rounded-xl border border-slate-200 px-4 py-2 text-slate-800 shadow-sm focus:border-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-300"
+                                placeholder="Contoh: 1234"
+                                maxLength={10}
+                            />
+                            {errors.pin && <p className="mt-1 text-sm text-rose-500">{errors.pin}</p>}
+                        </div>
+                        {!contentSet && (
+                            <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-700 shadow">
+                                Konten Memory Lane Kit belum diatur. Pengunjung tidak akan bisa melihat apapun sampai Anda mengisi setidaknya satu level.
+                            </div>
+                        )}
+                    </section>
+
                     {levels.map((level, index) => {
                         const key = level.key as LevelKey;
                         const imageField = `${key}_image` as const;

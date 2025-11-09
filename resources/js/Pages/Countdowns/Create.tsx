@@ -18,6 +18,7 @@ import {
     useState,
     type CSSProperties,
 } from "react";
+import { convertImageToWebP } from "@/utils/imageConverter";
 
 export default function CountdownCreate() {
     const currentSpace = useCurrentSpace();
@@ -38,6 +39,7 @@ export default function CountdownCreate() {
     });
 
     const [imagePreview, setImagePreview] = useState<string | null>(null);
+    const [fileError, setFileError] = useState<string | null>(null);
 
     useEffect(() => {
         return () => {
@@ -88,13 +90,26 @@ export default function CountdownCreate() {
         setData("activities", updated);
     };
 
-    const handleImageChange = (event: ChangeEvent<HTMLInputElement>) => {
-        const file = event.target.files?.[0] ?? null;
-        setData("image", file);
-        if (imagePreview) {
-            URL.revokeObjectURL(imagePreview);
+    const handleImageChange = async (event: ChangeEvent<HTMLInputElement>) => {
+        const file = event.target.files?.[0];
+        if (!file) return;
+
+        setFileError(null);
+
+        try {
+            const webpFile = await convertImageToWebP(file);
+            setData("image", webpFile);
+
+            if (imagePreview) {
+                URL.revokeObjectURL(imagePreview);
+            }
+            setImagePreview(URL.createObjectURL(webpFile));
+        } catch (error) {
+            console.error("Error converting image to WebP:", error);
+            setFileError("Gagal memproses gambar. Pastikan format file didukung dan coba lagi.");
+            setData("image", null);
+            setImagePreview(null);
         }
-        setImagePreview(file ? URL.createObjectURL(file) : null);
     };
 
     const removeImage = () => {
@@ -342,9 +357,14 @@ export default function CountdownCreate() {
                                     )}
                                 </div>
                             </div>
+                            {fileError && (
+                                <p className="text-xs text-rose-500 mt-2">{fileError}</p>
+                            )}
                             {errors.image && (
-                                <p className="text-xs text-rose-500">
-                                    {errors.image}
+                                <p className="text-xs text-rose-500 mt-2">
+                                    {errors.image === "validation.uploaded"
+                                        ? "Ukuran poster terlalu besar. Coba unggah file di bawah 2MB."
+                                        : errors.image}
                                 </p>
                             )}
                         </div>

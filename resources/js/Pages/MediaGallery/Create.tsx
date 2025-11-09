@@ -3,6 +3,7 @@ import { useCurrentSpace } from "@/hooks/useCurrentSpace";
 import { Head, Link, useForm } from "@inertiajs/react";
 import { ArrowLeft, Trash2, Upload } from "lucide-react";
 import { ChangeEvent, FormEvent, useMemo, useRef, useState } from "react";
+import { convertImageToWebP } from "@/utils/imageConverter";
 
 const MAX_FILES = 12;
 
@@ -42,21 +43,34 @@ export default function GalleryCreate() {
         setPreviewUrls(urls);
     };
 
-    const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {
-        const files = Array.from(event.target.files ?? []);
+    const handleFileChange = async (event: ChangeEvent<HTMLInputElement>) => {
+        const selectedFiles = Array.from(event.target.files ?? []);
+        if (selectedFiles.length === 0) return;
 
-        if (files.length === 0) {
-            return;
-        }
-
-        const combined = [...data.files, ...files];
-
-        if (combined.length > MAX_FILES) {
+        if (data.files.length + selectedFiles.length > MAX_FILES) {
             setFileError(`Maksimal ${MAX_FILES} file yang dapat diunggah.`);
             return;
         }
 
         setFileError(null);
+        const processedFiles: File[] = [];
+
+        for (const file of selectedFiles) {
+            if (file.type.startsWith("image/")) {
+                try {
+                    const webpFile = await convertImageToWebP(file);
+                    processedFiles.push(webpFile);
+                } catch (error) {
+                    console.error("Error converting image to WebP:", error);
+                    setFileError(`Gagal mengonversi ${file.name}. Pastikan format gambar didukung.`);
+                    // Skip this file and continue with others
+                }
+            } else {
+                processedFiles.push(file); // Keep non-image files as is
+            }
+        }
+
+        const combined = [...data.files, ...processedFiles];
         setData("files", combined);
         syncPreviewState(combined);
         event.target.value = "";
@@ -165,9 +179,15 @@ export default function GalleryCreate() {
                                     </p>
                                 )}
                             </div>
-                            {fileError && <p className="text-sm text-red-500">{fileError}</p>}
-                            {errors.files && <p className="text-sm text-red-500">{errors.files}</p>}
-                            {firstFileError && <p className="text-sm text-red-500">{firstFileError}</p>}
+                            {fileError && <p className="text-sm text-red-500 mt-2">{fileError}</p>}
+                            {errors.files && <p className="text-sm text-red-500 mt-2">{errors.files}</p>}
+                            {firstFileError && (
+                                <p className="text-sm text-red-500 mt-2">
+                                    {firstFileError === "validation.uploaded"
+                                        ? "Ukuran salah satu file terlalu besar (maks. 30MB)."
+                                        : firstFileError}
+                                </p>
+                            )}
                         </div>
 
                         <div className="rounded-2xl border border-emerald-100 bg-white/75 p-6 shadow-sm">

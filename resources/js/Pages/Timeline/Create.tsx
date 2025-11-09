@@ -3,6 +3,7 @@ import { Head, useForm, router, Link } from "@inertiajs/react";
 import { Calendar, ArrowLeft, Upload, X } from "lucide-react";
 import { ChangeEvent, FormEvent, useEffect, useRef, useState } from "react";
 import { useCurrentSpace } from "@/hooks/useCurrentSpace";
+import { convertImageToWebP } from "@/utils/imageConverter";
 
 export default function TimelineCreate() {
     const currentSpace = useCurrentSpace();
@@ -27,7 +28,9 @@ export default function TimelineCreate() {
 
     useEffect(() => {
         return () => {
-            createdPreviewUrls.current.forEach((url) => URL.revokeObjectURL(url));
+            createdPreviewUrls.current.forEach((url) =>
+                URL.revokeObjectURL(url)
+            );
         };
     }, []);
 
@@ -48,9 +51,9 @@ export default function TimelineCreate() {
     };
 
     // ====== File handler ======
-    const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
-        const files = Array.from(e.target.files || []);
-        const totalFiles = data.media.length + files.length;
+    const handleFileChange = async (e: ChangeEvent<HTMLInputElement>) => {
+        const selectedFiles = Array.from(e.target.files || []);
+        const totalFiles = data.media.length + selectedFiles.length;
 
         if (totalFiles > 5) {
             setFileError("Maksimal 5 foto yang dapat diunggah.");
@@ -59,18 +62,27 @@ export default function TimelineCreate() {
 
         setFileError(null);
 
-        const newFiles = [...data.media, ...files];
-        setData("media", newFiles);
+        const convertedFiles: File[] = [];
+        const newPreviews: string[] = [];
 
-        const newPreviews = [
-            ...previews,
-            ...files.map((file) => {
-                const url = URL.createObjectURL(file);
+        for (const file of selectedFiles) {
+            try {
+                const webpFile = await convertImageToWebP(file);
+                convertedFiles.push(webpFile);
+                const url = URL.createObjectURL(webpFile);
                 createdPreviewUrls.current.push(url);
-                return url;
-            }),
-        ];
-        setPreviews(newPreviews);
+                newPreviews.push(url);
+            } catch (error) {
+                console.error("Error converting image to WebP:", error);
+                setFileError(
+                    "Gagal mengonversi salah satu gambar ke WebP. Pastikan file adalah gambar yang valid."
+                );
+                return;
+            }
+        }
+
+        setData("media", [...data.media, ...convertedFiles]);
+        setPreviews([...previews, ...newPreviews]);
     };
 
     const removeFile = (index: number) => {
@@ -80,7 +92,7 @@ export default function TimelineCreate() {
         if (removedPreview) {
             URL.revokeObjectURL(removedPreview);
             createdPreviewUrls.current = createdPreviewUrls.current.filter(
-                (url) => url !== removedPreview,
+                (url) => url !== removedPreview
             );
         }
         newFiles.splice(index, 1);
@@ -117,7 +129,6 @@ export default function TimelineCreate() {
             <Head title="Tambah Momen" />
 
             <div className="relative min-h-screen overflow-hidden bg-gradient-to-br from-pink-50 via-white to-rose-50 py-10 px-4 sm:px-6 lg:px-8">
-
                 <div className="relative max-w-4xl mx-auto">
                     <form
                         onSubmit={handleSubmit}
@@ -157,6 +168,11 @@ export default function TimelineCreate() {
                                         value={data.date}
                                         onChange={(e) =>
                                             setData("date", e.target.value)
+                                        }
+                                        max={
+                                            new Date()
+                                                .toISOString()
+                                                .split("T")[0]
                                         }
                                         className="w-full pl-12 pr-5 py-4 border border-gray-300 rounded-2xl focus:ring-2 focus:ring-pink-500 focus:border-transparent transition text-gray-800"
                                     />
@@ -246,7 +262,9 @@ export default function TimelineCreate() {
 
                                 {errors.media && (
                                     <p className="text-red-500 text-sm mt-2">
-                                        {errors.media}
+                                        {errors.media === "validation.uploaded"
+                                            ? "Ukuran foto terlalu besar atau format tidak didukung. Silakan coba foto lain."
+                                            : errors.media}
                                     </p>
                                 )}
                             </div>

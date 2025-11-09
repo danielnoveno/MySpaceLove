@@ -22,6 +22,8 @@ class MemoryLaneConfig extends Model
         'level_two_body',
         'level_three_title',
         'level_three_body',
+        'pin',
+        'content_set',
     ];
 
     public function space(): BelongsTo

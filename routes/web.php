@@ -24,6 +24,7 @@ use App\Http\Controllers\SpotifyAuthController;
 use App\Http\Controllers\SpotifyController;
 use App\Http\Controllers\MemoryLaneConfigController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\StoryBookController;
 use App\Services\MemoryLaneContentService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -121,6 +122,8 @@ Route::get('/surprise/{space:slug}/memory', function (\App\Models\Space $space, 
         'skipPuzzle' => $skipPuzzle,
     ]);
 })->name('surprise.memory.space');
+
+Route::post('/surprise/{space:slug}/memory/verify-pin', [MemoryLaneConfigController::class, 'verifyPin'])->name('surprise.memory.verifyPin');
 
 Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
@@ -233,6 +236,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
                 'user' => Auth::user()?->name ?? 'Guest',
             ]);
         });
+
+        Route::get('/spaces/{space:slug}/storybook', [StoryBookController::class, 'show'])->name('storybook.show');
     });
 
     // Surprise Notes Routes

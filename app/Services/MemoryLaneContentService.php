@@ -41,7 +41,7 @@ class MemoryLaneContentService
                 }
 
                 if ($mapping['image'] && $disk->exists($mapping['image'])) {
-                    $level['image'] = $disk->url($mapping['image']);
+                    $level['image'] = Storage::url($mapping['image']);
                 }
 
                 if (!empty($mapping['title'])) {
@@ -96,7 +96,7 @@ class MemoryLaneContentService
                 $defaultLevel = $defaultLevels->get($index, []);
                 $imageUrl = null;
                 if ($storedPath && $disk->exists($storedPath)) {
-                    $imageUrl = $disk->url($storedPath);
+                    $imageUrl = Storage::url($storedPath);
                 }
 
                 return [
@@ -130,6 +130,19 @@ class MemoryLaneContentService
             })
             ->values()
             ->all();
+    }
+
+    public function isContentSet(MemoryLaneConfig $config): bool
+    {
+        return filled($config->level_one_title)
+            || filled($config->level_one_body)
+            || filled($config->level_one_image)
+            || filled($config->level_two_title)
+            || filled($config->level_two_body)
+            || filled($config->level_two_image)
+            || filled($config->level_three_title)
+            || filled($config->level_three_body)
+            || filled($config->level_three_image);
     }
 
     private function fetchConfig(?Space $space): ?MemoryLaneConfig

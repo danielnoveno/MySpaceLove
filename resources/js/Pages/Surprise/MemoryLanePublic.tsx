@@ -158,6 +158,16 @@ export default function MemoryLanePublic({
                     {memoryLane.intro.closing.footnote}
                 </p>
             </section>
+            {kitUnlocked && effectiveCompleted.length >= 3 && space?.slug && (
+                <section className="mt-8 flex justify-center">
+                    <Link
+                        href={route("storybook.show", { space: space.slug })}
+                        className="inline-flex items-center justify-center rounded-full bg-blue-500 px-6 py-3 text-sm font-semibold text-white transition hover:bg-blue-600 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-300 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900"
+                    >
+                        Lihat Story Book
+                    </Link>
+                </section>
+            )}
         </div>
     );
 

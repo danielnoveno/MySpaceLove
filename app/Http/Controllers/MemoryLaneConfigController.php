@@ -33,6 +33,8 @@ class MemoryLaneConfigController extends Controller
                 'title' => $space->title,
             ],
             'levels' => $levels,
+            'pin' => $space->memoryLaneConfig?->pin,
+            'contentSet' => $space->memoryLaneConfig?->content_set ?? false,
         ]);
     }
 
@@ -53,6 +55,7 @@ class MemoryLaneConfigController extends Controller
             'level_three_body' => ['nullable', 'string', 'max:800'],
             'level_three_image' => ['nullable', 'image', 'max:4096'],
             'level_three_reset' => ['nullable', 'boolean'],
+            'pin' => ['nullable', 'string', 'min:4', 'max:10'],
         ]);
 
         $config = MemoryLaneConfig::firstOrNew(['space_id' => $space->id]);
@@ -95,8 +98,18 @@ class MemoryLaneConfigController extends Controller
             }
         }
 
+        $config->pin = $validated['pin'] ?? null;
+
+        $config->content_set = $this->memoryLaneContentService->isContentSet($config);
+
         $config->space()->associate($space);
         $config->save();
+
+        if ($request->has('pin')) {
+            return redirect()
+                ->route('memory-lane.edit', ['space' => $space->slug])
+                ->with('success', __('PIN Memory Lane berhasil diperbarui.'));
+        }
 
         return redirect()
             ->route('memory-lane.edit', ['space' => $space->slug])
@@ -108,5 +121,22 @@ class MemoryLaneConfigController extends Controller
         if (!$space->hasMember(Auth::id())) {
             abort(403);
         }
+    }
+
+    public function verifyPin(Request $request, Space $space)
+    {
+        $validated = $request->validate([
+            'pin' => ['required', 'string', 'min:4', 'max:10'],
+        ]);
+
+        $config = MemoryLaneConfig::where('space_id', $space->id)->first();
+
+        if (!$config || $config->pin !== $validated['pin']) {
+            return back()->withErrors(['pin' => __('PIN yang Anda masukkan salah.')]);
+        }
+
+        $request->session()->put("memory_lane_access_{$space->slug}", true);
+
+        return redirect()->route('surprise.memory.space', ['space' => $space->slug]);
     }
 }
