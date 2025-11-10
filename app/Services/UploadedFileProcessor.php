@@ -16,22 +16,38 @@ class UploadedFileProcessor
      *
      * @return array{path: string, mime: string}
      */
-    public function store(UploadedFile $file, string $directory, string $disk = 'public'): array
+    public function store(
+        UploadedFile $file,
+        string $directory,
+        string $disk = 'public',
+        ?string $field = null,
+        ?string $tooLargeMessageKey = null
+    ): array
     {
         $maxSize = 10 * 1024 * 1024; // 10 MB in bytes
-        if ($file->getSize() > $maxSize) {
+        $fieldName = $field ?? 'file';
+        $sizeMessageKey = $tooLargeMessageKey ?? 'app.uploads.errors.generic_file_too_large';
+
+        if ($file->getSize() !== false && $file->getSize() > $maxSize) {
             throw ValidationException::withMessages([
-                'file' => 'The image size must not exceed 10 MB.',
+                $fieldName => __($sizeMessageKey),
             ]);
         }
 
         $mime = $file->getMimeType() ?: $file->getClientMimeType();
 
+        if ($mime === 'image/webp') {
+            return $this->storeOriginal($file, $directory, $disk, $mime);
+        }
+
         if ($this->shouldConvertToWebp($mime)) {
-            $converted = $this->storeImageAsWebp($file, $directory, $disk);
-            if ($converted !== null) {
-                return $converted;
+            if (!$this->supportsWebpConversion()) {
+                throw ValidationException::withMessages([
+                    $fieldName => __('app.uploads.errors.image_conversion_failed'),
+                ]);
             }
+
+            return $this->storeImageAsWebp($file, $directory, $disk, $fieldName);
         }
 
         return $this->storeOriginal($file, $directory, $disk, $mime);
@@ -43,26 +59,35 @@ class UploadedFileProcessor
             return false;
         }
 
-        if (in_array($mime, ['image/gif', 'image/svg+xml', 'image/webp'], true)) {
+        if (in_array($mime, ['image/gif', 'image/svg+xml'], true)) {
             return false;
         }
 
-        return function_exists('imagecreatefromstring') && function_exists('imagewebp');
+        return true;
     }
 
     /**
      * @return array{path: string, mime: string}|null
      */
-    private function storeImageAsWebp(UploadedFile $file, string $directory, string $disk): ?array
+    private function storeImageAsWebp(
+        UploadedFile $file,
+        string $directory,
+        string $disk,
+        string $fieldName
+    ): array
     {
         $contents = @file_get_contents($file->getRealPath());
         if ($contents === false) {
-            return null;
+            throw ValidationException::withMessages([
+                $fieldName => __('app.uploads.errors.image_conversion_failed'),
+            ]);
         }
 
         $image = @imagecreatefromstring($contents);
         if ($image === false) {
-            return null;
+            throw ValidationException::withMessages([
+                $fieldName => __('app.uploads.errors.image_conversion_failed'),
+            ]);
         }
 
         imagepalettetotruecolor($image);
@@ -76,7 +101,9 @@ class UploadedFileProcessor
         imagedestroy($image);
 
         if (!$success || $binary === false) {
-            return null;
+            throw ValidationException::withMessages([
+                $fieldName => __('app.uploads.errors.image_conversion_failed'),
+            ]);
         }
 
         $filename = Str::uuid()->toString() . '.webp';
@@ -84,13 +111,20 @@ class UploadedFileProcessor
 
         $stored = Storage::disk($disk)->put($path, $binary, ['visibility' => 'public']);
         if (!$stored) {
-            return null;
+            throw ValidationException::withMessages([
+                $fieldName => __('app.uploads.errors.generic_file_save_failed'),
+            ]);
         }
 
         return [
             'path' => $path,
             'mime' => 'image/webp',
         ];
+    }
+
+    private function supportsWebpConversion(): bool
+    {
+        return function_exists('imagecreatefromstring') && function_exists('imagewebp');
     }
 
     /**

@@ -228,7 +228,7 @@ export default function LongDistanceSpotifyHub({ space }: Props) {
 
     const authorizeHref = route("spotify.authorize", {
         space: space.slug,
-        redirect: route("spotify.companion", { space: space.slug }),
+        redirect: route("spotify.music-space", { space: space.slug }),
     });
     const handleAuthorize = useCallback(() => {
         window.location.href = authorizeHref;

@@ -119,7 +119,7 @@ class MediaGalleryApiController extends Controller
         $data = $r->validate([
             'title' => 'nullable|string|max:255',
             'files' => 'required|array|min:1|max:12',
-            'files.*' => 'required|file|mimes:jpg,jpeg,png,gif,mp4,mov|max:30720',
+            'files.*' => 'required|file|mimes:jpg,jpeg,png,webp,mp4,mov|max:10240',
             'collection_key' => 'nullable|string|exists:media_galleries,collection_key',
         ]);
 
@@ -139,7 +139,13 @@ class MediaGalleryApiController extends Controller
 
         try {
             foreach ($files as $index => $file) {
-                $stored = $this->fileProcessor->store($file, "spaces/{$space->slug}/media");
+                $stored = $this->fileProcessor->store(
+                    $file,
+                    "spaces/{$space->slug}/media",
+                    'public',
+                    'files',
+                    'app.uploads.errors.generic_file_too_large'
+                );
                 $path = $stored['path'];
                 $resolvedTitle = $baseTitle !== null && $baseTitle !== ''
                     ? $baseTitle
@@ -224,7 +230,7 @@ class MediaGalleryApiController extends Controller
 
         $data = $r->validate([
             'title' => 'nullable|string|max:255',
-            'file'  => 'nullable|file|mimes:jpg,jpeg,png,gif,mp4,mov|max:30720',
+            'file'  => 'nullable|file|mimes:jpg,jpeg,png,webp,mp4,mov|max:10240',
         ]);
 
         $updates = [
@@ -233,7 +239,13 @@ class MediaGalleryApiController extends Controller
 
         if ($r->hasFile('file')) {
             Storage::disk('public')->delete($media->file_path);
-            $stored = $this->fileProcessor->store($r->file('file'), "spaces/{$space->slug}/media");
+            $stored = $this->fileProcessor->store(
+                $r->file('file'),
+                "spaces/{$space->slug}/media",
+                'public',
+                'file',
+                'app.uploads.errors.generic_file_too_large'
+            );
             $updates['file_path'] = $stored['path'];
             $updates['type'] = $stored['mime'];
         }

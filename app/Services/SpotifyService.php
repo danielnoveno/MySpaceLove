@@ -64,7 +64,7 @@ class SpotifyService
         }
 
         if (!$token) {
-            throw new RuntimeException('Spotify belum tersambung untuk ruang ini.');
+            throw new RuntimeException(__('spotify.music_space.errors.connection_required'));
         }
 
         $this->token = $token;
@@ -85,7 +85,7 @@ class SpotifyService
     public function ensureValidToken(): void
     {
         if (!$this->token) {
-            throw new RuntimeException('Token Spotify tidak ditemukan.');
+            throw new RuntimeException(__('spotify.auth.token_missing'));
         }
 
         $margin = config('services.spotify.refresh_margin', 300);
@@ -99,7 +99,7 @@ class SpotifyService
     public function refreshAccessToken(): void
     {
         if (!$this->token) {
-            throw new RuntimeException('Token Spotify tidak ditemukan.');
+            throw new RuntimeException(__('spotify.auth.token_missing'));
         }
 
         $clientId = config('services.spotify.client_id');
@@ -123,7 +123,7 @@ class SpotifyService
     protected function http(): PendingRequest
     {
         if (!$this->token) {
-            throw new RuntimeException('Token Spotify tidak ditemukan.');
+            throw new RuntimeException(__('spotify.auth.token_missing'));
         }
 
         return Http::withToken($this->token->access_token)
@@ -134,7 +134,7 @@ class SpotifyService
     public function token(): SpotifyToken
     {
         if (!$this->token) {
-            throw new RuntimeException('Token Spotify tidak ditemukan.');
+            throw new RuntimeException(__('spotify.auth.token_missing'));
         }
 
         return $this->token;
@@ -143,7 +143,7 @@ class SpotifyService
     public function setSharedPlaylist(?string $playlistId): void
     {
         if (!$this->token) {
-            throw new RuntimeException('Token Spotify tidak ditemukan.');
+            throw new RuntimeException(__('spotify.auth.token_missing'));
         }
 
         $this->token->update(['shared_playlist_id' => $playlistId]);
@@ -221,6 +221,17 @@ class SpotifyService
         return $response->throw()->json();
     }
 
+    public function getCurrentlyPlaying(): array
+    {
+        $response = $this->http()->get('/me/player/currently-playing');
+
+        if ($response->status() === 204 || $response->body() === '') {
+            return [];
+        }
+
+        return $response->throw()->json();
+    }
+
     public function getTrack(string $trackId): array
     {
         return $this->http()
@@ -229,7 +240,39 @@ class SpotifyService
             ->json();
     }
 
-    public function startPlayback(string $trackId, ?int $positionMs = null): void
+    public function getTracks(array $trackIds): array
+    {
+        if (empty($trackIds)) {
+            return [];
+        }
+
+        return $this->http()
+            ->get('/tracks', ['ids' => implode(',', $trackIds)])
+            ->throw()
+            ->json('tracks', []);
+    }
+
+    public function searchTracks(string $query, int $limit = 10): array
+    {
+        return $this->http()
+            ->get('/search', [
+                'q' => $query,
+                'type' => 'track',
+                'limit' => $limit,
+            ])
+            ->throw()
+            ->json('tracks.items', []);
+    }
+
+    public function getCurrentUser(): array
+    {
+        return $this->http()
+            ->get('/me')
+            ->throw()
+            ->json();
+    }
+
+    public function startPlayback(string $trackId, ?string $deviceId = null, ?int $positionMs = null): void
     {
         $payload = [
             'uris' => ["spotify:track:{$trackId}"],
@@ -239,8 +282,140 @@ class SpotifyService
             $payload['position_ms'] = $positionMs;
         }
 
+        $request = $this->http();
+
+        if ($deviceId) {
+            $request = $request->withOptions([
+                'query' => ['device_id' => $deviceId],
+            ]);
+        }
+
+        $request->put('/me/player/play', $payload)->throw();
+    }
+
+    public function resumePlayback(?string $deviceId = null): void
+    {
+        $request = $this->http();
+
+        if ($deviceId) {
+            $request = $request->withOptions([
+                'query' => ['device_id' => $deviceId],
+            ]);
+        }
+
+        $request->put('/me/player/play')->throw();
+    }
+
+    public function pausePlayback(?string $deviceId = null): void
+    {
+        $request = $this->http();
+
+        if ($deviceId) {
+            $request = $request->withOptions([
+                'query' => ['device_id' => $deviceId],
+            ]);
+        }
+
+        $request->put('/me/player/pause')->throw();
+    }
+
+    public function nextTrack(?string $deviceId = null): void
+    {
+        $request = $this->http();
+
+        if ($deviceId) {
+            $request = $request->withOptions([
+                'query' => ['device_id' => $deviceId],
+            ]);
+        }
+
+        $request->post('/me/player/next')->throw();
+    }
+
+    public function previousTrack(?string $deviceId = null): void
+    {
+        $request = $this->http();
+
+        if ($deviceId) {
+            $request = $request->withOptions([
+                'query' => ['device_id' => $deviceId],
+            ]);
+        }
+
+        $request->post('/me/player/previous')->throw();
+    }
+
+    public function transferPlayback(string $deviceId, bool $play = true): void
+    {
         $this->http()
-            ->put('/me/player/play', $payload)
+            ->put('/me/player', [
+                'device_ids' => [$deviceId],
+                'play' => $play,
+            ])
             ->throw();
+    }
+
+    public function createPlaylist(string $userId, string $name, string $description = '', bool $isPublic = false): array
+    {
+        return $this->http()
+            ->post("/users/{$userId}/playlists", [
+                'name' => $name,
+                'description' => $description,
+                'public' => $isPublic,
+            ])
+            ->throw()
+            ->json();
+    }
+
+    public function addTracksToPlaylist(string $playlistId, array $trackUris): void
+    {
+        if (empty($trackUris)) {
+            return;
+        }
+
+        $this->http()
+            ->post("/playlists/{$playlistId}/tracks", [
+                'uris' => array_values($trackUris),
+            ])
+            ->throw();
+    }
+
+    public function removeTracksFromPlaylist(string $playlistId, array $trackUris): void
+    {
+        if (empty($trackUris)) {
+            return;
+        }
+
+        $tracks = array_map(static fn ($uri) => ['uri' => $uri], array_values($trackUris));
+
+        $this->http()
+            ->delete("/playlists/{$playlistId}/tracks", [
+                'tracks' => $tracks,
+            ])
+            ->throw();
+    }
+
+    public function getPlaylistWithTracks(string $playlistId, int $limit = 50): array
+    {
+        $playlist = $this->getPlaylist($playlistId);
+        $tracks = $this->getPlaylistTracks($playlistId, $limit);
+
+        return [
+            'info' => $playlist,
+            'tracks' => $tracks,
+        ];
+    }
+
+    public function getTopItems(string $type, int $limit = 10, string $timeRange = 'medium_term'): array
+    {
+        $type = $type === 'artists' ? 'artists' : 'tracks';
+
+        return $this->http()
+            ->get("/me/top/{$type}", [
+                'limit' => $limit,
+                'time_range' => $timeRange,
+            ])
+            ->throw()
+            ->json('items', []);
     }
 }

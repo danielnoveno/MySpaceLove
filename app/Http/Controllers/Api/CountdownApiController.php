@@ -54,12 +54,18 @@ class CountdownApiController extends Controller
             'event_date' => 'required|date',
             'description' => 'nullable|string',
             'activities' => 'nullable|array',
-            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
+            'image' => 'nullable|file|mimes:jpg,jpeg,png,webp|max:10240',
         ]);
         $data['space_id'] = $space->id;
 
         if ($r->hasFile('image')) {
-            $stored = $this->fileProcessor->store($r->file('image'), 'countdowns');
+            $stored = $this->fileProcessor->store(
+                $r->file('image'),
+                'countdowns',
+                'public',
+                'image',
+                'app.uploads.errors.event_poster_too_large'
+            );
             $data['image'] = $stored['path'];
         }
 
@@ -91,11 +97,17 @@ class CountdownApiController extends Controller
             'event_date' => 'required|date',
             'description' => 'nullable|string',
             'activities' => 'nullable|array',
-            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
+            'image' => 'nullable|file|mimes:jpg,jpeg,png,webp|max:10240',
         ]);
 
         if ($r->hasFile('image')) {
-            $stored = $this->fileProcessor->store($r->file('image'), 'countdowns');
+            $stored = $this->fileProcessor->store(
+                $r->file('image'),
+                'countdowns',
+                'public',
+                'image',
+                'app.uploads.errors.event_poster_too_large'
+            );
             $data['image'] = $stored['path'];
         }
 

@@ -22,6 +22,7 @@ use App\Http\Controllers\SpaceController;
 use App\Http\Controllers\NobarController;
 use App\Http\Controllers\SpotifyAuthController;
 use App\Http\Controllers\SpotifyController;
+use App\Http\Controllers\SpotifyMusicSpaceController;
 use App\Http\Controllers\MemoryLaneConfigController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\StoryBookController;
@@ -217,18 +218,37 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('/spaces/{space:slug}/spotify/playback/join', [SpotifyController::class, 'joinPlayback'])->name('spotify.playback.join');
 
         Route::get('/spaces/{space:slug}/spotify-companion', function (\App\Models\Space $space) {
-        return Inertia::render('Spotify/LongDistanceSpotifyHub', [
-            'space' => [
-                'id' => $space->id,
-                'slug' => $space->slug,
-                'title' => $space->title,
-            ],
-        ]);
-    })->name('spotify.companion');
+            return Inertia::render('Spotify/LongDistanceSpotifyHub', [
+                'space' => [
+                    'id' => $space->id,
+                    'slug' => $space->slug,
+                    'title' => $space->title,
+                ],
+            ]);
+        })->name('spotify.companion');
 
-    Route::get('/spaces/{space:slug}/nobar', [NobarController::class, 'show'])->name('space.nobar');
-    Route::post('/spaces/{space:slug}/nobar/schedules', [NobarController::class, 'storeSchedule'])->name('space.nobar.schedules.store');
-    Route::post('/spaces/{space:slug}/nobar/credentials', TuiRoomKitCredentialController::class)->name('space.nobar.credentials');
+        Route::get('/spaces/{space:slug}/spotify/music-space', function (\App\Models\Space $space) {
+            return Inertia::render('Spotify/CoupleMusicSpace', [
+                'space' => [
+                    'id' => $space->id,
+                    'slug' => $space->slug,
+                    'title' => $space->title,
+                ],
+            ]);
+        })->name('spotify.music-space');
+
+        Route::get('/spaces/{space:slug}/spotify/music-space/summary', [SpotifyMusicSpaceController::class, 'summary'])->name('spotify.music.summary');
+        Route::get('/spaces/{space:slug}/spotify/music-space/search', [SpotifyMusicSpaceController::class, 'search'])->name('spotify.music.search');
+        Route::post('/spaces/{space:slug}/spotify/music-space/playlists', [SpotifyMusicSpaceController::class, 'createPlaylist'])->name('spotify.music.playlists.create');
+        Route::post('/spaces/{space:slug}/spotify/music-space/playlists/{playlist}/tracks', [SpotifyMusicSpaceController::class, 'addTracks'])->name('spotify.music.playlists.tracks.add');
+        Route::delete('/spaces/{space:slug}/spotify/music-space/playlists/{playlist}/tracks', [SpotifyMusicSpaceController::class, 'removeTracks'])->name('spotify.music.playlists.tracks.remove');
+        Route::post('/spaces/{space:slug}/spotify/music-space/player/{action}', [SpotifyMusicSpaceController::class, 'controlPlayback'])
+            ->whereIn('action', ['play', 'pause', 'next', 'previous'])
+            ->name('spotify.music.player.control');
+
+        Route::get('/spaces/{space:slug}/nobar', [NobarController::class, 'show'])->name('space.nobar');
+        Route::post('/spaces/{space:slug}/nobar/schedules', [NobarController::class, 'storeSchedule'])->name('space.nobar.schedules.store');
+        Route::post('/spaces/{space:slug}/nobar/credentials', TuiRoomKitCredentialController::class)->name('space.nobar.credentials');
 
         Route::get('/spaces/{space:slug}/roomjitsi', function (\App\Models\Space $space) {
             return Inertia::render('Room/Show', [

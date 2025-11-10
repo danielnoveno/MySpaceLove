@@ -26,7 +26,7 @@ class SpotifyAuthController extends Controller
             'space_id' => $space->id,
             'space_slug' => $space->slug,
             'user_id' => $user?->id,
-            'redirect' => $request->query('redirect', route('spotify.companion', ['space' => $space->slug])),
+            'redirect' => $request->query('redirect', route('spotify.music-space', ['space' => $space->slug])),
         ];
 
         $state = base64_encode(json_encode($statePayload));
@@ -47,22 +47,22 @@ class SpotifyAuthController extends Controller
     {
         $state = $request->input('state');
         if (!$state) {
-            abort(400, 'State tidak ditemukan.');
+            abort(400, __('spotify.auth.state_missing'));
         }
 
         $payload = json_decode(base64_decode($state), true);
         if (!is_array($payload)) {
-            abort(400, 'State tidak valid.');
+            abort(400, __('spotify.auth.state_invalid'));
         }
 
         $space = Space::findOrFail(Arr::get($payload, 'space_id'));
-        $redirectUrl = Arr::get($payload, 'redirect', route('spotify.companion', ['space' => $space->slug]));
+        $redirectUrl = Arr::get($payload, 'redirect', route('spotify.music-space', ['space' => $space->slug]));
 
         $user = $request->user();
         if (!$user || $user->id !== Arr::get($payload, 'user_id')) {
             Auth::logout();
 
-            return redirect()->to($redirectUrl)->with('error', 'Sesi tidak valid. Silakan login ulang.');
+            return redirect()->to($redirectUrl)->with('error', __('spotify.auth.session_invalid'));
         }
 
         if ($request->filled('error')) {
@@ -71,7 +71,7 @@ class SpotifyAuthController extends Controller
 
         $code = $request->input('code');
         if (!$code) {
-            return redirect()->to($redirectUrl)->with('error', 'Kode otorisasi Spotify tidak ditemukan.');
+            return redirect()->to($redirectUrl)->with('error', __('spotify.auth.authorization_code_missing'));
         }
 
         $redirectUri = config('services.spotify.redirect_uri');
@@ -88,11 +88,11 @@ class SpotifyAuthController extends Controller
             ]);
 
         if ($response->failed()) {
-            return redirect()->to($redirectUrl)->with('error', 'Gagal menukar kode Spotify: ' . $response->body());
+            return redirect()->to($redirectUrl)->with('error', __('spotify.auth.exchange_failed'));
         }
 
         $spotifyService->storeToken($user, $space, $response->json());
 
-        return redirect()->to($redirectUrl)->with('success', 'Spotify berhasil terhubung!');
+        return redirect()->to($redirectUrl)->with('success', __('spotify.auth.success'));
     }
 }

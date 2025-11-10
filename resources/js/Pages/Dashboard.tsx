@@ -331,7 +331,7 @@ export default function Dashboard({ dashboardData, spaceContext }: Props) {
                 description:
                     quickActionStrings?.spotify?.description ??
                     "Sinkronisasi musik & mood jarak jauh",
-                href: route("spotify.companion", { space: spaceSlug }),
+                href: route("spotify.music-space", { space: spaceSlug }),
                 color: "from-emerald-500 to-teal-500",
                 requiresPartner: true,
             },

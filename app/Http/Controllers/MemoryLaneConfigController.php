@@ -45,15 +45,15 @@ class MemoryLaneConfigController extends Controller
         $validated = $request->validate([
             'level_one_title' => ['nullable', 'string', 'max:120'],
             'level_one_body' => ['nullable', 'string', 'max:800'],
-            'level_one_image' => ['nullable', 'image', 'max:4096'],
+            'level_one_image' => ['nullable', 'file', 'mimes:jpg,jpeg,png,webp', 'max:10240'],
             'level_one_reset' => ['nullable', 'boolean'],
             'level_two_title' => ['nullable', 'string', 'max:120'],
             'level_two_body' => ['nullable', 'string', 'max:800'],
-            'level_two_image' => ['nullable', 'image', 'max:4096'],
+            'level_two_image' => ['nullable', 'file', 'mimes:jpg,jpeg,png,webp', 'max:10240'],
             'level_two_reset' => ['nullable', 'boolean'],
             'level_three_title' => ['nullable', 'string', 'max:120'],
             'level_three_body' => ['nullable', 'string', 'max:800'],
-            'level_three_image' => ['nullable', 'image', 'max:4096'],
+            'level_three_image' => ['nullable', 'file', 'mimes:jpg,jpeg,png,webp', 'max:10240'],
             'level_three_reset' => ['nullable', 'boolean'],
             'pin' => ['nullable', 'string', 'min:4', 'max:10'],
         ]);
@@ -73,7 +73,13 @@ class MemoryLaneConfigController extends Controller
                 if (!empty($config->{$imageField})) {
                     Storage::disk('public')->delete($config->{$imageField});
                 }
-                $stored = $this->fileProcessor->store($request->file($imageField), $storagePath);
+                $stored = $this->fileProcessor->store(
+                    $request->file($imageField),
+                    $storagePath,
+                    'public',
+                    $imageField,
+                    'app.uploads.errors.memory_lane_image_too_large'
+                );
                 $config->{$imageField} = $stored['path'];
             } elseif ($request->boolean($resetField)) {
                 if (!empty($config->{$imageField})) {
@@ -108,12 +114,12 @@ class MemoryLaneConfigController extends Controller
         if ($request->has('pin')) {
             return redirect()
                 ->route('memory-lane.edit', ['space' => $space->slug])
-                ->with('success', __('PIN Memory Lane berhasil diperbarui.'));
+                ->with('success', __('memory_lane.flash.pin_updated'));
         }
 
         return redirect()
             ->route('memory-lane.edit', ['space' => $space->slug])
-            ->with('success', __('Konfigurasi Memory Lane berhasil diperbarui.'));
+            ->with('success', __('memory_lane.flash.saved'));
     }
 
     private function authorizeSpace(Space $space): void
@@ -132,7 +138,7 @@ class MemoryLaneConfigController extends Controller
         $config = MemoryLaneConfig::where('space_id', $space->id)->first();
 
         if (!$config || $config->pin !== $validated['pin']) {
-            return back()->withErrors(['pin' => __('PIN yang Anda masukkan salah.')]);
+            return back()->withErrors(['pin' => __('memory_lane.validation.pin_invalid')]);
         }
 
         $request->session()->put("memory_lane_access_{$space->slug}", true);

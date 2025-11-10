@@ -43,7 +43,7 @@ export default function AuthenticatedLayout({ header, children }) {
         ? route("gallery.index", { space: currentSpace.slug })
         : fallbackHref;
     const spotifyHref = currentSpace
-        ? route("spotify.companion", { space: currentSpace.slug })
+        ? route("spotify.music-space", { space: currentSpace.slug })
         : fallbackHref;
     const partnerFeaturesLocked =
         currentSpace !== null && currentSpace.has_partner === false;
@@ -125,7 +125,7 @@ export default function AuthenticatedLayout({ header, children }) {
                                         {partnerFeaturesLocked && (
                                             <Lock className="h-3 w-3 text-gray-400" aria-hidden="true" />
                                         )}
-                                        {navigation.spotify ?? "Spotify Kit"}
+                                        {navigation.spotify ?? "Couple Music Space"}
                                     </span>
                                 </Link>
                             </div>
@@ -413,7 +413,7 @@ export default function AuthenticatedLayout({ header, children }) {
                         </ResponsiveNavLink>
                         <ResponsiveNavLink
                             href={spotifyHref}
-                            active={route().current("spotify.companion")}
+                            active={route().current("spotify.music-space")}
                             className={
                                 partnerFeaturesLocked
                                     ? "opacity-40 pointer-events-none"
@@ -425,7 +425,7 @@ export default function AuthenticatedLayout({ header, children }) {
                                 {partnerFeaturesLocked && (
                                     <Lock className="h-4 w-4 text-gray-400" aria-hidden="true" />
                                 )}
-                                {navigation.spotify ?? "Spotify Kit"}
+                                {navigation.spotify ?? "Couple Music Space"}
                             </span>
                         </ResponsiveNavLink>
                         <ResponsiveNavLink

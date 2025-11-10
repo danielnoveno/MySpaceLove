@@ -4,6 +4,9 @@ import { Calendar, ArrowLeft, Upload, X } from "lucide-react";
 import { ChangeEvent, FormEvent, useEffect, useRef, useState } from "react";
 import { useCurrentSpace } from "@/hooks/useCurrentSpace";
 import { convertImageToWebP } from "@/utils/imageConverter";
+import { useTranslation } from "@/hooks/useTranslation";
+
+const MAX_FILE_SIZE = 10 * 1024 * 1024;
 
 export default function TimelineCreate() {
     const currentSpace = useCurrentSpace();
@@ -25,6 +28,7 @@ export default function TimelineCreate() {
     const [previews, setPreviews] = useState<string[]>([]);
     const [fileError, setFileError] = useState<string | null>(null);
     const createdPreviewUrls = useRef<string[]>([]);
+    const { t } = useTranslation("app");
 
     useEffect(() => {
         return () => {
@@ -56,7 +60,7 @@ export default function TimelineCreate() {
         const totalFiles = data.media.length + selectedFiles.length;
 
         if (totalFiles > 5) {
-            setFileError("Maksimal 5 foto yang dapat diunggah.");
+            setFileError(t("timeline.validation.max_media"));
             return;
         }
 
@@ -64,8 +68,15 @@ export default function TimelineCreate() {
 
         const convertedFiles: File[] = [];
         const newPreviews: string[] = [];
+        let rejected = false;
 
         for (const file of selectedFiles) {
+            if (file.size > MAX_FILE_SIZE) {
+                setFileError(t("uploads.errors.timeline_media_too_large"));
+                rejected = true;
+                continue;
+            }
+
             try {
                 const webpFile = await convertImageToWebP(file);
                 convertedFiles.push(webpFile);
@@ -74,11 +85,13 @@ export default function TimelineCreate() {
                 newPreviews.push(url);
             } catch (error) {
                 console.error("Error converting image to WebP:", error);
-                setFileError(
-                    "Gagal mengonversi salah satu gambar ke WebP. Pastikan file adalah gambar yang valid."
-                );
+                setFileError(t("uploads.errors.image_conversion_failed"));
                 return;
             }
+        }
+
+        if (rejected && convertedFiles.length === 0) {
+            return;
         }
 
         setData("media", [...data.media, ...convertedFiles]);

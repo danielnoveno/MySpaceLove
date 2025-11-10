@@ -38,7 +38,13 @@ class DocApiController extends Controller
             'notes' => 'nullable|string|max:1000',
         ]);
 
-        $stored = $this->fileProcessor->store($request->file('file'), 'docs');
+        $stored = $this->fileProcessor->store(
+            $request->file('file'),
+            'docs',
+            'public',
+            'file',
+            'app.uploads.errors.generic_file_too_large'
+        );
 
         Doc::create([
             'space_id'  => $request->user()->spaces()->first()->id ?? null,
@@ -48,7 +54,7 @@ class DocApiController extends Controller
             'notes'     => $data['notes'] ?? null,
         ]);
 
-        return redirect()->route('docs.index')->with('success', 'Document uploaded successfully!');
+        return redirect()->route('docs.index')->with('success', __('app.docs.flash.uploaded'));
     }
 
     public function edit($id)
@@ -69,13 +75,19 @@ class DocApiController extends Controller
 
         if ($request->hasFile('file')) {
             Storage::disk('public')->delete($doc->file_path);
-            $stored = $this->fileProcessor->store($request->file('file'), 'docs');
+            $stored = $this->fileProcessor->store(
+                $request->file('file'),
+                'docs',
+                'public',
+                'file',
+                'app.uploads.errors.generic_file_too_large'
+            );
             $data['file_path'] = $stored['path'];
         }
 
         $doc->update($data);
 
-        return redirect()->route('docs.index')->with('success', 'Document updated successfully!');
+        return redirect()->route('docs.index')->with('success', __('app.docs.flash.updated'));
     }
 
     public function destroy($id)
@@ -84,6 +96,6 @@ class DocApiController extends Controller
         Storage::disk('public')->delete($doc->file_path);
         $doc->delete();
 
-        return redirect()->route('docs.index')->with('success', 'Document deleted successfully!');
+        return redirect()->route('docs.index')->with('success', __('app.docs.flash.deleted'));
     }
 }

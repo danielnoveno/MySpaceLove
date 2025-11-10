@@ -9,6 +9,9 @@ import {
     DropResult,
 } from "react-beautiful-dnd";
 import { useCurrentSpace } from "@/hooks/useCurrentSpace";
+import { useTranslation } from "@/hooks/useTranslation";
+
+const MAX_FILE_SIZE = 10 * 1024 * 1024;
 
 interface TimelineItem {
     id: number;
@@ -72,6 +75,7 @@ export default function TimelineEdit({ item }: { item: TimelineItem }) {
     const createdPreviewUrls = useRef<string[]>([]);
     const [fileError, setFileError] = useState<string | null>(null);
     const [modalImage, setModalImage] = useState<string | null>(null);
+    const { t } = useTranslation("app");
 
     useEffect(() => {
         return () => {
@@ -146,14 +150,25 @@ export default function TimelineEdit({ item }: { item: TimelineItem }) {
             return;
         }
 
-        const total = mediaItems.length + files.length;
+        const validFiles = files.filter((file) => file.size <= MAX_FILE_SIZE);
+        const rejected = validFiles.length !== files.length;
+
+        if (rejected) {
+            setFileError(t("uploads.errors.timeline_media_too_large"));
+        }
+
+        if (validFiles.length === 0) {
+            return;
+        }
+
+        const total = mediaItems.length + validFiles.length;
         if (total > 5) {
-            setFileError("Maksimal 5 foto.");
+            setFileError(t("timeline.validation.max_media"));
             return;
         }
         setFileError(null);
 
-        const newMediaItems: NewMediaItem[] = files.map((file) => {
+        const newMediaItems: NewMediaItem[] = validFiles.map((file) => {
             const id =
                 typeof crypto !== "undefined" && crypto.randomUUID
                     ? crypto.randomUUID()
@@ -173,7 +188,7 @@ export default function TimelineEdit({ item }: { item: TimelineItem }) {
         setMediaItems((prev) => [...prev, ...newMediaItems]);
         setData((current) => ({
             ...current,
-            media: [...current.media, ...files],
+            media: [...current.media, ...validFiles],
             media_keys: [
                 ...current.media_keys,
                 ...newMediaItems.map((item) => item.id),
