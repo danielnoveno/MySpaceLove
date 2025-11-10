@@ -9,6 +9,8 @@ import {
     DropResult,
 } from "react-beautiful-dnd";
 import { useCurrentSpace } from "@/hooks/useCurrentSpace";
+import { convertImageToWebP } from "@/utils/imageConverter";
+import { useTranslation } from "@/hooks/useTranslation";
 
 interface TimelineItem {
     id: number;
@@ -35,6 +37,31 @@ type MediaItem = ExistingMediaItem | NewMediaItem;
 
 export default function TimelineEdit({ item }: { item: TimelineItem }) {
     const currentSpace = useCurrentSpace();
+    const { t: errorTranslator } = useTranslation("errors");
+    const { translations: timelineStrings } = useTranslation<Record<string, any>>("timeline");
+    const MAX_UPLOAD_BYTES = 10 * 1024 * 1024;
+    const MAX_FILES = 5;
+    const translatedSizeError = errorTranslator(
+        "timeline.image_too_large",
+        "File size too large. Maximum 10 MB for memory and special moment photos."
+    );
+    const translatedMaxFiles = errorTranslator(
+        "timeline.max_media_count",
+        "You can upload up to :count photos at once."
+    ).replace(":count", String(MAX_FILES));
+    const conversionError = errorTranslator(
+        "upload.image_not_convertible",
+        "The image could not be processed into .webp format."
+    );
+    const editHeadingStrings = timelineStrings?.edit?.heading ?? {};
+    const createFormStrings = timelineStrings?.create?.form ?? {};
+    const cancelLabel = createFormStrings.actions?.cancel ?? "Cancel";
+    const submitLabel = editHeadingStrings.submit ?? createFormStrings.actions?.submit ?? "Save memory";
+    const submittingLabel = editHeadingStrings.submitting ?? createFormStrings.actions?.submitting ?? "Saving…";
+    const mediaLabel = editHeadingStrings.media_label ?? createFormStrings.media?.label ?? "Photos";
+    const mediaButton = editHeadingStrings.media_button ?? createFormStrings.media?.button ?? "Choose photos";
+    const mediaHelper = (createFormStrings.media?.helper as string | undefined)?.replace(":count", String(MAX_FILES)) ??
+        `Upload up to ${MAX_FILES} photos.`;
 
     if (!currentSpace) {
         return null;
@@ -42,6 +69,8 @@ export default function TimelineEdit({ item }: { item: TimelineItem }) {
 
     const spaceSlug = currentSpace.slug;
     const spaceTitle = currentSpace.title;
+    const headTitle = timelineStrings?.meta?.edit ?? "Edit Memory";
+
     const { data, setData, post, processing, errors } = useForm<{
         title: string;
         description: string;
@@ -140,43 +169,72 @@ export default function TimelineEdit({ item }: { item: TimelineItem }) {
     }, []);
 
     // Handle image upload
-    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const handleFileChange = async (
+        e: React.ChangeEvent<HTMLInputElement>,
+    ) => {
         const files = Array.from(e.target.files || []);
         if (files.length === 0) {
             return;
         }
 
         const total = mediaItems.length + files.length;
-        if (total > 5) {
-            setFileError("Maksimal 5 foto.");
+        if (total > MAX_FILES) {
+            setFileError(translatedMaxFiles);
             return;
         }
+
+        const convertedMedia: NewMediaItem[] = [];
+        const convertedFiles: File[] = [];
+        const newUrls: string[] = [];
+
+        for (const file of files) {
+            if (file.size > MAX_UPLOAD_BYTES) {
+                setFileError(translatedSizeError);
+                newUrls.forEach((url) => URL.revokeObjectURL(url));
+                return;
+            }
+
+            try {
+                const webpFile = await convertImageToWebP(file);
+
+                if (webpFile.size > MAX_UPLOAD_BYTES) {
+                    setFileError(translatedSizeError);
+                    newUrls.forEach((url) => URL.revokeObjectURL(url));
+                    return;
+                }
+
+                const id =
+                    typeof crypto !== "undefined" && crypto.randomUUID
+                        ? crypto.randomUUID()
+                        : `new-${Date.now()}-${Math.random()
+                              .toString(16)
+                              .slice(2, 10)}`;
+                const url = URL.createObjectURL(webpFile);
+                createdPreviewUrls.current.push(url);
+                newUrls.push(url);
+                convertedFiles.push(webpFile);
+                convertedMedia.push({
+                    kind: "new",
+                    id,
+                    file: webpFile,
+                    url,
+                });
+            } catch (error) {
+                console.error("Failed to convert image to WebP", error);
+                setFileError(conversionError);
+                newUrls.forEach((url) => URL.revokeObjectURL(url));
+                return;
+            }
+        }
+
         setFileError(null);
-
-        const newMediaItems: NewMediaItem[] = files.map((file) => {
-            const id =
-                typeof crypto !== "undefined" && crypto.randomUUID
-                    ? crypto.randomUUID()
-                    : `new-${Date.now()}-${Math.random()
-                          .toString(16)
-                          .slice(2, 10)}`;
-            const url = URL.createObjectURL(file);
-            createdPreviewUrls.current.push(url);
-            return {
-                kind: "new",
-                id,
-                file,
-                url,
-            };
-        });
-
-        setMediaItems((prev) => [...prev, ...newMediaItems]);
+        setMediaItems((prev) => [...prev, ...convertedMedia]);
         setData((current) => ({
             ...current,
-            media: [...current.media, ...files],
+            media: [...current.media, ...convertedFiles],
             media_keys: [
                 ...current.media_keys,
-                ...newMediaItems.map((item) => item.id),
+                ...convertedMedia.map((item) => item.id),
             ],
         }));
     };
@@ -268,17 +326,19 @@ export default function TimelineEdit({ item }: { item: TimelineItem }) {
                     </Link>
                     <div>
                         <h1 className="text-3xl font-bold text-gray-900">
-                            Edit Momen Spesial
+                            {editHeadingStrings.title ?? "Edit Memory"}
                         </h1>
                         <p className="text-gray-600">
-                            Perbarui kenangan dan atur urutannya di{" "}
-                            {spaceTitle}
+                            {(editHeadingStrings.subtitle as string | undefined)?.replace(
+                                ":space",
+                                spaceTitle,
+                            ) ?? `Refresh the details for ${spaceTitle}.`}
                         </p>
                     </div>
                 </div>
             }
         >
-            <Head title="Edit Momen" />
+            <Head title={headTitle} />
             <div className="relative min-h-screen bg-gradient-to-br from-pink-50 via-white to-rose-50 py-10 px-4 sm:px-6 lg:px-8 overflow-hidden">
                 <canvas
                     ref={canvasRef}
@@ -293,7 +353,7 @@ export default function TimelineEdit({ item }: { item: TimelineItem }) {
                         {/* Text Inputs */}
                         <div>
                             <label className="block text-base font-semibold text-gray-800 mb-2">
-                                Judul Momen
+                                {createFormStrings.title?.label ?? "Moment Title"}
                             </label>
                             <input
                                 type="text"
@@ -302,12 +362,16 @@ export default function TimelineEdit({ item }: { item: TimelineItem }) {
                                     setData("title", e.target.value)
                                 }
                                 className="w-full px-5 py-4 border border-gray-300 rounded-2xl focus:ring-2 focus:ring-pink-500"
+                                placeholder={
+                                    createFormStrings.title?.placeholder ??
+                                    "e.g. Our first anniversary dinner"
+                                }
                             />
                         </div>
 
                         <div>
                             <label className="block text-base font-semibold text-gray-800 mb-2">
-                                Tanggal
+                                {createFormStrings.date?.label ?? "Date"}
                             </label>
                             <div className="relative">
                                 <Calendar className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
@@ -324,7 +388,7 @@ export default function TimelineEdit({ item }: { item: TimelineItem }) {
 
                         <div>
                             <label className="block text-base font-semibold text-gray-800 mb-2">
-                                Deskripsi
+                                {createFormStrings.description?.label ?? "Description"}
                             </label>
                             <textarea
                                 value={data.description}
@@ -333,13 +397,17 @@ export default function TimelineEdit({ item }: { item: TimelineItem }) {
                                 }
                                 rows={5}
                                 className="w-full px-5 py-4 border border-gray-300 rounded-2xl focus:ring-2 focus:ring-pink-500"
+                                placeholder={
+                                    createFormStrings.description?.placeholder ??
+                                    "Tell the story behind this moment…"
+                                }
                             />
                         </div>
 
                         {/* Reorderable Preview */}
                         <div>
                             <label className="block text-base font-semibold text-gray-800 mb-3">
-                                Foto (klik dan seret untuk ubah urutan)
+                                {mediaLabel}
                             </label>
 
                             <DragDropContext onDragEnd={onDragEnd}>
@@ -406,14 +474,17 @@ export default function TimelineEdit({ item }: { item: TimelineItem }) {
                         {/* Upload new */}
                         <div>
                             <label className="block text-base font-semibold text-gray-800 mb-2">
-                                Tambah Foto Baru
+                                {mediaLabel}
                             </label>
                             <div className="border-2 border-dashed border-gray-300 rounded-2xl p-8 text-center hover:border-pink-400 transition">
                                 <Upload className="w-14 h-14 text-gray-400 mx-auto mb-4" />
+                                <p className="text-sm text-gray-600 mb-4">{mediaHelper}</p>
                                 <input
                                     type="file"
                                     multiple
-                                    onChange={handleFileChange}
+                                    onChange={(event) => {
+                                        void handleFileChange(event);
+                                    }}
                                     accept="image/*"
                                     className="hidden"
                                     id="media-upload"
@@ -422,7 +493,7 @@ export default function TimelineEdit({ item }: { item: TimelineItem }) {
                                     htmlFor="media-upload"
                                     className="cursor-pointer bg-pink-500 text-white px-8 py-3 rounded-xl font-medium hover:bg-pink-600 transition"
                                 >
-                                    Pilih Foto (maks. 5)
+                                    {mediaButton}
                                 </label>
                                 {fileError && (
                                     <p className="text-red-500 text-sm mt-3">
@@ -440,16 +511,14 @@ export default function TimelineEdit({ item }: { item: TimelineItem }) {
                                 })}
                                 className="flex-1 px-6 py-4 border border-gray-300 text-gray-700 rounded-xl hover:bg-gray-50 text-center"
                             >
-                                Batal
+                                {cancelLabel}
                             </Link>
                             <button
                                 type="submit"
                                 disabled={processing}
                                 className="flex-1 bg-gradient-to-r from-pink-500 to-rose-500 text-white px-6 py-4 rounded-xl font-semibold hover:shadow-lg disabled:opacity-50"
                             >
-                                {processing
-                                    ? "Memperbarui..."
-                                    : "Perbarui Momen"}
+                                {processing ? submittingLabel : submitLabel}
                             </button>
                         </div>
                     </form>

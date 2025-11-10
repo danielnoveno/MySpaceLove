@@ -42,21 +42,28 @@ class MemoryLaneConfigController extends Controller
     {
         $this->authorizeSpace($space);
 
-        $validated = $request->validate([
-            'level_one_title' => ['nullable', 'string', 'max:120'],
-            'level_one_body' => ['nullable', 'string', 'max:800'],
-            'level_one_image' => ['nullable', 'image', 'max:4096'],
-            'level_one_reset' => ['nullable', 'boolean'],
-            'level_two_title' => ['nullable', 'string', 'max:120'],
-            'level_two_body' => ['nullable', 'string', 'max:800'],
-            'level_two_image' => ['nullable', 'image', 'max:4096'],
-            'level_two_reset' => ['nullable', 'boolean'],
-            'level_three_title' => ['nullable', 'string', 'max:120'],
-            'level_three_body' => ['nullable', 'string', 'max:800'],
-            'level_three_image' => ['nullable', 'image', 'max:4096'],
-            'level_three_reset' => ['nullable', 'boolean'],
-            'pin' => ['nullable', 'string', 'min:4', 'max:10'],
-        ]);
+        $validated = $request->validate(
+            [
+                'level_one_title' => ['nullable', 'string', 'max:120'],
+                'level_one_body' => ['nullable', 'string', 'max:800'],
+                'level_one_image' => ['nullable', 'image', 'max:10240'],
+                'level_one_reset' => ['nullable', 'boolean'],
+                'level_two_title' => ['nullable', 'string', 'max:120'],
+                'level_two_body' => ['nullable', 'string', 'max:800'],
+                'level_two_image' => ['nullable', 'image', 'max:10240'],
+                'level_two_reset' => ['nullable', 'boolean'],
+                'level_three_title' => ['nullable', 'string', 'max:120'],
+                'level_three_body' => ['nullable', 'string', 'max:800'],
+                'level_three_image' => ['nullable', 'image', 'max:10240'],
+                'level_three_reset' => ['nullable', 'boolean'],
+                'pin' => ['nullable', 'string', 'min:4', 'max:10'],
+            ],
+            [
+                'level_one_image.max' => __('errors.memory_lane.kit_image_too_large'),
+                'level_two_image.max' => __('errors.memory_lane.kit_image_too_large'),
+                'level_three_image.max' => __('errors.memory_lane.kit_image_too_large'),
+            ],
+        );
 
         $config = MemoryLaneConfig::firstOrNew(['space_id' => $space->id]);
         $storagePath = "spaces/{$space->id}/memory-lane";
@@ -73,7 +80,13 @@ class MemoryLaneConfigController extends Controller
                 if (!empty($config->{$imageField})) {
                     Storage::disk('public')->delete($config->{$imageField});
                 }
-                $stored = $this->fileProcessor->store($request->file($imageField), $storagePath);
+                $stored = $this->fileProcessor->store(
+                    $request->file($imageField),
+                    $storagePath,
+                    'public',
+                    'errors.memory_lane.kit_image_too_large',
+                    $imageField,
+                );
                 $config->{$imageField} = $stored['path'];
             } elseif ($request->boolean($resetField)) {
                 if (!empty($config->{$imageField})) {
@@ -105,15 +118,9 @@ class MemoryLaneConfigController extends Controller
         $config->space()->associate($space);
         $config->save();
 
-        if ($request->has('pin')) {
-            return redirect()
-                ->route('memory-lane.edit', ['space' => $space->slug])
-                ->with('success', __('PIN Memory Lane berhasil diperbarui.'));
-        }
-
         return redirect()
             ->route('memory-lane.edit', ['space' => $space->slug])
-            ->with('success', __('Konfigurasi Memory Lane berhasil diperbarui.'));
+            ->with('success', __('memory_lane.config.flash.success'));
     }
 
     private function authorizeSpace(Space $space): void
@@ -132,7 +139,9 @@ class MemoryLaneConfigController extends Controller
         $config = MemoryLaneConfig::where('space_id', $space->id)->first();
 
         if (!$config || $config->pin !== $validated['pin']) {
-            return back()->withErrors(['pin' => __('PIN yang Anda masukkan salah.')]);
+            return back()->withErrors([
+                'pin' => __('memory_lane.config.access.pin_invalid'),
+            ]);
         }
 
         $request->session()->put("memory_lane_access_{$space->slug}", true);

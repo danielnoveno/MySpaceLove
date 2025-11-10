@@ -16,12 +16,21 @@ class UploadedFileProcessor
      *
      * @return array{path: string, mime: string}
      */
-    public function store(UploadedFile $file, string $directory, string $disk = 'public'): array
+    public function store(
+        UploadedFile $file,
+        string $directory,
+        string $disk = 'public',
+        ?string $sizeErrorKey = null,
+        ?string $attribute = null,
+        ?string $conversionErrorKey = null
+    ): array
     {
         $maxSize = 10 * 1024 * 1024; // 10 MB in bytes
         if ($file->getSize() > $maxSize) {
             throw ValidationException::withMessages([
-                'file' => 'The image size must not exceed 10 MB.',
+                $attribute ?? 'file' => $sizeErrorKey
+                    ? __($sizeErrorKey)
+                    : __('errors.upload.file_too_large'),
             ]);
         }
 
@@ -32,6 +41,10 @@ class UploadedFileProcessor
             if ($converted !== null) {
                 return $converted;
             }
+
+            throw ValidationException::withMessages([
+                $attribute ?? 'file' => __($conversionErrorKey ?? 'errors.upload.image_not_convertible'),
+            ]);
         }
 
         return $this->storeOriginal($file, $directory, $disk, $mime);

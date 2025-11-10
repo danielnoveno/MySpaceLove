@@ -1,7 +1,9 @@
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout";
 import { Head, useForm, usePage } from "@inertiajs/react";
-import { ChangeEvent, useEffect, useRef, useState } from "react";
+import { ChangeEvent, FormEvent, useEffect, useRef, useState } from "react";
 import { Loader2, Upload, Image as ImageIcon, RotateCcw } from "lucide-react";
+import { useTranslation } from "@/hooks/useTranslation";
+import { convertImageToWebP } from "@/utils/imageConverter";
 
 interface LevelConfig {
     key: string;
@@ -44,22 +46,52 @@ interface FormData {
     pin: string;
 }
 
+const LEVEL_KEYS: LevelKey[] = ["level_one", "level_two", "level_three"];
+const MAX_IMAGE_SIZE = 10 * 1024 * 1024;
+
 export default function MemoryLaneConfig({ space, levels, pin, contentSet }: Props) {
     const page = usePage();
     const flash = page.props.flash as { success?: string; error?: string } | undefined;
+    const { translations: memoryLaneStrings } = useTranslation<Record<string, any>>("memory_lane");
+    const { t: errorsTranslator } = useTranslation("errors");
+
+    const configStrings = memoryLaneStrings?.config ?? {};
+    const headingStrings = configStrings.heading ?? {};
+    const accessStrings = configStrings.access ?? {};
+    const levelsStrings = configStrings.levels ?? {};
+    const actionStrings = configStrings.actions ?? {};
+
+    const pageTitle = memoryLaneStrings?.meta?.config ?? "Memory Lane Kit";
+    const headingTitle = headingStrings.title ?? "Memory Lane Kit";
+    const headingSubtitle = headingStrings.subtitle ?? "Curate sweet reveals, art, and notes for your shared puzzle adventure.";
+    const accessTitle = accessStrings.title ?? "Access PIN";
+    const accessDescription = accessStrings.description ?? "Protect the Memory Lane surprise with an optional PIN.";
+    const pinLabel = accessStrings.pin_label ?? "Access PIN (leave empty to disable)";
+    const pinPlaceholder = accessStrings.pin_placeholder ?? "Example: 1234";
+    const pinHelper = accessStrings.pin_helper ?? "4-10 digits or characters.";
+    const emptyNotice = accessStrings.empty_notice ?? "Memory Lane Kit content has not been configured yet.";
+    const levelsTitle = levelsStrings.title ?? "Reveal levels";
+    const levelsDescription = levelsStrings.description ?? "Update imagery and heartfelt copy for every reveal stage.";
+    const imageHelper = levelsStrings.image_helper ?? "Drag & drop or choose an image (max. 10 MB, JPG/PNG converted to .webp).";
+    const resetImageLabel = levelsStrings.reset ?? "Use default image";
+    const changeImageLabel = levelsStrings.change ?? "Change image";
+    const levelFieldTitle = levelsStrings.fields?.title ?? "Headline";
+    const levelFieldBody = levelsStrings.fields?.body ?? "Story snippet";
+    const saveLabel = actionStrings.save ?? "Save changes";
+    const savingLabel = actionStrings.saving ?? "Saving…";
 
     const createFormState = (source: LevelConfig[], initialPin: string | null): FormData => ({
         level_one_title: source[0]?.title ?? "",
         level_one_body: source[0]?.body ?? "",
-        level_one_image: null as File | null,
+        level_one_image: null,
         level_one_reset: false,
         level_two_title: source[1]?.title ?? "",
         level_two_body: source[1]?.body ?? "",
-        level_two_image: null as File | null,
+        level_two_image: null,
         level_two_reset: false,
         level_three_title: source[2]?.title ?? "",
         level_three_body: source[2]?.body ?? "",
-        level_three_image: null as File | null,
+        level_three_image: null,
         level_three_reset: false,
         pin: initialPin ?? "",
     });
@@ -71,8 +103,30 @@ export default function MemoryLaneConfig({ space, levels, pin, contentSet }: Pro
         level_two: levels[1]?.image ?? levels[1]?.default_image ?? null,
         level_three: levels[2]?.image ?? levels[2]?.default_image ?? null,
     });
+    const [localErrors, setLocalErrors] = useState<Record<LevelKey, string | null>>({
+        level_one: null,
+        level_two: null,
+        level_three: null,
+    });
+    const sizeErrorMessage = errorsTranslator(
+        "memory_lane.kit_image_too_large",
+        "Each Memory Lane Kit image must be a maximum of 10 MB."
+    );
+    const conversionErrorMessage = errorsTranslator(
+        "upload.image_not_convertible",
+        "The image could not be processed into .webp format."
+    );
 
     const objectUrlsRef = useRef<Record<string, string>>({});
+
+    const fallbackImageFor = (key: LevelKey): string | null => {
+        const index = LEVEL_KEYS.indexOf(key);
+        if (index === -1) {
+            return null;
+        }
+
+        return levels[index]?.image ?? levels[index]?.default_image ?? null;
+    };
 
     useEffect(() => {
         return () => {
@@ -94,6 +148,11 @@ export default function MemoryLaneConfig({ space, levels, pin, contentSet }: Pro
             level_two: levels[1]?.image ?? levels[1]?.default_image ?? null,
             level_three: levels[2]?.image ?? levels[2]?.default_image ?? null,
         });
+        setLocalErrors({
+            level_one: null,
+            level_two: null,
+            level_three: null,
+        });
 
         setData((current) => ({
             ...current,
@@ -101,23 +160,56 @@ export default function MemoryLaneConfig({ space, levels, pin, contentSet }: Pro
         }));
     }, [levels, pin, setData]);
 
-    const handleFileChange = (event: ChangeEvent<HTMLInputElement>, key: LevelKey) => {
+    const handleFileChange = async (
+        event: ChangeEvent<HTMLInputElement>,
+        key: LevelKey,
+    ) => {
         const file = event.target.files?.[0] ?? null;
         const imageField = `${key}_image` as const;
         const resetField = `${key}_reset` as const;
-
-        setData(imageField, file);
-        setData(resetField, false);
 
         if (objectUrlsRef.current[key]) {
             URL.revokeObjectURL(objectUrlsRef.current[key]);
             delete objectUrlsRef.current[key];
         }
 
-        if (file) {
-            const url = URL.createObjectURL(file);
+        if (!file) {
+            setData(imageField, null);
+            setData(resetField, false);
+            setPreviews((prev) => ({
+                ...prev,
+                [key]: fallbackImageFor(key),
+            }));
+            setLocalErrors((prev) => ({ ...prev, [key]: null }));
+            return;
+        }
+
+        if (file.size > MAX_IMAGE_SIZE) {
+            setLocalErrors((prev) => ({ ...prev, [key]: sizeErrorMessage }));
+            setData(imageField, null);
+            return;
+        }
+
+        try {
+            const webpFile = await convertImageToWebP(file);
+
+            if (webpFile.size > MAX_IMAGE_SIZE) {
+                setLocalErrors((prev) => ({ ...prev, [key]: sizeErrorMessage }));
+                setData(imageField, null);
+                return;
+            }
+
+            setData(imageField, webpFile);
+            setData(resetField, false);
+
+            const url = URL.createObjectURL(webpFile);
             objectUrlsRef.current[key] = url;
             setPreviews((prev) => ({ ...prev, [key]: url }));
+            setLocalErrors((prev) => ({ ...prev, [key]: null }));
+        } catch (error) {
+            console.error("Failed to convert image to WebP", error);
+            setLocalErrors((prev) => ({ ...prev, [key]: conversionErrorMessage }));
+            setData(imageField, null);
         }
     };
 
@@ -134,10 +226,14 @@ export default function MemoryLaneConfig({ space, levels, pin, contentSet }: Pro
         }
 
         setPreviews((prev) => ({ ...prev, [key]: defaultImage ?? null }));
+        setLocalErrors((prev) => ({ ...prev, [key]: null }));
     };
 
-    const handleSubmit = (event: React.FormEvent) => {
+    const handleSubmit = (event: FormEvent) => {
         event.preventDefault();
+        if (Object.values(localErrors).some(Boolean)) {
+            return;
+        }
         post(route("memory-lane.update", { space: space.slug }), {
             forceFormData: true,
             preserveScroll: true,
@@ -148,14 +244,12 @@ export default function MemoryLaneConfig({ space, levels, pin, contentSet }: Pro
         <AuthenticatedLayout
             header={
                 <div className="space-y-1">
-                    <h2 className="text-2xl font-semibold text-slate-900">Konfigurasi Memory Lane Kit</h2>
-                    <p className="text-sm text-slate-500">
-                        Sesuaikan gambar dan pesan setelah tiap level puzzle untuk ruang {space.title}.
-                    </p>
+                    <h2 className="text-2xl font-semibold text-slate-900">{headingTitle}</h2>
+                    <p className="text-sm text-slate-500">{headingSubtitle}</p>
                 </div>
             }
         >
-            <Head title="Memory Lane Config" />
+            <Head title={`${pageTitle} - ${space.title}`} />
 
             <div className="relative mx-auto max-w-5xl space-y-8 px-4 pb-16 sm:px-6 lg:px-8">
                 {flash?.success && (
@@ -175,14 +269,12 @@ export default function MemoryLaneConfig({ space, levels, pin, contentSet }: Pro
                 >
                     <section className="space-y-4">
                         <header className="space-y-2">
-                            <h3 className="text-xl font-semibold text-slate-900">Pengaturan Akses</h3>
-                            <p className="text-sm text-slate-500">
-                                Atur PIN untuk Memory Lane Kit Anda. Jika diatur, pengunjung harus memasukkan PIN untuk melihat konten.
-                            </p>
+                            <h3 className="text-xl font-semibold text-slate-900">{accessTitle}</h3>
+                            <p className="text-sm text-slate-500">{accessDescription}</p>
                         </header>
                         <div>
                             <label htmlFor="pin" className="block text-sm font-medium text-slate-700">
-                                PIN Akses (kosongkan untuk tanpa PIN)
+                                {pinLabel}
                             </label>
                             <input
                                 id="pin"
@@ -190,116 +282,130 @@ export default function MemoryLaneConfig({ space, levels, pin, contentSet }: Pro
                                 value={data.pin}
                                 onChange={(e) => setData("pin", e.target.value)}
                                 className="mt-1 w-full rounded-xl border border-slate-200 px-4 py-2 text-slate-800 shadow-sm focus:border-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-300"
-                                placeholder="Contoh: 1234"
+                                placeholder={pinPlaceholder}
                                 maxLength={10}
                             />
+                            <p className="mt-1 text-xs text-slate-500">{pinHelper}</p>
                             {errors.pin && <p className="mt-1 text-sm text-rose-500">{errors.pin}</p>}
                         </div>
                         {!contentSet && (
                             <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-700 shadow">
-                                Konten Memory Lane Kit belum diatur. Pengunjung tidak akan bisa melihat apapun sampai Anda mengisi setidaknya satu level.
+                                {emptyNotice}
                             </div>
                         )}
                     </section>
 
-                    {levels.map((level, index) => {
-                        const key = level.key as LevelKey;
-                        const imageField = `${key}_image` as const;
-                        const titleField = `${key}_title` as const;
-                        const bodyField = `${key}_body` as const;
-                        const resetField = `${key}_reset` as const;
-                        const preview = previews[key];
+                    <section className="space-y-6">
+                        <header className="space-y-2">
+                            <h3 className="text-xl font-semibold text-slate-900">{levelsTitle}</h3>
+                            <p className="text-sm text-slate-500">{levelsDescription}</p>
+                        </header>
 
-                        return (
-                            <section key={level.key} className="space-y-4">
-                                <header className="space-y-2">
-                                    <p className="text-xs uppercase tracking-[0.32em] text-slate-400">Level {index + 1}</p>
-                                    <h3 className="text-xl font-semibold text-slate-900">{level.label}</h3>
-                                </header>
-                                <div className="grid gap-6 md:grid-cols-[minmax(0,320px)_minmax(0,1fr)]">
-                                    <div className="space-y-3">
-                                        <div className="relative overflow-hidden rounded-3xl border border-slate-200 bg-slate-50">
-                                            {preview ? (
-                                                <img
-                                                    src={preview}
-                                                    alt={`Pratinjau level ${index + 1}`}
-                                                    className="h-56 w-full object-cover"
-                                                />
-                                            ) : (
-                                                <div className="flex h-56 flex-col items-center justify-center gap-2 text-sm text-slate-400">
-                                                    <ImageIcon className="h-8 w-8" />
-                                                    <span>Belum ada gambar</span>
-                                                </div>
-                                            )}
-                                        </div>
-                                        <div className="flex flex-col gap-2">
-                                            <label className="inline-flex cursor-pointer items-center justify-center gap-2 rounded-full bg-slate-900 px-4 py-2 text-sm font-medium text-white transition hover:bg-slate-700">
-                                                <Upload className="h-4 w-4" />
-                                                Pilih Gambar
-                                                <input
-                                                    type="file"
-                                                    className="hidden"
-                                                    accept="image/*"
-                                                    onChange={(event) => handleFileChange(event, key)}
-                                                />
-                                            </label>
-                                            {(level.image || level.default_image) && (
-                                                <button
-                                                    type="button"
-                                                    onClick={() => handleResetImage(key, level.default_image)}
-                                                    className="inline-flex items-center justify-center gap-2 rounded-full border border-slate-200 px-4 py-2 text-sm font-medium text-slate-600 transition hover:border-slate-300 hover:bg-slate-50"
+                        {levels.map((level, index) => {
+                            const key = level.key as LevelKey;
+                            const imageField = `${key}_image` as const;
+                            const titleField = `${key}_title` as const;
+                            const bodyField = `${key}_body` as const;
+                            const resetField = `${key}_reset` as const;
+                            const preview = previews[key];
+
+                            return (
+                                <section key={level.key} className="space-y-4 rounded-3xl border border-slate-100 bg-white/95 p-6 shadow-sm">
+                                    <header className="space-y-1">
+                                        <span className="text-xs uppercase tracking-[0.28em] text-slate-400">Level {index + 1}</span>
+                                        <h4 className="text-xl font-semibold text-slate-900">{level.label}</h4>
+                                    </header>
+                                    <div className="grid gap-6 md:grid-cols-[minmax(0,320px)_minmax(0,1fr)]">
+                                        <div className="space-y-3">
+                                            <div className="relative overflow-hidden rounded-3xl border border-slate-200 bg-slate-50">
+                                                {preview ? (
+                                                    <img
+                                                        src={preview}
+                                                        alt={`preview-level-${index + 1}`}
+                                                        className="h-56 w-full object-cover"
+                                                    />
+                                                ) : (
+                                                    <div className="flex h-56 flex-col items-center justify-center gap-2 text-sm text-slate-400">
+                                                        <ImageIcon className="h-8 w-8" />
+                                                        <span>{levelsStrings.empty_image ?? "No image"}</span>
+                                                    </div>
+                                                )}
+                                            </div>
+                                            <p className="text-xs text-slate-500">{imageHelper}</p>
+                                            <div className="flex flex-wrap items-center gap-3">
+                                                <label
+                                                    htmlFor={`${imageField}-input`}
+                                                    className="inline-flex items-center gap-2 rounded-xl bg-slate-900 px-4 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-slate-700"
                                                 >
-                                                    <RotateCcw className="h-4 w-4" />
-                                                    Gunakan gambar default
-                                                </button>
+                                                    <Upload className="h-4 w-4" />
+                                                    {changeImageLabel}
+                                                    <input
+                                                        id={`${imageField}-input`}
+                                                        type="file"
+                                                        accept="image/*"
+                                                        className="hidden"
+                                                        onChange={(event) => {
+                                                            void handleFileChange(event, key);
+                                                        }}
+                                                    />
+                                                </label>
+                                                {(level.image || level.default_image) && (
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => handleResetImage(key, level.default_image)}
+                                                        className="inline-flex items-center gap-2 rounded-xl border border-slate-200 px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-100"
+                                                    >
+                                                        <RotateCcw className="h-4 w-4" />
+                                                        {resetImageLabel}
+                                                    </button>
+                                                )}
+                                            </div>
+                                            {localErrors[key] && (
+                                                <p className="text-sm text-rose-600">{localErrors[key]}</p>
                                             )}
                                             {errors[imageField] && (
-                                                <p className="text-sm text-rose-500">{errors[imageField]}</p>
+                                                <p className="text-sm text-rose-600">{errors[imageField]}</p>
                                             )}
                                         </div>
-                                    </div>
-                                    <div className="space-y-4">
-                                        <div>
-                                            <label className="block text-sm font-medium text-slate-700">
-                                                Judul pesan setelah level
-                                            </label>
-                                            <input
-                                                type="text"
-                                                value={data[titleField] as string}
-                                                onChange={(event) => setData(titleField, event.target.value)}
-                                                className="mt-1 w-full rounded-xl border border-slate-200 px-4 py-2 text-slate-800 shadow-sm focus:border-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-300"
-                                                placeholder="Contoh: Misi selesai!"
-                                            />
-                                            {errors[titleField] && (
-                                                <p className="mt-1 text-sm text-rose-500">{errors[titleField]}</p>
-                                            )}
+                                        <div className="space-y-4">
+                                            <div>
+                                                <label className="block text-sm font-medium text-slate-700">{levelFieldTitle}</label>
+                                                <input
+                                                    type="text"
+                                                    value={data[titleField] as string}
+                                                    onChange={(event) => setData(titleField, event.target.value)}
+                                                    className="mt-1 w-full rounded-xl border border-slate-200 px-4 py-2 text-slate-800 shadow-sm focus:border-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-300"
+                                                />
+                                                {errors[titleField] && (
+                                                    <p className="mt-1 text-sm text-rose-500">{errors[titleField]}</p>
+                                                )}
+                                            </div>
+                                            <div>
+                                                <label className="block text-sm font-medium text-slate-700">{levelFieldBody}</label>
+                                                <textarea
+                                                    value={data[bodyField] as string}
+                                                    onChange={(event) => setData(bodyField, event.target.value)}
+                                                    className="mt-1 min-h-[120px] w-full rounded-xl border border-slate-200 px-4 py-2 text-slate-800 shadow-sm focus:border-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-300"
+                                                />
+                                                {errors[bodyField] && (
+                                                    <p className="mt-1 text-sm text-rose-500">{errors[bodyField]}</p>
+                                                )}
+                                            </div>
                                         </div>
-                                        <div>
-                                            <label className="block text-sm font-medium text-slate-700">Isi pesan</label>
-                                            <textarea
-                                                value={data[bodyField] as string}
-                                                onChange={(event) => setData(bodyField, event.target.value)}
-                                                className="mt-1 min-h-[120px] w-full rounded-xl border border-slate-200 px-4 py-2 text-slate-800 shadow-sm focus:border-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-300"
-                                                placeholder="Berikan cerita atau afirmasi setelah level ini selesai."
-                                            />
-                                        {errors[bodyField] && (
-                                            <p className="mt-1 text-sm text-rose-500">{errors[bodyField]}</p>
-                                        )}
                                     </div>
-                                </div>
-                                </div>
-                            </section>
-                        );
-                    })}
+                                </section>
+                            );
+                        })}
+                    </section>
 
                     <div className="flex justify-end">
                         <button
                             type="submit"
-                            disabled={processing}
+                            disabled={processing || Object.values(localErrors).some(Boolean)}
                             className="inline-flex items-center justify-center gap-2 rounded-full bg-slate-900 px-6 py-3 text-sm font-semibold text-white transition hover:bg-slate-700 disabled:cursor-not-allowed disabled:opacity-70"
                         >
                             {processing && <Loader2 className="h-4 w-4 animate-spin" />}
-                            {processing ? "Menyimpan..." : "Simpan Konfigurasi"}
+                            {processing ? savingLabel : saveLabel}
                         </button>
                     </div>
                 </form>

@@ -186,7 +186,26 @@ class HandleInertiaRequests extends Middleware
             'currentSpace' => $currentSpace,
             'locale' => app()->getLocale(),
             'availableLocales' => config('app.available_locales'),
-            'translations' => Lang::get('app'),
+            'translations' => array_replace_recursive(
+                Lang::get('app'),
+                ['surprise' => Lang::get('surprise')],
+                ['errors' => Lang::get('errors')],
+                [
+                    'timeline' => Lang::has('timeline')
+                        ? Lang::get('timeline')
+                        : [],
+                ],
+                [
+                    'memory_lane' => Lang::has('memory_lane')
+                        ? Lang::get('memory_lane')
+                        : [],
+                ],
+                [
+                    'spotify' => Lang::has('spotify')
+                        ? Lang::get('spotify')
+                        : [],
+                ],
+            ),
             'notificationSummary' => $notificationSummary,
             'unreadNotificationsCount' => data_get($notificationSummary, 'unread_count', 0),
         ];

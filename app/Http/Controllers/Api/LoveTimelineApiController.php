@@ -70,13 +70,18 @@ class LoveTimelineApiController extends Controller
 
     public function store(Request $request, Space $space)
     {
-        $request->validate([
-            'title' => 'required|string|max:255',
-            'description' => 'nullable|string',
-            'date' => 'required|date',
-            'media' => 'nullable|array|max:5', // ⬅️ batas maksimal 5 file
-            'media.*' => 'nullable|file|mimes:jpg,jpeg,png|max:10240', // max 10MB per file
-        ]);
+        $request->validate(
+            [
+                'title' => 'required|string|max:255',
+                'description' => 'nullable|string',
+                'date' => 'required|date',
+                'media' => 'nullable|array|max:5', // ⬅️ batas maksimal 5 file
+                'media.*' => 'nullable|file|mimes:jpg,jpeg,png,webp|max:10240', // max 10MB per file
+            ],
+            [
+                'media.*.max' => __('errors.timeline.image_too_large'),
+            ],
+        );
 
         $timeline = new LoveTimeline();
         $timeline->space_id = $space->id;
@@ -86,8 +91,14 @@ class LoveTimelineApiController extends Controller
 
         $paths = [];
         if ($request->hasFile('media')) {
-            foreach ($request->file('media') as $file) {
-                $stored = $this->fileProcessor->store($file, "spaces/{$space->id}/timeline");
+            foreach ($request->file('media') as $index => $file) {
+                $stored = $this->fileProcessor->store(
+                    $file,
+                    "spaces/{$space->id}/timeline",
+                    'public',
+                    'errors.timeline.media_too_large',
+                    sprintf('media.%d', $index),
+                );
                 $paths[] = $stored['path'];
             }
         }
@@ -99,7 +110,7 @@ class LoveTimelineApiController extends Controller
 
         return redirect()
             ->route('timeline.index', ['space' => $space->slug])
-            ->with('success', 'Timeline berhasil ditambahkan!');
+            ->with('success', __('timeline.flash.created'));
     }
 
     public function edit(Space $space, $id)
@@ -120,19 +131,24 @@ class LoveTimelineApiController extends Controller
 
         $item = LoveTimeline::where('space_id', $space->id)->findOrFail($id);
 
-        $data = $r->validate([
-            'title' => 'required|string|max:255',
-            'description' => 'nullable|string',
-            'date' => 'required|date',
-            'media' => 'nullable|array|max:5',
-            'media.*' => 'nullable|file|mimes:jpg,jpeg,png,gif,mp4,mov|max:20480',
-            'media_keys' => 'nullable|array',
-            'media_keys.*' => 'string',
-            'removed' => 'nullable|array',
-            'removed.*' => 'string',
-            'ordered' => 'nullable|array',
-            'ordered.*' => 'string',
-        ]);
+        $data = $r->validate(
+            [
+                'title' => 'required|string|max:255',
+                'description' => 'nullable|string',
+                'date' => 'required|date',
+                'media' => 'nullable|array|max:5',
+                'media.*' => 'nullable|file|mimes:jpg,jpeg,png,webp,mp4,mov|max:10240',
+                'media_keys' => 'nullable|array',
+                'media_keys.*' => 'string',
+                'removed' => 'nullable|array',
+                'removed.*' => 'string',
+                'ordered' => 'nullable|array',
+                'ordered.*' => 'string',
+            ],
+            [
+                'media.*.max' => __('errors.timeline.media_too_large'),
+            ],
+        );
 
         $existingPaths = collect($item->media_paths ?? []);
         $removed = collect($data['removed'] ?? [])->filter()->unique()->values();
@@ -151,7 +167,13 @@ class LoveTimelineApiController extends Controller
         $mediaKeys = $data['media_keys'] ?? [];
         $newUploads = [];
         foreach ($incomingFiles as $index => $file) {
-            $stored = $this->fileProcessor->store($file, "spaces/{$space->id}/timeline");
+            $stored = $this->fileProcessor->store(
+                $file,
+                "spaces/{$space->id}/timeline",
+                'public',
+                'errors.timeline.media_too_large',
+                sprintf('media.%d', $index),
+            );
             $newUploads[] = [
                 'key' => $mediaKeys[$index] ?? null,
                 'path' => $stored['path'],
@@ -210,7 +232,7 @@ class LoveTimelineApiController extends Controller
         $this->notifyTimelineEvent($space, $item, 'updated');
 
         return redirect()->route('timeline.index', ['space' => $space->slug])
-            ->with('success', 'Timeline berhasil diperbarui!');
+            ->with('success', __('timeline.flash.updated'));
     }
 
     public function destroy(Request $request, Space $space, $id)
@@ -237,7 +259,7 @@ class LoveTimelineApiController extends Controller
 
         return redirect()
             ->route('timeline.index', ['space' => $space->slug])
-            ->with('success', __('Momen berhasil dihapus.'));
+            ->with('success', __('timeline.flash.deleted'));
     }
 
     public function setThumbnail(Request $request, Space $space, LoveTimeline $timeline)
