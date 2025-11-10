@@ -5,6 +5,7 @@ namespace App\Services;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use Illuminate\Validation\ValidationException;
 
 class UploadedFileProcessor
 {
@@ -17,6 +18,13 @@ class UploadedFileProcessor
      */
     public function store(UploadedFile $file, string $directory, string $disk = 'public'): array
     {
+        $maxSize = 10 * 1024 * 1024; // 10 MB in bytes
+        if ($file->getSize() > $maxSize) {
+            throw ValidationException::withMessages([
+                'file' => 'The image size must not exceed 10 MB.',
+            ]);
+        }
+
         $mime = $file->getMimeType() ?: $file->getClientMimeType();
 
         if ($this->shouldConvertToWebp($mime)) {
@@ -98,4 +106,3 @@ class UploadedFileProcessor
         ];
     }
 }
-

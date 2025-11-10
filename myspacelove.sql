@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Nov 07, 2025 at 12:03 AM
+-- Generation Time: Nov 09, 2025 at 09:09 AM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -32,6 +32,14 @@ CREATE TABLE `cache` (
   `value` mediumtext NOT NULL,
   `expiration` int(11) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Dumping data for table `cache`
+--
+
+INSERT INTO `cache` (`key`, `value`, `expiration`) VALUES
+('spacelove-cache-novenoow@gmail.com|127.0.0.1', 'i:1;', 1762660479),
+('spacelove-cache-novenoow@gmail.com|127.0.0.1:timer', 'i:1762660479;', 1762660479);
 
 -- --------------------------------------------------------
 
@@ -78,6 +86,13 @@ CREATE TABLE `daily_messages` (
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Dumping data for table `daily_messages`
+--
+
+INSERT INTO `daily_messages` (`id`, `space_id`, `date`, `message`, `generated_by`, `created_at`, `updated_at`) VALUES
+(1, 1, '2025-11-09', 'Hey User1, Aku mau bilang sesuatu yang sudah lama ada di hatiku. 😊 It’s not always easy to find the right words, tapi I really want you to know how much you mean to me. You know, there’s this feeling, kaya kupu-kupu di perut, setiap kali aku melihat senyummu. I find myself drawn to your spirit. Like Rumi said, “The garden of the world has no limits, except in your mind.” You opened up this world to me, one where I feel safe being sepenuhnya diriku sendiri. ✨ And that\'s really priceless, isn\'t it? It’s more than just attraction; it\'s a deep connection that makes even the mundane terasa indah. Mungkin kedengarannya cheesy, but being with you feels like coming home after a long day. 💖 *Kamu adalah rumahku.* And building a life together with you… It\'s a future that fills my heart with peace. It’s not about perfection, it’s about growing together, saling menyemangati, and being there for each other through thick and thin. 💪 Remember that night under the stars? Itu adalah *momen yang tak terlupakan.* You taught me how to simply be. And now it’s my promise to always remind you of your worth, to uplift you when you’re down, and to be your constant through life\'s ups and downs. 🤗 I promise to learn with you', 'ai', '2025-11-08 20:54:10', '2025-11-08 20:54:10');
 
 -- --------------------------------------------------------
 
@@ -254,7 +269,9 @@ CREATE TABLE `memory_lane_configs` (
   `level_three_title` varchar(255) DEFAULT NULL,
   `level_three_body` text DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
-  `updated_at` timestamp NULL DEFAULT NULL
+  `updated_at` timestamp NULL DEFAULT NULL,
+  `pin` varchar(255) DEFAULT NULL,
+  `content_set` tinyint(1) NOT NULL DEFAULT 0
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
@@ -306,7 +323,8 @@ INSERT INTO `migrations` (`id`, `migration`, `batch`) VALUES
 (30, '2025_11_03_121211_add_level_images_to_memory_lane_configs_table', 1),
 (31, '2025_11_05_083141_update_mood_enum_in_love_journals_table', 1),
 (32, '2025_11_06_020554_add_profile_image_to_users_table', 1),
-(33, '2025_11_06_073146_create_listening_plans_table', 1);
+(33, '2025_11_06_073146_create_listening_plans_table', 1),
+(34, '2025_11_09_041709_add_pin_and_content_set_to_memory_lane_configs_table', 2);
 
 -- --------------------------------------------------------
 
@@ -370,6 +388,14 @@ CREATE TABLE `sessions` (
   `last_activity` int(11) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+--
+-- Dumping data for table `sessions`
+--
+
+INSERT INTO `sessions` (`id`, `user_id`, `ip_address`, `user_agent`, `payload`, `last_activity`) VALUES
+('8a8jYzqwmd2GtHhD7AEy89IR5ao5k8u10FETI1Vb', 1, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:145.0) Gecko/20100101 Firefox/145.0', 'ZXlKcGRpSTZJaXRwVVU5d2Nua3pkREZYVlVKblUxaGlLMmMwTkhjOVBTSXNJblpoYkhWbElqb2laWEZwU1c5TUswTnNPV3M1YjNFemIyWXhTbmt3Vm1SclZEbGFRbUZ1U0VSMUsyRm9WRFV2TkhweWIyVTFkbVZOZEZOTWNIUXJSakJCTlRkYWJuRmFaa2hVUkZGcFZVMXRjekZRY0VwTVVtVldWelJOTDBoVWFEaGxTMGRMUlRFeVZTOVlSUzkzVUROcE1WcFdiVVpVTHprck5rZHRWa0ZuWm5CaVVrNXhVblJaU0ZKaFZqbHFNRkZMVmxSTmVFOVVZM1ZZYWpWNVZFTjVlbXhVUm5KNVdXaHNVa3c0UmxremFtcDBjbTVhYmtsS1ltVmFZMEpIZVhVck1WaHJiM0J2VVdGek1pdG5hV015VVhoV1oyNWpTazVLT1dWQmRVaHNjR2sxYzBadmFXTTNiRU5qTUdsdWVVNUplVU14VnpOUWRscG5jbm93TlhWd2JUUkJNbWxWZVVSTUszTkhLMVl6ZVRGMWIzcGplRXBXTTJkaE5FcDZlVTh2TkhCbVdtaHljMlpvTlV4cmQwRnBTbTR5Tm1FMWRGVk1ZV0psV1hZMmIzZ3JNRXRoTjFwalpWWldkMkYzY1VWa00wbFdNRFpXU2t3ME1VVjJkRmczZUZoUmVURkxUMmhHVGpWR0wwRmpMMmM0UTBsekwyMWFaQ3RTVVN0Sk5XSnFlVGhUTmtJd1JHazBTMXB6T0hCUVN6RmtaVmRCY0hsT1FpdEZTVTB5YTI0M2JrWjRaVkpoY1VsQ1UxRm5hME42YVhneVlXbEdOVEp4U0c5d1psRmFVa3RWUmxwbGN6WTJZWGhzU3pKMFNuRTNibVZIYjBnM1lXTjJLMEpNVUZGRVNsVmtSRWc1TWtvM1lqWmhTM1ZhUnpoMlluRnlWbTlFTUhaNmNEQmxTVlp4Um0xak1XWnhMMnBFVlhKRlExQTRXRWh5UkdoNVIxaExRMnhSUFQwaUxDSnRZV01pT2lJeU5XVmxNRGswT0RBeFpXVXpZbU14TXpkak5qZ3pOV00zTTJVeE5XWm1OR1ZtTjJVME1UUXdZMk0wTUdWaE4yTXhOelJpWXpkbU5USmlPVFl6WVdKbUlpd2lkR0ZuSWpvaUluMD0=', 1762662020),
+('TZt2kAMMi017w0c97ibNlpD5g9ilTxrKYlY329YE', 1, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:145.0) Gecko/20100101 Firefox/145.0', 'ZXlKcGRpSTZJakF5UVU0NFIxUm5SRWxhVkhKT1QwVk1hRnBvVW5jOVBTSXNJblpoYkhWbElqb2ljM1ZyVHl0SldHaFRkMFYzYTNZM1YyMHdiSFIzZVRaQlltWk5iM2hwU2tzelVYZ3JlVWxIWkUxRFduUXdTa1ZYYWtWaVQxQnJSbFpRVlhFeVdubE1hMVJ0VkdoTFkycHNWemhWWWtoR1lVMXZWbkJyVURSbWJGVlllbE42VGpGeVdGcEpUVmRyY0RVMVFYUkpaWFpJT1VoMGVYUjJXR1UwVm1KUFEyVlFjMWM0Y0ZaVGNFMXhXVzlRYmtkWlJIWXdNMDVSTVhsaVpWcFFSWFk1ZG1oUmMzWTNObFUzWkdnMkwwSk5SbE5CTjB4WUwweDNUbll3Wm1kQlJVSm5NSEZFUnpFME1HOXNkWE5UV0hoQ1pFODNVM0JXZEhCSGR6YzRlVEZFTVZCdlREVjJSMm81VFhwSlIxWlhiR0ZYVEhrNVdHcDZTalV4YWtjd05IWTRiRlppTDFWVU5Hb3JkbUo0WTNoaU5WcFlieXN6WTNwRU5XWkdVVXhYV201RFVXRXJZbkUxVFc5VmNtbDZSRFE5SWl3aWJXRmpJam9pTmpoak9XRTJORGM0TXpjMFlXSXpObU14WXpoaU9UY3pZbVl5WkRSaU16ZzNaRFUwTjJabU9HSXlNR05rTTJFM05qWTRPVFkxTVRobFpqY3lOV0k1TlNJc0luUmhaeUk2SWlKOQ==', 1762673303);
+
 -- --------------------------------------------------------
 
 --
@@ -394,7 +420,7 @@ CREATE TABLE `spaces` (
 --
 
 INSERT INTO `spaces` (`id`, `slug`, `title`, `user_one_id`, `user_two_id`, `is_public`, `theme_id`, `bio`, `created_at`, `updated_at`) VALUES
-(1, 'my-space', 'My Space', 1, 2, 0, NULL, 'This is my personal space.', '2025-11-06 16:03:27', '2025-11-06 16:03:27');
+(1, 'my-space', 'My Space', 1, 2, 0, NULL, 'This is my personal space.', '2025-11-08 20:46:12', '2025-11-08 20:46:12');
 
 -- --------------------------------------------------------
 
@@ -538,11 +564,11 @@ CREATE TABLE `themes` (
 --
 
 INSERT INTO `themes` (`id`, `name`, `primary_color`, `secondary_color`, `background_color`, `font_family`, `created_at`, `updated_at`) VALUES
-(1, 'Classic Love', '#E63946', '#F1FAEE', '#FFF0F3', 'Georgia', '2025-11-06 16:03:27', '2025-11-06 16:03:27'),
-(2, 'Ocean Breeze', '#1D3557', '#A8DADC', '#F1FAEE', 'Montserrat', '2025-11-06 16:03:27', '2025-11-06 16:03:27'),
-(3, 'Forest Harmony', '#2A9D8F', '#E9C46A', '#F4F1DE', 'Roboto', '2025-11-06 16:03:27', '2025-11-06 16:03:27'),
-(4, 'Minimal White', '#222222', '#555555', '#FFFFFF', 'Helvetica', '2025-11-06 16:03:27', '2025-11-06 16:03:27'),
-(5, 'Romantic Pastel', '#FFB6B9', '#FAE3D9', '#FFF5E1', 'Poppins', '2025-11-06 16:03:27', '2025-11-06 16:03:27');
+(1, 'Classic Love', '#E63946', '#F1FAEE', '#FFF0F3', 'Georgia', '2025-11-08 20:46:12', '2025-11-08 20:46:12'),
+(2, 'Ocean Breeze', '#1D3557', '#A8DADC', '#F1FAEE', 'Montserrat', '2025-11-08 20:46:12', '2025-11-08 20:46:12'),
+(3, 'Forest Harmony', '#2A9D8F', '#E9C46A', '#F4F1DE', 'Roboto', '2025-11-08 20:46:12', '2025-11-08 20:46:12'),
+(4, 'Minimal White', '#222222', '#555555', '#FFFFFF', 'Helvetica', '2025-11-08 20:46:12', '2025-11-08 20:46:12'),
+(5, 'Romantic Pastel', '#FFB6B9', '#FAE3D9', '#FFF5E1', 'Poppins', '2025-11-08 20:46:12', '2025-11-08 20:46:12');
 
 -- --------------------------------------------------------
 
@@ -588,8 +614,8 @@ CREATE TABLE `users` (
 --
 
 INSERT INTO `users` (`id`, `name`, `email`, `profile_image`, `email_verified_at`, `password`, `username`, `partner_code`, `auth_provider`, `provider_id`, `provider_avatar`, `remember_token`, `created_at`, `updated_at`) VALUES
-(1, 'User', 'user@spacelovee.my.id', NULL, NULL, '$2y$12$UWDv8laI12me20fh5bGTSemRmMQcwPe2z6EPqmC2guRAl3KHSGg.m', 'admin', NULL, NULL, NULL, NULL, NULL, '2025-11-06 16:03:26', '2025-11-06 16:03:26'),
-(2, 'User1', 'user1@spacelovee.my.id', NULL, NULL, '$2y$12$3/2cc/ivIe5aMjKXomKe0u0iiuCyai0Gbf4ixJZvVKecRtHGj0PUi', 'daniel', NULL, NULL, NULL, NULL, NULL, '2025-11-06 16:03:27', '2025-11-06 16:03:27');
+(1, 'User', 'user@spacelovee.my.id', 'profile-images/aOiibOqVK2a5kHc5Z5JwcjFzDEvnFW9LbJLE5C4l.webp', NULL, '$2y$12$cH4S9xFQ/2c3o7UpsgWdrewPd7j4hvJDLC43L1H6ieBWb6/yvUZ..', 'admin', NULL, NULL, NULL, NULL, 'TRrAfLRoJuQKZW8CE7t0VJQOciOY7uyjY29nqOktTsHGp0OnjPqg9quLpMod', '2025-11-08 20:46:12', '2025-11-08 21:04:18'),
+(2, 'User1', 'user1@spacelovee.my.id', NULL, NULL, '$2y$12$gTfJ2wvDx72YMyAkTx4Z5.QwWNtG0jiMftG9y5Y/uXbbULIfa8dFm', 'daniel', NULL, NULL, NULL, NULL, NULL, '2025-11-08 20:46:12', '2025-11-08 20:46:12');
 
 -- --------------------------------------------------------
 
@@ -855,7 +881,7 @@ ALTER TABLE `countdowns`
 -- AUTO_INCREMENT for table `daily_messages`
 --
 ALTER TABLE `daily_messages`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
 
 --
 -- AUTO_INCREMENT for table `docs`
@@ -915,7 +941,7 @@ ALTER TABLE `memory_lane_configs`
 -- AUTO_INCREMENT for table `migrations`
 --
 ALTER TABLE `migrations`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=34;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=35;
 
 --
 -- AUTO_INCREMENT for table `nobar_schedules`
