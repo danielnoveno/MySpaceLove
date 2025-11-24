@@ -3,7 +3,7 @@ import { Link, usePage } from "@inertiajs/react";
 import ApplicationLogo from "@/Components/ApplicationLogo";
 import Dropdown from "@/Components/Dropdown";
 import ResponsiveNavLink from "@/Components/ResponsiveNavLink";
-import { Check, Globe, Lock } from "lucide-react";
+import { Check, Globe, Lock, Bell } from "lucide-react";
 import { useTranslation } from "@/hooks/useTranslation";
 
 export default function AuthenticatedLayout({ header, children }) {
@@ -13,6 +13,7 @@ export default function AuthenticatedLayout({ header, children }) {
     const user = props?.auth?.user;
     const spaces = props?.spaces ?? [];
     const currentSpace = props?.currentSpace ?? null;
+    const unreadNotificationsCount = props?.unreadNotificationsCount ?? 0;
 
     const { translations: layoutTranslations } = useTranslation("layout");
 
@@ -46,6 +47,9 @@ export default function AuthenticatedLayout({ header, children }) {
         : fallbackHref;
     const partnerFeaturesLocked =
         currentSpace !== null && currentSpace.has_partner === false;
+    const notificationsHref = currentSpace
+        ? route("spaces.notifications.index", { space: currentSpace.slug })
+        : fallbackHref;
     const lockedTooltip =
         navigation.locked_tooltip ??
         "Fitur couple akan aktif setelah pasanganmu bergabung.";
@@ -240,6 +244,21 @@ export default function AuthenticatedLayout({ header, children }) {
                                     </Dropdown>
                                 </div>
                             )}
+                            <div className="hidden sm:flex sm:items-center sm:ml-6">
+                                <Link
+                                    href={notificationsHref}
+                                    className="mr-4 text-gray-500 hover:text-gray-700 focus:outline-none"
+                                >
+                                    <span className="relative inline-block">
+                                        <Bell className="h-6 w-6 text-pink-500" />
+                                        {unreadNotificationsCount > 0 && (
+                                            <span className="absolute top-0 right-0 inline-flex items-center justify-center w-5 h-5 text-xs font-bold leading-none text-white transform translate-x-1/2 -translate-y-1/2 bg-pink-600 rounded-full">
+                                                {unreadNotificationsCount}
+                                            </span>
+                                        )}
+                                    </span>
+                                </Link>
+                            </div>
                             <div className="ml-3 relative">
                                 <Dropdown>
                                     <Dropdown.Trigger>
@@ -409,6 +428,28 @@ export default function AuthenticatedLayout({ header, children }) {
                                 {navigation.spotify ?? "Spotify Kit"}
                             </span>
                         </ResponsiveNavLink>
+                        <ResponsiveNavLink
+                            href={notificationsHref}
+                            active={route().current("spaces.notifications.index")}
+                            className={
+                                currentSpace === null
+                                    ? "opacity-40 pointer-events-none"
+                                    : ""
+                            }
+                            title={currentSpace === null ? (navigation.choose_space ?? "Pilih Space") : undefined}
+                        >
+                            <span className="flex items-center justify-between w-full gap-2">
+                                <span className="flex items-center gap-2">
+                                    <Bell className="h-5 w-5 text-pink-500" aria-hidden="true" />
+                                    {navigation.notifications ?? "Notifications"}
+                                </span>
+                                {unreadNotificationsCount > 0 && (
+                                    <span className="inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-red-100 bg-red-600 rounded-full">
+                                        {unreadNotificationsCount}
+                                    </span>
+                                )}
+                            </span>
+                        </ResponsiveNavLink>
                     </div>
 
                     <div className="pt-4 pb-1 border-t border-gray-200">
@@ -488,3 +529,7 @@ export default function AuthenticatedLayout({ header, children }) {
         </div>
     );
 }
+
+
+
+

@@ -2,6 +2,30 @@
 
 use Illuminate\Support\Str;
 
+$appUrl = env('APP_URL');
+$parsedHost = $appUrl ? parse_url($appUrl, PHP_URL_HOST) : null;
+$parsedScheme = $appUrl ? parse_url($appUrl, PHP_URL_SCHEME) : null;
+
+$sessionDomain = env('SESSION_DOMAIN');
+
+if ($sessionDomain === null && $parsedHost) {
+    $isIpAddress = filter_var($parsedHost, FILTER_VALIDATE_IP) !== false;
+    $isLocalhost = $parsedHost === 'localhost';
+
+    if (! $isIpAddress && ! $isLocalhost) {
+        $sessionDomain = '.' . ltrim($parsedHost, '.');
+    }
+}
+
+$rawSecure = env('SESSION_SECURE_COOKIE');
+
+if ($rawSecure === null) {
+    $sessionSecure = Str::lower((string) $parsedScheme) === 'https';
+} else {
+    $sessionSecure = filter_var($rawSecure, FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE);
+    $sessionSecure = $sessionSecure ?? false;
+}
+
 return [
 
     /*
@@ -156,7 +180,7 @@ return [
     |
     */
 
-    'domain' => env('SESSION_DOMAIN'),
+    'domain' => $sessionDomain,
 
     /*
     |--------------------------------------------------------------------------
@@ -169,7 +193,7 @@ return [
     |
     */
 
-    'secure' => env('SESSION_SECURE_COOKIE'),
+    'secure' => $sessionSecure,
 
     /*
     |--------------------------------------------------------------------------

@@ -4,10 +4,15 @@ namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Str;
 
+/**
+ * @property \Illuminate\Notifications\DatabaseNotificationCollection $notifications
+ * @property \Illuminate\Notifications\DatabaseNotificationCollection $unreadNotifications
+ */
 class User extends Authenticatable
 {
     /** @use HasFactory<\Database\Factories\UserFactory> */
@@ -24,6 +29,11 @@ class User extends Authenticatable
         'password',
         'username',
         'partner_code',
+        'email_verified_at',
+        'auth_provider',
+        'provider_id',
+        'provider_avatar',
+        'profile_image',
     ];
 
     /**
@@ -86,5 +96,20 @@ class User extends Authenticatable
         } while (static::where('partner_code', $code)->exists());
 
         return $code;
+    }
+
+    public function notifications(): MorphMany
+    {
+        return $this->morphMany(Notification::class, 'notifiable')->latest();
+    }
+
+    public function readNotifications()
+    {
+        return $this->notifications()->read();
+    }
+
+    public function unreadNotifications()
+    {
+        return $this->notifications()->unread();
     }
 }

@@ -11,6 +11,14 @@ export type LoveToken = {
     accent: string;
 };
 
+export type MemoryLaneLevel = {
+    id: string;
+    label: string;
+    image: string;
+    summaryTitle: string;
+    summaryBody: string;
+};
+
 export type MemoryLaneContent = {
     headTitle: string;
     secretGate: {
@@ -21,7 +29,7 @@ export type MemoryLaneContent = {
         placeholder: string;
         buttonLabel: string;
         errorMessage: string;
-        hintLabel: string;
+        hintLabel?: string;
         hint?: string;
         inputLabel: string;
     };
@@ -38,10 +46,7 @@ export type MemoryLaneContent = {
         dragLabel: string;
         movesLabel: string;
         resetLabel: string;
-        options: Array<{
-            label: string;
-            value: string;
-        }>;
+        levels: MemoryLaneLevel[];
     };
     intro: {
         tagline: string;

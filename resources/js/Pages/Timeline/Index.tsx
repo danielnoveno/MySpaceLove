@@ -1,20 +1,58 @@
+import axios from "axios";
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout";
-import { Head, Link } from "@inertiajs/react";
-import { Calendar, Edit, Plus, Heart, Eye, X } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
 import { useCurrentSpace } from "@/hooks/useCurrentSpace";
+import { Head, Link, router } from "@inertiajs/react";
+import {
+    Calendar,
+    Edit,
+    Heart,
+    Images,
+    Loader2,
+    Plus,
+    Trash2,
+    X,
+} from "lucide-react";
+import { useCallback, useMemo, useState } from "react";
+import type { MouseEvent as ReactMouseEvent } from "react";
+import ConfirmDialog from "@/Components/ConfirmDialog";
 
 interface TimelineItem {
     id: number;
     title: string;
-    description: string;
+    description?: string | null;
     date: string;
-    media_paths?: string[]; // ✅ ubah ke array
+    media_paths: string[];
+    media_urls: string[];
+    thumbnail_path?: string | null;
+    thumbnail_url?: string | null;
 }
 
 interface Props {
     timelines: TimelineItem[];
+    flash?: Record<string, string | undefined>;
 }
+
+type MediaOption = {
+    path: string;
+    url: string;
+};
+
+type AnchorPosition = {
+    top: number;
+    left: number;
+    width: number;
+    height: number;
+};
+
+const buildMediaOptions = (item: TimelineItem): MediaOption[] => {
+    const paths = item.media_paths ?? [];
+    const urls = item.media_urls ?? [];
+
+    return paths.map((path, index) => ({
+        path,
+        url: urls[index] ?? `/storage/${path}`,
+    }));
+};
 
 export default function TimelineIndex({ timelines }: Props) {
     const currentSpace = useCurrentSpace();
@@ -23,399 +61,419 @@ export default function TimelineIndex({ timelines }: Props) {
         return null;
     }
 
+    const [items, setItems] = useState<TimelineItem[]>(timelines);
+    const [selectedItem, setSelectedItem] = useState<TimelineItem | null>(null);
+    const [previewImage, setPreviewImage] = useState<string | null>(null);
+    const [thumbnailPending, setThumbnailPending] = useState<number | null>(null);
+    const [pendingDelete, setPendingDelete] = useState<TimelineItem | null>(null);
+    const [deleteAnchor, setDeleteAnchor] = useState<AnchorPosition | null>(null);
+    const [deleting, setDeleting] = useState(false);
+
     const spaceSlug = currentSpace.slug;
     const spaceTitle = currentSpace.title;
-    const [selectedItem, setSelectedItem] = useState<TimelineItem | null>(null);
-    const [selectedImage, setSelectedImage] = useState<string | null>(null);
-    const [thumbnailSelections, setThumbnailSelections] = useState<
-        Record<number, string>
-    >({});
 
-    useEffect(() => {
+    const formatDate = useCallback((value?: string) => {
+        if (!value) return "";
         try {
-            const stored = window.localStorage.getItem(
-                `timeline-thumbnails:${spaceSlug}`,
-            );
-            if (stored) {
-                const parsed = JSON.parse(stored) as Record<number, string>;
-                setThumbnailSelections(parsed);
-            }
-        } catch (error) {
-            console.warn("Failed to load saved thumbnail selections", error);
+            return new Date(value).toLocaleDateString("id-ID", {
+                day: "numeric",
+                month: "long",
+                year: "numeric",
+            });
+        } catch {
+            return value;
         }
-    }, [spaceSlug]);
-
-    useEffect(() => {
-        try {
-            window.localStorage.setItem(
-                `timeline-thumbnails:${spaceSlug}`,
-                JSON.stringify(thumbnailSelections),
-            );
-        } catch (error) {
-            console.warn("Failed to persist thumbnail selections", error);
-        }
-    }, [spaceSlug, thumbnailSelections]);
-
-    const handleThumbnailChange = (timelineId: number, path: string) => {
-        setThumbnailSelections((prev) => ({
-            ...prev,
-            [timelineId]: path,
-        }));
-    };
-
-    const canvasRef = useRef<HTMLCanvasElement>(null);
-    const [parallaxPos, setParallaxPos] = useState({ x: 0, y: 0 });
-    const [randomHearts] = useState(() =>
-        Array.from({ length: 40 }, () => ({
-            x: Math.random() * window.innerWidth,
-            y: Math.random() * window.innerHeight,
-            size: Math.random() * 14 + 8,
-            opacity: Math.random() * 0.5 + 0.2,
-        }))
-    );
-
-    useEffect(() => {
-        const canvas = canvasRef.current;
-        if (!canvas) return;
-        const ctx = canvas.getContext("2d");
-        if (!ctx) return;
-
-        canvas.width = window.innerWidth;
-        canvas.height = window.innerHeight;
-
-        const hearts: {
-            x: number;
-            y: number;
-            size: number;
-            dx: number;
-            dy: number;
-        }[] = [];
-
-        const createHeart = (x: number, y: number) => {
-            hearts.push({
-                x,
-                y,
-                size: Math.random() * 8 + 10,
-                dx: (Math.random() - 0.5) * 2,
-                dy: (Math.random() - 0.5) * 2,
-            });
-        };
-
-        const drawHeart = (
-            ctx: CanvasRenderingContext2D,
-            x: number,
-            y: number,
-            size: number,
-            opacity = 0.6
-        ) => {
-            ctx.save();
-            ctx.translate(x, y);
-            ctx.scale(size / 20, size / 20);
-            ctx.beginPath();
-            ctx.moveTo(0, 0);
-            ctx.bezierCurveTo(0, -3, -5, -15, -20, -15);
-            ctx.bezierCurveTo(-55, -15, -55, 22.5, -55, 22.5);
-            ctx.bezierCurveTo(-55, 40, -35, 62, 0, 80);
-            ctx.bezierCurveTo(35, 62, 55, 40, 55, 22.5);
-            ctx.bezierCurveTo(55, 22.5, 55, -15, 20, -15);
-            ctx.bezierCurveTo(5, -15, 0, -3, 0, 0);
-            ctx.fillStyle = `rgba(244,63,94,${opacity})`;
-            ctx.fill();
-            ctx.restore();
-        };
-
-        const animate = () => {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            hearts.forEach((h, i) => {
-                h.x += h.dx;
-                h.y += h.dy;
-                drawHeart(ctx, h.x, h.y, h.size);
-                if (
-                    h.x < 0 ||
-                    h.y < 0 ||
-                    h.x > canvas.width ||
-                    h.y > canvas.height
-                )
-                    hearts.splice(i, 1);
-            });
-            requestAnimationFrame(animate);
-        };
-
-        animate();
-
-        const handleMouseMove = (e: MouseEvent) => {
-            for (let i = 0; i < 2; i++) createHeart(e.clientX, e.clientY);
-            const centerX = window.innerWidth / 2;
-            const centerY = window.innerHeight / 2;
-            setParallaxPos({
-                x: (e.clientX - centerX) * 0.02,
-                y: (e.clientY - centerY) * 0.02,
-            });
-        };
-
-        window.addEventListener("mousemove", handleMouseMove);
-        window.addEventListener("resize", () => {
-            canvas.width = window.innerWidth;
-            canvas.height = window.innerHeight;
-        });
-
-        return () => {
-            window.removeEventListener("mousemove", handleMouseMove);
-        };
     }, []);
 
-    const formatDate = (dateString: string) => {
-        return new Date(dateString).toLocaleDateString("id-ID", {
-            year: "numeric",
-            month: "long",
-            day: "numeric",
+    const handleThumbnailChange = useCallback(
+        async (timelineId: number, path: string | null) => {
+            setThumbnailPending(timelineId);
+            try {
+                await axios.post(route("timeline.thumbnail", {
+                    space: spaceSlug,
+                    timeline: timelineId,
+                }), { path });
+
+                setItems((prev) =>
+                    prev.map((item) =>
+                        item.id === timelineId
+                            ? {
+                                  ...item,
+                                  thumbnail_path: path,
+                                  thumbnail_url: path
+                                      ? item.media_urls[
+                                            item.media_paths.findIndex((p) => p === path)
+                                        ] ?? `/storage/${path}`
+                                      : item.media_urls[0] ?? null,
+                              }
+                            : item,
+                    ),
+                );
+            } catch (error) {
+                console.error("Failed to update thumbnail", error);
+            } finally {
+                setThumbnailPending(null);
+            }
+        },
+        [spaceSlug],
+    );
+
+    const confirmDelete = useCallback(
+        (item: TimelineItem, event: ReactMouseEvent<HTMLButtonElement>) => {
+            const rect = event.currentTarget.getBoundingClientRect();
+            setPendingDelete(item);
+            setDeleteAnchor({
+                top: rect.top,
+                left: rect.left,
+                width: rect.width,
+                height: rect.height,
+            });
+        },
+        [],
+    );
+
+    const performDelete = useCallback(() => {
+        if (!pendingDelete) {
+            return;
+        }
+        setDeleting(true);
+
+        router.delete(
+            route("timeline.destroy", {
+                space: spaceSlug,
+                id: pendingDelete.id,
+            }),
+            {
+                preserveScroll: true,
+                onSuccess: () => {
+                    setPendingDelete(null);
+                    setDeleteAnchor(null);
+                    router.visit(
+                        route("timeline.index", {
+                            space: spaceSlug,
+                        }),
+                        {
+                            preserveScroll: true,
+                            replace: true,
+                        },
+                    );
+                },
+                onError: () => {
+                    setPendingDelete(null);
+                    setDeleteAnchor(null);
+                },
+                onFinish: () => setDeleting(false),
+            },
+        );
+    }, [pendingDelete, spaceSlug]);
+
+    const itemsWithFallback = useMemo(() => {
+        return items.map((item) => {
+            const media = buildMediaOptions(item);
+            const fallback = media[0]?.url ?? null;
+            return {
+                ...item,
+                media,
+                coverUrl: item.thumbnail_url ?? fallback,
+                coverPath: item.thumbnail_path ?? media[0]?.path ?? null,
+            };
         });
-    };
+    }, [items]);
 
     return (
         <AuthenticatedLayout
+            loveCursor={{
+                color: "#f43f5e",
+                heartCount: 48,
+                className: "opacity-70",
+            }}
             header={
-                <div className="flex justify-between items-center">
-                    <h2 className="font-semibold text-xl text-gray-800 flex items-center gap-2">
-                        <Heart className="w-5 h-5 text-pink-500" />
-                        Love Timeline
+                <div className="flex flex-col gap-1">
+                    <p className="text-xs uppercase tracking-[0.4em] text-pink-400">
+                        Koleksi momen
+                    </p>
+                    <h2 className="text-3xl font-semibold text-pink-900">
+                        Love Timeline – {spaceTitle}
                     </h2>
-                    <Link
-                        href={route("timeline.create", { space: spaceSlug })}
-                        className="bg-gradient-to-r from-pink-500 to-purple-600 hover:from-pink-600 hover:to-purple-700 text-white px-4 py-2 rounded-lg shadow-lg transition-all duration-300 flex items-center gap-2"
-                    >
-                        <Plus className="w-4 h-4" />
-                        Tambah Momen
-                    </Link>
                 </div>
             }
         >
-            <Head title={`Love Timeline - ${spaceTitle}`} />
+        <Head title={`Timeline - ${spaceTitle}`} />
 
-            {/* Background Animasi */}
-            <div className="relative min-h-screen bg-gradient-to-br from-pink-50 via-white to-rose-50 py-10 px-4 sm:px-6 lg:px-8 overflow-hidden">
-                <canvas
-                    ref={canvasRef}
-                    className="absolute inset-0 w-full h-full pointer-events-none"
-                />
-
-                {/* Animasi Hati */}
-                <div className="absolute inset-0 overflow-hidden pointer-events-none">
-                    {randomHearts.map((h, idx) => (
-                        <div
-                            key={idx}
-                            className="absolute text-pink-400 select-none"
-                            style={{
-                                left: h.x,
-                                top: h.y,
-                                fontSize: h.size,
-                                opacity: h.opacity,
-                                transform: `translate3d(${
-                                    parallaxPos.x * 0.5
-                                }px, ${parallaxPos.y * 0.5}px, 0)`,
-                                transition: "transform 0.2s ease-out",
-                            }}
+            <div className="relative mx-auto max-w-6xl space-y-10 px-6 pb-16">
+                <section className="rounded-[28px] border border-pink-100/80 bg-white/90 p-8 shadow-sm backdrop-blur">
+                    <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                        <div>
+                            <p className="text-xs uppercase tracking-[0.4em] text-pink-400">
+                                Galeri kisah
+                            </p>
+                            <h3 className="text-2xl font-semibold text-pink-900">
+                                Susun momen indah kalian
+                            </h3>
+                            <p className="text-sm text-pink-700/80">
+                                Pilih foto yang paling mewakili cerita sebagai cover setiap momen.
+                            </p>
+                        </div>
+                        <Link
+                            href={route("timeline.create", { space: spaceSlug })}
+                            className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-pink-500 to-rose-500 px-6 py-2 text-sm font-semibold text-white shadow-md transition hover:shadow-lg"
                         >
-                            ♥
-                        </div>
-                    ))}
-                </div>
+                            <Plus className="h-4 w-4" />
+                            Tambah Momen
+                        </Link>
+                    </div>
+                </section>
 
-                {/* Konten */}
-                <div className="relative z-10 max-w-6xl mx-auto">
-                    {timelines.length === 0 ? (
-                        <div className="text-center py-12">
-                            <div className="bg-white/80 backdrop-blur-md rounded-3xl shadow-lg p-8 max-w-md mx-auto border border-gray-100">
-                                <Heart className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-                                <h3 className="text-lg font-semibold text-gray-600 mb-2">
-                                    Belum ada momen tersimpan
-                                </h3>
-                                <p className="text-gray-500 mb-4">
-                                    Mulai tambahkan momen spesial pertama
-                                    kalian!
-                                </p>
-                                <Link
-                                    href={route("timeline.create", {
-                                        space: spaceSlug,
-                                    })}
-                                    className="bg-gradient-to-r from-pink-500 to-purple-600 text-white px-6 py-2 rounded-lg inline-block hover:shadow-lg transition-all"
+                {itemsWithFallback.length === 0 ? (
+                    <div className="rounded-[28px] border border-dashed border-pink-200 bg-white/85 py-16 text-center shadow-inner">
+                        <p className="text-lg font-semibold text-pink-800">
+                            Belum ada kenangan tersimpan.
+                        </p>
+                        <p className="mt-2 text-sm text-pink-600">
+                            Mulai tambahkan cerita pertamamu hari ini. ✨
+                        </p>
+                    </div>
+                ) : (
+                    <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
+                        {itemsWithFallback.map((item) => {
+                            const media = item.media as MediaOption[];
+
+                            return (
+                                <article
+                                    key={item.id}
+                                    className="group relative overflow-hidden rounded-[26px] border border-pink-100/80 bg-white/85 shadow-sm transition duration-300 hover:-translate-y-1 hover:shadow-xl"
                                 >
-                                    Tambah Momen Pertama
-                                </Link>
-                            </div>
-                        </div>
-                    ) : (
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                            {timelines.map((item) => {
-                                const availableMedia = item.media_paths ?? [];
-                                const cover = thumbnailSelections[item.id]
-                                    ? `/storage/${thumbnailSelections[item.id]}`
-                                    : availableMedia[0]
-                                    ? `/storage/${availableMedia[0]}`
-                                    : null;
-                                return (
-                                    <div
-                                        key={item.id}
-                                        className="bg-white/80 backdrop-blur-md rounded-2xl shadow-lg border border-gray-100 hover:shadow-xl transition-all duration-300 overflow-hidden group"
-                                    >
-                                        {cover && (
-                                            <div className="h-48 overflow-hidden">
-                                                <img
-                                                    src={cover}
-                                                    alt={item.title}
-                                                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                                                />
+                                    <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-pink-50/70 via-transparent to-white" />
+                                    <div className="pointer-events-none absolute -left-6 top-8 h-24 w-24 rounded-full bg-pink-200/20 blur-3xl" />
+                                    <div className="relative grid gap-6 px-8 pb-10 pt-10">
+                                        <div className="relative mx-auto w-full max-w-sm">
+                                            <div
+                                                className="absolute inset-2 rounded-[24px] border border-pink-100/70 bg-white shadow-md transition group-hover:shadow-lg"
+                                            />
+                                            <div
+                                                className="relative overflow-hidden rounded-[24px] border border-pink-100/80 bg-white shadow-lg transition group-hover:shadow-2xl"
+                                            >
+                                                {item.coverUrl ? (
+                                                    <img
+                                                        src={item.coverUrl}
+                                                        alt={item.title}
+                                                        className="h-64 w-full object-cover"
+                                                        onClick={() => setSelectedItem(item)}
+                                                    />
+                                                ) : (
+                                                    <div className="flex h-64 w-full flex-col items-center justify-center gap-3 bg-pink-50 text-pink-400">
+                                                        <Images className="h-10 w-10" />
+                                                        <span className="text-sm font-medium">
+                                                            Belum ada foto
+                                                        </span>
+                                                    </div>
+                                                )}
+                                                <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/60 via-black/0 to-transparent px-4 py-3 text-white">
+                                                    <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.32em] text-white/70">
+                                                        <Calendar className="h-3 w-3 text-white/80" />
+                                                        {formatDate(item.date)}
+                                                    </div>
+                                                    <h4 className="mt-1 text-lg font-semibold">
+                                                        {item.title}
+                                                    </h4>
+                                                </div>
                                             </div>
-                                        )}
-                                        <div className="p-6">
-                                            <div className="flex items-center gap-2 text-sm text-gray-500 mb-2">
-                                                <Calendar className="w-4 h-4" />
-                                                {formatDate(item.date)}
-                                            </div>
-                                            <h3 className="font-semibold text-gray-800 text-lg mb-2 line-clamp-2">
-                                                {item.title}
-                                            </h3>
-                                            <p className="text-gray-600 text-sm line-clamp-3 mb-4">
-                                                {item.description}
+                                        </div>
+
+                                        <div className="rounded-[20px] border border-pink-100/80 bg-pink-50/60 p-5">
+                                            <p className="line-clamp-3 text-sm text-pink-800/90">
+                                                {item.description ?? "Belum ada cerita tertulis."}
                                             </p>
-                                            <div className="flex justify-between items-center">
-                                                <button
-                                                    onClick={() =>
-                                                        setSelectedItem(item)
-                                                    }
-                                                    className="text-blue-600 hover:text-blue-700 flex items-center gap-1 text-sm font-medium"
-                                                >
-                                                    <Eye className="w-4 h-4" />
-                                                    Detail
-                                                </button>
-                                                <Link
-                                                    href={route(
-                                                        "timeline.edit",
-                                                        {
-                                                            space: spaceSlug,
-                                                            id: item.id,
-                                                        },
-                                                    )}
-                                                    className="text-pink-600 hover:text-pink-700 flex items-center gap-1 text-sm font-medium"
-                                                >
-                                                    <Edit className="w-4 h-4" />
-                                                    Edit
-                                                </Link>
-                                            </div>
-                                            {availableMedia.length > 1 && (
-                                                <div className="mt-4">
-                                                    <p className="text-xs uppercase tracking-[0.2em] text-pink-400 mb-2">
-                                                        Pilih thumbnail
+                                            {media.length > 0 && (
+                                                <div className="mt-5 space-y-3">
+                                                    <p className="text-xs font-semibold uppercase tracking-[0.32em] text-pink-400">
+                                                        Pilih Cover Foto
                                                     </p>
-                                                    <div className="flex flex-wrap gap-2">
-                                                        {availableMedia.map((path, mediaIndex) => {
-                                                            const resolvedPath = `/storage/${path}`;
+                                                    <div className="flex flex-wrap gap-3">
+                                                        {media.map((option) => {
                                                             const isActive =
-                                                                thumbnailSelections[item.id]
-                                                                    ? thumbnailSelections[item.id] === path
-                                                                    : mediaIndex === 0;
+                                                                option.path === item.coverPath;
+                                                            const isDisabled =
+                                                                thumbnailPending === item.id;
                                                             return (
                                                                 <button
-                                                                    key={path}
+                                                                    key={option.path}
                                                                     type="button"
+                                                                    disabled={isDisabled}
                                                                     onClick={() =>
                                                                         handleThumbnailChange(
                                                                             item.id,
-                                                                            path,
+                                                                            option.path,
                                                                         )
                                                                     }
-                                                                    className={`relative h-14 w-14 overflow-hidden rounded-lg border transition shadow-sm focus:outline-none focus:ring-2 focus:ring-pink-400 ${
+                                                                    className={`relative h-16 w-16 overflow-hidden rounded-xl border bg-white shadow transition focus:outline-none focus:ring-2 focus:ring-pink-400 ${
                                                                         isActive
-                                                                            ? "border-pink-400 ring-2 ring-pink-300"
-                                                                            : "border-transparent"
+                                                                            ? "border-pink-500 ring-2 ring-pink-300"
+                                                                            : "border-transparent hover:-translate-y-1"
+                                                                    } ${
+                                                                        isDisabled
+                                                                            ? "cursor-not-allowed opacity-60"
+                                                                            : ""
                                                                     }`}
-                                                                    aria-label={`Pilih thumbnail ${mediaIndex + 1}`}
+                                                                    aria-label="Pilih thumbnail"
                                                                 >
                                                                     <img
-                                                                        src={resolvedPath}
-                                                                        alt={`thumbnail-${mediaIndex}`}
+                                                                        src={option.url}
+                                                                        alt="thumbnail option"
                                                                         className="h-full w-full object-cover"
                                                                     />
+                                                                    {isActive && (
+                                                                        <span className="absolute bottom-1 left-1 rounded-full bg-pink-500 px-2 text-[10px] font-semibold uppercase tracking-[0.18em] text-white">
+                                                                            aktif
+                                                                        </span>
+                                                                    )}
                                                                 </button>
                                                             );
                                                         })}
+                                                        {media.length > 1 && item.coverPath && (
+                                                            <button
+                                                                type="button"
+                                                                disabled={thumbnailPending === item.id}
+                                                                onClick={() =>
+                                                                    handleThumbnailChange(item.id, null)
+                                                                }
+                                                                className="inline-flex items-center justify-center rounded-xl border border-pink-200 bg-white px-3 text-xs font-semibold uppercase tracking-[0.24em] text-pink-500 transition hover:bg-pink-100 disabled:opacity-60"
+                                                            >
+                                                                Reset
+                                                            </button>
+                                                        )}
+                                                        {thumbnailPending === item.id && (
+                                                            <div className="inline-flex items-center gap-2 rounded-xl border border-pink-200 bg-white px-3 py-2 text-xs font-medium text-pink-500">
+                                                                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                                                                Menyimpan...
+                                                            </div>
+                                                        )}
                                                     </div>
                                                 </div>
                                             )}
+                                            <div className="mt-6 flex flex-wrap items-center justify-between gap-3 text-sm font-medium text-pink-700">
+                                                <div className="flex flex-wrap items-center gap-3">
+                                                    <Link
+                                                        href={route("timeline.edit", {
+                                                            space: spaceSlug,
+                                                            id: item.id,
+                                                        })}
+                                                        className="inline-flex items-center gap-2 rounded-full border border-pink-200 px-4 py-1 transition hover:bg-pink-500 hover:text-white"
+                                                    >
+                                                        <Edit className="h-4 w-4" />
+                                                        Sunting
+                                                    </Link>
+                                                    <button
+                                                        type="button"
+                                                        onClick={(event) => confirmDelete(item, event)}
+                                                        className="inline-flex items-center gap-2 rounded-full border border-rose-200 px-4 py-1 text-rose-500 transition hover:bg-rose-500 hover:text-white"
+                                                    >
+                                                        <Trash2 className="h-4 w-4" />
+                                                        Hapus
+                                                    </button>
+                                                </div>
+                                                {media.length > 0 && (
+                                                    <button
+                                                        onClick={() => setSelectedItem(item)}
+                                                        className="inline-flex items-center gap-2 rounded-full border border-pink-200 px-4 py-1 transition hover:bg-pink-500 hover:text-white"
+                                                    >
+                                                        <Heart className="h-4 w-4" />
+                                                        Detail
+                                                    </button>
+                                                )}
+                                            </div>
                                         </div>
                                     </div>
-                                );
-                            })}
-                        </div>
-                    )}
-                </div>
-
-                {/* Modal Detail */}
-                {selectedItem && (
-                    <div
-                        className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4"
-                        onClick={() => setSelectedItem(null)}
-                    >
-                        <div
-                            className="bg-white rounded-xl shadow-lg p-6 max-w-[90vw] max-h-[90vh] overflow-auto relative"
-                            onClick={(e) => e.stopPropagation()}
-                        >
-                            <button
-                                onClick={() => setSelectedItem(null)}
-                                className="absolute top-3 right-3 bg-black/50 text-white p-1 rounded-full hover:bg-black transition"
-                            >
-                                <X className="w-4 h-4" />
-                            </button>
-
-                            {/* Gallery */}
-                            {selectedItem.media_paths &&
-                                selectedItem.media_paths.length > 0 && (
-                                    <div className="flex flex-wrap justify-center gap-3 mb-6">
-                                        {selectedItem.media_paths.map(
-                                            (path, idx) => (
-                                                <img
-                                                    key={idx}
-                                                    src={`/storage/${path}`}
-                                                    alt={`media-${idx}`}
-                                                    onClick={() =>
-                                                        setSelectedImage(
-                                                            `/storage/${path}`
-                                                        )
-                                                    }
-                                                    className="w-32 h-32 object-cover rounded-lg cursor-pointer hover:opacity-80 transition"
-                                                />
-                                            )
-                                        )}
-                                    </div>
-                                )}
-
-                            <h3 className="text-2xl font-semibold mb-2 text-center">
-                                {selectedItem.title}
-                            </h3>
-                            <p className="text-gray-500 text-sm mb-4 text-center">
-                                {formatDate(selectedItem.date)}
-                            </p>
-                            <p className="text-gray-700 text-center whitespace-pre-line">
-                                {selectedItem.description}
-                            </p>
-                        </div>
-                    </div>
-                )}
-
-                {/* Fullscreen image preview */}
-                {selectedImage && (
-                    <div
-                        className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4"
-                        onClick={() => setSelectedImage(null)}
-                    >
-                        <img
-                            src={selectedImage}
-                            alt="fullscreen"
-                            className="max-h-[90vh] max-w-[90vw] object-contain rounded-lg"
-                        />
+                                </article>
+                            );
+                        })}
                     </div>
                 )}
             </div>
+
+            {selectedItem && (
+                <div
+                    className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+                    onClick={() => setSelectedItem(null)}
+                >
+                    <div
+                        className="relative max-h-[90vh] w-full max-w-3xl overflow-y-auto rounded-3xl bg-white p-8 shadow-2xl"
+                        onClick={(event) => event.stopPropagation()}
+                    >
+                        <button
+                            type="button"
+                            onClick={() => setSelectedItem(null)}
+                            className="absolute right-4 top-4 rounded-full bg-black/50 p-1 text-white transition hover:bg-black"
+                        >
+                            <X className="h-4 w-4" />
+                        </button>
+
+                        <div className="flex flex-col gap-8 md:flex-row">
+                            <div className="flex-1 space-y-4">
+                                <h3 className="text-2xl font-semibold text-pink-900">
+                                    {selectedItem.title}
+                                </h3>
+                                <p className="flex items-center gap-2 text-sm uppercase tracking-[0.32em] text-pink-400">
+                                    <Calendar className="h-4 w-4" />
+                                    {formatDate(selectedItem.date)}
+                                </p>
+                                <p className="whitespace-pre-line text-sm leading-relaxed text-pink-800/90">
+                                    {selectedItem.description ?? "Belum ada cerita tertulis."}
+                                </p>
+                            </div>
+                            <div className="flex-1">
+                                <div className="grid grid-cols-2 gap-4">
+                                    {selectedItem.media_urls.map((url, index) => (
+                                        <button
+                                            key={`${selectedItem.id}-${index}`}
+                                            type="button"
+                                            onClick={() => setPreviewImage(url)}
+                                            className="overflow-hidden rounded-2xl border border-pink-100 shadow-sm transition hover:-translate-y-1 hover:shadow-lg"
+                                        >
+                                            <img
+                                                src={url}
+                                                alt={`media-${index}`}
+                                                className="h-32 w-full object-cover"
+                                            />
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {previewImage && (
+                <div
+                    className="fixed inset-0 z-[70] flex items-center justify-center bg-black/80 p-4"
+                    onClick={() => setPreviewImage(null)}
+                >
+                    <img
+                        src={previewImage}
+                        alt="preview"
+                        className="max-h-[90vh] max-w-[90vw] rounded-3xl object-contain shadow-2xl"
+                    />
+                </div>
+            )}
+
+            <ConfirmDialog
+                open={pendingDelete !== null}
+                title="Hapus momen dari timeline?"
+                description="Momen yang dihapus tidak bisa dikembalikan, tetapi kamu masih bisa menambahkannya lagi kapan saja."
+                confirmLabel="Ya, hapus momen"
+                cancelLabel="Batal"
+                tone="danger"
+                loading={deleting}
+                anchor={deleteAnchor}
+                onCancel={() => {
+                    if (!deleting) {
+                        setPendingDelete(null);
+                        setDeleteAnchor(null);
+                    }
+                }}
+                onConfirm={performDelete}
+            />
         </AuthenticatedLayout>
     );
 }

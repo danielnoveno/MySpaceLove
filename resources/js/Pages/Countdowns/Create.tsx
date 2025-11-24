@@ -1,6 +1,24 @@
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout";
-import { Head, useForm } from "@inertiajs/react";
+import { Head, Link, useForm } from "@inertiajs/react";
 import { useCurrentSpace } from "@/hooks/useCurrentSpace";
+import {
+    ArrowLeft,
+    Calendar,
+    Plus,
+    Sparkles,
+    Trash2,
+    Upload,
+    X,
+} from "lucide-react";
+import {
+    ChangeEvent,
+    FormEvent,
+    useEffect,
+    useMemo,
+    useState,
+    type CSSProperties,
+} from "react";
+import { convertImageToWebP } from "@/utils/imageConverter";
 
 export default function CountdownCreate() {
     const currentSpace = useCurrentSpace();
@@ -11,18 +29,56 @@ export default function CountdownCreate() {
 
     const spaceSlug = currentSpace.slug;
     const spaceTitle = currentSpace.title;
-    const { data, setData, post, processing, errors } = useForm({
+
+    const { data, setData, post, processing, errors, clearErrors } = useForm({
         event_name: "",
-        event_date: "",
+        event_date: new Date().toISOString().split("T")[0],
         description: "",
         activities: [] as string[],
         image: null as File | null,
     });
 
+    const [imagePreview, setImagePreview] = useState<string | null>(null);
+    const [fileError, setFileError] = useState<string | null>(null);
+
+    useEffect(() => {
+        return () => {
+            if (imagePreview) {
+                URL.revokeObjectURL(imagePreview);
+            }
+        };
+    }, [imagePreview]);
+
+    const loveHoverPrimary = {
+        "--love-hover-color": "#8b5cf6",
+    } as CSSProperties;
+    const loveHoverSecondary = {
+        "--love-hover-color": "#6b7280",
+    } as CSSProperties;
+    const loveHoverAccent = {
+        "--love-hover-color": "#a855f7",
+    } as CSSProperties;
+    const loveHoverDelete = {
+        "--love-hover-color": "#ef4444",
+    } as CSSProperties;
+
+    const hasActivities = useMemo(
+        () => data.activities.length > 0,
+        [data.activities.length],
+    );
+
+    const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
+        event.preventDefault();
+        clearErrors();
+        post(route("countdown.store", { space: spaceSlug }), {
+            forceFormData: true,
+        });
+    };
+
     const handleActivityChange = (index: number, value: string) => {
-        const newActivities = [...data.activities];
-        newActivities[index] = value;
-        setData("activities", newActivities);
+        const updated = [...data.activities];
+        updated[index] = value;
+        setData("activities", updated);
     };
 
     const addActivity = () => {
@@ -30,143 +86,312 @@ export default function CountdownCreate() {
     };
 
     const removeActivity = (index: number) => {
-        const newActivities = data.activities.filter((_, i) => i !== index);
-        setData("activities", newActivities);
+        const updated = data.activities.filter((_, idx) => idx !== index);
+        setData("activities", updated);
     };
 
-    function submit(e: React.FormEvent) {
-        e.preventDefault();
-        post(route("countdown.store", { space: spaceSlug }), {
-            forceFormData: true,
-        });
-    }
+    const handleImageChange = async (event: ChangeEvent<HTMLInputElement>) => {
+        const file = event.target.files?.[0];
+        if (!file) return;
+
+        setFileError(null);
+
+        try {
+            const webpFile = await convertImageToWebP(file);
+            setData("image", webpFile);
+
+            if (imagePreview) {
+                URL.revokeObjectURL(imagePreview);
+            }
+            setImagePreview(URL.createObjectURL(webpFile));
+        } catch (error) {
+            console.error("Error converting image to WebP:", error);
+            setFileError("Gagal memproses gambar. Pastikan format file didukung dan coba lagi.");
+            setData("image", null);
+            setImagePreview(null);
+        }
+    };
+
+    const removeImage = () => {
+        if (imagePreview) {
+            URL.revokeObjectURL(imagePreview);
+        }
+        setImagePreview(null);
+        setData("image", null);
+    };
 
     return (
         <AuthenticatedLayout
+            loveCursor={{
+                color: "#8b5cf6",
+                heartCount: 40,
+                className: "opacity-55",
+            }}
             header={
-                <h2 className="font-semibold text-xl text-gray-800">
-                    Tambah Countdown
-                </h2>
+                <div className="flex items-center gap-4">
+                    <Link
+                        href={route("countdown.index", { space: spaceSlug })}
+                        className="rounded-lg p-2 transition hover:bg-gray-100"
+                    >
+                        <ArrowLeft className="h-5 w-5" />
+                    </Link>
+                    <div>
+                        <h1 className="text-3xl font-bold text-violet-900">
+                            Tambah Event Spesial
+                        </h1>
+                        <p className="text-sm text-violet-500">
+                            Susun countdown romantis untuk space {spaceTitle}
+                        </p>
+                    </div>
+                </div>
             }
         >
             <Head title={`Tambah Countdown - ${spaceTitle}`} />
 
-            <div className="p-6 max-w-xl mx-auto bg-white shadow-md rounded-xl space-y-6">
-                <form onSubmit={submit}>
-                    <div>
-                        <label className="block text-gray-700 font-medium">
-                            Nama Event
-                        </label>
-                        <input
-                            type="text"
-                            value={data.event_name}
-                            onChange={(e) =>
-                                setData("event_name", e.target.value)
-                            }
-                            className="mt-1 w-full border-gray-300 rounded-lg shadow-sm focus:border-purple-500 focus:ring-purple-500 transition"
-                        />
-                        {errors.event_name && (
-                            <p className="mt-1 text-red-500 text-sm">
-                                {errors.event_name}
-                            </p>
-                        )}
-                    </div>
+            <div className="relative min-h-screen overflow-hidden bg-gradient-to-br from-violet-50 via-white to-fuchsia-50 py-10 px-4 sm:px-6 lg:px-8">
+                <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,_#ede9fe_0,_transparent_45%)] opacity-50" />
 
-                    <div className="mt-4">
-                        <label className="block text-gray-700 font-medium">
-                            Tanggal Event
-                        </label>
-                        <input
-                            type="date"
-                            value={data.event_date}
-                            onChange={(e) =>
-                                setData("event_date", e.target.value)
-                            }
-                            className="mt-1 w-full border-gray-300 rounded-lg shadow-sm focus:border-purple-500 focus:ring-purple-500 transition"
-                        />
-                        {errors.event_date && (
-                            <p className="mt-1 text-red-500 text-sm">
-                                {errors.event_date}
+                <div className="relative mx-auto w-full max-w-4xl">
+                    <form
+                        onSubmit={handleSubmit}
+                        className="relative z-10 space-y-10 rounded-[30px] border border-violet-100 bg-white/85 p-8 shadow-xl backdrop-blur-sm md:p-10"
+                    >
+                        <div className="space-y-3">
+                            <span className="inline-flex items-center gap-2 rounded-full border border-violet-200 bg-violet-50 px-3 py-1 text-xs font-semibold uppercase tracking-[0.32em] text-violet-500">
+                                <Sparkles className="h-3 w-3" />
+                                Detail Event
+                            </span>
+                            <h2 className="text-2xl font-semibold text-violet-900">
+                                Apa acaranya?
+                            </h2>
+                            <p className="text-sm text-violet-500">
+                                Tulis nama event, tanggal penting, dan sedikit
+                                cerita biar kalian sama-sama menantikan momennya.
                             </p>
-                        )}
-                    </div>
+                        </div>
 
-                    <div className="mt-4">
-                        <label className="block text-gray-700 font-medium">
-                            Deskripsi
-                        </label>
-                        <textarea
-                            value={data.description}
-                            onChange={(e) =>
-                                setData("description", e.target.value)
-                            }
-                            className="mt-1 w-full border-gray-300 rounded-lg shadow-sm focus:border-purple-500 focus:ring-purple-500 transition"
-                        />
-                        {errors.description && (
-                            <p className="mt-1 text-red-500 text-sm">
-                                {errors.description}
-                            </p>
-                        )}
-                    </div>
-
-                    <div className="mt-4">
-                        <label className="block text-gray-700 font-medium">
-                            Gambar
-                        </label>
-                        <input
-                            type="file"
-                            onChange={(e) =>
-                                setData("image", e.target.files ? e.target.files[0] : null)
-                            }
-                            className="mt-1 w-full border-gray-300 rounded-lg shadow-sm focus:border-purple-500 focus:ring-purple-500 transition"
-                        />
-                        {errors.image && (
-                            <p className="mt-1 text-red-500 text-sm">
-                                {errors.image}
-                            </p>
-                        )}
-                    </div>
-
-                    <div className="mt-4">
-                        <label className="block text-gray-700 font-medium">
-                            Aktivitas
-                        </label>
-                        {data.activities.map((activity, index) => (
-                            <div key={index} className="flex items-center mt-2">
+                        <div className="grid gap-6 md:grid-cols-2">
+                            <div className="space-y-2">
+                                <label className="text-sm font-semibold text-violet-900">
+                                    Nama Event
+                                </label>
                                 <input
                                     type="text"
-                                    value={activity}
-                                    onChange={(e) =>
-                                        handleActivityChange(index, e.target.value)
+                                    value={data.event_name}
+                                    onChange={(event) =>
+                                        setData("event_name", event.target.value)
                                     }
-                                    className="w-full border-gray-300 rounded-lg shadow-sm focus:border-purple-500 focus:ring-purple-500 transition"
+                                    className="w-full rounded-2xl border border-violet-200 bg-white px-4 py-3 text-sm text-violet-900 shadow-sm transition focus:border-violet-400 focus:outline-none focus:ring-2 focus:ring-violet-200"
+                                    placeholder="Contoh: Anniversary ke-3"
                                 />
+                                {errors.event_name && (
+                                    <p className="text-xs text-rose-500">
+                                        {errors.event_name}
+                                    </p>
+                                )}
+                            </div>
+
+                            <div className="space-y-2">
+                                <label className="text-sm font-semibold text-violet-900">
+                                    Tanggal Event
+                                </label>
+                                <div className="relative">
+                                    <Calendar className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-violet-400" />
+                                    <input
+                                        type="date"
+                                        value={data.event_date}
+                                        onChange={(event) =>
+                                            setData(
+                                                "event_date",
+                                                event.target.value,
+                                            )
+                                        }
+                                        className="w-full rounded-2xl border border-violet-200 bg-white px-10 py-3 text-sm text-violet-900 shadow-sm transition focus:border-violet-400 focus:outline-none focus:ring-2 focus:ring-violet-200"
+                                    />
+                                </div>
+                                {errors.event_date && (
+                                    <p className="text-xs text-rose-500">
+                                        {errors.event_date}
+                                    </p>
+                                )}
+                            </div>
+                        </div>
+
+                        <div className="space-y-2">
+                            <label className="text-sm font-semibold text-violet-900">
+                                Deskripsi Singkat
+                            </label>
+                            <textarea
+                                value={data.description}
+                                onChange={(event) =>
+                                    setData("description", event.target.value)
+                                }
+                                rows={4}
+                                className="w-full rounded-2xl border border-violet-200 bg-white px-4 py-3 text-sm text-violet-900 shadow-sm transition focus:border-violet-400 focus:outline-none focus:ring-2 focus:ring-violet-200"
+                                placeholder="Ceritakan sedikit tentang event ini dan kenapa kamu excited."
+                            />
+                            {errors.description && (
+                                <p className="text-xs text-rose-500">
+                                    {errors.description}
+                                </p>
+                            )}
+                        </div>
+
+                        <div className="space-y-4 rounded-3xl border border-violet-100 bg-violet-50/60 p-6">
+                            <div className="flex items-center justify-between gap-4">
+                                <div>
+                                    <h3 className="text-lg font-semibold text-violet-900">
+                                        Agenda Aktivitas
+                                    </h3>
+                                    <p className="text-sm text-violet-500">
+                                        Tambahkan rencana kecil biar countdown-nya makin bermakna.
+                                    </p>
+                                </div>
                                 <button
                                     type="button"
-                                    onClick={() => removeActivity(index)}
-                                    className="ml-2 text-red-500"
+                                    onClick={addActivity}
+                                    data-love-hover
+                                    style={loveHoverAccent}
+                                    className="inline-flex items-center gap-2 rounded-full border border-violet-200 bg-white px-4 py-2 text-sm font-medium text-violet-600 transition hover:bg-violet-500 hover:text-white"
                                 >
-                                    Hapus
+                                    <Plus className="h-4 w-4" />
+                                    Tambah Agenda
                                 </button>
                             </div>
-                        ))}
-                        <button
-                            type="button"
-                            onClick={addActivity}
-                            className="mt-2 text-purple-600"
-                        >
-                            + Tambah Aktivitas
-                        </button>
-                    </div>
 
-                    <button
-                        type="submit"
-                        disabled={processing}
-                        className="mt-6 bg-purple-600 hover:bg-purple-700 text-white px-6 py-2 rounded-lg shadow-md transition duration-200 w-full"
-                    >
-                        Simpan Countdown
-                    </button>
-                </form>
+                            {hasActivities ? (
+                                <div className="space-y-3">
+                                    {data.activities.map((activity, index) => (
+                                        <div
+                                            key={`activity-${index}`}
+                                            className="flex flex-col gap-2 rounded-2xl border border-violet-100 bg-white px-4 py-3 text-sm text-violet-900 shadow-sm sm:flex-row sm:items-center"
+                                        >
+                                            <input
+                                                type="text"
+                                                value={activity}
+                                                onChange={(event) =>
+                                                    handleActivityChange(
+                                                        index,
+                                                        event.target.value,
+                                                    )
+                                                }
+                                                className="flex-1 rounded-xl border border-transparent bg-violet-50 px-3 py-2 text-sm text-violet-900 transition focus:border-violet-300 focus:outline-none focus:ring-2 focus:ring-violet-200"
+                                                placeholder={`Agenda #${index + 1}`}
+                                            />
+                                            <button
+                                                type="button"
+                                                onClick={() =>
+                                                    removeActivity(index)
+                                                }
+                                                data-love-hover
+                                                style={loveHoverDelete}
+                                                className="inline-flex items-center justify-center gap-2 rounded-full border border-rose-200 px-3 py-2 text-xs font-semibold text-rose-600 transition hover:bg-rose-500 hover:text-white"
+                                            >
+                                                <Trash2 className="h-3.5 w-3.5" />
+                                                Hapus
+                                            </button>
+                                        </div>
+                                    ))}
+                                </div>
+                            ) : (
+                                <p className="rounded-2xl border border-dashed border-violet-200 bg-white/70 px-4 py-6 text-center text-sm text-violet-500">
+                                    Belum ada agenda. Klik &quot;Tambah
+                                    Agenda&quot; untuk mulai menyusun kegiatan romantis kalian.
+                                </p>
+                            )}
+                        </div>
+
+                        <div className="space-y-4">
+                            <div className="flex items-center justify-between">
+                                <div>
+                                    <h3 className="text-lg font-semibold text-violet-900">
+                                        Poster / Thumbnail
+                                    </h3>
+                                    <p className="text-sm text-violet-500">
+                                        Upload foto yang menggambarkan event ini.
+                                        Opsional tapi bikin countdown makin cantik.
+                                    </p>
+                                </div>
+                                {imagePreview && (
+                                    <button
+                                        type="button"
+                                        onClick={removeImage}
+                                        data-love-hover
+                                        style={loveHoverSecondary}
+                                        className="inline-flex items-center gap-2 rounded-full border border-slate-200 px-4 py-2 text-xs font-semibold text-slate-600 transition hover:bg-slate-600 hover:text-white"
+                                    >
+                                        <X className="h-4 w-4" />
+                                        Hapus Poster
+                                    </button>
+                                )}
+                            </div>
+
+                            <div className="grid gap-4 md:grid-cols-[2fr,3fr]">
+                                <label className="flex flex-col items-center justify-center rounded-3xl border-2 border-dashed border-violet-200 bg-white/90 px-6 py-10 text-center text-sm text-violet-500 transition hover:border-violet-400 hover:bg-violet-50">
+                                    <Upload className="h-10 w-10 text-violet-400" />
+                                    <span className="mt-3 font-semibold text-violet-700">
+                                        Pilih Poster Event
+                                    </span>
+                                    <span className="mt-1 text-xs text-violet-400">
+                                        Format JPG, PNG, atau GIF (maks 2 MB)
+                                    </span>
+                                    <input
+                                        type="file"
+                                        accept="image/*"
+                                        className="hidden"
+                                        onChange={handleImageChange}
+                                    />
+                                </label>
+
+                                <div className="flex items-center justify-center rounded-3xl border border-violet-100 bg-violet-50/60 p-4">
+                                    {imagePreview ? (
+                                        <img
+                                            src={imagePreview}
+                                            alt="Preview poster event"
+                                            className="h-48 w-full rounded-2xl object-cover shadow-lg"
+                                        />
+                                    ) : (
+                                        <p className="text-center text-sm text-violet-500">
+                                            Poster belum dipilih. Kamu boleh melewati langkah ini.
+                                        </p>
+                                    )}
+                                </div>
+                            </div>
+                            {fileError && (
+                                <p className="text-xs text-rose-500 mt-2">{fileError}</p>
+                            )}
+                            {errors.image && (
+                                <p className="text-xs text-rose-500 mt-2">
+                                    {errors.image === "validation.uploaded"
+                                        ? "Ukuran poster terlalu besar. Coba unggah file di bawah 2MB."
+                                        : errors.image}
+                                </p>
+                            )}
+                        </div>
+
+                        <div className="flex flex-col gap-3 pt-2 sm:flex-row">
+                            <Link
+                                href={route("countdown.index", {
+                                    space: spaceSlug,
+                                })}
+                                data-love-hover
+                                style={loveHoverSecondary}
+                                className="flex-1 rounded-full border border-slate-200 px-6 py-3 text-center text-sm font-semibold text-slate-600 transition hover:bg-slate-600 hover:text-white"
+                            >
+                                Batal
+                            </Link>
+                            <button
+                                type="submit"
+                                disabled={processing}
+                                data-love-hover
+                                style={loveHoverPrimary}
+                                className="flex-1 rounded-full bg-gradient-to-r from-violet-500 to-fuchsia-500 px-6 py-3 text-sm font-semibold text-white shadow-lg transition hover:shadow-xl disabled:cursor-not-allowed disabled:opacity-60"
+                            >
+                                {processing ? "Menyimpan..." : "Simpan Event"}
+                            </button>
+                        </div>
+                    </form>
+                </div>
             </div>
         </AuthenticatedLayout>
     );

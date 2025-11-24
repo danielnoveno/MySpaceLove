@@ -1,5 +1,8 @@
 <?php
 
+$appUrl = config('app.url');
+$defaultGoogleRedirect = $appUrl ? rtrim($appUrl, '/') . '/auth/google/callback' : null;
+
 return [
 
     /*
@@ -35,12 +38,27 @@ return [
         ],
     ],
 
+    'google' => [
+        'client_id' => env('GOOGLE_CLIENT_ID'),
+        'client_secret' => env('GOOGLE_CLIENT_SECRET'),
+        'redirect' => env('GOOGLE_REDIRECT_URI', $defaultGoogleRedirect),
+        'allowed_domain' => env('GOOGLE_ALLOWED_DOMAIN'),
+    ],
+
     'spotify' => [
         'client_id' => env('SPOTIFY_CLIENT_ID'),
         'client_secret' => env('SPOTIFY_CLIENT_SECRET'),
         'redirect_uri' => env('SPOTIFY_REDIRECT_URI'),
         'scopes' => env('SPOTIFY_SCOPES', ''),
         'refresh_margin' => (int) env('SPOTIFY_REFRESH_MARGIN', 300),
+    ],
+
+    'tencent' => [
+        'tui_room_kit' => [
+            'sdk_app_id' => env('TENCENT_SDK_APP_ID'),
+            'secret_key' => env('TENCENT_SDK_SECRET_KEY'),
+            'user_sig_ttl' => (int) env('TENCENT_USER_SIG_TTL', 86400),
+        ],
     ],
 
 ];

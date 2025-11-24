@@ -2,7 +2,7 @@ import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout";
 import { Head, Link, router } from "@inertiajs/react";
 import { useSprings, animated } from "react-spring";
 import { useDrag } from "react-use-gesture";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Modal from "@/Components/Modal";
 import TextInput from "@/Components/TextInput";
 import InputLabel from "@/Components/InputLabel";
@@ -11,6 +11,7 @@ import SecondaryButton from "@/Components/SecondaryButton";
 import { useCurrentSpace } from "@/hooks/useCurrentSpace";
 import { useTranslation } from "@/hooks/useTranslation";
 import axios from "axios";
+import { Loader2, X } from "lucide-react";
 
 const ExpandableText = ({
     text,
@@ -72,6 +73,7 @@ export default function DailyMessageIndex({
                 add_manual?: string;
                 regenerate_ai?: string;
                 send_email?: string;
+                regenerating?: string;
             };
             empty?: string;
             modal?: {
@@ -87,6 +89,9 @@ export default function DailyMessageIndex({
                 email_sent?: string;
                 email_failed?: string;
                 email_partner_missing?: string;
+                email_sending?: string;
+                regenerating?: string;
+                regenerate_failed?: string;
             };
         }>("daily_messages");
     const { t: tCommon } = useTranslation("common");
@@ -104,6 +109,40 @@ export default function DailyMessageIndex({
         filters.date || ""
     );
     const [sendingEmailId, setSendingEmailId] = useState<string | null>(null);
+    const [regeneratingId, setRegeneratingId] = useState<string | null>(null);
+    const [loadingOverlay, setLoadingOverlay] = useState<{
+        title: string;
+        description?: string;
+    } | null>(null);
+    const [feedbackBanner, setFeedbackBanner] = useState<{
+        type: "success" | "error";
+        message: string;
+    } | null>(null);
+    const feedbackTimeoutRef = useRef<number | null>(null);
+
+    useEffect(() => {
+        return () => {
+            if (feedbackTimeoutRef.current) {
+                window.clearTimeout(feedbackTimeoutRef.current);
+                feedbackTimeoutRef.current = null;
+            }
+        };
+    }, []);
+
+    useEffect(() => {
+        if (!feedbackBanner) {
+            return;
+        }
+
+        if (feedbackTimeoutRef.current) {
+            window.clearTimeout(feedbackTimeoutRef.current);
+        }
+
+        feedbackTimeoutRef.current = window.setTimeout(() => {
+            setFeedbackBanner(null);
+            feedbackTimeoutRef.current = null;
+        }, 6000);
+    }, [feedbackBanner]);
 
     const handleSendEmail = async (message: DailyMessage) => {
         if (sendingEmailId !== null) {
@@ -112,6 +151,13 @@ export default function DailyMessageIndex({
 
         const messageId = String(message.id);
         setSendingEmailId(messageId);
+        setLoadingOverlay({
+            title:
+                dailyStrings.feedback?.email_sending ??
+                "Mengirim daily message ke email pasangan...",
+            description:
+                "Tunggu sebentar, kami sedang mengirim pesan manisnya kepada pasanganmu.",
+        });
 
         try {
             const response = await axios.post(
@@ -121,18 +167,21 @@ export default function DailyMessageIndex({
             const successMessage =
                 response.data?.message ??
                 dailyStrings.feedback?.email_sent ??
-                "Daily message sent to your partner's email!";
+                "Daily message berhasil dikirim ke email pasangan!";
 
-            window.alert(successMessage);
+            setFeedbackBanner({
+                type: "success",
+                message: successMessage,
+            });
         } catch (error) {
             let fallbackMessage =
                 dailyStrings.feedback?.email_failed ??
-                "Could not send email. Please try again later.";
+                "Gagal mengirim email. Coba lagi nanti, ya.";
 
             if (axios.isAxiosError(error)) {
                 const partnerMissingMessage =
                     dailyStrings.feedback?.email_partner_missing ??
-                    "Connect your partner and make sure their email is available before sending.";
+                    "Hubungkan pasanganmu dan pastikan alamat email tersedia sebelum mengirim.";
 
                 if (error.response?.status === 422) {
                     fallbackMessage =
@@ -143,10 +192,52 @@ export default function DailyMessageIndex({
                 }
             }
 
-            window.alert(fallbackMessage);
+            setFeedbackBanner({
+                type: "error",
+                message: fallbackMessage,
+            });
         } finally {
+            setLoadingOverlay(null);
             setSendingEmailId(null);
         }
+    };
+
+    const handleRegenerate = (message: DailyMessage) => {
+        if (regeneratingId) {
+            return;
+        }
+
+        const messageKey = String(message.id ?? message.date ?? "");
+        setRegeneratingId(messageKey);
+        setLoadingOverlay({
+            title:
+                dailyStrings.feedback?.regenerating ??
+                "Mengganti pesan harian...",
+            description:
+                "AI sedang menyusun ulang kata-kata manisnya untukmu ??",
+        });
+
+        router.post(
+            route("daily.regenerate", { space: spaceSlug }),
+            { date: message.date },
+            {
+                preserveScroll: true,
+                onError: () => {
+                    setLoadingOverlay(null);
+                    setRegeneratingId(null);
+                    setFeedbackBanner({
+                        type: "error",
+                        message:
+                            dailyStrings.feedback?.regenerate_failed ??
+                            "Pesan harian gagal digenerate ulang. Coba lagi nanti, ya.",
+                    });
+                },
+                onFinish: () => {
+                    setRegeneratingId(null);
+                    setLoadingOverlay(null);
+                },
+            },
+        );
     };
 
     const sanitize = (text: string) => {
@@ -227,76 +318,84 @@ export default function DailyMessageIndex({
                         ref={containerRef}
                         className="grid grid-cols-1 md:grid-cols-3 gap-6 items-start"
                     >
-                        {springs.map(({ x, y }, i) => (
-                            <animated.div
-                                {...bind(i)}
-                                key={messages[i].id}
-                                style={{ x, y, zIndex: springs[i].zIndex, touchAction: "none" }}
-                                className="p-4 bg-white shadow-md rounded-xl border border-gray-100 hover:shadow-xl transition duration-200 cursor-grab active:cursor-grabbing"
-                            >
-                                <h4 className="font-semibold text-gray-800">
-                                    {messages[i].date}
-                                </h4>
-                                <ExpandableText
-                                    text={sanitize(`"${messages[i].message}"`)}
-                                    wordLimit={50}
-                                    expandMoreLabel={
-                                        dailyStrings.expand?.more ??
-                                        "Baca selengkapnya"
-                                    }
-                                    expandLessLabel={
-                                        dailyStrings.expand?.less ??
-                                        "Baca lebih sedikit"
-                                    }
-                                />
-                                <div className="flex gap-2 mt-4">
-                                    <Link
-                                        href={route("daily.edit", {
-                                            space: spaceSlug,
-                                            id: messages[i].id,
-                                        })}
-                                        className="px-3 py-1 text-sm rounded-lg bg-yellow-500 hover:bg-yellow-600 text-white transition"
-                                    >
-                                        {tCommon("actions.edit", "Edit")}
-                                    </Link>
-                                    <button
-                                        onClick={() =>
-                                            router.post(
-                                            route("daily.regenerate", {
-                                                space: spaceSlug,
-                                            }),
-                                            { date: messages[i].date },
-                                        )
-                                    }
-
-                                        className="px-3 py-1 text-sm rounded-lg bg-green-500 hover:bg-green-600 text-white transition"
-                                    >
-                                        {dailyStrings.actions?.regenerate_ai ??
-                                            tCommon("actions.regenerate", "Regenerate AI")}
-                                    </button>
-                                    <button
-                                        type="button"
-                                        onClick={() => void handleSendEmail(messages[i])}
-                                        className={`px-3 py-1 text-sm rounded-lg bg-blue-500 text-white transition hover:bg-blue-600 ${
-                                            sendingEmailId ===
-                                            String(messages[i].id)
-                                                ? "opacity-70 cursor-not-allowed"
-                                                : ""
-                                        }`}
-                                        disabled={
-                                            sendingEmailId ===
-                                            String(messages[i].id)
+                        {springs.map((spring, i) => {
+                            const { x, y, zIndex } = spring;
+                            const message = messages[i];
+                            const messageKey = String(message.id ?? message.date ?? i);
+                            return (
+                                <animated.div
+                                    {...bind(i)}
+                                    key={message.id}
+                                    style={{
+                                        x,
+                                        y,
+                                        zIndex: zIndex.to((value) => Math.round(value)),
+                                        touchAction: "none",
+                                    }}
+                                    className="p-4 bg-white shadow-md rounded-xl border border-gray-100 hover:shadow-xl transition duration-200 cursor-grab active:cursor-grabbing"
+                                >
+                                    <h4 className="font-semibold text-gray-800">
+                                        {message.date}
+                                    </h4>
+                                    <ExpandableText
+                                        text={sanitize(`"${message.message}"`)}
+                                        wordLimit={50}
+                                        expandMoreLabel={
+                                            dailyStrings.expand?.more ??
+                                            "Baca selengkapnya"
                                         }
-                                    >
-                                        {dailyStrings.actions?.send_email ??
-                                            tCommon(
-                                                "actions.send_email",
-                                                "Send to Email",
+                                        expandLessLabel={
+                                            dailyStrings.expand?.less ??
+                                            "Baca lebih sedikit"
+                                        }
+                                    />
+                                    <div className="mt-4 flex gap-2">
+                                        <Link
+                                            href={route("daily.edit", {
+                                                space: spaceSlug,
+                                                id: message.id,
+                                            })}
+                                            className="px-3 py-1 text-sm rounded-lg bg-yellow-500 text-white transition hover:bg-yellow-600"
+                                        >
+                                            {tCommon("actions.edit", "Edit")}
+                                        </Link>
+                                        <button
+                                            type="button"
+                                            onClick={() => handleRegenerate(message)}
+                                            disabled={Boolean(regeneratingId)}
+                                            className="px-3 py-1 text-sm rounded-lg bg-green-500 text-white transition hover:bg-green-600 disabled:cursor-wait disabled:opacity-70"
+                                        >
+                                            {regeneratingId === messageKey ? (
+                                                <span className="inline-flex items-center gap-2">
+                                                    <Loader2 className="h-4 w-4 animate-spin" />
+                                                    {dailyStrings.actions?.regenerating ??
+                                                        tCommon("actions.loading", "Memproses...")}
+                                                </span>
+                                            ) : (
+                                                dailyStrings.actions?.regenerate_ai ??
+                                                tCommon("actions.regenerate", "Regenerate AI")
                                             )}
-                                    </button>
-                                </div>
-                            </animated.div>
-                        ))}
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={() => void handleSendEmail(message)}
+                                            className={`px-3 py-1 text-sm rounded-lg bg-blue-500 text-white transition hover:bg-blue-600 ${
+                                                sendingEmailId === String(message.id)
+                                                    ? "opacity-70 cursor-not-allowed"
+                                                    : ""
+                                            }`}
+                                            disabled={sendingEmailId === String(message.id)}
+                                        >
+                                            {dailyStrings.actions?.send_email ??
+                                                tCommon(
+                                                    "actions.send_email",
+                                                    "Send to Email",
+                                                )}
+                                        </button>
+                                    </div>
+                                </animated.div>
+                            );
+                        })}
                     </div>
                 )}
 
@@ -371,6 +470,52 @@ export default function DailyMessageIndex({
                         </div>
                     </form>
                 </Modal>
+
+                {feedbackBanner && (
+                    <div className="fixed inset-x-0 top-6 z-40 flex justify-center px-4">
+                        <div
+                            className={`flex items-center gap-3 rounded-full px-5 py-3 text-sm font-medium text-white shadow-lg ${
+                                feedbackBanner.type === "success"
+                                    ? "bg-emerald-500"
+                                    : "bg-rose-500"
+                            }`}
+                        >
+                            <span>{feedbackBanner.message}</span>
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    if (feedbackTimeoutRef.current) {
+                                        window.clearTimeout(
+                                            feedbackTimeoutRef.current,
+                                        );
+                                        feedbackTimeoutRef.current = null;
+                                    }
+                                    setFeedbackBanner(null);
+                                }}
+                                className="rounded-full bg-white/20 p-1 text-white transition hover:bg-white/30"
+                                aria-label="Tutup notifikasi"
+                            >
+                                <X className="h-3.5 w-3.5" />
+                            </button>
+                        </div>
+                    </div>
+                )}
+
+                {loadingOverlay && (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 px-4">
+                        <div className="flex w-full max-w-sm flex-col items-center gap-3 rounded-3xl bg-white px-6 py-6 text-center shadow-2xl">
+                            <Loader2 className="h-8 w-8 animate-spin text-pink-500" />
+                            <h3 className="text-base font-semibold text-slate-900">
+                                {loadingOverlay.title}
+                            </h3>
+                            {loadingOverlay.description && (
+                                <p className="text-sm text-slate-500">
+                                    {loadingOverlay.description}
+                                </p>
+                            )}
+                        </div>
+                    </div>
+                )}
             </div>
         </AuthenticatedLayout>
     );

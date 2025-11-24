@@ -102,9 +102,6 @@ export default function Room({ spaceId, space, schedules = [] }: Props) {
     const resolvedSpaceSlug = space?.slug ?? currentSpace?.slug ?? `space-${spaceId}`;
     const resolvedSpaceTitle = space?.title ?? currentSpace?.title ?? `Space #${spaceId}`;
 
-    const resolvedUserId = currentUser?.id
-        ? `user-${String(currentUser.id)}`
-        : `guest-${spaceId}`;
     const resolvedUserName = (() => {
         const baseName = currentUser?.name ?? currentUser?.email ?? "Guest";
         const trimmed = String(baseName).trim();
@@ -120,9 +117,23 @@ export default function Room({ spaceId, space, schedules = [] }: Props) {
         ? String(currentUser.profile_photo_url)
         : undefined;
 
+    const resolvedUserId = (() => {
+        if (currentUser?.id) {
+            return `user-${currentUser.id}`;
+        }
+
+        if (currentUser?.email) {
+            const sanitized = currentUser.email.replace(/[^a-zA-Z0-9_-]/g, "_");
+            return sanitized.trim().slice(0, 40) || `guest-${spaceId}`;
+        }
+
+        return `guest-${spaceId}`;
+    })();
+
     const iframeRef = useRef<HTMLIFrameElement | null>(null);
     const [isScheduleOpen, setScheduleOpen] = useState(false);
     const [toastMessage, setToastMessage] = useState<string | null>(null);
+    const [iframeStatus, setIframeStatus] = useState<"idle" | "loading" | "ready" | "error">("idle");
     const toastTimeoutRef = useRef<number | undefined>(undefined);
 
     const sortedSchedules = useMemo(() => {
@@ -295,8 +306,12 @@ export default function Room({ spaceId, space, schedules = [] }: Props) {
             params.set("avatarUrl", avatarUrl);
         }
 
-        return `${TUIROOMKIT_ENTRY_PATH}?${params.toString()}`;
+        return `${TUIROOMKIT_ENTRY_PATH}?${params.toString()}#/home`;
     }, [avatarUrl, resolvedSpaceSlug, resolvedSpaceTitle, resolvedUserId, resolvedUserName, spaceId]);
+
+    useEffect(() => {
+        setIframeStatus("loading");
+    }, [iframeSrc]);
 
     return (
         <>
@@ -495,14 +510,36 @@ export default function Room({ spaceId, space, schedules = [] }: Props) {
                 </div>
             )}
 
-            <div className="h-screen bg-neutral-900">
+            <div className="relative h-screen bg-gradient-to-br from-rose-950 via-slate-950 to-slate-900">
+                {iframeStatus !== "ready" && (
+                    <div className="pointer-events-none absolute inset-0 z-10 flex flex-col items-center justify-center gap-3 bg-slate-950/85 text-center text-sm text-rose-100">
+                        {iframeStatus === "loading" ? (
+                            <>
+                                <span
+                                    className="inline-flex h-12 w-12 animate-spin items-center justify-center rounded-full border-2 border-rose-300/50 border-t-rose-400"
+                                    aria-hidden="true"
+                                />
+                                <p className="text-base font-semibold">Menyiapkan ruang nobar kalian…</p>
+                                <p className="text-xs text-rose-200/70">Jika halaman tetap kosong lebih dari 10 detik, refresh tab ini.</p>
+                            </>
+                        ) : (
+                            <>
+                                <p className="text-base font-semibold text-rose-100">Gagal memuat TUIRoomKit</p>
+                                <p className="max-w-xs text-xs text-rose-200/70">Coba muat ulang halaman, pastikan koneksi internet stabil, atau bukalah kembali dari dashboard space.</p>
+                            </>
+                        )}
+                    </div>
+                )}
                 <iframe
+                    key={iframeSrc}
                     ref={iframeRef}
                     title="Tencent Nobar Room"
                     src={iframeSrc}
                     className="h-full w-full border-0 bg-neutral-900"
                     allowFullScreen
                     allow="microphone; camera; fullscreen; display-capture; clipboard-read; clipboard-write; speaker"
+                    onLoad={() => setIframeStatus("ready")}
+                    onError={() => setIframeStatus("error")}
                 />
             </div>
         </>

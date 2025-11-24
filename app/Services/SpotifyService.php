@@ -50,12 +50,18 @@ class SpotifyService
         return $token;
     }
 
-    public function forSpace(Space $space, User $user): self
+    public function forSpace(Space $space, User $user, bool $fallbackToAny = true): self
     {
         $token = SpotifyToken::where('space_id', $space->id)
             ->where('user_id', $user->id)
-            ->first()
-            ?? SpotifyToken::where('space_id', $space->id)->latest()->first();
+            ->latest('updated_at')
+            ->first();
+
+        if (!$token && $fallbackToAny) {
+            $token = SpotifyToken::where('space_id', $space->id)
+                ->latest('updated_at')
+                ->first();
+        }
 
         if (!$token) {
             throw new RuntimeException('Spotify belum tersambung untuk ruang ini.');
@@ -65,6 +71,15 @@ class SpotifyService
         $this->ensureValidToken();
 
         return $this;
+    }
+
+    public function forToken(SpotifyToken $token): self
+    {
+        $instance = clone $this;
+        $instance->token = $token;
+        $instance->ensureValidToken();
+
+        return $instance;
     }
 
     public function ensureValidToken(): void

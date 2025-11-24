@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Space;
 use App\Models\SpaceInvitation;
 use App\Models\SpaceSeparationRequest;
+use App\Notifications\SpaceCreated;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -51,6 +52,11 @@ class SpaceController extends Controller
             }
         }
 
+        $spacesQuery->with([
+            'userOne:id,name,profile_image',
+            'userTwo:id,name,profile_image',
+        ]);
+
         $spaceModels = $spacesQuery
             ->orderByDesc('created_at')
             ->get(['id', 'slug', 'title', 'user_one_id', 'user_two_id']);
@@ -61,6 +67,18 @@ class SpaceController extends Controller
                 'slug' => $space->slug,
                 'title' => $space->title,
                 'has_partner' => $space->user_two_id !== null,
+                'users' => [
+                    $space->userOne ? [
+                        'id' => $space->userOne->id,
+                        'name' => $space->userOne->name,
+                        'profile_photo_url' => $space->userOne->profile_photo_url,
+                    ] : null,
+                    $space->userTwo ? [
+                        'id' => $space->userTwo->id,
+                        'name' => $space->userTwo->name,
+                        'profile_photo_url' => $space->userTwo->profile_photo_url,
+                    ] : null,
+                ],
                 'pending_invitation' => ($hasInvitationTable && $space->relationLoaded('pendingInvitation') && $space->pendingInvitation) ? [
                     'id' => $space->pendingInvitation->id,
                     'email' => $space->pendingInvitation->invitee_email,
@@ -214,9 +232,11 @@ class SpaceController extends Controller
             'bio' => $data['bio'] ?? null,
         ]);
 
+        $user->notify(new SpaceCreated($space));
+
         return redirect()
             ->route('spaces.dashboard', ['space' => $space->slug])
-            ->with('status', 'Space berhasil dibuat! Kamu bisa mengundang pasanganmu kapan saja.');
+            ->with('status', __('app.spaces.flash.created'));
     }
 
     /**

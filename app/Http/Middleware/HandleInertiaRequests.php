@@ -37,9 +37,14 @@ class HandleInertiaRequests extends Middleware
         $spaces = [];
         $currentSpace = null;
 
+        $notificationSummary = null;
+
+        $activeSpaceId = null;
+
         if ($user) {
             $hasInvitationTable = Schema::hasTable('space_invitations');
             $hasSeparationTable = Schema::hasTable('space_separation_requests');
+            $hasNotificationsTable = Schema::hasTable('notifications');
 
             $spacesQuery = Space::query()
                 ->where(function ($query) use ($user): void {
@@ -120,12 +125,55 @@ class HandleInertiaRequests extends Middleware
                         'awaiting_partner' => $routeSpace->pendingSeparationRequest->partner_confirmed_at === null,
                     ] : null,
                 ];
+
+                $activeSpaceId = $routeSpace->id;
             } elseif (is_string($routeSpace)) {
                 $space = collect($spaces)->firstWhere('slug', $routeSpace);
 
                 if ($space) {
                     $currentSpace = $space;
+                    $activeSpaceId = $space['id'];
                 }
+            }
+            if ($hasNotificationsTable) {
+                $notificationsCollection = $user->notifications()
+                    ->latest()
+                    ->limit(20)
+                    ->get();
+
+                $filteredNotifications = $notificationsCollection;
+
+                if ($activeSpaceId !== null) {
+                    $filteredNotifications = $filteredNotifications
+                        ->filter(function ($notification) use ($activeSpaceId) {
+                            return (int) data_get($notification->data, 'space_id') === (int) $activeSpaceId;
+                        })
+                        ->values();
+                }
+
+                $unreadNotifications = $user->unreadNotifications()->get();
+
+                if ($activeSpaceId !== null) {
+                    $unreadNotifications = $unreadNotifications
+                        ->filter(function ($notification) use ($activeSpaceId) {
+                            return (int) data_get($notification->data, 'space_id') === (int) $activeSpaceId;
+                        })
+                        ->values();
+                }
+
+                $notificationSummary = [
+                    'unread_count' => $unreadNotifications->count(),
+                    'latest' => $filteredNotifications
+                        ->take(5)
+                        ->map(fn ($notification): array => [
+                            'id' => $notification->id,
+                            'title' => data_get($notification->data, 'title'),
+                            'body' => data_get($notification->data, 'body'),
+                            'created_at' => optional($notification->created_at)->toIso8601String(),
+                            'read_at' => optional($notification->read_at)->toIso8601String(),
+                        ])
+                        ->all(),
+                ];
             }
         }
 
@@ -138,7 +186,28 @@ class HandleInertiaRequests extends Middleware
             'currentSpace' => $currentSpace,
             'locale' => app()->getLocale(),
             'availableLocales' => config('app.available_locales'),
-            'translations' => Lang::get('app'),
+            'translations' => array_replace_recursive(
+                Lang::get('app'),
+                ['surprise' => Lang::get('surprise')],
+                ['errors' => Lang::get('errors')],
+                [
+                    'timeline' => Lang::has('timeline')
+                        ? Lang::get('timeline')
+                        : [],
+                ],
+                [
+                    'memory_lane' => Lang::has('memory_lane')
+                        ? Lang::get('memory_lane')
+                        : [],
+                ],
+                [
+                    'spotify' => Lang::has('spotify')
+                        ? Lang::get('spotify')
+                        : [],
+                ],
+            ),
+            'notificationSummary' => $notificationSummary,
+            'unreadNotificationsCount' => data_get($notificationSummary, 'unread_count', 0),
         ];
     }
 }

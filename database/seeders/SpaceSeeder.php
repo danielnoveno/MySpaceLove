@@ -24,7 +24,8 @@ class SpaceSeeder extends Seeder
             Space::create([
                 'slug' => 'my-space',
                 'title' => 'My Space',
-                'user_one_id' => $user->id,
+                'user_one_id' => 1,
+                'user_two_id' => 2,
                 'is_public' => false,
                 'bio' => 'This is my personal space.',
             ]);

@@ -39,13 +39,13 @@ class AuthenticatedSessionController extends Controller
             $intendedPath = parse_url($intended, PHP_URL_PATH) ?? '';
 
             if (str_starts_with($intendedPath, '/api/')) {
-                return redirect()->route('dashboard', absolute: false);
+                return redirect()->route('dashboard');
             }
 
             $request->session()->put('url.intended', $intended);
         }
 
-        return redirect()->intended(route('dashboard', absolute: false));
+        return redirect()->intended(route('dashboard'));
     }
 
     /**
@@ -61,4 +61,5 @@ class AuthenticatedSessionController extends Controller
 
         return redirect('/');
     }
+
 }

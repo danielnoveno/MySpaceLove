@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\MemoryLaneConfig;
 use App\Models\NobarSchedule;
 use App\Models\SpaceInvitation;
 use App\Models\SpaceSeparationRequest;
@@ -98,8 +99,22 @@ class Space extends Model
         return $this->hasMany(NobarSchedule::class);
     }
 
+    public function memoryLaneConfig()
+    {
+        return $this->hasOne(MemoryLaneConfig::class);
+    }
+
     public function hasMember($userId)
     {
         return $this->user_one_id == $userId || $this->user_two_id == $userId;
+    }
+
+    public function partner()
+    {
+        if ($this->user_one_id === \Illuminate\Support\Facades\Auth::id()) {
+            return $this->userTwo;
+        }
+
+        return $this->userOne;
     }
 }

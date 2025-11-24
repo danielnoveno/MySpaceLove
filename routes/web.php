@@ -2,6 +2,7 @@
 
 require __DIR__ . '/auth.php';
 
+use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\Api\CountdownApiController;
 use App\Http\Controllers\Api\DailyApiController;
 use App\Http\Controllers\Api\DailyMessageApiController;
@@ -12,6 +13,7 @@ use App\Http\Controllers\Api\MediaGalleryApiController;
 use App\Http\Controllers\Api\SpaceApiController;
 use App\Http\Controllers\Api\SurpriseNoteApiController;
 use App\Http\Controllers\Api\WishlistApiController;
+use App\Http\Controllers\Api\TuiRoomKitCredentialController;
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\ChatController;
 use App\Http\Controllers\DashboardController;
@@ -20,6 +22,10 @@ use App\Http\Controllers\SpaceController;
 use App\Http\Controllers\NobarController;
 use App\Http\Controllers\SpotifyAuthController;
 use App\Http\Controllers\SpotifyController;
+use App\Http\Controllers\MemoryLaneConfigController;
+use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\StoryBookController;
+use App\Services\MemoryLaneContentService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Response;
@@ -38,7 +44,7 @@ Route::get('/about', function () {
 })->name('about');
 
 Route::get('/location/{space:slug}', [LocationController::class, 'publicView'])->name('location.public');
-Route::get('/surprise/story', function () {
+Route::get('/surprise/story', function (MemoryLaneContentService $memoryLane) {
     $storyBase = __('surprise.story_book');
     $defaultSpaceTitle = data_get($storyBase, 'defaults.spaceTitle', 'My Favorite Person');
 
@@ -46,35 +52,50 @@ Route::get('/surprise/story', function () {
         'spaceTitle' => $defaultSpaceTitle,
     ]);
 
+    $scrapbookMeta = data_get($storyContent, 'scrapbook', []);
+    $scrapbookPages = $memoryLane->scrapbookPages();
+
+    $storyContent['scrapbook'] = [
+        'title' => $scrapbookMeta['title'] ?? 'Digital scrapbook',
+        'subtitle' => $scrapbookMeta['subtitle'] ?? '',
+        'empty' => $scrapbookMeta['empty'] ?? '',
+        'cta' => $scrapbookMeta['cta'] ?? null,
+        'manage_url' => null,
+        'pages' => $scrapbookPages,
+    ];
+
     unset($storyContent['defaults']);
 
     return Inertia::render('Surprise/StoryBook', [
         'storyBook' => $storyContent,
     ]);
 })->name('surprise.story');
-Route::get('/surprise/memory', function () {
-    $memoryBase = __('surprise.memory_lane');
-    $defaultSpaceTitle = data_get($memoryBase, 'defaults.spaceTitle', 'kita');
-    $grid = data_get($memoryBase, 'puzzle.grid', ['rows' => 4, 'cols' => 4]);
-
-    $memoryContent = __('surprise.memory_lane', [
-        'spaceTitle' => $defaultSpaceTitle,
-        'rows' => $grid['rows'] ?? 4,
-        'cols' => $grid['cols'] ?? 4,
-    ]);
-
-    $memoryContent['puzzle']['grid'] = $grid;
-    unset($memoryContent['defaults']);
+Route::get('/surprise/memory', function (MemoryLaneContentService $memoryLane, Request $request) {
+    $memoryContent = $memoryLane->resolve();
+    $skipPuzzle = config('app.debug') || $request->boolean('skipPuzzle');
 
     return Inertia::render('Surprise/MemoryLanePublic', [
         'memoryLane' => $memoryContent,
+        'skipPuzzle' => $skipPuzzle,
     ]);
 })->name('surprise.memory');
-Route::get('/surprise/{space:slug}/story', function (\App\Models\Space $space) {
+Route::get('/surprise/{space:slug}/story', function (\App\Models\Space $space, MemoryLaneContentService $memoryLane) {
     $storyBase = __('surprise.story_book');
     $storyContent = __('surprise.story_book', [
         'spaceTitle' => $space->title ?? data_get($storyBase, 'defaults.spaceTitle', 'My Favorite Person'),
     ]);
+
+    $scrapbookMeta = data_get($storyContent, 'scrapbook', []);
+    $scrapbookPages = $memoryLane->scrapbookPages($space);
+
+    $storyContent['scrapbook'] = [
+        'title' => $scrapbookMeta['title'] ?? 'Digital scrapbook',
+        'subtitle' => $scrapbookMeta['subtitle'] ?? '',
+        'empty' => $scrapbookMeta['empty'] ?? '',
+        'cta' => $scrapbookMeta['cta'] ?? null,
+        'manage_url' => route('memory-lane.edit', ['space' => $space->slug]),
+        'pages' => $scrapbookPages,
+    ];
 
     unset($storyContent['defaults']);
 
@@ -87,17 +108,9 @@ Route::get('/surprise/{space:slug}/story', function (\App\Models\Space $space) {
         'storyBook' => $storyContent,
     ]);
 })->name('surprise.story.space');
-Route::get('/surprise/{space:slug}/memory', function (\App\Models\Space $space) {
-    $memoryBase = __('surprise.memory_lane');
-    $grid = data_get($memoryBase, 'puzzle.grid', ['rows' => 4, 'cols' => 4]);
-    $memoryContent = __('surprise.memory_lane', [
-        'spaceTitle' => $space->title ?? data_get($memoryBase, 'defaults.spaceTitle', 'kita'),
-        'rows' => $grid['rows'] ?? 4,
-        'cols' => $grid['cols'] ?? 4,
-    ]);
-
-    $memoryContent['puzzle']['grid'] = $grid;
-    unset($memoryContent['defaults']);
+Route::get('/surprise/{space:slug}/memory', function (\App\Models\Space $space, MemoryLaneContentService $memoryLane, Request $request) {
+    $memoryContent = $memoryLane->resolve($space);
+    $skipPuzzle = config('app.debug') || $request->boolean('skipPuzzle');
 
     return Inertia::render('Surprise/MemoryLanePublic', [
         'space' => [
@@ -106,8 +119,17 @@ Route::get('/surprise/{space:slug}/memory', function (\App\Models\Space $space) 
             'title' => $space->title,
         ],
         'memoryLane' => $memoryContent,
+        'skipPuzzle' => $skipPuzzle,
     ]);
 })->name('surprise.memory.space');
+
+Route::post('/surprise/{space:slug}/memory/verify-pin', [MemoryLaneConfigController::class, 'verifyPin'])->name('surprise.memory.verifyPin');
+
+Route::middleware('auth')->group(function () {
+    Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
+    Route::match(['patch', 'post'], '/profile', [ProfileController::class, 'update'])->name('profile.update');
+    Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+});
 
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/locale', function (Request $request) {
@@ -126,11 +148,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     })->name('locale.switch');
 
     // Profile Routes
-    Route::get('/profile/edit', [App\Http\Controllers\ProfileController::class, 'edit'])->name('profile.edit');
-    Route::put('/profile/update', [App\Http\Controllers\ProfileController::class, 'update'])->name('profile.update');
-    Route::delete('/profile/destroy', [App\Http\Controllers\ProfileController::class, 'destroy'])->name('profile.destroy');
 
-    Route::get('/oauth/spotify/callback', [SpotifyAuthController::class, 'callback'])->name('spotify.callback');
 
     // Dashboard & Space selection
     Route::get('/dashboard', [DashboardController::class, 'redirect'])->name('dashboard');
@@ -138,6 +156,12 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/spaces', [SpaceController::class, 'store'])->name('spaces.store');
 
     Route::middleware('space.access')->group(function () {
+        Route::get('/spaces/{space:slug}/notifications', [NotificationController::class, 'index'])->name('spaces.notifications.index');
+        Route::post('/spaces/{space:slug}/notifications/read-all', [NotificationController::class, 'markAllAsRead'])->name('spaces.notifications.readAll');
+        Route::post('/spaces/{space:slug}/notifications/{notification}/read', [NotificationController::class, 'markAsRead'])->name('spaces.notifications.read');
+        Route::delete('/spaces/{space:slug}/notifications/{notification}', [NotificationController::class, 'destroy'])->name('spaces.notifications.destroy');
+        Route::post('/spaces/{space:slug}/notifications/destroy-multiple', [NotificationController::class, 'destroyMultiple'])->name('spaces.notifications.destroyMultiple');
+
         Route::get('/spaces/{space:slug}/dashboard', [DashboardController::class, 'show'])->name('spaces.dashboard');
 
         Route::get('/spaces/{space:slug}/location', [LocationController::class, 'index'])->name('location.map');
@@ -148,6 +172,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/spaces/{space:slug}/timeline/{id}/edit', [LoveTimelineApiController::class, 'edit'])->name('timeline.edit');
         Route::post('/spaces/{space:slug}/timeline/{id}', [LoveTimelineApiController::class, 'update'])->name('timeline.update');
         Route::delete('/spaces/{space:slug}/timeline/{id}', [LoveTimelineApiController::class, 'destroy'])->name('timeline.destroy');
+        Route::post('/spaces/{space:slug}/timeline/{timeline}/thumbnail', [LoveTimelineApiController::class, 'setThumbnail'])->name('timeline.thumbnail');
 
         // Daily Messages Routes
         Route::get('/spaces/{space:slug}/daily-messages', [DailyMessageApiController::class, 'index'])->name('daily.index');
@@ -174,6 +199,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::put('/spaces/{space:slug}/journals/{id}', [LoveJournalApiController::class, 'update'])->name('journal.update');
         Route::delete('/spaces/{space:slug}/journals/{id}', [LoveJournalApiController::class, 'destroy'])->name('journal.destroy');
 
+        Route::get('/spaces/{space:slug}/memory-lane', [MemoryLaneConfigController::class, 'edit'])->name('memory-lane.edit');
+        Route::post('/spaces/{space:slug}/memory-lane', [MemoryLaneConfigController::class, 'update'])->name('memory-lane.update');
+
         // Media Gallery Routes
         Route::get('/spaces/{space:slug}/gallery', [MediaGalleryApiController::class, 'index'])->name('gallery.index');
         Route::get('/spaces/{space:slug}/gallery/create', [MediaGalleryApiController::class, 'create'])->name('gallery.create');
@@ -189,17 +217,18 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('/spaces/{space:slug}/spotify/playback/join', [SpotifyController::class, 'joinPlayback'])->name('spotify.playback.join');
 
         Route::get('/spaces/{space:slug}/spotify-companion', function (\App\Models\Space $space) {
-            return Inertia::render('Spotify/LongDistanceSpotifyHub', [
-                'space' => [
-                    'id' => $space->id,
-                    'slug' => $space->slug,
-                    'title' => $space->title,
-                ],
-            ]);
-        })->name('spotify.companion');
+        return Inertia::render('Spotify/LongDistanceSpotifyHub', [
+            'space' => [
+                'id' => $space->id,
+                'slug' => $space->slug,
+                'title' => $space->title,
+            ],
+        ]);
+    })->name('spotify.companion');
 
-        Route::get('/spaces/{space:slug}/nobar', [NobarController::class, 'show'])->name('space.nobar');
-        Route::post('/spaces/{space:slug}/nobar/schedules', [NobarController::class, 'storeSchedule'])->name('space.nobar.schedules.store');
+    Route::get('/spaces/{space:slug}/nobar', [NobarController::class, 'show'])->name('space.nobar');
+    Route::post('/spaces/{space:slug}/nobar/schedules', [NobarController::class, 'storeSchedule'])->name('space.nobar.schedules.store');
+    Route::post('/spaces/{space:slug}/nobar/credentials', TuiRoomKitCredentialController::class)->name('space.nobar.credentials');
 
         Route::get('/spaces/{space:slug}/roomjitsi', function (\App\Models\Space $space) {
             return Inertia::render('Room/Show', [
@@ -207,6 +236,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
                 'user' => Auth::user()?->name ?? 'Guest',
             ]);
         });
+
+        Route::get('/spaces/{space:slug}/storybook', [StoryBookController::class, 'show'])->name('storybook.show');
     });
 
     // Surprise Notes Routes
@@ -254,3 +285,5 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     Route::post('/room/{id}/chat', [ChatController::class, 'send']);
 });
+
+Route::get('/oauth/spotify/callback', [SpotifyAuthController::class, 'callback'])->name('spotify.callback');

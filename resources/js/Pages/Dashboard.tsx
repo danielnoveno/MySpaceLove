@@ -15,6 +15,7 @@ import {
     UserPlus,
     Lock,
     X,
+    Sparkles,
 } from "lucide-react";
 import { useTranslation } from "@/hooks/useTranslation";
 import { replacePlaceholders } from "@/utils/translation";
@@ -65,9 +66,11 @@ type DashboardTranslation = {
         quick_actions?: {
             title?: string;
             add_moment?: { label?: string; description?: string };
+            upcoming_event?: { label?: string; description?: string };
             upload_photo?: { label?: string; description?: string };
             daily_message?: { label?: string; description?: string };
             memory_lane?: { label?: string; description?: string };
+            memory_lane_setup?: { label?: string; description?: string };
             spotify?: { label?: string; description?: string };
             journal?: { label?: string; description?: string };
             nobar?: { label?: string; description?: string };
@@ -88,6 +91,8 @@ type DashboardTranslation = {
     };
     locks?: {
         requires_partner?: string;
+        requires_owner?: string;
+        owner_badge?: string;
     };
 };
 
@@ -120,12 +125,18 @@ export default function Dashboard({ dashboardData, spaceContext }: Props) {
     const coupleLockMessage =
         dashboardStrings.locks?.requires_partner ??
         "Hubungkan pasanganmu terlebih dahulu untuk membuka fitur ini.";
+    const ownerLockMessage =
+        dashboardStrings.locks?.requires_owner ??
+        "Hanya pemilik space yang dapat mengatur fitur ini.";
+    const ownerLockBadge =
+        dashboardStrings.locks?.owner_badge ?? "Owner only";
     const [dailyMessage, setDailyMessage] = useState<string | null>(null);
     const [showModal, setShowModal] = useState(false);
     const [expandedMessages, setExpandedMessages] = useState<
         Record<number, boolean>
     >({});
     const [showLockModal, setShowLockModal] = useState(false);
+    const [showComingSoonNotice, setShowComingSoonNotice] = useState(false);
 
     const handleLockedNavigation = useCallback(
         (event: MouseEvent<Element>) => {
@@ -255,6 +266,18 @@ export default function Dashboard({ dashboardData, spaceContext }: Props) {
                 requiresPartner: true,
             },
             {
+                icon: Clock,
+                label:
+                    quickActionStrings?.upcoming_event?.label ??
+                    "Upcoming Event",
+                description:
+                    quickActionStrings?.upcoming_event?.description ??
+                    "Kelola countdown romantis",
+                href: route("countdown.index", { space: spaceSlug }),
+                color: "from-violet-500 to-indigo-500",
+                requiresPartner: true,
+            },
+            {
                 icon: Image,
                 label:
                     quickActionStrings?.upload_photo?.label ?? "Upload Foto",
@@ -290,6 +313,18 @@ export default function Dashboard({ dashboardData, spaceContext }: Props) {
                 requiresPartner: true,
             },
             {
+                icon: Sparkles,
+                label:
+                    quickActionStrings?.memory_lane_setup?.label ??
+                    "Atur Memory Lane",
+                description:
+                    quickActionStrings?.memory_lane_setup?.description ??
+                    "Upload puzzle & pesan tiap level",
+                href: route("memory-lane.edit", { space: spaceSlug }),
+                color: "from-amber-500 to-orange-500",
+                requiresOwner: true,
+            },
+            {
                 icon: Music,
                 label:
                     quickActionStrings?.spotify?.label ?? "Spotify Companion",
@@ -317,13 +352,14 @@ export default function Dashboard({ dashboardData, spaceContext }: Props) {
                     quickActionStrings?.nobar?.label ?? "Masuk Nobar",
                 description:
                     quickActionStrings?.nobar?.description ??
-                    "Mulai nonton bareng",
+                    "Fitur nobar akan segera hadir.",
                 href: route("space.nobar", { space: spaceSlug }),
                 color: "from-red-500 to-orange-500",
                 requiresPartner: true,
+                comingSoon: true,
             },
         ],
-        [quickActionStrings, spaceSlug]
+        [quickActionStrings, spaceSlug, isSpaceOwner]
     );
 
     const recentMessages = useMemo(
@@ -359,6 +395,32 @@ export default function Dashboard({ dashboardData, spaceContext }: Props) {
                     { space: spaceTitle },
                 )}
             />
+
+            {showComingSoonNotice && (
+                <div className="mx-auto mt-4 w-full max-w-4xl px-4">
+                    <div className="flex flex-wrap items-start gap-4 rounded-3xl border border-amber-200 bg-amber-50/95 p-5 text-amber-700 shadow-sm">
+                        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-amber-100">
+                            <Sparkles className="h-5 w-5 text-amber-600" aria-hidden="true" />
+                        </div>
+                        <div className="flex-1 space-y-1">
+                            <p className="text-sm font-semibold uppercase tracking-wide text-amber-700">
+                                Fitur Nobar Segera Hadir
+                            </p>
+                            <p className="text-sm text-amber-600">
+                                Kami masih menyiapkan pengalaman nobar terbaik. Terima kasih sudah menunggu—kami akan memberi tahu kamu langsung dari dashboard begitu fitur ini siap digunakan.
+                            </p>
+                        </div>
+                        <button
+                            type="button"
+                            onClick={() => setShowComingSoonNotice(false)}
+                            className="ml-auto inline-flex items-center justify-center rounded-full bg-amber-200/70 p-2 text-amber-700 transition hover:bg-amber-200"
+                            aria-label={tCommon("actions.close", "Tutup")}
+                        >
+                            <X className="h-4 w-4" />
+                        </button>
+                    </div>
+                </div>
+            )}
 
             {showModal && dailyMessage && (
                 <div
@@ -533,35 +595,74 @@ export default function Dashboard({ dashboardData, spaceContext }: Props) {
                     </h2>
                     <div className="mt-4 grid gap-4 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5">
                         {quickActions.map((action, index) => {
-                            const locked =
+                            const ownerLocked =
+                                action.requiresOwner && !isSpaceOwner;
+                            const partnerLocked =
                                 coupleFeaturesLocked && action.requiresPartner;
+                            const comingSoon = action.comingSoon === true;
+                            const disabled = ownerLocked || partnerLocked || comingSoon;
+                            const actionTitle = comingSoon
+                                ? "Fitur nobar masih dalam pengembangan. Nantikan segera!"
+                                : ownerLocked
+                                ? ownerLockMessage
+                                : partnerLocked
+                                ? coupleLockMessage
+                                : undefined;
+                            const handleActionClick = (() => {
+                                if (comingSoon) {
+                                    return (event: MouseEvent<Element>) => {
+                                        event.preventDefault();
+                                        setShowComingSoonNotice(true);
+                                    };
+                                }
+
+                                if (ownerLocked) {
+                                    return (event: MouseEvent<Element>) => {
+                                        event.preventDefault();
+                                    };
+                                }
+
+                                if (partnerLocked) {
+                                    return handleLockedNavigation;
+                                }
+
+                                return undefined;
+                            })();
 
                             return (
                                 <Link
                                     key={index}
-                                    href={action.href}
-                                    onClick={locked ? handleLockedNavigation : undefined}
-                                    title={locked ? coupleLockMessage : undefined}
-                                    aria-disabled={locked}
+                                    href={comingSoon ? "#" : action.href}
+                                    onClick={handleActionClick}
+                                    title={actionTitle}
+                                    aria-disabled={disabled}
                                     className={`group relative rounded-2xl border border-gray-100 bg-white p-6 shadow-sm transition ${
-                                        locked
-                                            ? "cursor-not-allowed opacity-60"
+                                        disabled
+                                            ? "cursor-not-allowed opacity-70"
                                             : "hover:border-transparent hover:shadow-lg"
                                     }`}
                                 >
                                     <div
                                         className={`mb-3 w-fit rounded-xl bg-gradient-to-r ${action.color} p-3 transition-transform ${
-                                            locked ? "" : "group-hover:scale-110"
+                                            disabled ? "" : "group-hover:scale-110"
                                         }`}
                                     >
                                         <action.icon className="h-6 w-6 text-white" />
                                     </div>
                                     <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
                                         {action.label}
-                                        {locked && (
-                                            <span className="inline-flex items-center justify-center rounded-full bg-pink-100 px-2 py-0.5 text-xs font-semibold text-pink-500">
+                                        {comingSoon && (
+                                            <span className="inline-flex items-center justify-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 text-xs font-semibold text-amber-600">
+                                                <Sparkles className="h-3.5 w-3.5" aria-hidden="true" />
+                                                Segera Hadir
+                                            </span>
+                                        )}
+                                        {!comingSoon && (ownerLocked || partnerLocked) && (
+                                            <span className="inline-flex items-center justify-center gap-1 rounded-full bg-pink-100 px-2 py-0.5 text-xs font-semibold text-pink-500">
                                                 <Lock className="h-3 w-3" />
-                                                {tCommon("states.locked", "Terkunci")}
+                                                {ownerLocked
+                                                    ? ownerLockBadge
+                                                    : tCommon("states.locked", "Terkunci")}
                                             </span>
                                         )}
                                     </h3>

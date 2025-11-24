@@ -12,8 +12,15 @@ class MediaGallery extends Model
         'space_id',
         'user_id',
         'title',
-        'file_path',
-        'type'
+        'file_path', // This will store an array of file paths
+        'type',
+        'collection_key',
+        'collection_index',
+    ];
+
+    protected $casts = [
+        'file_path' => 'array', // Cast file_path to array
+        'collection_index' => 'integer',
     ];
 
     public function space()

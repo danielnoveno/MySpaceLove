@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Space;
 use App\Models\SpotifyCapsule;
 use App\Models\SpotifySurpriseDrop;
+use App\Models\SpotifyToken;
 use App\Services\SpotifyService;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
@@ -19,24 +20,107 @@ class SpotifyController extends Controller
     {
         $user = $request->user();
 
+        $space->loadMissing(['userOne', 'userTwo']);
+
+        $tokens = SpotifyToken::where('space_id', $space->id)
+            ->with('user')
+            ->get()
+            ->keyBy('user_id');
+
+        $participants = collect([$space->userOne, $space->userTwo, $user])
+            ->filter()
+            ->unique(fn ($participant) => $participant?->id ?? 0);
+
+        $connections = $participants
+            ->map(function ($participant) use ($tokens, $user) {
+                $participantId = $participant?->id;
+                $token = $participantId ? $tokens->get($participantId) : null;
+
+                return [
+                    'user_id' => $participantId,
+                    'name' => $participant?->name ?? $participant?->email ?? 'Member',
+                    'is_current_user' => $participantId === $user->id,
+                    'connected' => $token !== null,
+                    'connected_at' => optional($token?->updated_at)->toIso8601String(),
+                ];
+            })
+            ->values();
+
+        foreach ($tokens as $tokenUserId => $token) {
+            if (!$connections->contains(fn ($connection) => $connection['user_id'] === $tokenUserId)) {
+                $connections->push([
+                    'user_id' => $tokenUserId,
+                    'name' => optional($token->user)->name ?? optional($token->user)->email ?? 'Member',
+                    'is_current_user' => $tokenUserId === $user->id,
+                    'connected' => true,
+                    'connected_at' => optional($token->updated_at)->toIso8601String(),
+                ]);
+            }
+        }
+
+        $connections = $connections->values();
+
+        $connected = false;
+        $message = null;
+        $activeService = null;
+
         try {
-            $spotifyService->forSpace($space, $user);
+            $spotifyService->forSpace($space, $user, false);
+            $connected = true;
+            $activeService = $spotifyService;
         } catch (RuntimeException $exception) {
-            return response()->json([
-                'connected' => false,
-                'message' => $exception->getMessage(),
-            ], 409);
+            $message = $exception->getMessage();
         }
 
-        $playlistId = $request->query('playlist_id') ?: $spotifyService->token()->shared_playlist_id;
-
-        $playlist = $this->buildPlaylistSummary($spotifyService, $playlistId);
-        if (!empty($playlist['playlist_id']) && $playlist['playlist_id'] !== $spotifyService->token()->shared_playlist_id) {
-            $spotifyService->setSharedPlaylist($playlist['playlist_id']);
+        if (!$activeService) {
+            $fallbackToken = $tokens->first();
+            if ($fallbackToken) {
+                try {
+                    $activeService = $spotifyService->forToken($fallbackToken);
+                } catch (RuntimeException $exception) {
+                    $activeService = null;
+                }
+            }
         }
 
-        $moods = $this->buildMoodSnapshots($spotifyService);
-        $listening = $this->buildListeningSnapshot($spotifyService);
+        $playlist = null;
+        if ($activeService) {
+            $playlistId = $request->query('playlist_id') ?: $activeService->token()->shared_playlist_id;
+
+            $playlist = $this->buildPlaylistSummary($activeService, $playlistId);
+            if (!empty($playlist['playlist_id']) && $playlist['playlist_id'] !== $activeService->token()->shared_playlist_id) {
+                $activeService->setSharedPlaylist($playlist['playlist_id']);
+            }
+        }
+
+        $moodSources = $connections
+            ->filter(fn (array $connection) => $connection['connected'] && $connection['user_id'] !== null)
+            ->map(function (array $connection) use ($tokens, $user) {
+                $token = $tokens->get($connection['user_id']);
+                if (!$token) {
+                    return null;
+                }
+
+                $label = $connection['is_current_user']
+                    ? 'Mood Kamu'
+                    : ('Mood ' . ($connection['name'] ?? 'Pasangan'));
+
+                return [
+                    'token' => $token,
+                    'label' => $label,
+                ];
+            })
+            ->filter()
+            ->values()
+            ->all();
+
+        $moods = $this->buildMoodSnapshotsForTokens($spotifyService, $moodSources);
+        $listening = $activeService
+            ? $this->buildListeningSnapshot($activeService)
+            : [
+                'is_live' => false,
+                'joinable' => false,
+            ];
 
         $surpriseDrops = SpotifySurpriseDrop::where('space_id', $space->id)
             ->orderBy('scheduled_for')
@@ -64,7 +148,9 @@ class SpotifyController extends Controller
             ])->values()->all();
 
         return response()->json([
-            'connected' => true,
+            'connected' => $connected,
+            'message' => $connected ? null : $message,
+            'connections' => $connections->all(),
             'playlist' => $playlist,
             'moods' => $moods,
             'listening' => $listening,
@@ -78,7 +164,7 @@ class SpotifyController extends Controller
         $user = $request->user();
 
         try {
-            $spotifyService->forSpace($space, $user);
+            $spotifyService->forSpace($space, $user, false);
         } catch (RuntimeException $exception) {
             return response()->json([
                 'message' => $exception->getMessage(),
@@ -118,7 +204,7 @@ class SpotifyController extends Controller
         $user = $request->user();
 
         try {
-            $spotifyService->forSpace($space, $user);
+            $spotifyService->forSpace($space, $user, false);
         } catch (RuntimeException $exception) {
             return response()->json([
                 'message' => $exception->getMessage(),
@@ -162,7 +248,7 @@ class SpotifyController extends Controller
         $user = $request->user();
 
         try {
-            $spotifyService->forSpace($space, $user);
+            $spotifyService->forSpace($space, $user, false);
         } catch (RuntimeException $exception) {
             return response()->json([
                 'message' => $exception->getMessage(),
@@ -209,10 +295,8 @@ class SpotifyController extends Controller
                     'owner' => null,
                     'external_url' => null,
                     'total_tracks' => 0,
-                    'new_this_week' => 0,
                     'average_energy' => 0,
                     'last_added' => null,
-                    'target_weekly' => 6,
                 ];
             }
 
@@ -224,10 +308,8 @@ class SpotifyController extends Controller
                     'owner' => null,
                     'external_url' => null,
                     'total_tracks' => 0,
-                    'new_this_week' => 0,
                     'average_energy' => 0,
                     'last_added' => null,
-                    'target_weekly' => 6,
                 ];
             }
 
@@ -240,10 +322,8 @@ class SpotifyController extends Controller
                     'owner' => null,
                     'external_url' => null,
                     'total_tracks' => 0,
-                    'new_this_week' => 0,
                     'average_energy' => 0,
                     'last_added' => null,
-                    'target_weekly' => 6,
                 ];
             }
         }
@@ -298,59 +378,78 @@ class SpotifyController extends Controller
             'owner' => Arr::get($playlistInfo, 'owner.display_name'),
             'external_url' => Arr::get($playlistInfo, 'external_urls.spotify'),
             'total_tracks' => Arr::get($playlistInfo, 'tracks.total', $tracks->count()),
-            'new_this_week' => $newThisWeek,
             'average_energy' => $averageEnergy,
             'last_added' => $lastAdded ? [
                 'title' => $lastAdded['name'],
                 'artists' => $lastAdded['artists'],
                 'added_at' => $lastAdded['added_at'],
             ] : null,
-            'sample_tracks' => $tracks->take(5)->values()->all(),
-            'target_weekly' => 6,
+            'sample_tracks' => $tracks->values()->all(),
         ];
     }
 
-    protected function buildMoodSnapshots(SpotifyService $spotifyService): array
+    protected function buildMoodSnapshotsForTokens(SpotifyService $spotifyService, array $sources): array
+    {
+        $snapshots = [];
+
+        foreach ($sources as $source) {
+            try {
+                /** @var SpotifyToken $token */
+                $token = $source['token'];
+                $label = $source['label'];
+                $service = $spotifyService->forToken($token);
+                $snapshot = $this->buildMoodSnapshot($service, $label);
+                if ($snapshot !== null) {
+                    $snapshots[] = $snapshot;
+                }
+            } catch (\Throwable $exception) {
+                continue;
+            }
+        }
+
+        return $snapshots;
+    }
+
+    protected function buildMoodSnapshot(SpotifyService $spotifyService, string $label): ?array
     {
         try {
-            $recentlyPlayed = $spotifyService->getRecentlyPlayed(6);
+            $recentlyPlayed = $spotifyService->getRecentlyPlayed(3);
         } catch (\Throwable $exception) {
-            return [];
+            return null;
         }
 
-        $items = collect($recentlyPlayed);
-        if ($items->isEmpty()) {
-            return [];
+        $item = Arr::first($recentlyPlayed);
+        if (!$item) {
+            return null;
         }
 
-        $trackIds = $items->pluck('track.id')->filter()->unique()->values()->all();
+        $track = Arr::get($item, 'track', []);
+        $trackId = Arr::get($track, 'id');
+
+        if (!$trackId) {
+            return null;
+        }
 
         try {
-            $features = $spotifyService->getAudioFeatures($trackIds);
+            $features = $spotifyService->getAudioFeatures([$trackId]);
         } catch (\Throwable $exception) {
             $features = [];
         }
 
-        $labels = ['Mood Kamu', 'Mood Pasangan'];
+        $audio = $features[$trackId] ?? [];
+        $energy = Arr::get($audio, 'energy', 0);
+        $valence = Arr::get($audio, 'valence', 0);
 
-        return $items->take(2)->values()->map(function (array $item, int $index) use ($features, $labels) {
-            $track = Arr::get($item, 'track', []);
-            $trackId = Arr::get($track, 'id');
-            $audio = $trackId ? ($features[$trackId] ?? []) : [];
-            $energy = Arr::get($audio, 'energy', 0);
-            $valence = Arr::get($audio, 'valence', 0);
-
-            return [
-                'id' => $trackId ? $trackId . '-' . $index : (string) $index,
-                'user_label' => $labels[$index] ?? 'Mood',
-                'track' => Arr::get($track, 'name', 'Unknown'),
-                'artists' => implode(', ', Arr::pluck(Arr::get($track, 'artists', []), 'name')),
-                'mood_tone' => $this->describeMood($energy, $valence),
-                'energy' => round($energy, 2),
-                'affection' => $this->suggestAffection($energy, $valence),
-                'played_at' => Arr::get($item, 'played_at'),
-            ];
-        })->all();
+        return [
+            'id' => $trackId,
+            'user_label' => $label,
+            'track' => Arr::get($track, 'name', 'Unknown'),
+            'artists' => implode(', ', Arr::pluck(Arr::get($track, 'artists', []), 'name')),
+            'mood_tone' => $this->describeMood($energy, $valence),
+            'energy' => round($energy, 2),
+            'affection' => $this->suggestAffection($energy, $valence),
+            'played_at' => Arr::get($item, 'played_at'),
+        ];
     }
 
     protected function buildListeningSnapshot(SpotifyService $spotifyService): array

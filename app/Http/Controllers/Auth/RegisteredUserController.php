@@ -23,7 +23,8 @@ class RegisteredUserController extends Controller
      */
     public function create(): Response
     {
-        return Inertia::render('Auth/Register');
+        return Inertia::render('Auth/Register', [
+        ]);
     }
 
     /**
@@ -82,12 +83,13 @@ class RegisteredUserController extends Controller
 
                 return redirect()
                     ->route('spaces.dashboard', ['space' => $space->slug])
-                    ->with('status', 'Selamat! Kamu sudah bergabung ke Space pasanganmu.');
+                    ->with('status', __('app.auth.flash.space_joined'));
             }
         }
 
         return redirect()
             ->route('spaces.index')
-            ->with('status', 'Selamat datang! Kamu bisa langsung membuat Space pertama atau bergabung ke Space pasanganmu menggunakan kode pasangan.');
+            ->with('status', __('app.auth.flash.space_welcome'));
     }
+
 }

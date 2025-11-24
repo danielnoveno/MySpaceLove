@@ -6,6 +6,7 @@ use App\Mail\NobarScheduleReminderMail;
 use App\Models\NobarSchedule;
 use App\Models\Space;
 use App\Models\User;
+use App\Notifications\NobarScheduleNotification;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
@@ -23,34 +24,44 @@ class NobarController extends Controller
     {
         $this->authorizeSpace($space);
 
-        $space->loadMissing([
-            'nobarSchedules' => function ($query): void {
-                $query->orderBy('scheduled_for');
-            },
-            'userOne',
-            'userTwo',
-        ]);
+        if (config('features.nobar_enabled', false)) {
+            $space->loadMissing([
+                'nobarSchedules' => function ($query): void {
+                    $query->orderBy('scheduled_for');
+                },
+                'userOne',
+                'userTwo',
+            ]);
 
-        $schedules = $space->nobarSchedules
-            ->map(function (NobarSchedule $schedule): array {
-                return [
-                    'id' => $schedule->id,
-                    'title' => $schedule->title,
-                    'description' => $schedule->description,
-                    'scheduled_for' => $schedule->scheduled_for?->toIso8601String(),
-                    'created_at' => $schedule->created_at?->toIso8601String(),
-                ];
-            })
-            ->values();
+            $schedules = $space->nobarSchedules
+                ->map(function (NobarSchedule $schedule): array {
+                    return [
+                        'id' => $schedule->id,
+                        'title' => $schedule->title,
+                        'description' => $schedule->description,
+                        'scheduled_for' => $schedule->scheduled_for?->toIso8601String(),
+                        'created_at' => $schedule->created_at?->toIso8601String(),
+                    ];
+                })
+                ->values();
 
-        return Inertia::render('Room/Show', [
-            'spaceId' => $space->id,
+            return Inertia::render('Room/Show', [
+                'spaceId' => $space->id,
+                'space' => [
+                    'id' => $space->id,
+                    'slug' => $space->slug,
+                    'title' => $space->title,
+                ],
+                'schedules' => $schedules,
+            ]);
+        }
+
+        return Inertia::render('Nobar/ComingSoon', [
             'space' => [
                 'id' => $space->id,
                 'slug' => $space->slug,
                 'title' => $space->title,
             ],
-            'schedules' => $schedules,
         ]);
     }
 
@@ -58,51 +69,117 @@ class NobarController extends Controller
     {
         $this->authorizeSpace($space);
 
-        $data = $request->validate([
-            'title' => ['required', 'string', 'max:160'],
-            'scheduled_for' => ['required', 'date_format:Y-m-d\TH:i'],
-            'description' => ['nullable', 'string', 'max:2000'],
-            'timezone' => ['nullable', 'timezone'],
-        ]);
-
-        $timezone = $data['timezone'] ?? $request->user()?->timezone ?? config('app.timezone');
-
-        try {
-            $scheduledFor = Carbon::createFromFormat('Y-m-d\TH:i', $data['scheduled_for'], $timezone);
-        } catch (Throwable $exception) {
-            return back()->withErrors([
-                'scheduled_for' => __('The schedule time could not be parsed.'),
+        if (config('features.nobar_enabled', false)) {
+            $data = $request->validate([
+                'title' => ['required', 'string', 'max:160'],
+                'scheduled_for' => ['required', 'date_format:Y-m-d\TH:i'],
+                'description' => ['nullable', 'string', 'max:2000'],
+                'timezone' => ['nullable', 'timezone'],
             ]);
-        }
 
-        if ($scheduledFor === false) {
-            return back()->withErrors([
-                'scheduled_for' => __('The schedule time could not be parsed.'),
+            $timezone = $data['timezone'] ?? $request->user()?->timezone ?? config('app.timezone');
+
+            try {
+                $scheduledFor = Carbon::createFromFormat('Y-m-d\TH:i', $data['scheduled_for'], $timezone);
+            } catch (Throwable $exception) {
+                return back()->withErrors([
+                    'scheduled_for' => __('The schedule time could not be parsed.'),
+                ]);
+            }
+
+            if ($scheduledFor === false) {
+                return back()->withErrors([
+                    'scheduled_for' => __('The schedule time could not be parsed.'),
+                ]);
+            }
+
+            $scheduledForUtc = $scheduledFor->copy()->timezone('UTC');
+
+            if ($scheduledForUtc->lessThan(now()->subMinutes(1))) {
+                return back()->withErrors([
+                    'scheduled_for' => __('The schedule must be set in the future.'),
+                ]);
+            }
+
+            $schedule = NobarSchedule::create([
+                'space_id' => $space->id,
+                'created_by' => Auth::id(),
+                'title' => $data['title'],
+                'description' => $data['description'] ?? null,
+                'scheduled_for' => $scheduledForUtc,
             ]);
+
+            $this->sendScheduleEmails($space, $schedule, $request->user());
+
+            return redirect()->route('space.nobar', ['space' => $space->slug]);
         }
-
-        $scheduledForUtc = $scheduledFor->copy()->timezone('UTC');
-
-        if ($scheduledForUtc->lessThan(now()->subMinutes(1))) {
-            return back()->withErrors([
-                'scheduled_for' => __('The schedule must be set in the future.'),
-            ]);
-        }
-
-        $schedule = NobarSchedule::create([
-            'space_id' => $space->id,
-            'created_by' => Auth::id(),
-            'title' => $data['title'],
-            'description' => $data['description'] ?? null,
-            'scheduled_for' => $scheduledForUtc,
-        ]);
-
-        $this->sendScheduleEmails($space, $schedule, $request->user());
 
         return redirect()->route('space.nobar', ['space' => $space->slug]);
     }
 
-    private function sendScheduleEmails(Space $space, NobarSchedule $schedule, ?User $creator): void
+    public function updateSchedule(Request $request, Space $space, NobarSchedule $schedule): RedirectResponse
+    {
+        $this->authorizeSpace($space);
+
+        if (config('features.nobar_enabled', false)) {
+            $data = $request->validate([
+                'title' => ['required', 'string', 'max:160'],
+                'scheduled_for' => ['required', 'date_format:Y-m-d\TH:i'],
+                'description' => ['nullable', 'string', 'max:2000'],
+                'timezone' => ['nullable', 'timezone'],
+            ]);
+
+            $timezone = $data['timezone'] ?? $request->user()?->timezone ?? config('app.timezone');
+
+            try {
+                $scheduledFor = Carbon::createFromFormat('Y-m-d\TH:i', $data['scheduled_for'], $timezone);
+            } catch (Throwable $exception) {
+                return back()->withErrors([
+                    'scheduled_for' => __('The schedule time could not be parsed.'),
+                ]);
+            }
+
+            if ($scheduledFor === false) {
+                return back()->withErrors([
+                    'scheduled_for' => __('The schedule time could not be parsed.'),
+                ]);
+            }
+
+            $scheduledForUtc = $scheduledFor->copy()->timezone('UTC');
+
+            if ($scheduledForUtc->lessThan(now()->subMinutes(1))) {
+                return back()->withErrors([
+                    'scheduled_for' => __('The schedule must be set in the future.'),
+                ]);
+            }
+
+            $schedule->update([
+                'title' => $data['title'],
+                'description' => $data['description'] ?? null,
+                'scheduled_for' => $scheduledForUtc,
+            ]);
+
+            $this->sendScheduleEmails($space, $schedule, $request->user(), 'updated');
+
+            return redirect()->route('space.nobar', ['space' => $space->slug]);
+        }
+
+        return redirect()->route('space.nobar', ['space' => $space->slug]);
+    }
+
+    public function destroySchedule(Space $space, NobarSchedule $schedule): RedirectResponse
+    {
+        $this->authorizeSpace($space);
+
+        if (config('features.nobar_enabled', false)) {
+            $schedule->delete();
+            $this->sendScheduleEmails($space, $schedule, Auth::user(), 'deleted');
+        }
+
+        return redirect()->route('space.nobar', ['space' => $space->slug]);
+    }
+
+    private function sendScheduleEmails(Space $space, NobarSchedule $schedule, ?User $creator, string $action = 'created'): void
     {
         $space->loadMissing(['userOne', 'userTwo']);
 
@@ -112,11 +189,9 @@ class NobarController extends Controller
 
         foreach ($recipients as $recipient) {
             try {
-                Mail::to($recipient->email)->send(
-                    new NobarScheduleReminderMail($space, $schedule, $creator, $recipient)
-                );
+                $recipient->notify(new NobarScheduleNotification($schedule, $space, $action));
             } catch (Throwable $exception) {
-                Log::error('Failed to send nobar schedule email.', [
+                Log::error('Failed to send nobar schedule notification.', [
                     'space_id' => $space->id,
                     'schedule_id' => $schedule->id,
                     'recipient_id' => $recipient->id,

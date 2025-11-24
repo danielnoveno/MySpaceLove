@@ -14,8 +14,6 @@ return [
             'placeholder' => 'Example: 160825',
             'buttonLabel' => 'Unlock Kit',
             'errorMessage' => 'Wrong code. Try remembering our special date again.',
-            'hintLabel' => 'Hint',
-            'hint' => '160825',
             'inputLabel' => 'Secret Code',
         ],
         'puzzle' => [
@@ -31,18 +29,27 @@ return [
             'dragLabel' => 'Drag each piece into the correct slot.',
             'movesLabel' => 'Moves',
             'resetLabel' => 'Shuffle pieces again',
-            'options' => [
+            'levels' => [
                 [
-                    'label' => 'Tajen Memory',
-                    'value' => '/images/puzzle/example-image-tajen.jpg',
+                    'id' => 'flashback',
+                    'label' => 'Level 1 — Flashback',
+                    'image' => '/images/puzzle/example-image-tajen.jpg',
+                    'summaryTitle' => 'Flashback time',
+                    'summaryBody' => 'Great job! Take a minute to remember how this moment happened, what you felt, and why it still makes you smile today.',
                 ],
                 [
-                    'label' => 'Sunset Memory',
-                    'value' => '/images/puzzle/ea7c8d31ade2c25c5e5d06730def5933.jpg',
+                    'id' => 'affirmation',
+                    'label' => 'Level 2 — Affirmation',
+                    'image' => '/images/puzzle/ea7c8d31ade2c25c5e5d06730def5933.jpg',
+                    'summaryTitle' => 'Words from the heart',
+                    'summaryBody' => 'Write a short congratulations or appreciation message for your partner. Tell them what you love about them right now.',
                 ],
                 [
-                    'label' => 'Blossom Memory',
-                    'value' => '/images/puzzle/1745990293808.jpeg',
+                    'id' => 'memory',
+                    'label' => 'Level 3 — Memory Capsule',
+                    'image' => '/images/puzzle/1745990293808.jpeg',
+                    'summaryTitle' => 'Memory capsule unlocked',
+                    'summaryBody' => 'Leave a memo, a promise, or a little surprise note for the future. You just built the final piece of today’s Memory Lane.',
                 ],
             ],
         ],
@@ -107,6 +114,7 @@ return [
         ],
         'headTitle' => 'Birthday Story',
         'secretGate' => [
+            'enabled' => false,
             'code' => '160825',
             'accessLabel' => 'Restricted Access',
             'title' => 'Enter Our Anniversary Date',
@@ -114,8 +122,6 @@ return [
             'placeholder' => 'Example: 160825',
             'buttonLabel' => 'Open Story',
             'errorMessage' => 'Wrong code. Try remembering our special date again.',
-            'hintLabel' => 'Hint',
-            'hint' => '160825',
             'inputLabel' => 'Secret Code',
         ],
         'hero' => [
@@ -137,6 +143,12 @@ return [
             'reminder' => 'If you want to add new chapters, let me know. We can update it together anytime.',
             'finishMessage' => 'Thank you for being my safest home. I love you every single day.',
             'nextButton' => 'Next',
+        ],
+        'scrapbook' => [
+            'title' => 'Digital scrapbook',
+            'subtitle' => 'Each Memory Lane mission becomes a keepsake page you can revisit anytime.',
+            'empty' => 'You have not prepared custom Memory Lane content yet.',
+            'cta' => 'Configure Memory Lane Kit',
         ],
         'chapters' => [
             [
@@ -282,4 +294,3 @@ return [
         ],
     ],
 ];
-
