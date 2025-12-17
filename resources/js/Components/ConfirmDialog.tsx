@@ -1,4 +1,16 @@
-import { ReactNode, useEffect, useMemo, useRef } from "react";
+import {
+    ReactNode,
+    useCallback,
+    useEffect,
+    useMemo,
+    useRef,
+    useState,
+} from "react";
+import type {
+    CSSProperties,
+    MouseEvent as ReactMouseEvent,
+    TouchEvent as ReactTouchEvent,
+} from "react";
 import { Loader2 } from "lucide-react";
 import { createPortal } from "react-dom";
 import Modal from "./Modal";
@@ -91,6 +103,86 @@ export default function ConfirmDialog({
     const colors = toneClasses[tone];
     const anchorColors = anchorToneClasses[tone];
     const anchorRef = useRef<HTMLDivElement | null>(null);
+    const dragOriginRef = useRef<{ x: number; y: number } | null>(null);
+    const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
+
+    const resetDrag = useCallback(() => {
+        dragOriginRef.current = null;
+        setDragOffset({ x: 0, y: 0 });
+    }, []);
+
+    const handleDragMove = useCallback(
+        (event: MouseEvent | TouchEvent) => {
+            if (!dragOriginRef.current) {
+                return;
+            }
+
+            if ("touches" in event && event.touches.length === 0) {
+                return;
+            }
+
+            const point =
+                "touches" in event && event.touches.length > 0
+                    ? event.touches[0]
+                    : (event as MouseEvent);
+
+            event.preventDefault?.();
+
+            setDragOffset({
+                x: point.clientX - dragOriginRef.current.x,
+                y: point.clientY - dragOriginRef.current.y,
+            });
+        },
+        [dragOriginRef],
+    );
+
+    const handleDragEnd = useCallback(() => {
+        dragOriginRef.current = null;
+        window.removeEventListener("mousemove", handleDragMove);
+        window.removeEventListener("mouseup", handleDragEnd);
+        window.removeEventListener("touchmove", handleDragMove);
+        window.removeEventListener("touchend", handleDragEnd);
+    }, [handleDragMove]);
+
+    const startDrag = useCallback(
+        (event: ReactMouseEvent | ReactTouchEvent) => {
+            if ("button" in event && event.button !== 0) {
+                return;
+            }
+
+            const point =
+                "touches" in event && event.touches.length > 0
+                    ? event.touches[0]
+                    : (event as ReactMouseEvent);
+
+            event.preventDefault();
+            dragOriginRef.current = {
+                x: point.clientX - dragOffset.x,
+                y: point.clientY - dragOffset.y,
+            };
+
+            window.addEventListener("mousemove", handleDragMove);
+            window.addEventListener("mouseup", handleDragEnd);
+            window.addEventListener("touchmove", handleDragMove, {
+                passive: false,
+            });
+            window.addEventListener("touchend", handleDragEnd);
+        },
+        [dragOffset.x, dragOffset.y, handleDragMove, handleDragEnd],
+    );
+
+    useEffect(() => {
+        if (open) {
+            resetDrag();
+        }
+    }, [
+        open,
+        anchor?.top,
+        anchor?.left,
+        anchor?.width,
+        anchor?.height,
+        resetDrag,
+    ]);
 
     useEffect(() => {
         if (!open || !anchor) {
@@ -135,6 +227,12 @@ export default function ConfirmDialog({
         };
     }, [anchor]);
 
+    useEffect(() => {
+        return () => {
+            handleDragEnd();
+        };
+    }, [handleDragEnd]);
+
     if (!open) {
         return null;
     }
@@ -148,7 +246,7 @@ export default function ConfirmDialog({
                     style={{
                         top: anchorPosition.top,
                         left: anchorPosition.left,
-                        transform: "translate(-50%, calc(-100% - 16px))",
+                        transform: `translate(-50%, calc(-100% - 16px)) translate(${dragOffset.x}px, ${dragOffset.y}px)`,
                     }}
                 >
                     <div
@@ -159,7 +257,11 @@ export default function ConfirmDialog({
                         >
                             Konfirmasi
                         </p>
-                        <h3 className="mt-2 text-base font-semibold text-slate-900">
+                        <h3
+                            className="mt-2 text-base font-semibold text-slate-900"
+                            onMouseDown={startDrag}
+                            onTouchStart={startDrag}
+                        >
                             {title}
                         </h3>
                         {description && (
@@ -196,11 +298,23 @@ export default function ConfirmDialog({
     }
 
     return (
-        <Modal show={open} maxWidth="sm" onClose={onCancel}>
+        <Modal
+            show={open}
+            maxWidth="sm"
+            onClose={onCancel}
+            panelStyle={{
+                ["--tw-translate-x" as string]: `${dragOffset.x}px`,
+                ["--tw-translate-y" as string]: `${dragOffset.y}px`,
+            } as CSSProperties}
+        >
             <div className="relative overflow-hidden bg-white">
-                <div className="absolute inset-x-0 top-0 h-36 bg-gradient-to-br from-white via-transparent to-transparent opacity-90 pointer-events-none" />
+                <div className="pointer-events-none absolute inset-x-0 top-0 h-36 bg-gradient-to-br from-white via-transparent to-transparent opacity-90" />
                 <div className="space-y-6 p-6">
-                    <div className="flex items-start gap-4">
+                    <div
+                        className="flex items-start gap-4 cursor-move select-none active:cursor-grabbing"
+                        onMouseDown={startDrag}
+                        onTouchStart={startDrag}
+                    >
                         <div
                             className={`flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-2xl shadow-inner ${colors.iconWrap}`}
                         >

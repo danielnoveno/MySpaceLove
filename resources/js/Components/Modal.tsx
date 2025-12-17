@@ -4,7 +4,7 @@ import {
     Transition,
     TransitionChild,
 } from '@headlessui/react';
-import { PropsWithChildren } from 'react';
+import type { CSSProperties, PropsWithChildren } from 'react';
 
 export default function Modal({
     children,
@@ -12,11 +12,15 @@ export default function Modal({
     maxWidth = '2xl',
     closeable = true,
     onClose = () => {},
+    panelClassName = '',
+    panelStyle,
 }: PropsWithChildren<{
     show: boolean;
     maxWidth?: 'sm' | 'md' | 'lg' | 'xl' | '2xl';
     closeable?: boolean;
     onClose: CallableFunction;
+    panelClassName?: string;
+    panelStyle?: CSSProperties;
 }>) {
     const close = () => {
         if (closeable) {
@@ -61,7 +65,8 @@ export default function Modal({
                         leaveTo="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
                     >
                         <DialogPanel
-                            className={`w-full transform overflow-hidden rounded-2xl bg-white shadow-xl transition-all ${maxWidthClass}`}
+                            className={`w-full transform overflow-hidden rounded-2xl bg-white shadow-xl transition-all ${maxWidthClass} ${panelClassName}`}
+                            style={panelStyle}
                         >
                             {children}
                         </DialogPanel>

@@ -148,6 +148,24 @@ export default function Dashboard({ dashboardData, spaceContext }: Props) {
         [coupleFeaturesLocked, setShowLockModal]
     );
 
+    const readXsrfToken = useCallback((): string | null => {
+        const match = document.cookie.match(/XSRF-TOKEN=([^;]+)/);
+        return match ? decodeURIComponent(match[1]) : null;
+    }, []);
+
+    const ensureCsrf = useCallback(async () => {
+        const token = readXsrfToken();
+
+        if (!token) {
+            await axios.get("/sanctum/csrf-cookie", { withCredentials: true });
+        }
+
+        const refreshedToken = readXsrfToken();
+        if (refreshedToken) {
+            axios.defaults.headers.common["X-XSRF-TOKEN"] = refreshedToken;
+        }
+    }, [readXsrfToken]);
+
     const formattedDailyMessage = useMemo(() => {
         if (!dailyMessage) {
             return null;
@@ -248,8 +266,11 @@ export default function Dashboard({ dashboardData, spaceContext }: Props) {
             }
         };
 
-        void fetchDailyMessage();
-    }, [extractDailyMessageText, openDailyMessageModal, spaceSlug]);
+        void (async () => {
+            await ensureCsrf();
+            await fetchDailyMessage();
+        })();
+    }, [ensureCsrf, extractDailyMessageText, openDailyMessageModal, spaceSlug]);
 
     const quickActionStrings = dashboardStrings.cards?.quick_actions;
     const quickActions = useMemo(

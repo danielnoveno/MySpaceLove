@@ -86,11 +86,11 @@ class DailyMessageGenerator
             $promptData = [
                 "task" => "Generate a unique romantic or love-related message.",
                 "requirements" => [
-                    "length" => "3-6 sentences, 80-140 words",
+                    "length" => "Keep it 160-240 words and 10-18 sentences. Never stop before 160 words; if you are under that count, continue writing smooth, relevant lines until you reach the range.",
                     "style" => $selectedStyle,
                     "language" => "Mix of natural English and Bahasa Indonesia",
                     "tone" => "warm, genuine, personal, avoid cliches, avoid generic platitudes",
-                    "emoji" => "Add 3-6 appropriate emojis inline, not stacked",
+                    "emoji" => "Add 3-6 appropriate emojis inline across different sentences (not stacked, not all at the end).",
                     "avoid" => [
                         "meski jarak memisahkan",
                         "samudra dan daratan",
@@ -115,18 +115,18 @@ class DailyMessageGenerator
                     "I don't really know how to start off this message. I have written and removed and written and removed again but I hope this one will not be deleted. No one has loved me like you've loved me. No one has ever taken care of me the way you take care of me. No one in the past has been worried about small things regarding me like you do. I have never met someone like you and this is not to flatter you. This is the truth. People may think or have conclusions like they want to, but me and you know the truth, the real truth. I have never thought you were playing games with me, not when we started, not during and not when things got a bit out of hand. I knew you were honest, I knew your feelings were real and you reminded me of that every single day.... and you still do, even when our backs are against the wall. I can only imagine what you're going through and what is really going on in your mind. You are the only one who I wouldn't mind losing sleep for, the only one who I can never get tired of talking to and the only one who crosses my mind constantly throughout the day. You are the only one who can make me smile without any intention and affect my emotions with every action of yours. I can't explain in words how much you mean to me but you're the one I'm afraid of losing and the one I want to keep in my life. I hope I can make you feel the value that you deserve. You're the best girl anyone could ever ask for. I hope you",
 
                     // --- Your short casual examples ---
-                    // "Kamu tau gak? Setiap kali liat notif dari kamu, hari aku langsung berasa lebih cerah ☀️",
-                    // "Aku bangga sama kamu yang terus berjuang di sana. Keep going, sayang! 💪❤️",
-                    // "Random thought: Kamu itu comfort person aku banget 🥺✨",
-                    // "Pengen remind you aja kalau kamu doing great! I'm always rooting for you 🌟",
-                    // "Miss you tapi aku tau kita both lagi kerja keras untuk masa depan kita. Let's go! 💕",
-                    // "Hari ini kamu udah makan belum? Jangan lupa jaga kesehatan ya ❤️",
-                    // "Fun fact: Kamu itu alasan aku semangat bangun pagi 🌅✨",
-                    // "Lagi ngapain? Btw, kamu keren banget tau gak 😎💙",
-                    // "Seneng banget punya kamu yang selalu ngerti aku. Thank you for being you 🥰",
-                    // "Kangen sih, tapi lebih kangen liat kamu sukses dan bahagia 🌟💕"
+                    "Kamu tau gak? Setiap kali liat notif dari kamu, hari aku langsung berasa lebih cerah ☀️",
+                    "Aku bangga sama kamu yang terus berjuang di sana. Keep going, sayang! 💪❤️",
+                    "Random thought: Kamu itu comfort person aku banget 🥺✨",
+                    "Pengen remind you aja kalau kamu doing great! I'm always rooting for you 🌟",
+                    "Miss you tapi aku tau kita both lagi kerja keras untuk masa depan kita. Let's go! 💕",
+                    "Hari ini kamu udah makan belum? Jangan lupa jaga kesehatan ya ❤️",
+                    "Fun fact: Kamu itu alasan aku semangat bangun pagi 🌅✨",
+                    "Lagi ngapain? Btw, kamu keren banget tau gak 😎💙",
+                    "Seneng banget punya kamu yang selalu ngerti aku. Thank you for being you 🥰",
+                    "Kangen sih, tapi lebih kangen liat kamu sukses dan bahagia 🌟💕"
                 ],
-                "output" => "Write one brand new message different from all examples. Directly output the message only without intro."
+                "output" => "Write one brand new message different from all examples. Directly output the message only without intro. Ensure final text respects the 160-240 word range and 10-18 sentence count before stopping."
             ];
 
             // --- Dynamic Prompt Modification ---
