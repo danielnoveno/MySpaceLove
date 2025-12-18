@@ -42,7 +42,7 @@ class LoveTimelineApiController extends Controller
                     : ($mediaPaths ? asset('storage/' . $mediaPaths[0]) : null);
 
                 return [
-                    'id' => $timeline->id,
+                    'uuid' => $timeline->uuid,
                     'title' => $timeline->title,
                     'description' => $timeline->description,
                     'date' => $timeline->date?->toDateString(),
@@ -113,23 +113,33 @@ class LoveTimelineApiController extends Controller
             ->with('success', __('timeline.flash.created'));
     }
 
-    public function edit(Space $space, $id)
+    public function edit(Space $space, LoveTimeline $timeline)
     {
         $this->authorizeSpace($space);
 
-        $item = LoveTimeline::where('space_id', $space->id)->findOrFail($id);
+        if ($timeline->space_id !== $space->id) {
+            abort(404);
+        }
 
         return Inertia::render('Timeline/Edit', [
-            'item' => $item,
+            'item' => [
+                'uuid' => $timeline->uuid,
+                'title' => $timeline->title,
+                'description' => $timeline->description,
+                'date' => $timeline->date?->toDateString(),
+                'media_paths' => $timeline->media_paths ?? [],
+            ],
             'space' => $this->spacePayload($space),
         ]);
     }
 
-    public function update(Request $r, Space $space, $id)
+    public function update(Request $r, Space $space, LoveTimeline $timeline)
     {
         $this->authorizeSpace($space);
 
-        $item = LoveTimeline::where('space_id', $space->id)->findOrFail($id);
+        if ($timeline->space_id !== $space->id) {
+            abort(404);
+        }
 
         $data = $r->validate(
             [
@@ -150,7 +160,7 @@ class LoveTimelineApiController extends Controller
             ],
         );
 
-        $existingPaths = collect($item->media_paths ?? []);
+        $existingPaths = collect($timeline->media_paths ?? []);
         $removed = collect($data['removed'] ?? [])->filter()->unique()->values();
         $remainingExisting = $existingPaths
             ->reject(fn ($path) => $removed->contains($path))
@@ -217,41 +227,43 @@ class LoveTimelineApiController extends Controller
             }
         }
 
-        $thumbnailPath = $item->thumbnail_path;
+        $thumbnailPath = $timeline->thumbnail_path;
         if ($thumbnailPath && !in_array($thumbnailPath, $finalPaths, true)) {
             $thumbnailPath = $finalPaths[0] ?? null;
         }
 
-        $item->update([
+        $timeline->update([
             'title' => $data['title'],
             'description' => $data['description'] ?? null,
             'date' => $data['date'],
             'media_paths' => $finalPaths,
             'thumbnail_path' => $thumbnailPath,
         ]);
-        $this->notifyTimelineEvent($space, $item, 'updated');
+        $this->notifyTimelineEvent($space, $timeline, 'updated');
 
         return redirect()->route('timeline.index', ['space' => $space->slug])
             ->with('success', __('timeline.flash.updated'));
     }
 
-    public function destroy(Request $request, Space $space, $id)
+    public function destroy(Request $request, Space $space, LoveTimeline $timeline)
     {
         $this->authorizeSpace($space);
 
-        $item = LoveTimeline::where('space_id', $space->id)->findOrFail($id);
+        if ($timeline->space_id !== $space->id) {
+            abort(404);
+        }
 
-        $mediaPaths = $item->media_paths ?? [];
+        $mediaPaths = $timeline->media_paths ?? [];
         foreach ($mediaPaths as $path) {
             Storage::disk('public')->delete($path);
         }
 
-        if ($item->thumbnail_path && !in_array($item->thumbnail_path, $mediaPaths, true)) {
-            Storage::disk('public')->delete($item->thumbnail_path);
+        if ($timeline->thumbnail_path && !in_array($timeline->thumbnail_path, $mediaPaths, true)) {
+            Storage::disk('public')->delete($timeline->thumbnail_path);
         }
 
-        $item->delete();
-        $this->notifyTimelineEvent($space, $item, 'deleted');
+        $timeline->delete();
+        $this->notifyTimelineEvent($space, $timeline, 'deleted');
 
         if ($request->wantsJson()) {
             return response()->json(['message' => 'deleted']);
@@ -349,6 +361,7 @@ class LoveTimelineApiController extends Controller
             'space_id' => $space->id,
             'space_slug' => $space->slug,
             'timeline_id' => $timeline->id,
+            'timeline_uuid' => $timeline->uuid,
             'timeline_title' => $timeline->title,
             'timeline_date' => optional($timeline->date)->toDateString(),
             'action_url' => route('timeline.index', ['space' => $space->slug]),

@@ -109,12 +109,14 @@ class DailyMessageApiController extends Controller
         $now = $this->currentDailyMessageNow();
         $targetDate = $request->input('date') ?: $now->toDateString();
 
+        $recentMessages = $this->recentMessagesForWeek($space, $targetDate);
+
         DailyMessage::where('space_id', $space->id)
             ->where('date', $targetDate)
             ->delete();
 
         [$fromName, $partnerName] = $this->resolveNamePair($space);
-        $text = $this->dailyMessageGenerator->generate(null, null, $fromName, $partnerName);
+        $text = $this->dailyMessageGenerator->generate(null, null, $fromName, $partnerName, $recentMessages);
 
         if (!$text) {
             $status = $this->dailyMessageGenerator->getLastErrorStatus() ?? 503;
@@ -258,7 +260,8 @@ class DailyMessageApiController extends Controller
             return null;
         }
 
-        $text = $this->dailyMessageGenerator->generate(null, null, $fromName, $partnerName);
+        $recentMessages = $this->recentMessagesForWeek($space, $date);
+        $text = $this->dailyMessageGenerator->generate(null, null, $fromName, $partnerName, $recentMessages);
 
         if (!$text) {
             Log::warning('Daily message auto-generation returned empty result.', [
@@ -433,5 +436,19 @@ class DailyMessageApiController extends Controller
             'slug' => $space->slug,
             'title' => $space->title,
         ];
+    }
+
+    private function recentMessagesForWeek(Space $space, string $targetDate): array
+    {
+        $target = Carbon::parse($targetDate, $this->dailyMessageTimezone());
+        $end = $target->copy()->endOfDay();
+        $start = $target->copy()->subDays(6)->startOfDay();
+
+        return DailyMessage::where('space_id', $space->id)
+            ->whereBetween('date', [$start->toDateString(), $end->toDateString()])
+            ->orderByDesc('date')
+            ->limit(7)
+            ->pluck('message')
+            ->toArray();
     }
 }

@@ -15,30 +15,33 @@ class DailyMessageGenerator
         ?string $existingMessage = null,
         ?string $mood = null,
         ?string $senderName = null,
-        ?string $partnerName = null
+        ?string $partnerName = null,
+        array $recentMessages = []
     ): ?string {
         $this->model = env('GEMINI_MODEL', 'gemini-2.5-flash');
-        return $this->generateGeminiMessage($existingMessage, $mood, $senderName, $partnerName);
+        return $this->generateGeminiMessage($existingMessage, $mood, $senderName, $partnerName, $recentMessages);
     }
 
     private function generateGeminiMessage(
         ?string $existingMessage = null,
         ?string $mood = null,
         ?string $senderName = null,
-        ?string $partnerName = null
+        ?string $partnerName = null,
+        array $recentMessages = []
     ) {
         $this->lastErrorMessage = null;
         $this->lastErrorStatus = null;
 
         $apiKey = env('GEMINI_API_KEY');
         if (!$apiKey) {
-            $this->lastErrorMessage = 'GEMINI_API_KEY is not set in .env file.';
+            $this->lastErrorMessage = 'GEMINI_API_KEY is not set in .env file. Falling back to local generator.';
             Log::warning($this->lastErrorMessage);
-            return null; // easier to handle in controller
+
+            return $this->generateFallbackMessage($senderName, $partnerName);
         }
 
         try {
-            // Array of styles for variation
+            // Array of styles for variation (tetap dipertahankan agar tema harian berubah-ubah)
             $styles = [
                 'romantic quote style from famous writers or thinkers',
                 'short playful message with emojis like chat style',
@@ -48,7 +51,6 @@ class DailyMessageGenerator
                 'appreciation message with grateful tone',
                 'aesthetic mini love note like Pinterest style',
                 'uplifting daily relationship affirmation',
-                'quote from philosophers or poets about love adapted to couple context',
                 'funny meme-like but romantic style message'
             ];
 
@@ -62,6 +64,21 @@ class DailyMessageGenerator
                 'partner_name' => $toName,
             ];
 
+            // Instruksi Personal (Ciri Khas)
+            $voiceCalibration = "Adopt a very specific Indonesian boyfriend persona. The speech pattern must be casual, slightly clingy, and warm.
+            KEY LINGUISTIC MARKERS (Use these naturally in sentences):
+            1. Use particles like 'tu', 'tau', 'dong' frequently to emphasize feelings (e.g., 'Aku tu...', 'Sayang tau gak...', 'Kamu tu...').
+            2. Use affectionate terms repetitively but naturally (e.g., 'Sayang', 'Yang').
+            3. Sentence structure should feel spoken, not written. It should sound like a whisper or a soft chat.
+            4. Example vibe (do not copy, just mimic syntax): 'Aku tu mikirin kamu terus tau yang', 'Sayang tau gak aku sesayang itu sama kamu'.";
+
+            // Instruksi Psikologis (Trauma & Trust Issue Research)
+            $psychologicalFramework = "The recipient has past trauma and trust issues. The message MUST follow these psychological safety guidelines:
+            1. **Avoid Hyperbole/Love Bombing:** Do not use over-the-top promises like 'I will die for you' or 'Everything is perfect'. This triggers suspicion in people with trust issues.
+            2. **Focus on Consistency & Safety:** Use words that imply stability, safety, and calming presence (e.g., 'aman', 'tenang', 'di sini', 'pulang').
+            3. **Validating & Reassuring:** Ackowledge that while things might be hard, you are staying. The tone must be 'Secure Attachment'—grounded, calm, and sure.
+            4. **The Goal:** Make them feel regulated and safe, not just flattered. Prove reliability through words.";
+
             if (!$fromName) {
                 $context['from_name_hint'] = "Use a gentle neutral sign-off like 'Your partner'.";
             }
@@ -72,7 +89,7 @@ class DailyMessageGenerator
 
             $personalizationRequirement = $toName
                 ? sprintf(
-                    'Mention %s naturally at least once and write it as if %s is speaking directly to them.',
+                    'Mention %s naturally at least once and write it as if %s is speaking directly to them using the defined persona.',
                     $toName,
                     $fromName ?: 'their partner'
                 )
@@ -84,59 +101,54 @@ class DailyMessageGenerator
 
             // Structured prompt as JSON
             $promptData = [
-                "task" => "Generate a unique romantic or love-related message.",
+                "task" => "Generate a deep, reassuring, and romantic message.",
+                "persona_calibration" => [
+                    "voice_style" => $voiceCalibration,
+                    "psychological_approach" => $psychologicalFramework
+                ],
                 "requirements" => [
-                    "length" => "Keep it 160-240 words and 10-18 sentences. Never stop before 160 words; if you are under that count, continue writing smooth, relevant lines until you reach the range.",
-                    "style" => $selectedStyle,
-                    "language" => "Mix of natural English and Bahasa Indonesia",
-                    "tone" => "warm, genuine, personal, avoid cliches, avoid generic platitudes",
-                    "emoji" => "Add 3-6 appropriate emojis inline across different sentences (not stacked, not all at the end).",
+                    "length" => "Keep it 200-300 words and 30-60 sentences. Never stop before 200 words; extend smoothly if needed.",
+                    "theme_style" => $selectedStyle, // Tetap gunakan style random tapi dibalut dengan persona di atas
+                    "language" => "Dominant Bahasa Indonesia with natural casual slang, occasionally mixed with simple soft English phrases.",
+                    "tone" => "Calming, Convincing (meyakinkan), Clingy but Secure, Warm.",
+                    "emoji" => "Add 6-15 appropriate emojis inline (warm colors like 🤎, 🤍, 🧸, 🏠).",
                     "avoid" => [
-                        "meski jarak memisahkan",
-                        "samudra dan daratan",
-                        "benang cinta tak kasat mata",
-                        "ketahuilah",
-                        "percayalah at beginning"
+                        "Cliché poetic words like 'samudra', 'benang merah', 'rembulan' (unless used ironically)",
+                        "Formal Indonesian (baku)",
+                        "Robotic transitions",
+                        "Overly dramatic promises that sound fake"
                     ],
-                    "format" => "No numbering, no bullet points, no lists, no quotes wrapping the whole text.",
-                    "source_reference" => "You may draw inspiration or quotes from famous authors, poets, or philosophers about love, but adapt to personal message style.",
+                    "format" => "No numbering, no bullet points, no lists. Just one flowing heartfelt paragraph.",
                     "personalization" => $personalizationRequirement,
                     "sign_off" => $signOffInstruction,
                 ],
                 "context" => $context,
-                "examples" => [
-                    // --- Your short examples ---
-                    "You're special to me. You are the only one who I wouldn't mind losing sleep for, the only one who I can never get tired of talking to and the only one who crosses my mind constantly throughout the day. You are the only one who can make me smile without any intention and affect my emotions with every action of yours. I can't explain in words how much you mean to me but you're the one I'm afraid of losing and the one I want to keep in my life.",
-
-                    "My dear pretty girl I know It's so easy to love someone when things are perfect and everything's wonderful. But to love someone when things are difficult, when they're not being perfect, when they're messing up, flaws are seen, mistakes are made, I think that's what really allows you to see how much love really is there. Anyone can love someone who's doing and saying all the right things, being everything you want and need, but to love someone at their lowest, to love someone despite how broken they feel, when they're lost, when you're willing to stand by them no matter how challenging or difficult things may be, I think that kind of love is a lot more beautiful. Thank you for loving me both times, when things are good and also when things are bad, for taking in every part of me, accepting my flaws, forgiving me, helping me become the best version of myself. I'm truly grateful to have you my love and I'm blessed to be yours. I love you, every version of you, in all the good and bad days, you're my girlfriend, my wifey to be, you always have me, there's no letting go. Nuh uhhh. Mwaghhh Yours and only yours Poohoooh",
-
-                    "My Love, You once asked why I fell in love with you, I am writing this letter to answer that question, you might be wondering why I fell in love with you because I don't often say things like you are pretty, gorgeous or mesmerizing it's not because you aren't. You are beyond beautiful, in ways words will always fail to capture. But I never fell for just the way you look. I fell for the way your soul shines and the word pretty is too small for a soul as vast as yours I love the kindness in your heart, the way you carry your pain with grace, the way you feel everything so deeply-even when it hurts. I love how you cry for others, how you love without limits, how you forgive yet never let anyone dim your light. You think too much, feel too much, care too much-and, that is what makes you extraordinary. I love how your mind dances with questions, how you find magic in the smallest things, how you soften for those you love yet stand unshaken in the face of disrespect. You are both gentle and fierce, innocent and wise. And that is why I love you-not just for your beauty, but for the universe you hold inside you. And when time paints your face with lines of a life well-lived, when years try to steal your youth, I will love you still. I will look at you like you are my sun, my moon, my eternal universe. Because I never loved you for how you looked-I loved you for who you are. And I always will. Eternally yours, The one who stays.",
-
-                    "I don't really know how to start off this message. I have written and removed and written and removed again but I hope this one will not be deleted. No one has loved me like you've loved me. No one has ever taken care of me the way you take care of me. No one in the past has been worried about small things regarding me like you do. I have never met someone like you and this is not to flatter you. This is the truth. People may think or have conclusions like they want to, but me and you know the truth, the real truth. I have never thought you were playing games with me, not when we started, not during and not when things got a bit out of hand. I knew you were honest, I knew your feelings were real and you reminded me of that every single day.... and you still do, even when our backs are against the wall. I can only imagine what you're going through and what is really going on in your mind. You are the only one who I wouldn't mind losing sleep for, the only one who I can never get tired of talking to and the only one who crosses my mind constantly throughout the day. You are the only one who can make me smile without any intention and affect my emotions with every action of yours. I can't explain in words how much you mean to me but you're the one I'm afraid of losing and the one I want to keep in my life. I hope I can make you feel the value that you deserve. You're the best girl anyone could ever ask for. I hope you",
-
-                    // --- Your short casual examples ---
-                    "Kamu tau gak? Setiap kali liat notif dari kamu, hari aku langsung berasa lebih cerah ☀️",
-                    "Aku bangga sama kamu yang terus berjuang di sana. Keep going, sayang! 💪❤️",
-                    "Random thought: Kamu itu comfort person aku banget 🥺✨",
-                    "Pengen remind you aja kalau kamu doing great! I'm always rooting for you 🌟",
-                    "Miss you tapi aku tau kita both lagi kerja keras untuk masa depan kita. Let's go! 💕",
-                    "Hari ini kamu udah makan belum? Jangan lupa jaga kesehatan ya ❤️",
-                    "Fun fact: Kamu itu alasan aku semangat bangun pagi 🌅✨",
-                    "Lagi ngapain? Btw, kamu keren banget tau gak 😎💙",
-                    "Seneng banget punya kamu yang selalu ngerti aku. Thank you for being you 🥰",
-                    "Kangen sih, tapi lebih kangen liat kamu sukses dan bahagia 🌟💕"
+                "examples_to_learn_syntax_from" => [
+                    // Hanya untuk referensi syntax, bukan untuk dicopy
+                    "Aku tu kadang suka mikir, beruntung banget ya aku punya kamu. Kamu tu rumah buat aku tau yang.",
+                    "Sayang, kalo dunia lagi berisik, lari ke aku ya? Aku tu bakal selalu ada buat dengerin kamu, sesayang itu aku sama kamu tau.",
+                    "Gak perlu takut ya cantik, aku disini. Aku tu gak kemana-mana, kita jalanin pelan-pelan ya sayang."
                 ],
-                "output" => "Write one brand new message different from all examples. Directly output the message only without intro. Ensure final text respects the 160-240 word range and 10-18 sentence count before stopping."
+                "output" => "Write one brand new message strictly following the 'persona_calibration' and 'psychological_approach'. Output the message text only."
             ];
+
+            if (!empty($recentMessages)) {
+                $promptData['recent_week_chats'] = [
+                    'note' => 'These are the chats/daily messages from the past 7 days. Study them first so the new message feels fresh.',
+                    'messages' => array_values($recentMessages),
+                ];
+
+                $promptData['requirements']['variation_guard'] = "Read 'recent_week_chats' carefully. Avoid repeating the same openings, hooks, emoji placements, or sentence rhythms. Invent a new flow that still matches the persona.";
+            }
 
             // --- Dynamic Prompt Modification ---
             if ($existingMessage) {
-                $promptData['task'] = "Improvise, rewrite, or enhance this existing romantic message. Make it better, more poetic, or change the style.";
+                $promptData['task'] = "Rewrite this existing message to match the 'persona_calibration' (make it sound like 'aku tu...', 'sayang tau gak') and make it more psychologically reassuring.";
                 $promptData['original_message'] = $existingMessage;
             }
 
             if ($mood) {
-                $promptData['requirements']['user_mood'] = "Incorporate this mood or feeling into the message: '{$mood}'";
+                $promptData['requirements']['user_mood'] = "The partner is currently feeling '{$mood}'. Adjust the reassurance level to soothe this specific emotion.";
             }
 
             $promptJson = json_encode($promptData, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
@@ -159,24 +171,26 @@ class DailyMessageGenerator
                     ]
                 ],
                 'generationConfig' => [
-                    'temperature' => 1.3,
+                    'temperature' => 1.4, // Sedikit lebih kreatif untuk variasi emosi
                     'topK' => 50,
                     'topP' => 0.95,
-                    // Reserve enough tokens for Gemini's hidden reasoning + the 80-140 word output.
-                    // 'maxOutputTokens' => 800,
                 ]
             ]);
 
             Log::info('Gemini API Response', [
                 'status' => $response->status(),
-                'body'   => $response->json(),
                 'model'  => $this->model,
             ]);
 
             if ($response->failed()) {
                 $this->lastErrorStatus = $response->status();
                 $this->lastErrorMessage = $response->json('error.message') ?? 'Gemini API request failed.';
-                return null;
+                Log::warning('Gemini API request failed, using fallback generator.', [
+                    'status' => $this->lastErrorStatus,
+                    'message' => $this->lastErrorMessage,
+                ]);
+
+                return $this->generateFallbackMessage($senderName, $partnerName);
             }
 
             $candidates = $response->json('candidates');
@@ -204,13 +218,18 @@ class DailyMessageGenerator
                 Log::warning('Gemini API: Candidates is empty or not an array.');
             }
 
-            return $text ?: null;
+            if ($text) {
+                return $text;
+            }
+
+            Log::warning('Gemini API returned no usable text, using fallback generator.');
+            return $this->generateFallbackMessage($senderName, $partnerName);
         } catch (\Exception $e) {
             $this->lastErrorMessage = $e->getMessage();
             $this->lastErrorStatus = 500;
 
             Log::error('Gemini API Exception', ['message' => $this->lastErrorMessage]);
-            return null;
+            return $this->generateFallbackMessage($senderName, $partnerName);
         }
     }
 
@@ -222,5 +241,31 @@ class DailyMessageGenerator
     public function getLastErrorStatus(): ?int
     {
         return $this->lastErrorStatus;
+    }
+
+    /**
+     * Fallback message generator when Gemini is unavailable.
+     */
+    private function generateFallbackMessage(?string $senderName, ?string $partnerName): string
+    {
+        $from = $senderName && trim($senderName) !== '' ? trim($senderName) : 'aku';
+        $to = $partnerName && trim($partnerName) !== '' ? trim($partnerName) : 'sayang';
+
+        // Updated fallback to match the "aku tu" style slightly better
+        $sentences = [
+            "Halo {$to}, aku tu cuma mau bilang kalo kamu berharga banget buat {$from} 🤎.",
+            "Sayang tau gak, aku suka banget cara kamu bikin hal kecil jadi spesial, makasih ya udah jadi diri kamu sendiri 😊.",
+            "Setiap kali kamu cerita tentang harimu, aku tu ngerasa deket banget sama kamu.",
+            "{$to} tu tempat ternyaman aku tau, makanya aku betah banget sama kamu.",
+            "Aku bangga banget sama kamu, jangan lupa istirahat ya sayang, aku gamau kamu sakit 💪.",
+            "Aku tu pengen terus jadi orang yang bisa kamu andalkan, aku disini ya, gak kemana-mana.",
+            "Kalo hari ini berat, inget ya ada aku disini yang selalu dukung kamu, sesayang itu aku sama kamu.",
+            "Semoga hari ini ada hal kecil yang bikin kamu senyum ya, love you more than words can say 🧸.",
+            "Aku gak akan bosen bilang kalo kamu tu versi terbaik yang pernah aku temui.",
+            "Makasih ya udah kasih aku ruang di hidup kamu, aku janji bakal jaga kepercayaan ini baik-baik.",
+            "Peluk jauh dari {$from}, kamu aman sama aku 💌."
+        ];
+
+        return implode(' ', $sentences);
     }
 }

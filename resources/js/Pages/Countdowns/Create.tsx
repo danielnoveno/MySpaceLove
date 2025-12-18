@@ -81,13 +81,14 @@ export default function CountdownCreate() {
     const spaceSlug = currentSpace.slug;
     const spaceTitle = currentSpace.title;
 
-    const { data, setData, post, processing, errors, clearErrors } = useForm({
+    const form = useForm({
         event_name: "",
         event_date: new Date().toISOString().split("T")[0],
         description: "",
         activities: [] as string[],
         image: null as File | null,
     });
+    const { data, setData, post, processing, errors, clearErrors } = form;
 
     const [imagePreview, setImagePreview] = useState<string | null>(null);
     const [fileError, setFileError] = useState<string | null>(null);
@@ -121,6 +122,22 @@ export default function CountdownCreate() {
     const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
         event.preventDefault();
         clearErrors();
+        form.transform((payload) => {
+            const prunedActivities = payload.activities
+                .map((activity) => activity.trim())
+                .filter((activity) => activity.length > 0);
+
+            const transformed: Record<string, unknown> = {
+                ...payload,
+                activities: prunedActivities,
+            };
+
+            if (!(payload.image instanceof File)) {
+                delete transformed.image;
+            }
+
+            return transformed;
+        });
         post(route("countdown.store", { space: spaceSlug }), {
             forceFormData: true,
         });

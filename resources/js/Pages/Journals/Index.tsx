@@ -2,7 +2,6 @@ import ConfirmDialog from "@/Components/ConfirmDialog";
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout";
 import { Head, Link, router } from "@inertiajs/react";
 import { useCallback, useState } from "react";
-import type { MouseEvent as ReactMouseEvent } from "react";
 
 interface JournalItem {
     id: number;
@@ -29,12 +28,6 @@ const moodLabels: Record<string, string> = {
     miss: "Rindu",
     excited: "Semangat",
 };
-type AnchorPosition = {
-    top: number;
-    left: number;
-    width: number;
-    height: number;
-};
 
 
 export default function JournalIndex({ items, space }: Props) {
@@ -42,7 +35,6 @@ export default function JournalIndex({ items, space }: Props) {
     const spaceTitle = space.title;
     const [pendingDelete, setPendingDelete] = useState<JournalItem | null>(null);
     const [deleting, setDeleting] = useState(false);
-    const [deleteAnchor, setDeleteAnchor] = useState<AnchorPosition | null>(null);
 
     const formatDate = (value?: string) => {
         if (!value) return "";
@@ -72,30 +64,18 @@ export default function JournalIndex({ items, space }: Props) {
                 preserveScroll: true,
                 onSuccess: () => {
                     setPendingDelete(null);
-                    setDeleteAnchor(null);
                 },
                 onError: () => {
                     setPendingDelete(null);
-                    setDeleteAnchor(null);
                 },
                 onFinish: () => setDeleting(false),
             },
         );
     };
 
-    const promptDelete = useCallback(
-        (item: JournalItem, event: ReactMouseEvent<HTMLButtonElement>) => {
-            const rect = event.currentTarget.getBoundingClientRect();
-            setPendingDelete(item);
-            setDeleteAnchor({
-                top: rect.top,
-                left: rect.left,
-                width: rect.width,
-                height: rect.height,
-            });
-        },
-        [],
-    );
+    const promptDelete = useCallback((item: JournalItem) => {
+        setPendingDelete(item);
+    }, []);
 
     return (
         <AuthenticatedLayout
@@ -202,7 +182,7 @@ export default function JournalIndex({ items, space }: Props) {
                                                 </Link>
                                                 <button
                                                     type="button"
-                                                    onClick={(event) => promptDelete(item, event)}
+                                                    onClick={() => promptDelete(item)}
                                                     className="rounded-full border border-rose-200 px-4 py-1 text-rose-500 transition hover:bg-rose-500 hover:text-white"
                                                 >
                                                     Hapus
@@ -218,17 +198,23 @@ export default function JournalIndex({ items, space }: Props) {
 
                 <ConfirmDialog
                     open={pendingDelete !== null}
-                    title="Hapus catatan jurnal?"
-                    description="Catatan yang dihapus tidak dapat dipulihkan nanti."
-                    confirmLabel="Ya, hapus"
+                    title={
+                        pendingDelete
+                            ? `Hapus catatan jurnal "${pendingDelete.title}"?`
+                            : "Hapus catatan jurnal?"
+                    }
+                    description={
+                        pendingDelete
+                            ? `Catatan "${pendingDelete.title}" akan dihapus permanen dari jurnal.`
+                            : "Catatan akan dihapus permanen dari jurnal."
+                    }
+                    confirmLabel="Ya, hapus jurnal"
                     cancelLabel="Batal"
                     tone="danger"
                     loading={deleting}
-                    anchor={deleteAnchor}
                     onCancel={() => {
                         if (!deleting) {
                             setPendingDelete(null);
-                            setDeleteAnchor(null);
                         }
                     }}
                     onConfirm={handleDelete}
@@ -237,7 +223,5 @@ export default function JournalIndex({ items, space }: Props) {
         </AuthenticatedLayout>
     );
 }
-
-
 
 

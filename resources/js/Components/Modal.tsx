@@ -1,5 +1,6 @@
 import { Dialog, Transition } from '@headlessui/react';
-import type { CSSProperties, PropsWithChildren } from 'react';
+import type { CSSProperties, HTMLAttributes, PropsWithChildren } from 'react';
+import { Fragment } from 'react';
 
 export default function Modal({
     children,
@@ -9,6 +10,7 @@ export default function Modal({
     onClose = () => {},
     panelClassName = '',
     panelStyle,
+    panelProps = {},
 }: PropsWithChildren<{
     show: boolean;
     maxWidth?: 'sm' | 'md' | 'lg' | 'xl' | '2xl';
@@ -16,6 +18,7 @@ export default function Modal({
     onClose: CallableFunction;
     panelClassName?: string;
     panelStyle?: CSSProperties;
+    panelProps?: HTMLAttributes<HTMLDivElement>;
 }>) {
     const close = () => {
         if (closeable) {
@@ -32,14 +35,15 @@ export default function Modal({
     }[maxWidth];
 
     return (
-        <Transition show={show} leave="duration-200">
+        <Transition show={show} leave="duration-200" as={Fragment}>
             <Dialog
                 as="div"
                 id="modal"
-                className="fixed inset-0 z-[9999] flex items-center justify-center overflow-y-auto"
+                className="fixed inset-0 z-[9999] overflow-y-auto"
                 onClose={close}
             >
                 <Transition.Child
+                    as={Fragment}
                     enter="ease-out duration-300"
                     enterFrom="opacity-0"
                     enterTo="opacity-100"
@@ -50,8 +54,9 @@ export default function Modal({
                     <div className="fixed inset-0 z-[9998] bg-gray-900/70" />
                 </Transition.Child>
 
-                <div className="flex min-h-full w-full items-center justify-center p-4 sm:p-6">
+                <div className="grid min-h-full w-full place-items-center p-4 sm:p-6">
                     <Transition.Child
+                        as={Fragment}
                         enter="ease-out duration-300"
                         enterFrom="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
                         enterTo="opacity-100 translate-y-0 sm:scale-100"
@@ -61,7 +66,8 @@ export default function Modal({
                     >
                         <Dialog.Panel
                             className={`w-full transform overflow-hidden rounded-2xl bg-white shadow-xl transition-all ${maxWidthClass} ${panelClassName}`}
-                            style={panelStyle}
+                            style={{ ...(panelProps.style ?? {}), ...(panelStyle ?? {}) }}
+                            {...panelProps}
                         >
                             {children}
                         </Dialog.Panel>

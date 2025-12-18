@@ -27,8 +27,8 @@ Route::middleware('auth:sanctum')->group(function () {
     // nested resources: /api/spaces/{space}/...
     Route::get('spaces/{space}/timelines', [LoveTimelineApiController::class, 'index']);
     Route::post('spaces/{space}/timelines', [LoveTimelineApiController::class, 'store']);
-    Route::put('spaces/{space}/timelines/{id}', [LoveTimelineApiController::class, 'update']);
-    Route::delete('spaces/{space}/timelines/{id}', [LoveTimelineApiController::class, 'destroy']);
+    Route::put('spaces/{space}/timelines/{timeline:uuid}', [LoveTimelineApiController::class, 'update']);
+    Route::delete('spaces/{space}/timelines/{timeline:uuid}', [LoveTimelineApiController::class, 'destroy']);
 
     Route::get('spaces/{space}/daily-message', [DailyMessageApiController::class, 'getTodayMessage'])
         ->name('api.spaces.daily-message');

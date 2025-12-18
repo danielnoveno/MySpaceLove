@@ -13,11 +13,10 @@ import {
     X,
 } from "lucide-react";
 import { useCallback, useMemo, useState } from "react";
-import type { MouseEvent as ReactMouseEvent } from "react";
 import ConfirmDialog from "@/Components/ConfirmDialog";
 
 interface TimelineItem {
-    id: number;
+    uuid: string;
     title: string;
     description?: string | null;
     date: string;
@@ -35,13 +34,6 @@ interface Props {
 type MediaOption = {
     path: string;
     url: string;
-};
-
-type AnchorPosition = {
-    top: number;
-    left: number;
-    width: number;
-    height: number;
 };
 
 const buildMediaOptions = (item: TimelineItem): MediaOption[] => {
@@ -64,9 +56,8 @@ export default function TimelineIndex({ timelines }: Props) {
     const [items, setItems] = useState<TimelineItem[]>(timelines);
     const [selectedItem, setSelectedItem] = useState<TimelineItem | null>(null);
     const [previewImage, setPreviewImage] = useState<string | null>(null);
-    const [thumbnailPending, setThumbnailPending] = useState<number | null>(null);
+    const [thumbnailPending, setThumbnailPending] = useState<string | null>(null);
     const [pendingDelete, setPendingDelete] = useState<TimelineItem | null>(null);
-    const [deleteAnchor, setDeleteAnchor] = useState<AnchorPosition | null>(null);
     const [deleting, setDeleting] = useState(false);
 
     const spaceSlug = currentSpace.slug;
@@ -86,17 +77,17 @@ export default function TimelineIndex({ timelines }: Props) {
     }, []);
 
     const handleThumbnailChange = useCallback(
-        async (timelineId: number, path: string | null) => {
-            setThumbnailPending(timelineId);
+        async (timelineUuid: string, path: string | null) => {
+            setThumbnailPending(timelineUuid);
             try {
                 await axios.post(route("timeline.thumbnail", {
                     space: spaceSlug,
-                    timeline: timelineId,
+                    timeline: timelineUuid,
                 }), { path });
 
                 setItems((prev) =>
                     prev.map((item) =>
-                        item.id === timelineId
+                        item.uuid === timelineUuid
                             ? {
                                   ...item,
                                   thumbnail_path: path,
@@ -118,19 +109,9 @@ export default function TimelineIndex({ timelines }: Props) {
         [spaceSlug],
     );
 
-    const confirmDelete = useCallback(
-        (item: TimelineItem, event: ReactMouseEvent<HTMLButtonElement>) => {
-            const rect = event.currentTarget.getBoundingClientRect();
-            setPendingDelete(item);
-            setDeleteAnchor({
-                top: rect.top,
-                left: rect.left,
-                width: rect.width,
-                height: rect.height,
-            });
-        },
-        [],
-    );
+    const confirmDelete = useCallback((item: TimelineItem) => {
+        setPendingDelete(item);
+    }, []);
 
     const performDelete = useCallback(() => {
         if (!pendingDelete) {
@@ -141,13 +122,12 @@ export default function TimelineIndex({ timelines }: Props) {
         router.delete(
             route("timeline.destroy", {
                 space: spaceSlug,
-                id: pendingDelete.id,
+                timeline: pendingDelete.uuid,
             }),
             {
                 preserveScroll: true,
                 onSuccess: () => {
                     setPendingDelete(null);
-                    setDeleteAnchor(null);
                     router.visit(
                         route("timeline.index", {
                             space: spaceSlug,
@@ -160,7 +140,6 @@ export default function TimelineIndex({ timelines }: Props) {
                 },
                 onError: () => {
                     setPendingDelete(null);
-                    setDeleteAnchor(null);
                 },
                 onFinish: () => setDeleting(false),
             },
@@ -240,7 +219,7 @@ export default function TimelineIndex({ timelines }: Props) {
 
                             return (
                                 <article
-                                    key={item.id}
+                                    key={item.uuid}
                                     className="group relative overflow-hidden rounded-[26px] border border-pink-100/80 bg-white/85 shadow-sm transition duration-300 hover:-translate-y-1 hover:shadow-xl"
                                 >
                                     <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-pink-50/70 via-transparent to-white" />
@@ -294,7 +273,7 @@ export default function TimelineIndex({ timelines }: Props) {
                                                             const isActive =
                                                                 option.path === item.coverPath;
                                                             const isDisabled =
-                                                                thumbnailPending === item.id;
+                                                                thumbnailPending === item.uuid;
                                                             return (
                                                                 <button
                                                                     key={option.path}
@@ -302,7 +281,7 @@ export default function TimelineIndex({ timelines }: Props) {
                                                                     disabled={isDisabled}
                                                                     onClick={() =>
                                                                         handleThumbnailChange(
-                                                                            item.id,
+                                                                            item.uuid,
                                                                             option.path,
                                                                         )
                                                                     }
@@ -333,16 +312,16 @@ export default function TimelineIndex({ timelines }: Props) {
                                                         {media.length > 1 && item.coverPath && (
                                                             <button
                                                                 type="button"
-                                                                disabled={thumbnailPending === item.id}
+                                                                disabled={thumbnailPending === item.uuid}
                                                                 onClick={() =>
-                                                                    handleThumbnailChange(item.id, null)
+                                                                    handleThumbnailChange(item.uuid, null)
                                                                 }
                                                                 className="inline-flex items-center justify-center rounded-xl border border-pink-200 bg-white px-3 text-xs font-semibold uppercase tracking-[0.24em] text-pink-500 transition hover:bg-pink-100 disabled:opacity-60"
                                                             >
                                                                 Reset
                                                             </button>
                                                         )}
-                                                        {thumbnailPending === item.id && (
+                                                        {thumbnailPending === item.uuid && (
                                                             <div className="inline-flex items-center gap-2 rounded-xl border border-pink-200 bg-white px-3 py-2 text-xs font-medium text-pink-500">
                                                                 <Loader2 className="h-3.5 w-3.5 animate-spin" />
                                                                 Menyimpan...
@@ -356,7 +335,7 @@ export default function TimelineIndex({ timelines }: Props) {
                                                     <Link
                                                         href={route("timeline.edit", {
                                                             space: spaceSlug,
-                                                            id: item.id,
+                                                            timeline: item.uuid,
                                                         })}
                                                         className="inline-flex items-center gap-2 rounded-full border border-pink-200 px-4 py-1 transition hover:bg-pink-500 hover:text-white"
                                                     >
@@ -365,7 +344,7 @@ export default function TimelineIndex({ timelines }: Props) {
                                                     </Link>
                                                     <button
                                                         type="button"
-                                                        onClick={(event) => confirmDelete(item, event)}
+                                                        onClick={() => confirmDelete(item)}
                                                         className="inline-flex items-center gap-2 rounded-full border border-rose-200 px-4 py-1 text-rose-500 transition hover:bg-rose-500 hover:text-white"
                                                     >
                                                         <Trash2 className="h-4 w-4" />
@@ -425,7 +404,7 @@ export default function TimelineIndex({ timelines }: Props) {
                                 <div className="grid grid-cols-2 gap-4">
                                     {selectedItem.media_urls.map((url, index) => (
                                         <button
-                                            key={`${selectedItem.id}-${index}`}
+                                            key={`${selectedItem.uuid}-${index}`}
                                             type="button"
                                             onClick={() => setPreviewImage(url)}
                                             className="overflow-hidden rounded-2xl border border-pink-100 shadow-sm transition hover:-translate-y-1 hover:shadow-lg"
@@ -459,17 +438,23 @@ export default function TimelineIndex({ timelines }: Props) {
 
             <ConfirmDialog
                 open={pendingDelete !== null}
-                title="Hapus momen dari timeline?"
-                description="Momen yang dihapus tidak bisa dikembalikan, tetapi kamu masih bisa menambahkannya lagi kapan saja."
+                description={
+                    pendingDelete
+                        ? `Momen timeline "${pendingDelete.title}" akan dihapus dan tidak bisa dikembalikan.`
+                        : "Momen akan dihapus dan tidak bisa dikembalikan."
+                }
                 confirmLabel="Ya, hapus momen"
                 cancelLabel="Batal"
                 tone="danger"
                 loading={deleting}
-                anchor={deleteAnchor}
+                title={
+                    pendingDelete
+                        ? `Hapus momen timeline "${pendingDelete.title}"?`
+                        : "Hapus momen timeline?"
+                }
                 onCancel={() => {
                     if (!deleting) {
                         setPendingDelete(null);
-                        setDeleteAnchor(null);
                     }
                 }}
                 onConfirm={performDelete}

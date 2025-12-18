@@ -4,7 +4,6 @@ import { useCurrentSpace } from "@/hooks/useCurrentSpace";
 import { Head, Link, router } from "@inertiajs/react";
 import { Calendar, Edit, Sparkles, Trash2 } from "lucide-react";
 import { useCallback, useMemo, useState, type CSSProperties } from "react";
-import type { MouseEvent as ReactMouseEvent } from "react";
 
 interface CountdownItem {
     id: number;
@@ -20,13 +19,6 @@ interface Props {
 }
 
 type CountdownTone = "future" | "present" | "past" | "unset";
-
-type AnchorPosition = {
-    top: number;
-    left: number;
-    width: number;
-    height: number;
-};
 
 const toneClasses: Record<CountdownTone, string> = {
     future: "border-emerald-200 bg-emerald-50 text-emerald-600",
@@ -61,9 +53,6 @@ export default function CountdownIndex({ items }: Props) {
         null,
     );
     const [deleting, setDeleting] = useState(false);
-    const [deleteAnchor, setDeleteAnchor] = useState<AnchorPosition | null>(
-        null,
-    );
 
     const formatEventDate = useCallback((value?: string | null) => {
         const date = parseDateValue(value);
@@ -209,19 +198,9 @@ export default function CountdownIndex({ items }: Props) {
         "--love-hover-color": "#ef4444",
     } as CSSProperties;
 
-    const confirmDelete = useCallback(
-        (item: CountdownItem, event: ReactMouseEvent<HTMLButtonElement>) => {
-            const rect = event.currentTarget.getBoundingClientRect();
-            setPendingDelete(item);
-            setDeleteAnchor({
-                top: rect.top,
-                left: rect.left,
-                width: rect.width,
-                height: rect.height,
-            });
-        },
-        [],
-    );
+    const confirmDelete = useCallback((item: CountdownItem) => {
+        setPendingDelete(item);
+    }, []);
 
     const handleDelete = () => {
         if (!pendingDelete) {
@@ -238,11 +217,9 @@ export default function CountdownIndex({ items }: Props) {
                 preserveScroll: true,
                 onSuccess: () => {
                     setPendingDelete(null);
-                    setDeleteAnchor(null);
                 },
                 onError: () => {
                     setPendingDelete(null);
-                    setDeleteAnchor(null);
                 },
                 onFinish: () => setDeleting(false),
             },
@@ -326,7 +303,7 @@ export default function CountdownIndex({ items }: Props) {
                         </Link>
                         <button
                             type="button"
-                            onClick={(clickEvent) => confirmDelete(event, clickEvent)}
+                            onClick={() => confirmDelete(event)}
                             data-love-hover
                             style={loveHoverDelete}
                             className="inline-flex items-center gap-2 rounded-full border border-rose-200 px-4 py-2 text-sm font-medium text-rose-600 transition hover:bg-rose-500 hover:text-white"
@@ -509,16 +486,18 @@ export default function CountdownIndex({ items }: Props) {
                         ? `Hapus "${pendingDelete.event_name}"?`
                         : "Hapus event?"
                 }
-                description="Event yang dihapus akan hilang dari daftar countdown. Kamu masih bisa membuatnya lagi kapan saja."
+                description={
+                    pendingDelete
+                        ? `Event countdown "${pendingDelete.event_name}" akan dihapus dari daftar dan tidak bisa dipulihkan.`
+                        : "Event countdown akan dihapus dari daftar."
+                }
                 confirmLabel="Ya, hapus event"
                 cancelLabel="Batal"
                 tone="danger"
                 loading={deleting}
-                anchor={deleteAnchor}
                 onCancel={() => {
                     if (!deleting) {
                         setPendingDelete(null);
-                        setDeleteAnchor(null);
                     }
                 }}
                 onConfirm={handleDelete}
@@ -526,8 +505,6 @@ export default function CountdownIndex({ items }: Props) {
         </AuthenticatedLayout>
     );
 }
-
-
 
 
 

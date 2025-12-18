@@ -13,9 +13,9 @@ import { convertImageToWebP } from "@/utils/imageConverter";
 import { useTranslation } from "@/hooks/useTranslation";
 
 interface TimelineItem {
-    id: number;
+    uuid: string;
     title: string;
-    description: string;
+    description: string | null;
     date: string;
     media_paths: string[];
 }
@@ -301,7 +301,7 @@ export default function TimelineEdit({ item }: { item: TimelineItem }) {
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        post(route("timeline.update", { space: spaceSlug, id: item.id }), {
+        post(route("timeline.update", { space: spaceSlug, timeline: item.uuid }), {
             forceFormData: true,
             onSuccess: () =>
                 router.visit(route("timeline.index", { space: spaceSlug })),

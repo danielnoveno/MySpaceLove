@@ -17,6 +17,12 @@ return Application::configure(basePath: dirname(__DIR__))
         app_path('Listeners'),
     ])
     ->withMiddleware(function (Middleware $middleware): void {
+        // Keep the XSRF-TOKEN cookie unencrypted so it can be read by the browser
+        // and sent back via the X-XSRF-TOKEN header for CSRF validation.
+        $middleware->encryptCookies(except: [
+            'XSRF-TOKEN',
+        ]);
+
         $middleware->web(append: [
             \App\Http\Middleware\SetLocale::class,
             \App\Http\Middleware\HandleInertiaRequests::class,

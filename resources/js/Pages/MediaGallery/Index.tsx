@@ -11,8 +11,8 @@ import {
     Trash2,
     X,
 } from "lucide-react";
-import { useCallback, useMemo, useState, useRef } from "react";
-import type { MouseEvent as ReactMouseEvent, ChangeEvent } from "react";
+import { useMemo, useState, useRef } from "react";
+import type { ChangeEvent } from "react";
 
 type GalleryMediaItem = {
     id: number;
@@ -29,12 +29,6 @@ type GalleryCollection = {
     created_at?: string | null;
     count: number;
     items: GalleryMediaItem[];
-};
-type AnchorPosition = {
-    top: number;
-    left: number;
-    width: number;
-    height: number;
 };
 
 
@@ -66,9 +60,6 @@ export default function GalleryIndex({
         null,
     );
     const [deleting, setDeleting] = useState(false);
-    const [deleteAnchor, setDeleteAnchor] = useState<AnchorPosition | null>(
-        null,
-    );
     const [uploading, setUploading] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -105,11 +96,9 @@ export default function GalleryIndex({
                 preserveScroll: true,
                 onSuccess: () => {
                     setPendingDelete(null);
-                    setDeleteAnchor(null);
                 },
                 onError: () => {
                     setPendingDelete(null);
-                    setDeleteAnchor(null);
                 },
                 onFinish: () => {
                     setDeleting(false);
@@ -117,20 +106,6 @@ export default function GalleryIndex({
             },
         );
     };
-    const promptDelete = useCallback(
-        (item: GalleryMediaItem, event: ReactMouseEvent<HTMLButtonElement>) => {
-            const rect = event.currentTarget.getBoundingClientRect();
-            setPendingDelete(item);
-            setDeleteAnchor({
-                top: rect.top,
-                left: rect.left,
-                width: rect.width,
-                height: rect.height,
-            });
-        },
-        [],
-    );
-
     const handleFileSelect = (event: ChangeEvent<HTMLInputElement>) => {
         if (
             !event.target.files ||
@@ -449,17 +424,23 @@ export default function GalleryIndex({
 
             <ConfirmDialog
                 open={pendingDelete !== null}
-                title="Hapus foto dari galeri?"
-                description="Foto yang dihapus tidak dapat dikembalikan. Koleksi akan diperbarui secara otomatis."
-                confirmLabel="Ya, hapus foto"
+                title={
+                    pendingDelete
+                        ? `Hapus foto galeri "${pendingDelete.title ?? "Tanpa judul"}"?`
+                        : "Hapus foto galeri?"
+                }
+                description={
+                    pendingDelete
+                        ? `Foto di koleksi galeri "${pendingDelete.title ?? "tanpa judul"}" akan dihapus permanen.`
+                        : "Foto akan dihapus permanen dari galeri."
+                }
+                confirmLabel="Ya, hapus foto galeri"
                 cancelLabel="Batal"
                 tone="danger"
                 loading={deleting}
-                anchor={deleteAnchor}
                 onCancel={() => {
                     if (!deleting) {
                         setPendingDelete(null);
-                        setDeleteAnchor(null);
                     }
                 }}
                 onConfirm={performDelete}
@@ -467,9 +448,17 @@ export default function GalleryIndex({
 
             <ConfirmDialog
                 open={pendingDeleteCollection !== null}
-                title="Hapus koleksi dari galeri?"
-                description="Semua foto dalam koleksi ini akan dihapus dan tidak dapat dikembalikan."
-                confirmLabel="Ya, hapus koleksi"
+                title={
+                    pendingDeleteCollection
+                        ? `Hapus koleksi galeri "${pendingDeleteCollection.title ?? "Tanpa judul"}"?`
+                        : "Hapus koleksi galeri?"
+                }
+                description={
+                    pendingDeleteCollection
+                        ? `Semua foto dalam koleksi "${pendingDeleteCollection.title ?? "tanpa judul"}" akan dihapus permanen dari galeri.`
+                        : "Semua foto dalam koleksi ini akan dihapus permanen dari galeri."
+                }
+                confirmLabel="Ya, hapus koleksi galeri"
                 cancelLabel="Batal"
                 tone="danger"
                 loading={deletingCollection}
@@ -483,8 +472,5 @@ export default function GalleryIndex({
         </AuthenticatedLayout>
     );
 }
-
-
-
 
 

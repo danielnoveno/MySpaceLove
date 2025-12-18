@@ -18,7 +18,8 @@ export interface Space {
 
 // ==== Timeline ====
 export interface Timeline {
-    id: number;
+    uuid: string;
+    id?: number;
     space_id: number;
     title: string;
     event_date: string; // ISO Date
