@@ -188,12 +188,6 @@ export default function TimelineEdit({ item }: { item: TimelineItem }) {
         const newUrls: string[] = [];
 
         for (const file of files) {
-            if (file.size > MAX_UPLOAD_BYTES) {
-                setFileError(translatedSizeError);
-                newUrls.forEach((url) => URL.revokeObjectURL(url));
-                return;
-            }
-
             try {
                 const webpFile = await convertImageToWebP(file);
 

@@ -1,4 +1,5 @@
 import axios, { AxiosError, AxiosRequestConfig } from 'axios';
+import { router } from '@inertiajs/react';
 window.axios = axios;
 
 const readXsrfToken = (): string | null => {
@@ -6,11 +7,32 @@ const readXsrfToken = (): string | null => {
     return match ? decodeURIComponent(match[1]) : null;
 };
 
+const readMetaCsrfToken = (): string | null => {
+    const meta = document.head.querySelector('meta[name="csrf-token"]');
+    return meta ? meta.getAttribute('content') : null;
+};
+
 const applyXsrfHeader = () => {
     const xsrf = readXsrfToken();
     if (xsrf) {
         window.axios.defaults.headers.common['X-XSRF-TOKEN'] = xsrf;
     }
+};
+
+const attachInertiaCsrfHeaders = () => {
+    router.on('before', ({ detail }) => {
+        const headers = detail.visit.headers;
+        const xsrf = readXsrfToken();
+        const csrfMeta = readMetaCsrfToken();
+
+        if (xsrf) {
+            headers['X-XSRF-TOKEN'] = xsrf;
+        }
+
+        if (csrfMeta) {
+            headers['X-CSRF-TOKEN'] = csrfMeta;
+        }
+    });
 };
 
 const ensureCsrfCookie = async () => {
@@ -37,6 +59,9 @@ if (csrfToken) {
 }
 
 applyXsrfHeader();
+if (typeof window !== 'undefined') {
+    attachInertiaCsrfHeaders();
+}
 
 declare module 'axios' {
     export interface AxiosRequestConfig {

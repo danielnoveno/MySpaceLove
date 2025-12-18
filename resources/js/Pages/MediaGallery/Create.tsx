@@ -3,9 +3,16 @@ import { useCurrentSpace } from "@/hooks/useCurrentSpace";
 import { Head, Link, useForm } from "@inertiajs/react";
 import { ArrowLeft, Trash2, Upload } from "lucide-react";
 import { ChangeEvent, FormEvent, useMemo, useRef, useState } from "react";
-import { convertImageToWebP } from "@/utils/imageConverter";
 
 const MAX_FILES = 12;
+const ALLOWED_MIME_TYPES = [
+    "image/jpeg",
+    "image/jpg",
+    "image/png",
+    "image/gif",
+    "video/mp4",
+    "video/quicktime", // covers .mov from iOS
+];
 
 export default function GalleryCreate() {
     const currentSpace = useCurrentSpace();
@@ -56,18 +63,12 @@ export default function GalleryCreate() {
         const processedFiles: File[] = [];
 
         for (const file of selectedFiles) {
-            if (file.type.startsWith("image/")) {
-                try {
-                    const webpFile = await convertImageToWebP(file);
-                    processedFiles.push(webpFile);
-                } catch (error) {
-                    console.error("Error converting image to WebP:", error);
-                    setFileError(`Gagal mengonversi ${file.name}. Pastikan format gambar didukung.`);
-                    // Skip this file and continue with others
-                }
-            } else {
-                processedFiles.push(file); // Keep non-image files as is
+            if (!ALLOWED_MIME_TYPES.includes(file.type)) {
+                setFileError(`Format ${file.name} tidak didukung. Gunakan jpg, jpeg, png, gif, mp4, atau mov.`);
+                continue;
             }
+
+            processedFiles.push(file);
         }
 
         const combined = [...data.files, ...processedFiles];

@@ -297,15 +297,20 @@ export default function ConfirmDialog({
         );
     }
 
+    const panelTransformStyle = useMemo(
+        () =>
+            ({
+                transform: `translate(${dragOffset.x}px, ${dragOffset.y}px)`,
+            }) as CSSProperties,
+        [dragOffset.x, dragOffset.y],
+    );
+
     return (
         <Modal
             show={open}
             maxWidth="sm"
             onClose={onCancel}
-            panelStyle={{
-                ["--tw-translate-x" as string]: `${dragOffset.x}px`,
-                ["--tw-translate-y" as string]: `${dragOffset.y}px`,
-            } as CSSProperties}
+            panelStyle={panelTransformStyle}
         >
             <div className="relative overflow-hidden bg-white">
                 <div className="pointer-events-none absolute inset-x-0 top-0 h-36 bg-gradient-to-br from-white via-transparent to-transparent opacity-90" />

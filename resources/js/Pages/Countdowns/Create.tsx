@@ -18,7 +18,58 @@ import {
     useState,
     type CSSProperties,
 } from "react";
-import { convertImageToWebP } from "@/utils/imageConverter";
+
+const MAX_UPLOAD_BYTES = 2 * 1024 * 1024;
+
+const compressImageToJpeg = async (file: File): Promise<File> => {
+    if (!file.type.startsWith("image/")) {
+        throw new Error("File is not an image.");
+    }
+
+    // Keep small files and non-raster types as-is.
+    if (file.size <= MAX_UPLOAD_BYTES || file.type === "image/svg+xml" || file.type === "image/gif") {
+        return file;
+    }
+
+    const imageElement = await new Promise<HTMLImageElement>((resolve, reject) => {
+        const img = new Image();
+        const url = URL.createObjectURL(file);
+        img.onload = () => {
+            URL.revokeObjectURL(url);
+            resolve(img);
+        };
+        img.onerror = () => {
+            URL.revokeObjectURL(url);
+            reject(new Error("Failed to load image."));
+        };
+        img.src = url;
+    });
+
+    const maxDimension = 1600;
+    const scale = Math.min(1, maxDimension / Math.max(imageElement.width, imageElement.height));
+    const targetWidth = Math.max(1, Math.round(imageElement.width * scale));
+    const targetHeight = Math.max(1, Math.round(imageElement.height * scale));
+
+    const canvas = document.createElement("canvas");
+    canvas.width = targetWidth;
+    canvas.height = targetHeight;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) {
+        throw new Error("Canvas context unavailable.");
+    }
+    ctx.drawImage(imageElement, 0, 0, targetWidth, targetHeight);
+
+    const blob: Blob | null = await new Promise((resolve) =>
+        canvas.toBlob((b) => resolve(b), "image/jpeg", 0.78),
+    );
+
+    if (!blob) {
+        return file;
+    }
+
+    const newName = file.name.replace(/\.[^.]+$/, "") + ".jpg";
+    return new File([blob], newName, { type: "image/jpeg", lastModified: Date.now() });
+};
 
 export default function CountdownCreate() {
     const currentSpace = useCurrentSpace();
@@ -97,15 +148,23 @@ export default function CountdownCreate() {
         setFileError(null);
 
         try {
-            const webpFile = await convertImageToWebP(file);
-            setData("image", webpFile);
+            const processed = await compressImageToJpeg(file);
+
+            if (processed.size > MAX_UPLOAD_BYTES) {
+                setFileError("Ukuran maksimal 2MB. Coba pilih/resize gambar lebih kecil.");
+                setData("image", null);
+                setImagePreview(null);
+                return;
+            }
+
+            setData("image", processed);
 
             if (imagePreview) {
                 URL.revokeObjectURL(imagePreview);
             }
-            setImagePreview(URL.createObjectURL(webpFile));
+            setImagePreview(URL.createObjectURL(processed));
         } catch (error) {
-            console.error("Error converting image to WebP:", error);
+            console.error("Error processing image:", error);
             setFileError("Gagal memproses gambar. Pastikan format file didukung dan coba lagi.");
             setData("image", null);
             setImagePreview(null);

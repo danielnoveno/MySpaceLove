@@ -119,11 +119,6 @@ export default function TimelineCreate() {
         const newPreviews: string[] = [];
 
         for (const file of selectedFiles) {
-            if (file.size > MAX_UPLOAD_BYTES) {
-                setFileError(translatedSizeError);
-                return;
-            }
-
             try {
                 const webpFile = await convertImageToWebP(file);
 
