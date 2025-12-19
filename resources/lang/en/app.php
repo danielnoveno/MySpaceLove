@@ -32,6 +32,7 @@ return [
             'daily_messages' => 'Daily Message',
             'gallery' => 'Gallery',
             'spotify' => 'Spotify Kit',
+            'games' => 'Games',
             'notifications' => 'Notifications',
             'memory_lane' => 'Memory Lane Kit',
             'choose_space' => 'Choose Space',

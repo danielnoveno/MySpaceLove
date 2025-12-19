@@ -17,6 +17,8 @@ use App\Http\Controllers\Api\TuiRoomKitCredentialController;
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\ChatController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\GameScoreController;
+use App\Http\Controllers\GamesController;
 use App\Http\Controllers\LocationController;
 use App\Http\Controllers\SpaceController;
 use App\Http\Controllers\NobarController;
@@ -146,6 +148,14 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
         return back()->withCookie(cookie()->forever('locale', $locale));
     })->name('locale.switch');
+
+    Route::get('/games', [GamesController::class, 'index'])->name('games.index');
+    Route::get('/games/{slug}/leaderboard', [GamesController::class, 'leaderboard'])
+        ->name('games.leaderboard');
+    Route::post('/games/{slug}/score', [GameScoreController::class, 'store'])
+        ->middleware('throttle:20,1')
+        ->name('games.score');
+    Route::get('/games/{slug}', [GamesController::class, 'show'])->name('games.show');
 
     // Profile Routes
 

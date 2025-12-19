@@ -128,6 +128,12 @@ export default function AuthenticatedLayout({ header, children }) {
                                         {navigation.spotify ?? "Spotify Kit"}
                                     </span>
                                 </Link>
+                                <Link
+                                    href={route("games.index")}
+                                    className={navClass(false)}
+                                >
+                                    {navigation.games ?? "Games"}
+                                </Link>
                             </div>
                         </div>
 
@@ -429,6 +435,12 @@ export default function AuthenticatedLayout({ header, children }) {
                             </span>
                         </ResponsiveNavLink>
                         <ResponsiveNavLink
+                            href={route("games.index")}
+                            active={route().current("games.index")}
+                        >
+                            {navigation.games ?? "Games"}
+                        </ResponsiveNavLink>
+                        <ResponsiveNavLink
                             href={notificationsHref}
                             active={route().current("spaces.notifications.index")}
                             className={
@@ -529,7 +541,6 @@ export default function AuthenticatedLayout({ header, children }) {
         </div>
     );
 }
-
 
 
 
