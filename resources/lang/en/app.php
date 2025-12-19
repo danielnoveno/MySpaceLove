@@ -227,6 +227,10 @@ return [
                     'label' => 'Spotify Companion',
                     'description' => 'Sync music and moods remotely',
                 ],
+                'games' => [
+                    'label' => 'Games Hub',
+                    'description' => 'Play and track space scores',
+                ],
                 'journal' => [
                     'label' => 'Write Journal',
                     'description' => 'Express your feelings',

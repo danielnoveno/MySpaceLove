@@ -16,6 +16,7 @@ import {
     Lock,
     X,
     Sparkles,
+    Gamepad2,
 } from "lucide-react";
 import { useTranslation } from "@/hooks/useTranslation";
 import { replacePlaceholders } from "@/utils/translation";
@@ -74,6 +75,7 @@ type DashboardTranslation = {
             spotify?: { label?: string; description?: string };
             journal?: { label?: string; description?: string };
             nobar?: { label?: string; description?: string };
+            games?: { label?: string; description?: string };
         };
         upcoming_events?: {
             title?: string;
@@ -297,6 +299,15 @@ export default function Dashboard({ dashboardData, spaceContext }: Props) {
                 href: route("countdown.index", { space: spaceSlug }),
                 color: "from-violet-500 to-indigo-500",
                 requiresPartner: true,
+            },
+            {
+                icon: Gamepad2,
+                label: quickActionStrings?.games?.label ?? "Games",
+                description:
+                    quickActionStrings?.games?.description ??
+                    "Buka hub permainan & skor space",
+                href: route("games.index", { space: spaceSlug }),
+                color: "from-indigo-600 to-blue-600",
             },
             {
                 icon: Image,

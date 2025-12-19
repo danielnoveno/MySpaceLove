@@ -227,6 +227,10 @@ return [
                     'label' => 'Spotify Companion',
                     'description' => 'Sinkronisasi musik & mood jarak jauh',
                 ],
+                'games' => [
+                    'label' => 'Games',
+                    'description' => 'Main dan pantau skor space',
+                ],
                 'journal' => [
                     'label' => 'Tulis Journal',
                     'description' => 'Ekspresikan perasaan',
