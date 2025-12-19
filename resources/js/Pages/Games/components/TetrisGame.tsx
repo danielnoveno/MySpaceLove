@@ -16,7 +16,10 @@ const COLORS = [
     "#f97316",
 ];
 
-type GameOverHandler = (score: number, meta?: Record<string, number>) => void;
+type GameOverHandler = (
+    score: number,
+    meta?: Record<string, string | number | boolean | null>
+) => void | Promise<void>;
 
 interface Props {
     onGameOver: GameOverHandler;

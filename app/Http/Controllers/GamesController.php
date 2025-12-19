@@ -21,8 +21,22 @@ class GamesController extends Controller
 
         $games = Game::query()
             ->where('is_enabled', true)
-            ->orderBy('name')
-            ->get(['id', 'slug', 'name', 'description']);
+            ->get(['id', 'slug', 'name', 'description', 'supports_multiplayer']);
+
+        $priority = [
+            'pong-duet',
+            'connect-four',
+            'memory-match',
+            'maze-escape',
+            'couple-quiz',
+            'tetris',
+            'slither',
+        ];
+
+        $games = $games->sortBy(function (Game $game) use ($priority) {
+            $index = array_search($game->slug, $priority, true);
+            return $index === false ? 999 : $index;
+        })->values();
 
         return Inertia::render('Games/Index', [
             'games' => $games->map(fn (Game $game): array => [
@@ -30,8 +44,11 @@ class GamesController extends Controller
                 'slug' => $game->slug,
                 'name' => $game->name,
                 'description' => $game->description,
+                'supports_multiplayer' => $game->supports_multiplayer,
             ])->values()->all(),
             'spaceSlug' => $space?->slug,
+            'spaceGoalsRoute' => route('space.goals.index') . ($space?->slug ? '?space=' . $space->slug : ''),
+            'spaceGoalsStoreRoute' => route('space.goals.store') . ($space?->slug ? '?space=' . $space->slug : ''),
         ]);
     }
 
@@ -58,9 +75,12 @@ class GamesController extends Controller
                 'slug' => $game->slug,
                 'name' => $game->name,
                 'description' => $game->description,
+                'supports_multiplayer' => $game->supports_multiplayer,
             ],
             'scoreRoute' => route('games.score', ['slug' => $game->slug]) . '?space=' . $spaceSlug,
             'leaderboardRoute' => route('games.leaderboard', ['slug' => $game->slug]) . '?space=' . $spaceSlug,
+            'sessionRoute' => route('games.sessions.show', ['slug' => $game->slug, 'sessionId' => 'SESSION']) . '?space=' . $spaceSlug,
+            'sessionMoveRoute' => route('games.sessions.move', ['slug' => $game->slug, 'sessionId' => 'SESSION']) . '?space=' . $spaceSlug,
         ]);
     }
 

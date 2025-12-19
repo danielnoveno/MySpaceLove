@@ -14,10 +14,12 @@ class Game extends Model
         'name',
         'description',
         'is_enabled',
+        'supports_multiplayer',
     ];
 
     protected $casts = [
         'is_enabled' => 'boolean',
+        'supports_multiplayer' => 'boolean',
     ];
 
     public function scores()

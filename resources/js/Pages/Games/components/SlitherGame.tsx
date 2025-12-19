@@ -1,6 +1,9 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 
-type GameOverHandler = (score: number, meta?: Record<string, number>) => void;
+type GameOverHandler = (
+    score: number,
+    meta?: Record<string, string | number | boolean | null>
+) => void | Promise<void>;
 
 interface Props {
     onGameOver: GameOverHandler;
