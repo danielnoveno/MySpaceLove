@@ -32,6 +32,7 @@ return [
             'daily_messages' => 'Daily Message',
             'gallery' => 'Galeri',
             'spotify' => 'Spotify Kit',
+            'games' => 'Games',
             'notifications' => 'Notifikasi',
             'memory_lane' => 'Memory Lane Kit',
             'choose_space' => 'Pilih Space',
