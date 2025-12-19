@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Game;
 use App\Models\GameScore;
 use App\Models\Space;
+use App\Models\SpaceGoal;
 use Illuminate\Http\Request;
 
 class GameScoreController extends Controller
@@ -35,6 +36,11 @@ class GameScoreController extends Controller
             'score' => $validated['score'],
             'meta' => $validated['meta'] ?? null,
         ]);
+
+        SpaceGoal::query()
+            ->where('space_id', $space->id)
+            ->where('is_active', true)
+            ->increment('current_points', $validated['score']);
 
         return response()->json([
             'id' => $score->id,

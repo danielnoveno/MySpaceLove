@@ -17,10 +17,12 @@ use App\Http\Controllers\Api\TuiRoomKitCredentialController;
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\ChatController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\GameSessionController;
 use App\Http\Controllers\GameScoreController;
 use App\Http\Controllers\GamesController;
 use App\Http\Controllers\LocationController;
 use App\Http\Controllers\SpaceController;
+use App\Http\Controllers\SpaceGoalsController;
 use App\Http\Controllers\NobarController;
 use App\Http\Controllers\SpotifyAuthController;
 use App\Http\Controllers\SpotifyController;
@@ -156,6 +158,18 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ->middleware('throttle:20,1')
         ->name('games.score');
     Route::get('/games/{slug}', [GamesController::class, 'show'])->name('games.show');
+    Route::get('/games/{slug}/session/{sessionId}', [GameSessionController::class, 'show'])
+        ->name('games.sessions.show');
+    Route::post('/games/{slug}/session/{sessionId}/move', [GameSessionController::class, 'move'])
+        ->middleware('throttle:30,1')
+        ->name('games.sessions.move');
+
+    Route::get('/space/goals', [SpaceGoalsController::class, 'index'])->name('space.goals.index');
+    Route::post('/space/goals', [SpaceGoalsController::class, 'store'])->name('space.goals.store');
+    Route::match(['put', 'patch'], '/space/goals/{goal}', [SpaceGoalsController::class, 'update'])
+        ->name('space.goals.update');
+    Route::post('/space/goals/{goal}/complete', [SpaceGoalsController::class, 'complete'])
+        ->name('space.goals.complete');
 
     // Profile Routes
 

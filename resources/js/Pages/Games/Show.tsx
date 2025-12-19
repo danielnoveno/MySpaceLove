@@ -3,12 +3,18 @@ import { Head, Link } from "@inertiajs/react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import SlitherGame from "@/Pages/Games/components/SlitherGame";
 import TetrisGame from "@/Pages/Games/components/TetrisGame";
+import PongDuetGame from "@/Pages/Games/components/PongDuetGame";
+import ConnectFourGame from "@/Pages/Games/components/ConnectFourGame";
+import MemoryMatchGame from "@/Pages/Games/components/MemoryMatchGame";
+import MazeEscapeGame from "@/Pages/Games/components/MazeEscapeGame";
+import CoupleQuizGame from "@/Pages/Games/components/CoupleQuizGame";
 
 interface GameInfo {
     id: number;
     slug: string;
     name: string;
     description?: string | null;
+    supports_multiplayer?: boolean;
 }
 
 interface LeaderboardEntry {
@@ -33,12 +39,16 @@ interface Props {
     game: GameInfo;
     scoreRoute: string;
     leaderboardRoute: string;
+    sessionRoute: string;
+    sessionMoveRoute: string;
 }
 
 export default function GamesShow({
     game,
     scoreRoute,
     leaderboardRoute,
+    sessionRoute,
+    sessionMoveRoute,
 }: Props) {
     const [leaderboard, setLeaderboard] = useState<LeaderboardResponse | null>(
         null
@@ -72,7 +82,7 @@ export default function GamesShow({
     }, []);
 
     const submitScore = useCallback(
-        async (score: number, meta?: Record<string, number>) => {
+        async (score: number, meta?: Record<string, string | number | boolean | null>) => {
             setLatestScore(score);
             setSaveState("saving");
 
@@ -102,6 +112,44 @@ export default function GamesShow({
 
     const partnerBestLabel = leaderboard?.partner_best?.score ?? "—";
     const personalBestLabel = leaderboard?.personal_best ?? "—";
+    const hasSessionGames = ["connect-four", "couple-quiz"].includes(game.slug);
+
+    const gameView = useMemo(() => {
+        switch (game.slug) {
+            case "tetris":
+                return <TetrisGame onGameOver={submitScore} />;
+            case "slither":
+                return <SlitherGame onGameOver={submitScore} />;
+            case "pong-duet":
+                return <PongDuetGame onGameOver={submitScore} />;
+            case "connect-four":
+                return (
+                    <ConnectFourGame
+                        onGameOver={submitScore}
+                        sessionRoute={sessionRoute}
+                        sessionMoveRoute={sessionMoveRoute}
+                    />
+                );
+            case "memory-match":
+                return <MemoryMatchGame onGameOver={submitScore} />;
+            case "maze-escape":
+                return <MazeEscapeGame onGameOver={submitScore} />;
+            case "couple-quiz":
+                return (
+                    <CoupleQuizGame
+                        onGameOver={submitScore}
+                        sessionRoute={sessionRoute}
+                        sessionMoveRoute={sessionMoveRoute}
+                    />
+                );
+            default:
+                return (
+                    <div className="rounded-3xl border border-dashed border-purple-200 bg-white/70 p-8 text-center text-sm text-gray-500">
+                        This game is coming soon. Check back for new updates!
+                    </div>
+                );
+        }
+    }, [game.slug, sessionMoveRoute, sessionRoute, submitScore]);
 
     return (
         <AuthenticatedLayout>
@@ -126,16 +174,22 @@ export default function GamesShow({
                     </div>
                     <div className="rounded-2xl border border-purple-100 bg-white/90 px-4 py-3 text-sm text-gray-600 shadow-sm">
                         Our Records are private to your Space.
+                        {game.supports_multiplayer && (
+                            <div className="mt-1 text-xs text-purple-500">
+                                Multiplayer mode is ready for your partner.
+                            </div>
+                        )}
+                        {hasSessionGames && (
+                            <div className="mt-1 text-xs text-purple-500">
+                                Share a session code to take turns together.
+                            </div>
+                        )}
                     </div>
                 </div>
 
                 <div className="grid gap-6 lg:grid-cols-[2fr,1fr]">
                     <div className="space-y-6">
-                        {game.slug === "tetris" ? (
-                            <TetrisGame onGameOver={submitScore} />
-                        ) : (
-                            <SlitherGame onGameOver={submitScore} />
-                        )}
+                        {gameView}
                         <div className="rounded-3xl border border-pink-100 bg-white/90 p-6 shadow-sm">
                             <h2 className="text-lg font-semibold text-gray-900">
                                 Game Recap

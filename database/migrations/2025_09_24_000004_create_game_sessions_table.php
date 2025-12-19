@@ -8,23 +8,24 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::create('game_scores', function (Blueprint $table) {
+        Schema::create('game_sessions', function (Blueprint $table) {
             $table->id();
             $table->foreignId('game_id')->constrained()->cascadeOnDelete();
-            $table->foreignId('user_id')->constrained()->cascadeOnDelete();
             $table->foreignId('space_id')->constrained()->cascadeOnDelete();
-            $table->unsignedInteger('score');
-            $table->json('meta')->nullable();
+            $table->string('session_id');
+            $table->foreignId('created_by_user_id')->constrained('users')->cascadeOnDelete();
+            $table->foreignId('current_turn_user_id')->nullable()->constrained('users')->nullOnDelete();
+            $table->string('status')->default('active');
+            $table->json('state')->nullable();
             $table->timestamps();
 
+            $table->unique(['game_id', 'space_id', 'session_id']);
             $table->index(['space_id', 'game_id']);
-            $table->index('user_id');
-            $table->index(['space_id', 'game_id', 'created_at']);
         });
     }
 
     public function down(): void
     {
-        Schema::dropIfExists('game_scores');
+        Schema::dropIfExists('game_sessions');
     }
 };

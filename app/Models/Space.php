@@ -94,6 +94,11 @@ class Space extends Model
         return $this->hasMany(Doc::class);
     }
 
+    public function goals()
+    {
+        return $this->hasMany(SpaceGoal::class);
+    }
+
     public function nobarSchedules()
     {
         return $this->hasMany(NobarSchedule::class);
