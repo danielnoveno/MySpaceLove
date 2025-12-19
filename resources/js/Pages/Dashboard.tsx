@@ -384,11 +384,10 @@ export default function Dashboard({ dashboardData, spaceContext }: Props) {
                     quickActionStrings?.nobar?.label ?? "Masuk Nobar",
                 description:
                     quickActionStrings?.nobar?.description ??
-                    "Fitur nobar akan segera hadir.",
+                    "Mulai nonton bareng",
                 href: route("space.nobar", { space: spaceSlug }),
                 color: "from-red-500 to-orange-500",
                 requiresPartner: true,
-                comingSoon: true,
             },
         ],
         [quickActionStrings, spaceSlug, isSpaceOwner]
