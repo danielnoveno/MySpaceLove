@@ -53,12 +53,4 @@ return [
         'refresh_margin' => (int) env('SPOTIFY_REFRESH_MARGIN', 300),
     ],
 
-    'tencent' => [
-        'tui_room_kit' => [
-            'sdk_app_id' => env('TENCENT_SDK_APP_ID'),
-            'secret_key' => env('TENCENT_SDK_SECRET_KEY'),
-            'user_sig_ttl' => (int) env('TENCENT_USER_SIG_TTL', 86400),
-        ],
-    ],
-
 ];

@@ -235,36 +235,7 @@ export default function Dashboard({ dashboardData, spaceContext }: Props) {
                     return;
                 }
             } catch (error) {
-                if (
-                    axios.isAxiosError(error) &&
-                    error.response?.status === 404
-                ) {
-                    try {
-                        const regenerateResponse = await axios.post(
-                            route("api.spaces.daily-message.regenerate", {
-                                space: spaceSlug,
-                            }),
-                        );
-
-                        const regeneratedText = extractDailyMessageText(
-                            regenerateResponse.data?.message,
-                        );
-
-                        if (
-                            regenerateResponse.status === 200 &&
-                            regeneratedText
-                        ) {
-                            openDailyMessageModal(regeneratedText);
-                        }
-                    } catch (regenerateError) {
-                        console.error(
-                            "Error regenerating daily message:",
-                            regenerateError,
-                        );
-                    }
-                } else {
-                    console.error("Error fetching daily message:", error);
-                }
+                console.error("Error fetching daily message:", error);
             }
         };
 

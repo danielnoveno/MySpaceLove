@@ -6,6 +6,8 @@ use App\Models\MemoryLaneConfig;
 use App\Models\NobarSchedule;
 use App\Models\SpaceInvitation;
 use App\Models\SpaceSeparationRequest;
+use App\Models\Message;
+use App\Models\MessageRead;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
@@ -121,5 +123,15 @@ class Space extends Model
         }
 
         return $this->userOne;
+    }
+
+    public function messages()
+    {
+        return $this->hasMany(Message::class);
+    }
+
+    public function messageReads()
+    {
+        return $this->hasManyThrough(MessageRead::class, Message::class);
     }
 }

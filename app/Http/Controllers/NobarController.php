@@ -20,9 +20,17 @@ use Throwable;
 
 class NobarController extends Controller
 {
-    public function show(Space $space): Response
+    public function show(Request $request, Space $space): Response
     {
         $this->authorizeSpace($space);
+        $request->attributes->set('currentSpace', $space);
+
+        $currentSpacePayload = [
+            'id' => $space->id,
+            'slug' => $space->slug,
+            'title' => $space->title,
+            'has_partner' => !empty($space->user_one_id) && !empty($space->user_two_id),
+        ];
 
         if (config('features.nobar_enabled', false)) {
             $space->loadMissing([
@@ -47,21 +55,15 @@ class NobarController extends Controller
 
             return Inertia::render('Room/Show', [
                 'spaceId' => $space->id,
-                'space' => [
-                    'id' => $space->id,
-                    'slug' => $space->slug,
-                    'title' => $space->title,
-                ],
+                'space' => $currentSpacePayload,
+                'currentSpace' => $currentSpacePayload,
                 'schedules' => $schedules,
             ]);
         }
 
         return Inertia::render('Nobar/ComingSoon', [
-            'space' => [
-                'id' => $space->id,
-                'slug' => $space->slug,
-                'title' => $space->title,
-            ],
+            'space' => $currentSpacePayload,
+            'currentSpace' => $currentSpacePayload,
         ]);
     }
 

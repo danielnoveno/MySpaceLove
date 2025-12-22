@@ -13,10 +13,8 @@ use App\Notifications\DailyMessageSent;
 use App\Models\Space;
 use App\Models\User;
 use App\Services\DailyMessageGenerator;
-use Gemini;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Mail;
 use Inertia\Inertia;
 use Throwable;
@@ -100,56 +98,6 @@ class DailyMessageApiController extends Controller
         );
 
         return redirect(route('daily.index', ['space' => $space->slug]));
-    }
-
-    public function regenerate(Request $request, Space $space)
-    {
-        $this->authorizeSpace($space);
-
-        $now = $this->currentDailyMessageNow();
-        $targetDate = $request->input('date') ?: $now->toDateString();
-
-        $recentMessages = $this->recentMessagesForWeek($space, $targetDate);
-
-        DailyMessage::where('space_id', $space->id)
-            ->where('date', $targetDate)
-            ->delete();
-
-        [$fromName, $partnerName] = $this->resolveNamePair($space);
-        $text = $this->dailyMessageGenerator->generate(null, null, $fromName, $partnerName, $recentMessages);
-
-        if (!$text) {
-            $status = $this->dailyMessageGenerator->getLastErrorStatus() ?? 503;
-            $errorMessage = $this->dailyMessageGenerator->getLastErrorMessage() ?? 'Gagal generate pesan AI.';
-
-            if ($request->wantsJson()) {
-                return response()->json(['error' => $errorMessage], $status);
-            }
-
-            return redirect()
-                ->route('daily.index', ['space' => $space->slug])
-                ->with('error', __($errorMessage));
-        }
-
-        $dailyMessage = $this->persistDailyMessage($space, $targetDate, $text, 'ai');
-
-        if (!$dailyMessage) {
-            if ($request->wantsJson()) {
-                return response()->json(['error' => 'Pesan harian tidak dapat disimpan'], 500);
-            }
-
-            return redirect()
-                ->route('daily.index', ['space' => $space->slug])
-                ->with('error', __('Pesan harian tidak dapat disimpan.'));
-        }
-
-        if ($request->wantsJson()) {
-            return response()->json(['message' => $dailyMessage]);
-        }
-
-        return redirect()
-            ->route('daily.index', ['space' => $space->slug])
-            ->with('success', __('Pesan harian berhasil digenerate ulang.'));
     }
 
     public function sendEmail(Request $request, Space $space, $id)
@@ -261,7 +209,7 @@ class DailyMessageApiController extends Controller
         }
 
         $recentMessages = $this->recentMessagesForWeek($space, $date);
-        $text = $this->dailyMessageGenerator->generate(null, null, $fromName, $partnerName, $recentMessages);
+        $text = $this->dailyMessageGenerator->generate(null, $fromName, $partnerName, $recentMessages);
 
         if (!$text) {
             Log::warning('Daily message auto-generation returned empty result.', [
@@ -398,35 +346,6 @@ class DailyMessageApiController extends Controller
     private function isFilled(?string $value): bool
     {
         return is_string($value) && trim($value) !== '';
-    }
-
-    public function update(Request $request, Space $space, $id)
-    {
-        $this->authorizeSpace($space);
-
-        $data = $request->validate([
-            'date' => 'required|date',
-            'message' => 'required|string',
-        ]);
-
-        $dailyMessage = DailyMessage::where('space_id', $space->id)->findOrFail($id);
-
-        $dailyMessage->update($data);
-
-        return redirect()->route('daily.index', ['space' => $space->slug])
-            ->with('success', 'Daily Message berhasil diperbarui!');
-    }
-
-    public function edit(Space $space, $id)
-    {
-        $this->authorizeSpace($space);
-
-        $dailyMessage = DailyMessage::where('space_id', $space->id)->findOrFail($id);
-
-        return Inertia::render('DailyMessages/Edit', [
-            'space' => $this->spacePayload($space),
-            'dailyMessage' => $dailyMessage,
-        ]);
     }
 
     private function spacePayload(Space $space): array

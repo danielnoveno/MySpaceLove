@@ -24,6 +24,8 @@ interface SpaceGoal {
     target_points: number;
     current_points: number;
     is_active: boolean;
+    is_completed?: boolean;
+    completed_at?: string | null;
 }
 
 export default function GamesIndex({
@@ -235,6 +237,10 @@ export default function GamesIndex({
                                                     100
                                             )
                                         );
+                                        const isCompleted =
+                                            goal.is_completed ||
+                                            progress >= 100 ||
+                                            !goal.is_active;
                                         return (
                                             <div
                                                 key={goal.id}
@@ -260,7 +266,11 @@ export default function GamesIndex({
                                                                     )
                                                                 )
                                                             }
-                                                            className="w-full rounded-lg border border-transparent bg-transparent text-sm font-semibold text-gray-900 focus:border-pink-200 focus:ring-2 focus:ring-pink-200"
+                                                            className={`w-full rounded-lg border border-transparent bg-transparent text-sm font-semibold text-gray-900 focus:border-pink-200 focus:ring-2 focus:ring-pink-200 ${
+                                                                isCompleted
+                                                                    ? "line-through text-gray-400"
+                                                                    : ""
+                                                            }`}
                                                         />
                                                         <textarea
                                                             value={
@@ -285,7 +295,11 @@ export default function GamesIndex({
                                                                 )
                                                             }
                                                             rows={2}
-                                                            className="mt-2 w-full rounded-lg border border-transparent bg-transparent text-xs text-gray-600 focus:border-purple-200 focus:ring-2 focus:ring-purple-200"
+                                                            className={`mt-2 w-full rounded-lg border border-transparent bg-transparent text-xs text-gray-600 focus:border-purple-200 focus:ring-2 focus:ring-purple-200 ${
+                                                                isCompleted
+                                                                    ? "line-through text-gray-400"
+                                                                    : ""
+                                                            }`}
                                                         />
                                                     </div>
                                                     <button
@@ -318,23 +332,25 @@ export default function GamesIndex({
                                                         />
                                                     </div>
                                                 </div>
-                                                {goal.is_active ? (
-                                                    <button
-                                                        type="button"
-                                                        onClick={() =>
-                                                            completeGoal(
-                                                                goal.id
-                                                            )
-                                                        }
-                                                        className="mt-3 text-xs font-semibold text-pink-500 hover:text-pink-600"
-                                                    >
-                                                        Mark complete
-                                                    </button>
-                                                ) : (
-                                                    <div className="mt-3 text-xs font-semibold text-gray-400">
-                                                        Completed
-                                                    </div>
-                                                )}
+                                                <div className="mt-3 flex items-center gap-2 text-xs font-semibold">
+                                                    {isCompleted ? (
+                                                        <span className="inline-flex items-center rounded-full bg-emerald-100 px-3 py-1 text-emerald-700">
+                                                            Done
+                                                        </span>
+                                                    ) : (
+                                                        <button
+                                                            type="button"
+                                                            onClick={() =>
+                                                                completeGoal(
+                                                                    goal.id
+                                                                )
+                                                            }
+                                                            className="text-pink-500 hover:text-pink-600"
+                                                        >
+                                                            Mark complete
+                                                        </button>
+                                                    )}
+                                                </div>
                                                 <div className="mt-3">
                                                     <label className="text-[10px] uppercase tracking-wide text-gray-500">
                                                         Target points

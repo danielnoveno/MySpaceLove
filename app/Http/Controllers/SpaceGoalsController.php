@@ -29,6 +29,8 @@ class SpaceGoalsController extends Controller
                 'target_points' => $goal->target_points,
                 'current_points' => $goal->current_points,
                 'is_active' => $goal->is_active,
+                'completed_at' => $goal->completed_at?->toIso8601String(),
+                'is_completed' => $goal->isCompleted(),
                 'meta' => $goal->meta,
             ]);
 
@@ -59,6 +61,7 @@ class SpaceGoalsController extends Controller
             'target_points' => $validated['target_points'],
             'current_points' => 0,
             'is_active' => true,
+            'completed_at' => null,
         ]);
 
         return response()->json([
@@ -87,6 +90,7 @@ class SpaceGoalsController extends Controller
             'description' => $validated['description'] ?? null,
             'target_points' => $validated['target_points'],
             'is_active' => $validated['is_active'] ?? $goal->is_active,
+            'completed_at' => ($validated['is_active'] ?? $goal->is_active) ? null : ($goal->completed_at ?? now()),
         ]);
 
         return response()->json([
@@ -105,6 +109,7 @@ class SpaceGoalsController extends Controller
 
         $goal->update([
             'is_active' => false,
+            'completed_at' => now(),
         ]);
 
         return response()->json([

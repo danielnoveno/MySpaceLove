@@ -8,7 +8,6 @@ import {
     CalendarDays,
     Loader2,
     Sparkles,
-    Wand2,
 } from "lucide-react";
 import { PageProps } from "@/types";
 
@@ -51,8 +50,6 @@ export default function DailyMessageCreate() {
 
     const { data, setData, post, errors, processing } = form;
 
-    const [loadingAI, setLoadingAI] = useState(false);
-    const [mood, setMood] = useState("");
     const [notice, setNotice] = useState<NoticeState | null>(null);
 
     useEffect(() => {
@@ -75,77 +72,6 @@ export default function DailyMessageCreate() {
 
         setNotice(null);
         post(route("daily.store", { space: spaceSlug }));
-    };
-
-    const generateAI = async () => {
-        if (!data.date) {
-            setNotice({
-                tone: "error",
-                message: "Pilih tanggal terlebih dahulu sebelum meminta AI menulis pesan.",
-            });
-            return;
-        }
-
-        setLoadingAI(true);
-        setNotice(null);
-
-        const isImprovisation = data.message.trim().length > 0;
-
-        try {
-            const payload: {
-                date: string;
-                message?: string;
-                mood?: string;
-            } = {
-                date: data.date,
-            };
-
-            if (isImprovisation) {
-                payload.message = data.message;
-            }
-
-            if (mood.trim().length > 0) {
-                payload.mood = mood.trim();
-            }
-
-            const regenerateUrl =
-                route("daily.regenerate", { space: spaceSlug }) + "?json=true";
-
-            const response = await axios.post(regenerateUrl, payload, {
-                headers: { "Content-Type": "application/json" },
-            });
-
-            const aiMessage = response.data?.message?.message;
-
-            if (aiMessage) {
-                setData("message", aiMessage);
-                setNotice({
-                    tone: "success",
-                    message: isImprovisation
-                        ? "Pesan berhasil diimprovisasi oleh AI."
-                        : "Pesan romantis dari AI siap disimpan!",
-                });
-            } else {
-                setNotice({
-                    tone: "error",
-                    message:
-                        "AI tidak mengembalikan pesan. Coba lagi beberapa saat lagi.",
-                });
-            }
-        } catch (error) {
-            console.error("Generate AI error:", error);
-            const errMsg =
-                (axios.isAxiosError(error)
-                    ? error.response?.data?.error
-                    : null) ??
-                "Gagal meminta AI menulis pesan. Silakan coba ulang.";
-            setNotice({
-                tone: "error",
-                message: errMsg,
-            });
-        } finally {
-            setLoadingAI(false);
-        }
     };
 
     const baseFieldClass =
@@ -192,10 +118,10 @@ export default function DailyMessageCreate() {
                                 <Sparkles className="mt-1 h-5 w-5 text-pink-500" />
                                 <div>
                                     <p className="font-semibold">
-                                        Tulis pesannya, biarkan AI menghangatkan suasana.
+                                        Tulis pesan harianmu dengan kata-kata sendiri.
                                     </p>
                                     <p className="mt-1 text-pink-600">
-                                        Kamu bisa memberi konteks mood supaya pesan terasa lebih personal.
+                                        Simpan pesan terbaikmu untuk tanggal yang dipilih dan kirimkan ke email pasangan dari daftar pesan.
                                     </p>
                                 </div>
                             </div>
@@ -247,7 +173,7 @@ export default function DailyMessageCreate() {
                                     }
                                     rows={5}
                                     className={`${baseFieldClass} min-h-[140px] resize-y`}
-                                    placeholder="Tuliskan pesan dari hati atau minta AI bantu menyusunnya."
+                                    placeholder="Tuliskan pesan dari hati untuk pasanganmu."
                                 />
                                 {errors.message && (
                                     <p className="text-xs text-rose-500">
@@ -256,44 +182,13 @@ export default function DailyMessageCreate() {
                                 )}
                             </div>
 
-                            <div className="grid gap-2">
-                                <label className="text-sm font-semibold text-slate-800">
-                                    Mood / Prompt Tambahan (Opsional)
-                                </label>
-                                <input
-                                    type="text"
-                                    value={mood}
-                                    onChange={(event) =>
-                                        setMood(event.target.value)
-                                    }
-                                    placeholder="Contoh: Kita lagi LDR dan kangen banget malam ini."
-                                    className={baseFieldClass}
-                                />
-                            </div>
                         </div>
 
-                        <div className="flex flex-col gap-3 pt-2 sm:flex-row">
-                            <button
-                                type="button"
-                                onClick={generateAI}
-                                disabled={loadingAI}
-                                className="flex flex-1 items-center justify-center gap-2 rounded-full border border-pink-200 bg-white/80 px-6 py-3 text-sm font-semibold text-pink-600 shadow-sm transition hover:border-pink-300 hover:bg-white disabled:cursor-not-allowed disabled:opacity-60"
-                            >
-                                {loadingAI ? (
-                                    <Loader2 className="h-4 w-4 animate-spin" />
-                                ) : (
-                                    <Wand2 className="h-4 w-4" />
-                                )}
-                                {loadingAI
-                                    ? "Memproses..."
-                                    : data.message.trim().length > 0
-                                    ? "Improvisasi dengan AI"
-                                    : "Generate Pesan AI"}
-                            </button>
+                        <div className="flex justify-end pt-2">
                             <button
                                 type="submit"
                                 disabled={processing}
-                                className="flex flex-1 items-center justify-center gap-2 rounded-full bg-gradient-to-r from-pink-500 to-rose-500 px-6 py-3 text-sm font-semibold text-white shadow-lg transition hover:shadow-xl disabled:cursor-not-allowed disabled:opacity-60"
+                                className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-gradient-to-r from-pink-500 to-rose-500 px-6 py-3 text-sm font-semibold text-white shadow-lg transition hover:shadow-xl disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
                             >
                                 {processing && (
                                     <Loader2 className="h-4 w-4 animate-spin" />

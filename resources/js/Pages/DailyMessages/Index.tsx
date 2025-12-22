@@ -71,9 +71,7 @@ export default function DailyMessageIndex({
             actions?: {
                 search?: string;
                 add_manual?: string;
-                regenerate_ai?: string;
                 send_email?: string;
-                regenerating?: string;
             };
             empty?: string;
             modal?: {
@@ -90,8 +88,6 @@ export default function DailyMessageIndex({
                 email_failed?: string;
                 email_partner_missing?: string;
                 email_sending?: string;
-                regenerating?: string;
-                regenerate_failed?: string;
             };
         }>("daily_messages");
     const { t: tCommon } = useTranslation("common");
@@ -109,7 +105,6 @@ export default function DailyMessageIndex({
         filters.date || ""
     );
     const [sendingEmailId, setSendingEmailId] = useState<string | null>(null);
-    const [regeneratingId, setRegeneratingId] = useState<string | null>(null);
     const [loadingOverlay, setLoadingOverlay] = useState<{
         title: string;
         description?: string;
@@ -202,44 +197,6 @@ export default function DailyMessageIndex({
         }
     };
 
-    const handleRegenerate = (message: DailyMessage) => {
-        if (regeneratingId) {
-            return;
-        }
-
-        const messageKey = String(message.id ?? message.date ?? "");
-        setRegeneratingId(messageKey);
-        setLoadingOverlay({
-            title:
-                dailyStrings.feedback?.regenerating ??
-                "Mengganti pesan harian...",
-            description:
-                "AI sedang menyusun ulang kata-kata manisnya untukmu ??",
-        });
-
-        router.post(
-            route("daily.regenerate", { space: spaceSlug }),
-            { date: message.date },
-            {
-                preserveScroll: true,
-                onError: () => {
-                    setLoadingOverlay(null);
-                    setRegeneratingId(null);
-                    setFeedbackBanner({
-                        type: "error",
-                        message:
-                            dailyStrings.feedback?.regenerate_failed ??
-                            "Pesan harian gagal digenerate ulang. Coba lagi nanti, ya.",
-                    });
-                },
-                onFinish: () => {
-                    setRegeneratingId(null);
-                    setLoadingOverlay(null);
-                },
-            },
-        );
-    };
-
     const sanitize = (text: string) => {
         let sanitizedText = text
             .replace(/<[^>]*>/g, "")
@@ -321,7 +278,6 @@ export default function DailyMessageIndex({
                         {springs.map((spring, i) => {
                             const { x, y, zIndex } = spring;
                             const message = messages[i];
-                            const messageKey = String(message.id ?? message.date ?? i);
                             return (
                                 <animated.div
                                     {...bind(i)}
@@ -349,33 +305,7 @@ export default function DailyMessageIndex({
                                             "Baca lebih sedikit"
                                         }
                                     />
-                                    <div className="mt-4 flex gap-2">
-                                        <Link
-                                            href={route("daily.edit", {
-                                                space: spaceSlug,
-                                                id: message.id,
-                                            })}
-                                            className="px-3 py-1 text-sm rounded-lg bg-yellow-500 text-white transition hover:bg-yellow-600"
-                                        >
-                                            {tCommon("actions.edit", "Edit")}
-                                        </Link>
-                                        <button
-                                            type="button"
-                                            onClick={() => handleRegenerate(message)}
-                                            disabled={Boolean(regeneratingId)}
-                                            className="px-3 py-1 text-sm rounded-lg bg-green-500 text-white transition hover:bg-green-600 disabled:cursor-wait disabled:opacity-70"
-                                        >
-                                            {regeneratingId === messageKey ? (
-                                                <span className="inline-flex items-center gap-2">
-                                                    <Loader2 className="h-4 w-4 animate-spin" />
-                                                    {dailyStrings.actions?.regenerating ??
-                                                        tCommon("actions.loading", "Memproses...")}
-                                                </span>
-                                            ) : (
-                                                dailyStrings.actions?.regenerate_ai ??
-                                                tCommon("actions.regenerate", "Regenerate AI")
-                                            )}
-                                        </button>
+                                    <div className="mt-4 flex justify-end">
                                         <button
                                             type="button"
                                             onClick={() => void handleSendEmail(message)}

@@ -11,13 +11,26 @@ interface Props {
 
 const CANVAS_WIDTH = 560;
 const CANVAS_HEIGHT = 360;
-const SEGMENT_SIZE = 8;
+const BASE_SEGMENT_SIZE = 8;
 const SPEED = 2.4;
+const TURN_SMOOTHING = 0.12;
+const TARGET_LERP = 0.18;
+const KEY_TURN_STEP = 0.14;
+const ORB_COUNT = 18;
+const SPAWN_RADIUS = 340;
 
-const createOrb = () => ({
-    x: 40 + Math.random() * (CANVAS_WIDTH - 80),
-    y: 40 + Math.random() * (CANVAS_HEIGHT - 80),
-    r: 6 + Math.random() * 4,
+const createOrbAround = (center: { x: number; y: number }) => ({
+    x:
+        center.x +
+        Math.cos(Math.random() * Math.PI * 2) *
+            Math.sqrt(Math.random()) *
+            SPAWN_RADIUS,
+    y:
+        center.y +
+        Math.sin(Math.random() * Math.PI * 2) *
+            Math.sqrt(Math.random()) *
+            SPAWN_RADIUS,
+    r: 6 + Math.random() * 5,
 });
 
 export default function SlitherGame({ onGameOver }: Props) {
@@ -34,15 +47,27 @@ export default function SlitherGame({ onGameOver }: Props) {
     const targetDirectionRef = useRef(Math.PI / 2);
     const snakeRef = useRef<Array<{ x: number; y: number }>>([]);
     const orbsRef = useRef<Array<{ x: number; y: number; r: number }>>([]);
+    const cameraRef = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
+    const scaleRef = useRef(1);
+
+    const segmentSize = useCallback(() => {
+        return (
+            BASE_SEGMENT_SIZE +
+            Math.min(6, Math.floor(lengthRef.current / 60))
+        );
+    }, []);
 
     const resetGame = useCallback(() => {
-        const startX = CANVAS_WIDTH / 2;
-        const startY = CANVAS_HEIGHT / 2;
+        const startX = 0;
+        const startY = 0;
         snakeRef.current = Array.from({ length: lengthRef.current }, (_, idx) => ({
-            x: startX - idx * SEGMENT_SIZE,
+            x: startX - idx * BASE_SEGMENT_SIZE,
             y: startY,
         }));
-        orbsRef.current = Array.from({ length: 6 }, createOrb);
+        cameraRef.current = { x: startX, y: startY };
+        orbsRef.current = Array.from({ length: ORB_COUNT }, () =>
+            createOrbAround({ x: startX, y: startY })
+        );
         scoreRef.current = 0;
         setScore(0);
         setLength(lengthRef.current);
@@ -59,29 +84,24 @@ export default function SlitherGame({ onGameOver }: Props) {
     }, [onGameOver]);
 
     const update = useCallback(() => {
+        if (snakeRef.current.length === 0) {
+            resetGame();
+        }
+
         const direction = directionRef.current;
         const targetDirection = targetDirectionRef.current;
         const angleDiff = Math.atan2(
             Math.sin(targetDirection - direction),
             Math.cos(targetDirection - direction)
         );
-        directionRef.current = direction + angleDiff * 0.2;
+        directionRef.current = direction + angleDiff * TURN_SMOOTHING;
 
         const head = snakeRef.current[0];
+        const size = segmentSize();
         const newHead = {
             x: head.x + Math.cos(directionRef.current) * SPEED,
             y: head.y + Math.sin(directionRef.current) * SPEED,
         };
-
-        if (
-            newHead.x < SEGMENT_SIZE ||
-            newHead.x > CANVAS_WIDTH - SEGMENT_SIZE ||
-            newHead.y < SEGMENT_SIZE ||
-            newHead.y > CANVAS_HEIGHT - SEGMENT_SIZE
-        ) {
-            endGame();
-            return;
-        }
 
         snakeRef.current.unshift(newHead);
         while (snakeRef.current.length > lengthRef.current) {
@@ -92,7 +112,7 @@ export default function SlitherGame({ onGameOver }: Props) {
             const segment = snakeRef.current[i];
             const dx = segment.x - newHead.x;
             const dy = segment.y - newHead.y;
-            if (Math.hypot(dx, dy) < SEGMENT_SIZE) {
+            if (Math.hypot(dx, dy) < size * 0.9) {
                 endGame();
                 return;
             }
@@ -101,7 +121,7 @@ export default function SlitherGame({ onGameOver }: Props) {
         orbsRef.current = orbsRef.current.filter((orb) => {
             const dx = orb.x - newHead.x;
             const dy = orb.y - newHead.y;
-            if (Math.hypot(dx, dy) < orb.r + SEGMENT_SIZE) {
+            if (Math.hypot(dx, dy) < orb.r + size) {
                 lengthRef.current += 4;
                 scoreRef.current += 10;
                 setScore(scoreRef.current);
@@ -111,8 +131,8 @@ export default function SlitherGame({ onGameOver }: Props) {
             return true;
         });
 
-        while (orbsRef.current.length < 6) {
-            orbsRef.current.push(createOrb());
+        while (orbsRef.current.length < ORB_COUNT) {
+            orbsRef.current.push(createOrbAround(newHead));
         }
 
         draw();
@@ -120,14 +140,43 @@ export default function SlitherGame({ onGameOver }: Props) {
         if (status === "playing") {
             animationRef.current = requestAnimationFrame(update);
         }
-    }, [endGame, status]);
+    }, [endGame, segmentSize, status]);
 
     const draw = () => {
         const ctx = canvasRef.current?.getContext("2d");
         if (!ctx) return;
 
+        const head = snakeRef.current[0] ?? { x: 0, y: 0 };
+        cameraRef.current = {
+            x:
+                cameraRef.current.x +
+                (head.x - cameraRef.current.x) * 0.15,
+            y:
+                cameraRef.current.y +
+                (head.y - cameraRef.current.y) * 0.15,
+        };
+
+        const size = segmentSize();
+        const zoom =
+            Math.max(
+                0.6,
+                Math.min(1.4, 1.2 - lengthRef.current / 300 - size / 80)
+            );
+        scaleRef.current = zoom;
+
+        ctx.save();
+        ctx.clearRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+        ctx.translate(CANVAS_WIDTH / 2, CANVAS_HEIGHT / 2);
+        ctx.scale(zoom, zoom);
+        ctx.translate(-cameraRef.current.x, -cameraRef.current.y);
+
         ctx.fillStyle = "#fdf2f8";
-        ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+        ctx.fillRect(
+            cameraRef.current.x - CANVAS_WIDTH,
+            cameraRef.current.y - CANVAS_HEIGHT,
+            CANVAS_WIDTH * 2,
+            CANVAS_HEIGHT * 2
+        );
 
         orbsRef.current.forEach((orb) => {
             ctx.beginPath();
@@ -139,9 +188,11 @@ export default function SlitherGame({ onGameOver }: Props) {
         snakeRef.current.forEach((segment, index) => {
             ctx.beginPath();
             ctx.fillStyle = index === 0 ? "#9333ea" : "#c084fc";
-            ctx.arc(segment.x, segment.y, SEGMENT_SIZE, 0, Math.PI * 2);
+            ctx.arc(segment.x, segment.y, size, 0, Math.PI * 2);
             ctx.fill();
         });
+
+        ctx.restore();
     };
 
     useEffect(() => {
@@ -159,19 +210,26 @@ export default function SlitherGame({ onGameOver }: Props) {
     useEffect(() => {
         const handleMouseMove = (event: MouseEvent) => {
             const rect = canvasRef.current?.getBoundingClientRect();
-            if (!rect) return;
+            if (!rect || snakeRef.current.length === 0) return;
             const x = event.clientX - rect.left;
             const y = event.clientY - rect.top;
+            const zoom = scaleRef.current || 1;
+            const worldX =
+                (x - CANVAS_WIDTH / 2) / zoom + cameraRef.current.x;
+            const worldY =
+                (y - CANVAS_HEIGHT / 2) / zoom + cameraRef.current.y;
             const head = snakeRef.current[0];
-            targetDirectionRef.current = Math.atan2(y - head.y, x - head.x);
+            const desiredAngle = Math.atan2(worldY - head.y, worldX - head.x);
+            targetDirectionRef.current +=
+                (desiredAngle - targetDirectionRef.current) * TARGET_LERP;
         };
 
         const handleKeyDown = (event: KeyboardEvent) => {
             if (event.key === "ArrowLeft") {
-                targetDirectionRef.current -= 0.2;
+                targetDirectionRef.current -= KEY_TURN_STEP;
             }
             if (event.key === "ArrowRight") {
-                targetDirectionRef.current += 0.2;
+                targetDirectionRef.current += KEY_TURN_STEP;
             }
         };
 

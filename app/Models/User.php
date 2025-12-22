@@ -112,4 +112,14 @@ class User extends Authenticatable
     {
         return $this->notifications()->unread();
     }
+
+    public function messages()
+    {
+        return $this->hasMany(Message::class, 'sender_user_id');
+    }
+
+    public function messageReads()
+    {
+        return $this->hasMany(MessageRead::class);
+    }
 }

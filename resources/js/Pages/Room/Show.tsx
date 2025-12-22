@@ -1,13 +1,6 @@
 import { Head, useForm, usePage } from "@inertiajs/react";
-import {
-    FormEvent,
-    useCallback,
-    useEffect,
-    useMemo,
-    useRef,
-    useState,
-} from "react";
-import { Calendar, Clock, MailCheck, Sparkles, X, BellRing } from "lucide-react";
+import { FormEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Calendar, Clock, MailCheck, Sparkles, X, BellRing, Monitor, Mic, Video } from "lucide-react";
 import { PageProps } from "@/types";
 
 interface NobarSchedulePayload {
@@ -27,12 +20,6 @@ interface Props {
     };
     schedules?: NobarSchedulePayload[];
 }
-
-const TUIROOMKIT_ENTRY_PATH = "/tuiroomkit/index.html";
-const CHILD_MESSAGE_SOURCE = "tuiroomkit";
-const PARENT_MESSAGE_SOURCE = "myspacelove";
-const SCHEDULE_OPEN_TYPE = "schedule:open";
-const SCHEDULE_CLOSE_TYPE = "schedule:close";
 
 function formatDateTime(value?: string | null): string {
     if (!value) {
@@ -130,10 +117,8 @@ export default function Room({ spaceId, space, schedules = [] }: Props) {
         return `guest-${spaceId}`;
     })();
 
-    const iframeRef = useRef<HTMLIFrameElement | null>(null);
     const [isScheduleOpen, setScheduleOpen] = useState(false);
     const [toastMessage, setToastMessage] = useState<string | null>(null);
-    const [iframeStatus, setIframeStatus] = useState<"idle" | "loading" | "ready" | "error">("idle");
     const toastTimeoutRef = useRef<number | undefined>(undefined);
 
     const sortedSchedules = useMemo(() => {
@@ -182,75 +167,6 @@ export default function Room({ spaceId, space, schedules = [] }: Props) {
     }, []);
 
     useEffect(() => {
-        const expectedOrigin = typeof window !== "undefined" ? window.location.origin : undefined;
-
-        function handleMessage(event: MessageEvent) {
-            if (expectedOrigin && event.origin !== expectedOrigin) {
-                return;
-            }
-
-            const payload = event.data;
-            if (!payload || typeof payload !== "object") {
-                return;
-            }
-
-            if (payload.source !== CHILD_MESSAGE_SOURCE) {
-                return;
-            }
-
-            if (payload.type === SCHEDULE_OPEN_TYPE) {
-                setScheduleOpen(true);
-            }
-
-            if (payload.type === SCHEDULE_CLOSE_TYPE) {
-                setScheduleOpen(false);
-            }
-        }
-
-        window.addEventListener("message", handleMessage);
-
-        return () => {
-            window.removeEventListener("message", handleMessage);
-        };
-    }, []);
-
-    useEffect(() => {
-        if (!isScheduleOpen) {
-            return;
-        }
-
-        function handleKeyDown(event: KeyboardEvent) {
-            if (event.key === "Escape") {
-                event.preventDefault();
-                closeSchedule();
-            }
-        }
-
-        window.addEventListener("keydown", handleKeyDown);
-
-        return () => {
-            window.removeEventListener("keydown", handleKeyDown);
-        };
-    }, [closeSchedule, isScheduleOpen]);
-
-    useEffect(() => {
-        const frame = iframeRef.current?.contentWindow;
-        const targetOrigin = typeof window !== "undefined" ? window.location.origin : "*";
-
-        if (!frame) {
-            return;
-        }
-
-        frame.postMessage(
-            {
-                source: PARENT_MESSAGE_SOURCE,
-                type: isScheduleOpen ? SCHEDULE_OPEN_TYPE : SCHEDULE_CLOSE_TYPE,
-            },
-            targetOrigin,
-        );
-    }, [isScheduleOpen]);
-
-    useEffect(() => {
         return () => {
             if (toastTimeoutRef.current) {
                 window.clearTimeout(toastTimeoutRef.current);
@@ -290,28 +206,6 @@ export default function Room({ spaceId, space, schedules = [] }: Props) {
             },
         );
     };
-
-    const iframeSrc = useMemo(() => {
-        const params = new URLSearchParams({
-            roomId: `space-${spaceId}`,
-            userId: resolvedUserId,
-            userName: resolvedUserName,
-            lang: "id-ID",
-            spaceSlug: resolvedSpaceSlug,
-            spaceTitle: resolvedSpaceTitle,
-            dashboardUrl: `/spaces/${resolvedSpaceSlug}/dashboard`,
-        });
-
-        if (avatarUrl) {
-            params.set("avatarUrl", avatarUrl);
-        }
-
-        return `${TUIROOMKIT_ENTRY_PATH}?${params.toString()}#/home`;
-    }, [avatarUrl, resolvedSpaceSlug, resolvedSpaceTitle, resolvedUserId, resolvedUserName, spaceId]);
-
-    useEffect(() => {
-        setIframeStatus("loading");
-    }, [iframeSrc]);
 
     return (
         <>
@@ -353,7 +247,7 @@ export default function Room({ spaceId, space, schedules = [] }: Props) {
                                         </span>
                                         <h2 className="text-2xl font-semibold text-slate-900">Atur jadwal nobar untuk {resolvedSpaceTitle}</h2>
                                         <p className="text-sm text-slate-500 max-w-xl">
-                                            Undangan email akan dikirim ke anggota space setelah jadwal disimpan. Kamu masih bisa memakai tombol Join/Create di TUIRoomKit seperti biasa.
+                                            Undangan email akan dikirim ke anggota space setelah jadwal disimpan. Tombol Join/Create tetap tersedia begitu server self-hosted siap.
                                         </p>
                                     </div>
                                     <button
@@ -460,7 +354,7 @@ export default function Room({ spaceId, space, schedules = [] }: Props) {
                                         <div className="mt-4 max-h-80 space-y-4 overflow-y-auto pr-1">
                                             {sortedSchedules.length === 0 ? (
                                                 <div className="rounded-xl border border-dashed border-pink-200 bg-pink-50/70 p-6 text-center text-sm text-pink-500">
-                                                    Klik tombol Schedule di TUIRoomKit untuk membuat jadwal pertama kalian.
+                                                    Pakai tombol Schedule di halaman ini untuk membuat jadwal pertama kalian.
                                                 </div>
                                             ) : (
                                                 <ul className="space-y-4">
@@ -510,37 +404,145 @@ export default function Room({ spaceId, space, schedules = [] }: Props) {
                 </div>
             )}
 
-            <div className="relative h-screen bg-gradient-to-br from-rose-950 via-slate-950 to-slate-900">
-                {iframeStatus !== "ready" && (
-                    <div className="pointer-events-none absolute inset-0 z-10 flex flex-col items-center justify-center gap-3 bg-slate-950/85 text-center text-sm text-rose-100">
-                        {iframeStatus === "loading" ? (
-                            <>
-                                <span
-                                    className="inline-flex h-12 w-12 animate-spin items-center justify-center rounded-full border-2 border-rose-300/50 border-t-rose-400"
-                                    aria-hidden="true"
-                                />
-                                <p className="text-base font-semibold">Menyiapkan ruang nobar kalian…</p>
-                                <p className="text-xs text-rose-200/70">Jika halaman tetap kosong lebih dari 10 detik, refresh tab ini.</p>
-                            </>
-                        ) : (
-                            <>
-                                <p className="text-base font-semibold text-rose-100">Gagal memuat TUIRoomKit</p>
-                                <p className="max-w-xs text-xs text-rose-200/70">Coba muat ulang halaman, pastikan koneksi internet stabil, atau bukalah kembali dari dashboard space.</p>
-                            </>
-                        )}
+            <div className="relative min-h-screen bg-gradient-to-br from-rose-950 via-slate-950 to-slate-900 px-4 py-10 sm:px-8">
+                <div className="mx-auto flex max-w-6xl flex-col gap-8">
+                    <div className="flex flex-wrap items-start justify-between gap-4">
+                        <div className="space-y-2">
+                            <p className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.28em] text-rose-200">
+                                <Sparkles className="h-4 w-4" aria-hidden="true" />
+                                Nobar Room (Self-hosted)
+                            </p>
+                            <h1 className="text-3xl font-semibold text-white">
+                                {resolvedSpaceTitle}
+                            </h1>
+                            <p className="max-w-2xl text-sm text-rose-100/80">
+                                Streaming room ini akan menggunakan signaling self-hosted (tanpa layanan berbayar). Pengaturan jadwal tetap berjalan; tombol Join/Create akan aktif setelah server WebRTC siap.
+                            </p>
+                        </div>
+                        <button
+                            type="button"
+                            onClick={() => setScheduleOpen(true)}
+                            className="inline-flex items-center gap-2 rounded-full bg-white/15 px-4 py-2 text-sm font-semibold text-white shadow-sm ring-1 ring-white/20 transition hover:bg-white/20 hover:ring-white/40"
+                        >
+                            <Calendar className="h-4 w-4" aria-hidden="true" />
+                            Buka jadwal nobar
+                        </button>
                     </div>
-                )}
-                <iframe
-                    key={iframeSrc}
-                    ref={iframeRef}
-                    title="Tencent Nobar Room"
-                    src={iframeSrc}
-                    className="h-full w-full border-0 bg-neutral-900"
-                    allowFullScreen
-                    allow="microphone; camera; fullscreen; display-capture; clipboard-read; clipboard-write; speaker"
-                    onLoad={() => setIframeStatus("ready")}
-                    onError={() => setIframeStatus("error")}
-                />
+
+                    <div className="grid gap-6 lg:grid-cols-[1.6fr,1fr]">
+                        <div className="relative overflow-hidden rounded-3xl border border-rose-200/30 bg-white/5 p-6 shadow-xl shadow-rose-900/30 backdrop-blur">
+                            <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(244,114,182,0.08),transparent_45%),radial-gradient(circle_at_80%_0%,rgba(94,234,212,0.06),transparent_35%)]" />
+                            <div className="relative flex flex-col gap-4">
+                                <div className="flex items-center gap-3 text-rose-100">
+                                    <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-white/10">
+                                        <Monitor className="h-6 w-6" />
+                                    </div>
+                                    <div>
+                                        <p className="text-sm text-rose-100/80">Streaming Room</p>
+                                        <p className="text-lg font-semibold text-white">
+                                            Self-hosted WebRTC coming online
+                                        </p>
+                                    </div>
+                                </div>
+                                <div className="grid gap-3 text-sm text-rose-100/80 sm:grid-cols-3">
+                                    <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
+                                        <div className="flex items-center gap-2 text-rose-50">
+                                            <Video className="h-4 w-4" />
+                                            Camera/Screen
+                                        </div>
+                                        <p className="mt-2 text-xs text-rose-100/70">
+                                            Ready to toggle once signaling server is running.
+                                        </p>
+                                    </div>
+                                    <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
+                                        <div className="flex items-center gap-2 text-rose-50">
+                                            <Mic className="h-4 w-4" />
+                                            Mic & Host control
+                                        </div>
+                                        <p className="mt-2 text-xs text-rose-100/70">
+                                            Self-hosted controls; no billing or third-party SDK.
+                                        </p>
+                                    </div>
+                                    <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
+                                        <div className="flex items-center gap-2 text-rose-50">
+                                            <Sparkles className="h-4 w-4" />
+                                            Chat & Participants
+                                        </div>
+                                        <p className="mt-2 text-xs text-rose-100/70">
+                                            Presence, chat, and kicks will run on private channels.
+                                        </p>
+                                    </div>
+                                </div>
+                                <div className="rounded-2xl border border-white/10 bg-white/5 p-4 text-center text-sm text-rose-50">
+                                    Tombol join/create akan muncul setelah server WebRTC & signaling dikonfigurasi. Tidak ada dependensi vendor pihak ketiga atau layanan berbayar.
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="rounded-3xl border border-rose-200/40 bg-white/5 p-6 text-rose-50 shadow-xl shadow-rose-900/30 backdrop-blur">
+                            <div className="flex items-start justify-between gap-4">
+                                <div>
+                                    <h3 className="text-lg font-semibold">Agenda nobar kalian</h3>
+                                    <p className="text-sm text-rose-100/80">
+                                        Jadwal dan pengingat email tetap aktif.
+                                    </p>
+                                </div>
+                                <button
+                                    type="button"
+                                    onClick={() => setScheduleOpen(true)}
+                                    className="rounded-full bg-white/10 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-white ring-1 ring-white/20 transition hover:bg-white/15"
+                                >
+                                    Atur jadwal
+                                </button>
+                            </div>
+                            <div className="mt-4 max-h-80 space-y-4 overflow-y-auto pr-1">
+                                {sortedSchedules.length === 0 ? (
+                                    <div className="rounded-xl border border-dashed border-rose-200/60 bg-white/5 p-6 text-center text-sm text-rose-100/80">
+                                        Belum ada jadwal nobar yang tersimpan.
+                                    </div>
+                                ) : (
+                                    <ul className="space-y-4">
+                                        {sortedSchedules.map((schedule) => {
+                                            const isHighlighted = nextSchedule?.id === schedule.id;
+                                            const relative = formatRelativeTime(schedule.scheduled_for);
+
+                                            return (
+                                                <li
+                                                    key={schedule.id}
+                                                    className={`rounded-xl border px-4 py-3 text-sm transition ${
+                                                        isHighlighted
+                                                            ? "border-rose-300/70 bg-white/10 shadow-sm shadow-rose-900/30"
+                                                            : "border-rose-200/40 bg-white/5 hover:border-rose-200/70"
+                                                    }`}
+                                                >
+                                                    <div className="flex flex-col gap-2">
+                                                        <div className="flex flex-col gap-1">
+                                                            <span className="text-sm font-semibold text-white">{schedule.title}</span>
+                                                            <span className="flex items-center gap-2 text-xs text-rose-100/80">
+                                                                <Calendar className="h-3.5 w-3.5 text-rose-200" aria-hidden="true" />
+                                                                {formatDateTime(schedule.scheduled_for)}
+                                                            </span>
+                                                        </div>
+                                                        {schedule.description && (
+                                                            <p className="text-xs text-rose-100/75 whitespace-pre-line">
+                                                                {schedule.description}
+                                                            </p>
+                                                        )}
+                                                        {relative && (
+                                                            <span className="inline-flex w-fit items-center rounded-full bg-white/10 px-3 py-1 text-[11px] font-medium text-rose-50 shadow-inner">
+                                                                {relative}
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                </li>
+                                            );
+                                        })}
+                                    </ul>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </>
     );

@@ -13,7 +13,6 @@ use App\Http\Controllers\Api\MediaGalleryApiController;
 use App\Http\Controllers\Api\SpaceApiController;
 use App\Http\Controllers\Api\SurpriseNoteApiController;
 use App\Http\Controllers\Api\WishlistApiController;
-use App\Http\Controllers\Api\TuiRoomKitCredentialController;
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\ChatController;
 use App\Http\Controllers\DashboardController;
@@ -202,9 +201,6 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/spaces/{space:slug}/daily-messages', [DailyMessageApiController::class, 'index'])->name('daily.index');
         Route::get('/spaces/{space:slug}/daily-messages/create', [DailyMessageApiController::class, 'create'])->name('daily.create');
         Route::post('/spaces/{space:slug}/daily-messages', [DailyMessageApiController::class, 'store'])->name('daily.store');
-        Route::get('/spaces/{space:slug}/daily-messages/{id}/edit', [DailyMessageApiController::class, 'edit'])->name('daily.edit');
-        Route::put('/spaces/{space:slug}/daily-messages/{id}', [DailyMessageApiController::class, 'update'])->name('daily.update');
-        Route::post('/spaces/{space:slug}/daily-messages/regenerate', [DailyMessageApiController::class, 'regenerate'])->name('daily.regenerate');
         Route::post('/spaces/{space:slug}/daily-messages/{id}/email', [DailyMessageApiController::class, 'sendEmail'])->name('daily.email');
 
         // Countdown Routes
@@ -252,7 +248,6 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     Route::get('/spaces/{space:slug}/nobar', [NobarController::class, 'show'])->name('space.nobar');
     Route::post('/spaces/{space:slug}/nobar/schedules', [NobarController::class, 'storeSchedule'])->name('space.nobar.schedules.store');
-    Route::post('/spaces/{space:slug}/nobar/credentials', TuiRoomKitCredentialController::class)->name('space.nobar.credentials');
 
         Route::get('/spaces/{space:slug}/roomjitsi', function (\App\Models\Space $space) {
             return Inertia::render('Room/Show', [

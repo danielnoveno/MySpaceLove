@@ -13,7 +13,9 @@ use App\Http\Controllers\Api\{
     MediaGalleryApiController,
     WishlistApiController,
     DocApiController,
-    ThemeController
+    ThemeController,
+    ChatMessageController,
+    NobarSignalingController
 };
 use App\Http\Controllers\LocationController;
 
@@ -32,10 +34,30 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::get('spaces/{space}/daily-message', [DailyMessageApiController::class, 'getTodayMessage'])
         ->name('api.spaces.daily-message');
-    Route::post('spaces/{space}/daily-message/regenerate', [DailyMessageApiController::class, 'regenerate'])
-        ->name('api.spaces.daily-message.regenerate');
     Route::get('spaces/{space}/daily-message/all', [DailyMessageApiController::class, 'index'])
         ->name('api.spaces.daily-message.all');
+
+    // Chat (self-hosted, space-scoped)
+    Route::get('spaces/{space}/chat/messages', [ChatMessageController::class, 'index'])
+        ->name('api.spaces.chat.messages.index');
+    Route::post('spaces/{space}/chat/messages', [ChatMessageController::class, 'store'])
+        ->name('api.spaces.chat.messages.store');
+    Route::post('spaces/{space}/chat/messages/read', [ChatMessageController::class, 'markRead'])
+        ->name('api.spaces.chat.messages.read');
+
+    // Nobar signaling (self-hosted)
+    Route::get('spaces/{space}/nobar/participants', [NobarSignalingController::class, 'index'])
+        ->name('api.spaces.nobar.participants.index');
+    Route::post('spaces/{space}/nobar/participants/join', [NobarSignalingController::class, 'join'])
+        ->name('api.spaces.nobar.participants.join');
+    Route::post('spaces/{space}/nobar/participants/update', [NobarSignalingController::class, 'update'])
+        ->name('api.spaces.nobar.participants.update');
+    Route::post('spaces/{space}/nobar/participants/leave', [NobarSignalingController::class, 'leave'])
+        ->name('api.spaces.nobar.participants.leave');
+    Route::post('spaces/{space}/nobar/participants/{participant}/kick', [NobarSignalingController::class, 'kick'])
+        ->name('api.spaces.nobar.participants.kick');
+    Route::post('spaces/{space}/nobar/mute-all', [NobarSignalingController::class, 'muteAll'])
+        ->name('api.spaces.nobar.mute-all');
 
     Route::apiResource('spaces.countdowns', CountdownApiController::class)->except(['create', 'edit', 'show'])->scoped([
         'space' => 'slug',

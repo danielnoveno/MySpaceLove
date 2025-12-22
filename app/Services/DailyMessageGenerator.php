@@ -12,18 +12,16 @@ class DailyMessageGenerator
     private string $model;
 
     public function generate(
-        ?string $existingMessage = null,
         ?string $mood = null,
         ?string $senderName = null,
         ?string $partnerName = null,
         array $recentMessages = []
     ): ?string {
         $this->model = env('GEMINI_MODEL', 'gemini-2.5-flash');
-        return $this->generateGeminiMessage($existingMessage, $mood, $senderName, $partnerName, $recentMessages);
+        return $this->generateGeminiMessage($mood, $senderName, $partnerName, $recentMessages);
     }
 
     private function generateGeminiMessage(
-        ?string $existingMessage = null,
         ?string $mood = null,
         ?string $senderName = null,
         ?string $partnerName = null,
@@ -142,11 +140,6 @@ class DailyMessageGenerator
             }
 
             // --- Dynamic Prompt Modification ---
-            if ($existingMessage) {
-                $promptData['task'] = "Rewrite this existing message to match the 'persona_calibration' (make it sound like 'aku tu...', 'sayang tau gak') and make it more psychologically reassuring.";
-                $promptData['original_message'] = $existingMessage;
-            }
-
             if ($mood) {
                 $promptData['requirements']['user_mood'] = "The partner is currently feeling '{$mood}'. Adjust the reassurance level to soothe this specific emotion.";
             }

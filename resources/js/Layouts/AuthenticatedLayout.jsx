@@ -29,26 +29,27 @@ export default function AuthenticatedLayout({ header, children }) {
         languageOptions[activeLocale] ?? activeLocale.toUpperCase();
 
     const fallbackHref = route("spaces.index");
+    const activeSpace = currentSpace ?? spaces[0] ?? null;
 
-    const dashboardHref = currentSpace
-        ? route("spaces.dashboard", { space: currentSpace.slug })
+    const dashboardHref = activeSpace
+        ? route("spaces.dashboard", { space: activeSpace.slug })
         : fallbackHref;
-    const timelineHref = currentSpace
-        ? route("timeline.index", { space: currentSpace.slug })
+    const timelineHref = activeSpace
+        ? route("timeline.index", { space: activeSpace.slug })
         : fallbackHref;
-    const dailyHref = currentSpace
-        ? route("daily.index", { space: currentSpace.slug })
+    const dailyHref = activeSpace
+        ? route("daily.index", { space: activeSpace.slug })
         : fallbackHref;
-    const galleryHref = currentSpace
-        ? route("gallery.index", { space: currentSpace.slug })
+    const galleryHref = activeSpace
+        ? route("gallery.index", { space: activeSpace.slug })
         : fallbackHref;
-    const spotifyHref = currentSpace
-        ? route("spotify.companion", { space: currentSpace.slug })
+    const spotifyHref = activeSpace
+        ? route("spotify.companion", { space: activeSpace.slug })
         : fallbackHref;
     const partnerFeaturesLocked =
-        currentSpace !== null && currentSpace.has_partner === false;
-    const notificationsHref = currentSpace
-        ? route("spaces.notifications.index", { space: currentSpace.slug })
+        activeSpace !== null && activeSpace.has_partner === false;
+    const notificationsHref = activeSpace
+        ? route("spaces.notifications.index", { space: activeSpace.slug })
         : fallbackHref;
     const lockedTooltip =
         navigation.locked_tooltip ??
@@ -541,6 +542,5 @@ export default function AuthenticatedLayout({ header, children }) {
         </div>
     );
 }
-
 
 

@@ -37,10 +37,24 @@ class GameScoreController extends Controller
             'meta' => $validated['meta'] ?? null,
         ]);
 
-        SpaceGoal::query()
+        $activeGoals = SpaceGoal::query()
             ->where('space_id', $space->id)
             ->where('is_active', true)
-            ->increment('current_points', $validated['score']);
+            ->get();
+
+        foreach ($activeGoals as $goal) {
+            $newPoints = $goal->current_points + $validated['score'];
+            $updates = ['current_points' => $newPoints];
+
+            if ($newPoints >= $goal->target_points) {
+                $updates['is_active'] = false;
+                $updates['completed_at'] = now();
+                // Clamp to target for cleaner UI
+                $updates['current_points'] = $goal->target_points;
+            }
+
+            $goal->update($updates);
+        }
 
         return response()->json([
             'id' => $score->id,
