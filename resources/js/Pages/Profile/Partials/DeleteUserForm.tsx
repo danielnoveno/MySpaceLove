@@ -119,7 +119,7 @@ export default function DeleteUserForm({
                             onChange={(e) =>
                                 setData('password', e.target.value)
                             }
-                            className="mt-1 w-full rounded-xl border border-rose-100 bg-white/70 px-4 py-3 text-sm text-gray-900 shadow-sm focus:border-pink-400 focus:ring-pink-400"
+                            className="mt-1 w-full rounded-xl border-2 border-violet-200 bg-gradient-to-r from-white/90 to-violet-50/50 px-4 py-3 text-sm text-gray-900 shadow-sm transition-all duration-200 focus:border-violet-400 focus:ring-2 focus:ring-violet-300"
                             isFocused
                             placeholder={
                                 modalStrings.password_placeholder ?? 'Password'

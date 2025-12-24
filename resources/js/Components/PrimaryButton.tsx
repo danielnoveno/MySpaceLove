@@ -10,7 +10,7 @@ export default function PrimaryButton({
         <button
             {...props}
             className={
-                `inline-flex items-center justify-center rounded-full border border-transparent bg-gradient-to-r from-pink-500 via-rose-500 to-purple-500 px-5 py-3 text-sm font-semibold text-white shadow-lg transition duration-200 ease-in-out hover:from-pink-500 hover:via-rose-500 hover:to-pink-500 hover:shadow-xl focus:outline-none focus-visible:ring-2 focus-visible:ring-pink-300 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60 ${
+                `inline-flex items-center justify-center rounded-full border border-transparent bg-gradient-to-r from-fuchsia-500 via-violet-500 to-purple-600 px-5 py-3 text-sm font-semibold text-white shadow-lg transition-all duration-300 ease-in-out hover:from-fuchsia-600 hover:via-violet-600 hover:to-purple-700 hover:shadow-2xl hover:scale-105 focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-400 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:scale-100 ${
                     disabled ? 'pointer-events-none' : ''
                 } ${className}`
             }

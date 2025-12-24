@@ -101,7 +101,7 @@ export default function UpdatePasswordForm({
                             setData('current_password', e.target.value)
                         }
                         type="password"
-                        className="mt-1 w-full rounded-xl border border-rose-100 bg-white/70 px-4 py-3 text-sm text-gray-900 shadow-sm focus:border-pink-400 focus:ring-pink-400"
+                        className="mt-1 w-full rounded-xl border-2 border-violet-200 bg-gradient-to-r from-white/90 to-violet-50/50 px-4 py-3 text-sm text-gray-900 shadow-sm transition-all duration-200 focus:border-violet-400 focus:ring-2 focus:ring-violet-300"
                         autoComplete="current-password"
                     />
 
@@ -123,7 +123,7 @@ export default function UpdatePasswordForm({
                         value={data.password}
                         onChange={(e) => setData('password', e.target.value)}
                         type="password"
-                        className="mt-1 w-full rounded-xl border border-rose-100 bg-white/70 px-4 py-3 text-sm text-gray-900 shadow-sm focus:border-pink-400 focus:ring-pink-400"
+                        className="mt-1 w-full rounded-xl border-2 border-violet-200 bg-gradient-to-r from-white/90 to-violet-50/50 px-4 py-3 text-sm text-gray-900 shadow-sm transition-all duration-200 focus:border-violet-400 focus:ring-2 focus:ring-violet-300"
                         autoComplete="new-password"
                     />
 
@@ -143,7 +143,7 @@ export default function UpdatePasswordForm({
                             setData('password_confirmation', e.target.value)
                         }
                         type="password"
-                        className="mt-1 w-full rounded-xl border border-rose-100 bg-white/70 px-4 py-3 text-sm text-gray-900 shadow-sm focus:border-pink-400 focus:ring-pink-400"
+                        className="mt-1 w-full rounded-xl border-2 border-violet-200 bg-gradient-to-r from-white/90 to-violet-50/50 px-4 py-3 text-sm text-gray-900 shadow-sm transition-all duration-200 focus:border-violet-400 focus:ring-2 focus:ring-violet-300"
                         autoComplete="new-password"
                     />
 
@@ -165,7 +165,7 @@ export default function UpdatePasswordForm({
                         leave="transition ease-in-out"
                         leaveTo="opacity-0"
                     >
-                        <p className="text-sm text-pink-500">
+                        <p className="text-sm font-semibold text-transparent bg-clip-text bg-gradient-to-r from-violet-600 to-fuchsia-600">
                             {actionStrings.saved ?? 'Password updated!'}
                         </p>
                     </Transition>

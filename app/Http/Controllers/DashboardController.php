@@ -9,6 +9,7 @@ use App\Models\Countdown;
 use App\Models\DailyMessage;
 use App\Models\Space;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Http\RedirectResponse;
 use Inertia\Response;
 
@@ -16,10 +17,18 @@ class DashboardController extends Controller
 {
     public function redirect(): RedirectResponse
     {
-        $space = Space::where(function ($query) {
-            $query->where('user_one_id', Auth::id())
-                ->orWhere('user_two_id', Auth::id());
-        })->oldest()->first();
+        $userId = Auth::id();
+        
+        // Cache user's first space for 10 minutes
+        $space = Cache::remember("user.{$userId}.first_space", 600, function () use ($userId) {
+            return Space::where(function ($query) use ($userId) {
+                $query->where('user_one_id', $userId)
+                    ->orWhere('user_two_id', $userId);
+            })
+            ->select(['id', 'slug'])
+            ->oldest()
+            ->first();
+        });
 
         if (!$space) {
             return redirect()->route('spaces.index');
@@ -32,34 +41,24 @@ class DashboardController extends Controller
     {
         $this->authorizeSpace($space);
 
-        $timelineCount = LoveTimeline::where('space_id', $space->id)->count();
-        $galleryCount = MediaGallery::where('space_id', $space->id)->count();
-
-        $upcomingEvents = Countdown::where('space_id', $space->id)
-            ->where('event_date', '>=', now())
-            ->orderBy('event_date')
-            ->get();
-
-        // $upcomingEvents = $upcomingEvents->map(function ($event) {
-        //     $event->days_left = now()->diffInDays($event->event_date);
-        //     return $event;
-        // })->where('days_left', '>=', 0);
-
-        // if ($upcomingEvents->isEmpty()) {
-        //     $upcomingEvents = collect([]);
-        // }
-
-        $recentMessages = DailyMessage::where('space_id', $space->id)
-            ->orderBy('date', 'desc')
-            ->limit(5)
-            ->get();
-
-        $dashboardData = [
-            'timelineCount' => $timelineCount,
-            'galleryCount' => $galleryCount,
-            'upcomingEvents' => $upcomingEvents,
-            'recentMessages' => $recentMessages,
-        ];
+        // Cache dashboard data for 30 minutes
+        $cacheKey = "dashboard.space.{$space->id}";
+        $dashboardData = Cache::remember($cacheKey, 1800, function () use ($space) {
+            return [
+                'timelineCount' => LoveTimeline::where('space_id', $space->id)->count(),
+                'galleryCount' => MediaGallery::where('space_id', $space->id)->count(),
+                'upcomingEvents' => Countdown::where('space_id', $space->id)
+                    ->where('event_date', '>=', now())
+                    ->orderBy('event_date')
+                    ->select(['id', 'title', 'event_date', 'description'])
+                    ->get(),
+                'recentMessages' => DailyMessage::where('space_id', $space->id)
+                    ->orderBy('date', 'desc')
+                    ->limit(5)
+                    ->select(['id', 'title', 'message', 'date'])
+                    ->get(),
+            ];
+        });
 
         return Inertia::render('Dashboard', [
             'dashboardData' => $dashboardData,

@@ -83,7 +83,7 @@ export default function UpdateProfileInformation({
 
                     <TextInput
                         id="name"
-                        className="mt-1 w-full rounded-xl border border-rose-100 bg-white/70 px-4 py-3 text-sm text-gray-900 shadow-sm focus:border-pink-400 focus:ring-pink-400"
+                        className="mt-1 w-full rounded-xl border-2 border-violet-200 bg-gradient-to-r from-white/90 to-violet-50/50 px-4 py-3 text-sm text-gray-900 shadow-sm transition-all duration-200 focus:border-violet-400 focus:ring-2 focus:ring-violet-300"
                         value={data.name}
                         onChange={(e) => setData('name', e.target.value)}
                         required
@@ -103,7 +103,7 @@ export default function UpdateProfileInformation({
                     <TextInput
                         id="email"
                         type="email"
-                        className="mt-1 w-full rounded-xl border border-rose-100 bg-white/70 px-4 py-3 text-sm text-gray-900 shadow-sm focus:border-pink-400 focus:ring-pink-400"
+                        className="mt-1 w-full rounded-xl border-2 border-violet-200 bg-gradient-to-r from-white/90 to-violet-50/50 px-4 py-3 text-sm text-gray-900 shadow-sm transition-all duration-200 focus:border-violet-400 focus:ring-2 focus:ring-violet-300"
                         value={data.email}
                         onChange={(e) => setData('email', e.target.value)}
                         required
@@ -122,7 +122,7 @@ export default function UpdateProfileInformation({
                                 href={route('verification.send')}
                                 method="post"
                                 as="button"
-                                className="ml-1 rounded-md text-sm font-semibold text-pink-500 underline decoration-dotted underline-offset-4 transition hover:text-pink-400 focus:outline-none focus-visible:ring-2 focus-visible:ring-pink-300 focus-visible:ring-offset-2"
+                                className="ml-1 rounded-md text-sm font-semibold text-violet-600 underline decoration-dotted underline-offset-4 transition-colors hover:text-fuchsia-600 focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-300 focus-visible:ring-offset-2"
                             >
                                 {verificationStrings.action ??
                                     'Resend verification email.'}
@@ -130,7 +130,7 @@ export default function UpdateProfileInformation({
                         </p>
 
                         {status === 'verification-link-sent' && (
-                            <div className="mt-2 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm font-medium text-emerald-600">
+                            <div className="mt-2 rounded-lg border-2 border-emerald-300 bg-gradient-to-r from-emerald-50 to-violet-50 px-3 py-2 text-sm font-medium text-emerald-700">
                                 {verificationStrings.sent ??
                                     'We sent a new verification link to your inbox.'}
                             </div>
@@ -150,7 +150,7 @@ export default function UpdateProfileInformation({
                         leave="transition ease-in-out"
                         leaveTo="opacity-0"
                     >
-                        <p className="text-sm text-pink-500">
+                        <p className="text-sm font-semibold text-transparent bg-clip-text bg-gradient-to-r from-violet-600 to-fuchsia-600">
                             {actionStrings.saved ?? 'Saved!'}
                         </p>
                     </Transition>

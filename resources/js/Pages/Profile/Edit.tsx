@@ -30,7 +30,7 @@ export default function Edit({
         <AuthenticatedLayout
             header={
                 <div className="flex flex-col gap-2">
-                    <span className="text-xs font-semibold uppercase tracking-[0.3em] text-rose-400">
+                    <span className="text-xs font-semibold uppercase tracking-[0.3em] text-transparent bg-clip-text bg-gradient-to-r from-violet-500 to-fuchsia-500">
                         {profileStrings.badge ?? 'Account'}
                     </span>
                     <h1 className="text-3xl font-semibold text-gray-900">
@@ -42,7 +42,7 @@ export default function Edit({
                     </p>
                 </div>
             }
-            loveCursor={{ color: '#fb7185', heartCount: 24, trailColor: 'rgba(251, 113, 133, 0.35)' }}
+            loveCursor={{ color: '#8b5cf6', heartCount: 24, trailColor: 'rgba(139, 92, 246, 0.35)' }}
         >
             <Head title="Profile" />
 
