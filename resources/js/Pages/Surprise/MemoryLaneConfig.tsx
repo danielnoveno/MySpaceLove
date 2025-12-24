@@ -26,6 +26,7 @@ interface Props {
     levels: LevelConfig[];
     pin: string | null;
     contentSet: boolean;
+    activeLevels: number;
 }
 
 type LevelKey = "level_one" | "level_two" | "level_three";
@@ -43,13 +44,14 @@ interface FormData {
     level_three_body: string;
     level_three_image: File | null;
     level_three_reset: boolean;
+    active_levels: number;
     pin: string;
 }
 
 const LEVEL_KEYS: LevelKey[] = ["level_one", "level_two", "level_three"];
 const MAX_IMAGE_SIZE = 10 * 1024 * 1024;
 
-export default function MemoryLaneConfig({ space, levels, pin, contentSet }: Props) {
+export default function MemoryLaneConfig({ space, levels, pin, contentSet, activeLevels }: Props) {
     const page = usePage();
     const flash = page.props.flash as { success?: string; error?: string } | undefined;
     const { translations: memoryLaneStrings } = useTranslation<Record<string, any>>("memory_lane");
@@ -80,7 +82,7 @@ export default function MemoryLaneConfig({ space, levels, pin, contentSet }: Pro
     const saveLabel = actionStrings.save ?? "Save changes";
     const savingLabel = actionStrings.saving ?? "Saving…";
 
-    const createFormState = (source: LevelConfig[], initialPin: string | null): FormData => ({
+    const createFormState = (source: LevelConfig[], initialPin: string | null, initialActiveLevels: number): FormData => ({
         level_one_title: source[0]?.title ?? "",
         level_one_body: source[0]?.body ?? "",
         level_one_image: null,
@@ -93,10 +95,11 @@ export default function MemoryLaneConfig({ space, levels, pin, contentSet }: Pro
         level_three_body: source[2]?.body ?? "",
         level_three_image: null,
         level_three_reset: false,
+        active_levels: initialActiveLevels,
         pin: initialPin ?? "",
     });
 
-    const { data, setData, post, processing, errors } = useForm<FormData>(() => createFormState(levels, pin));
+    const { data, setData, post, processing, errors } = useForm<FormData>(createFormState(levels, pin, activeLevels));
 
     const [previews, setPreviews] = useState<Record<LevelKey, string | null>>({
         level_one: levels[0]?.image ?? levels[0]?.default_image ?? null,
@@ -156,7 +159,7 @@ export default function MemoryLaneConfig({ space, levels, pin, contentSet }: Pro
 
         setData((current) => ({
             ...current,
-            ...createFormState(levels, pin),
+            ...createFormState(levels, pin, activeLevels),
         }));
     }, [levels, pin, setData]);
 
@@ -286,6 +289,9 @@ export default function MemoryLaneConfig({ space, levels, pin, contentSet }: Pro
                                 maxLength={10}
                             />
                             <p className="mt-1 text-xs text-slate-500">{pinHelper}</p>
+                            <div className="mt-2 rounded-xl border border-blue-200 bg-blue-50 px-3 py-2 text-xs text-blue-700">
+                                <strong>Default PIN:</strong> 00000 (five zeros). Change this to secure your Memory Lane.
+                            </div>
                             {errors.pin && <p className="mt-1 text-sm text-rose-500">{errors.pin}</p>}
                         </div>
                         {!contentSet && (
@@ -295,13 +301,46 @@ export default function MemoryLaneConfig({ space, levels, pin, contentSet }: Pro
                         )}
                     </section>
 
+                    <section className="space-y-4">
+                        <header className="space-y-2">
+                            <h3 className="text-xl font-semibold text-slate-900">Number of Puzzle Levels</h3>
+                            <p className="text-sm text-slate-500">Choose how many puzzle levels users must complete (0 = skip puzzles entirely)</p>
+                        </header>
+                        <div>
+                            <label htmlFor="active_levels" className="block text-sm font-medium text-slate-700">
+                                Active Levels
+                            </label>
+                            <select
+                                id="active_levels"
+                                value={data.active_levels}
+                                onChange={(e) => setData("active_levels", parseInt(e.target.value))}
+                                className="mt-1 w-full rounded-xl border border-slate-200 px-4 py-2 text-slate-800 shadow-sm focus:border-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-300"
+                            >
+                                <option value={0}>0 - Skip puzzles (no levels)</option>
+                                <option value={1}>1 - One puzzle level</option>
+                                <option value={2}>2 - Two puzzle levels</option>
+                                <option value={3}>3 - Three puzzle levels (default)</option>
+                            </select>
+                            <p className="mt-1 text-xs text-slate-500">
+                                Users will need to complete {data.active_levels} puzzle{data.active_levels !== 1 ? 's' : ''} before accessing the Memory Lane content.
+                            </p>
+                            {errors.active_levels && <p className="mt-1 text-sm text-rose-500">{errors.active_levels}</p>}
+                        </div>
+                    </section>
+
                     <section className="space-y-6">
                         <header className="space-y-2">
                             <h3 className="text-xl font-semibold text-slate-900">{levelsTitle}</h3>
                             <p className="text-sm text-slate-500">{levelsDescription}</p>
                         </header>
 
-                        {levels.map((level, index) => {
+                        {data.active_levels === 0 && (
+                            <div className="rounded-2xl border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-700 shadow">
+                                Puzzles are disabled. Users will skip directly to Memory Lane content.
+                            </div>
+                        )}
+
+                        {levels.slice(0, data.active_levels).map((level, index) => {
                             const key = level.key as LevelKey;
                             const imageField = `${key}_image` as const;
                             const titleField = `${key}_title` as const;

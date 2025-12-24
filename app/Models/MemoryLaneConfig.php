@@ -22,6 +22,7 @@ class MemoryLaneConfig extends Model
         'level_two_body',
         'level_three_title',
         'level_three_body',
+        'active_levels',
         'pin',
         'content_set',
     ];

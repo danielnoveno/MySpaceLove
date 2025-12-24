@@ -226,7 +226,7 @@ export default function MemoryLanePublic({
                             imageUrl={
                                 activeLevel.image ??
                                 levels[currentLevelIndex]?.image ??
-                                "/images/puzzle/example-image-tajen.jpg"
+                                "/images/puzzle/defaultimage.png"
                             }
                             title={activeLevel.label ?? memoryLane.puzzle.title}
                             description={memoryLane.puzzle.description}

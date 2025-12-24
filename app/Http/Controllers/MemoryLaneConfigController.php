@@ -33,8 +33,9 @@ class MemoryLaneConfigController extends Controller
                 'title' => $space->title,
             ],
             'levels' => $levels,
-            'pin' => $space->memoryLaneConfig?->pin,
+            'pin' => $space->memoryLaneConfig?->pin ?? '00000',
             'contentSet' => $space->memoryLaneConfig?->content_set ?? false,
+            'activeLevels' => $space->memoryLaneConfig?->active_levels ?? 3,
         ]);
     }
 
@@ -56,6 +57,8 @@ class MemoryLaneConfigController extends Controller
                 'level_three_body' => ['nullable', 'string', 'max:800'],
                 'level_three_image' => ['nullable', 'image', 'max:10240'],
                 'level_three_reset' => ['nullable', 'boolean'],
+                'active_levels' => ['required', 'integer', 'min:0', 'max:3'],
+                'pin' => ['nullable', 'string', 'min:4', 'max:10'],
                 'pin' => ['nullable', 'string', 'min:4', 'max:10'],
             ],
             [
@@ -111,7 +114,8 @@ class MemoryLaneConfigController extends Controller
             }
         }
 
-        $config->pin = $validated['pin'] ?? null;
+        $config->pin = !empty($validated['pin']) ? $validated['pin'] : '00000';
+        $config->active_levels = $validated['active_levels'] ?? 3;
 
         $config->content_set = $this->memoryLaneContentService->isContentSet($config);
 

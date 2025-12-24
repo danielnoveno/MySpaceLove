@@ -16,37 +16,56 @@ class MemoryLaneContentService
         $grid = data_get($memoryBase, 'puzzle.grid', ['rows' => 4, 'cols' => 4]);
         $defaultSpaceTitle = data_get($memoryBase, 'defaults.spaceTitle', 'us');
         $spaceTitle = $space?->title ?? $defaultSpaceTitle;
+        
+        // Get config to check for custom PIN, otherwise use default
+        $config = $this->fetchConfig($space);
+        $pin = $config?->pin ?? '00000';
 
         $content = __('surprise.memory_lane', [
             'spaceTitle' => $spaceTitle,
             'rows' => $grid['rows'] ?? 4,
             'cols' => $grid['cols'] ?? 4,
         ]);
+        
+        // Override the secret code with actual PIN (custom or default)
+        $content['secretGate']['code'] = $pin;
 
         $content['puzzle']['grid'] = $grid;
         $levels = collect($content['puzzle']['levels'] ?? [])->values();
         unset($content['defaults']);
 
-        $config = $this->fetchConfig($space);
+        $activeCount = $config?->active_levels ?? 3;
+
+        // Ensure we don't return more levels than active, and handle 0 case
+        if ($activeCount === 0) {
+             $content['puzzle']['levels'] = [];
+             return $content;
+        }
+        
+        // Take only the active number of levels from the base definition
+        $levels = $levels->slice(0, $activeCount);
 
         if ($config) {
             $disk = Storage::disk('public');
             $overrides = $this->configLevels($config);
 
             $levels = $levels->map(function (array $level, int $index) use ($overrides, $disk) {
+                // ... same logic
                 $mapping = $overrides[$index] ?? null;
 
                 if ($mapping === null) {
                     return $level;
                 }
-
+                
+                // ... 
                 if ($mapping['image'] && $disk->exists($mapping['image'])) {
-                    $level['image'] = Storage::url($mapping['image']);
+                     $level['image'] = Storage::url($mapping['image']);
                 }
 
                 if (!empty($mapping['title'])) {
                     $level['summaryTitle'] = $mapping['title'];
                 }
+
 
                 if (!empty($mapping['body'])) {
                     $level['summaryBody'] = $mapping['body'];
