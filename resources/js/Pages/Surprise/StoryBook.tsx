@@ -57,6 +57,17 @@ export default function StoryBook({
         setShowBook(true);
     };
 
+    // Prepare pages for Book component
+    const bookPages = scrapbookPages.map((page, index) => ({
+        id: page.id || `page-${index}`,
+        title: page.title || page.label || `Page ${index + 1}`,
+        body: page.body || '',
+        image: page.image || null,
+    }));
+
+    const coverImage = scrapbook?.coverImage || null;
+    const coverTitle = scrapbook?.coverTitle || 'Our Story';
+
     return (
         <div className="relative min-h-screen bg-black text-white">
             <Head title={headTitle} />
@@ -68,7 +79,7 @@ export default function StoryBook({
                     Next
                 </button>
             ) : (
-                <Book />
+                <Book pages={bookPages as any} coverImage={coverImage as any} coverTitle={coverTitle} />
             )}
         </div>
     );

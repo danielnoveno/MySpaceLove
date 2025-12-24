@@ -1,9 +1,11 @@
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout";
-import { Head, useForm, usePage } from "@inertiajs/react";
+import { Head, Link, useForm, usePage } from "@inertiajs/react";
 import { ChangeEvent, FormEvent, useEffect, useRef, useState } from "react";
 import { Loader2, Upload, Image as ImageIcon, RotateCcw } from "lucide-react";
 import { useTranslation } from "@/hooks/useTranslation";
 import { convertImageToWebP } from "@/utils/imageConverter";
+import RewardsConfig from "@/Components/Surprise/RewardsConfig";
+import FlipbookConfig from "@/Components/Surprise/FlipbookConfig";
 
 interface LevelConfig {
     key: string;
@@ -27,6 +29,11 @@ interface Props {
     pin: string | null;
     contentSet: boolean;
     activeLevels: number;
+    defaultRewards: any[];
+    customRewards: any[];
+    flipbookPages: any[];
+    flipbookCoverImage?: string | null;
+    flipbookCoverTitle?: string;
 }
 
 type LevelKey = "level_one" | "level_two" | "level_three";
@@ -46,12 +53,16 @@ interface FormData {
     level_three_reset: boolean;
     active_levels: number;
     pin: string;
+    custom_rewards: any[];
+    flipbook_pages: any[];
+    flipbook_cover_image: File | null;
+    flipbook_cover_title: string;
 }
 
 const LEVEL_KEYS: LevelKey[] = ["level_one", "level_two", "level_three"];
 const MAX_IMAGE_SIZE = 10 * 1024 * 1024;
 
-export default function MemoryLaneConfig({ space, levels, pin, contentSet, activeLevels }: Props) {
+export default function MemoryLaneConfig({ space, levels, pin, contentSet, activeLevels, defaultRewards, customRewards, flipbookPages, flipbookCoverImage, flipbookCoverTitle }: Props) {
     const page = usePage();
     const flash = page.props.flash as { success?: string; error?: string } | undefined;
     const { translations: memoryLaneStrings } = useTranslation<Record<string, any>>("memory_lane");
@@ -82,7 +93,14 @@ export default function MemoryLaneConfig({ space, levels, pin, contentSet, activ
     const saveLabel = actionStrings.save ?? "Save changes";
     const savingLabel = actionStrings.saving ?? "Saving…";
 
-    const createFormState = (source: LevelConfig[], initialPin: string | null, initialActiveLevels: number): FormData => ({
+    const createFormState = (
+        source: LevelConfig[],
+        initialPin: string | null,
+        initialActiveLevels: number,
+        initialRewards: any[],
+        initialFlipbook: any[],
+        initialCoverTitle?: string
+    ): FormData => ({
         level_one_title: source[0]?.title ?? "",
         level_one_body: source[0]?.body ?? "",
         level_one_image: null,
@@ -97,9 +115,13 @@ export default function MemoryLaneConfig({ space, levels, pin, contentSet, activ
         level_three_reset: false,
         active_levels: initialActiveLevels,
         pin: initialPin ?? "",
+        custom_rewards: initialRewards,
+        flipbook_pages: initialFlipbook,
+        flipbook_cover_image: null,
+        flipbook_cover_title: initialCoverTitle ?? '',
     });
 
-    const { data, setData, post, processing, errors } = useForm<FormData>(createFormState(levels, pin, activeLevels));
+    const { data, setData, post, processing, errors } = useForm<FormData>(createFormState(levels, pin, activeLevels, customRewards, flipbookPages, flipbookCoverTitle));
 
     const [previews, setPreviews] = useState<Record<LevelKey, string | null>>({
         level_one: levels[0]?.image ?? levels[0]?.default_image ?? null,
@@ -159,9 +181,9 @@ export default function MemoryLaneConfig({ space, levels, pin, contentSet, activ
 
         setData((current) => ({
             ...current,
-            ...createFormState(levels, pin, activeLevels),
+            ...createFormState(levels, pin, activeLevels, customRewards, flipbookPages, flipbookCoverTitle),
         }));
-    }, [levels, pin, setData]);
+    }, [levels, pin, activeLevels, customRewards, flipbookPages, flipbookCoverTitle, setData]);
 
     const handleFileChange = async (
         event: ChangeEvent<HTMLInputElement>,
@@ -246,9 +268,31 @@ export default function MemoryLaneConfig({ space, levels, pin, contentSet, activ
     return (
         <AuthenticatedLayout
             header={
-                <div className="space-y-1">
-                    <h2 className="text-2xl font-semibold text-slate-900">{headingTitle}</h2>
-                    <p className="text-sm text-slate-500">{headingSubtitle}</p>
+                <div className="flex items-start justify-between gap-4">
+                    <div className="space-y-1">
+                        <h2 className="text-2xl font-semibold text-slate-900">{headingTitle}</h2>
+                        <p className="text-sm text-slate-500">{headingSubtitle}</p>
+                    </div>
+                    <Link
+                        href={route("surprise.memory.space", { space: space.slug })}
+                        className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-rose-500 to-purple-600 px-4 py-2 text-sm font-semibold text-white shadow-lg transition hover:from-rose-600 hover:to-purple-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-rose-300 focus-visible:ring-offset-2"
+                    >
+                        <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            className="h-4 w-4"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="2"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                        >
+                            <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
+                            <polyline points="15 3 21 3 21 9" />
+                            <line x1="10" y1="14" x2="21" y2="3" />
+                        </svg>
+                        Lihat Memory Lane
+                    </Link>
                 </div>
             }
         >
@@ -290,7 +334,7 @@ export default function MemoryLaneConfig({ space, levels, pin, contentSet, activ
                             />
                             <p className="mt-1 text-xs text-slate-500">{pinHelper}</p>
                             <div className="mt-2 rounded-xl border border-blue-200 bg-blue-50 px-3 py-2 text-xs text-blue-700">
-                                <strong>Default PIN:</strong> 00000 (five zeros). Change this to secure your Memory Lane.
+                                <strong>Catatan:</strong> PIN akan otomatis dinormalisasi (spasi dihapus, huruf kecil semua) untuk konsistensi. Default PIN: 00000 (lima nol).
                             </div>
                             {errors.pin && <p className="mt-1 text-sm text-rose-500">{errors.pin}</p>}
                         </div>
@@ -437,7 +481,55 @@ export default function MemoryLaneConfig({ space, levels, pin, contentSet, activ
                         })}
                     </section>
 
-                    <div className="flex justify-end">
+                    {/* Rewards Configuration (Level 1) */}
+                    <RewardsConfig
+                        defaultRewards={defaultRewards}
+                        customRewards={data.custom_rewards}
+                        onChange={(rewards) => setData("custom_rewards", rewards)}
+                    />
+
+                    {/* Flipbook Configuration (Level 2) */}
+                    <FlipbookConfig
+                        pages={data.flipbook_pages}
+                        onChange={(pages) => setData("flipbook_pages", pages)}
+                        onImageChange={(pageIndex, file) => {
+                            const updated = [...data.flipbook_pages];
+                            if (updated[pageIndex]) {
+                                // Don't modify the image path, just add the file
+                                // The file will be uploaded and path will be updated by backend
+                                updated[pageIndex] = {
+                                    ...updated[pageIndex],
+                                    image_file: file,
+                                };
+                                setData("flipbook_pages", updated);
+                            }
+                        }}
+                        coverImage={flipbookCoverImage}
+                        coverTitle={data.flipbook_cover_title}
+                        onCoverImageChange={(file) => setData("flipbook_cover_image", file)}
+                        onCoverTitleChange={(title) => setData("flipbook_cover_title", title)}
+                    />
+
+                    <div className="flex flex-wrap items-center justify-between gap-4">
+                        <Link
+                            href={route("surprise.memory.space", { space: space.slug })}
+                            className="inline-flex items-center gap-2 rounded-full border-2 border-slate-300 bg-white px-6 py-3 text-sm font-semibold text-slate-700 transition hover:border-slate-400 hover:bg-slate-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-300 focus-visible:ring-offset-2"
+                        >
+                            <svg
+                                xmlns="http://www.w3.org/2000/svg"
+                                className="h-4 w-4"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth="2"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                            >
+                                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                                <circle cx="12" cy="12" r="3" />
+                            </svg>
+                            Preview Memory Lane
+                        </Link>
                         <button
                             type="submit"
                             disabled={processing || Object.values(localErrors).some(Boolean)}

@@ -39,6 +39,8 @@ class MemoryLaneContentService
         // Ensure we don't return more levels than active, and handle 0 case
         if ($activeCount === 0) {
              $content['puzzle']['levels'] = [];
+             $content['rewards'] = [];
+             $content['flipbook'] = [];
              return $content;
         }
         
@@ -49,7 +51,7 @@ class MemoryLaneContentService
             $disk = Storage::disk('public');
             $overrides = $this->configLevels($config);
 
-            $levels = $levels->map(function (array $level, int $index) use ($overrides, $disk) {
+            $levels = $levels->map(function (array $level, int $index) use ($overrides, $disk, $config) {
                 // ... same logic
                 $mapping = $overrides[$index] ?? null;
 
@@ -71,11 +73,24 @@ class MemoryLaneContentService
                     $level['summaryBody'] = $mapping['body'];
                 }
 
+                // Add level-specific rewards and flipbook
+                if ($index === 0) {
+                    // Level 1: Rewards/Gacha
+                    $level['rewards'] = $this->getRewards($config);
+                } elseif ($index === 1) {
+                    // Level 2: Flipbook
+                    $level['flipbook'] = $this->getFlipbookPages($config);
+                }
+
                 return $level;
             });
         }
 
         $content['puzzle']['levels'] = $levels->values()->all();
+        
+        // Add global rewards and flipbook for backward compatibility
+        $content['rewards'] = $config ? $this->getRewards($config) : [];
+        $content['flipbook'] = $config ? $this->getFlipbookPages($config) : [];
 
         return $content;
     }
@@ -151,6 +166,42 @@ class MemoryLaneContentService
             ->all();
     }
 
+    public function flipbookPages(?Space $space = null): array
+    {
+        $config = $this->fetchConfig($space);
+        
+        if (!$config) {
+            return [];
+        }
+
+        return $this->getFlipbookPages($config);
+    }
+
+    public function flipbookCoverData(?Space $space = null): array
+    {
+        $config = $this->fetchConfig($space);
+        
+        if (!$config) {
+            return [
+                'image' => null,
+                'title' => 'Our Story',
+            ];
+        }
+
+        $disk = Storage::disk('public');
+        $coverImage = null;
+
+        if (!empty($config->flipbook_cover_image) && $disk->exists($config->flipbook_cover_image)) {
+            $coverImage = asset(Storage::url($config->flipbook_cover_image));
+        }
+
+        return [
+            'image' => $coverImage,
+            'title' => $config->flipbook_cover_title ?? 'Our Story',
+        ];
+    }
+
+
     public function isContentSet(MemoryLaneConfig $config): bool
     {
         return filled($config->level_one_title)
@@ -194,5 +245,40 @@ class MemoryLaneContentService
                 'body' => $config->level_three_body,
             ],
         ];
+    }
+
+    private function getRewards(MemoryLaneConfig $config): array
+    {
+        // If custom rewards are set, use them; otherwise use defaults
+        if (!empty($config->custom_rewards) && is_array($config->custom_rewards)) {
+            return $config->custom_rewards;
+        }
+
+        // Return default rewards from config
+        return config('memory_lane_rewards.default_rewards', []);
+    }
+
+    private function getFlipbookPages(MemoryLaneConfig $config): array
+    {
+        if (empty($config->flipbook_pages) || !is_array($config->flipbook_pages)) {
+            return [];
+        }
+
+        $disk = Storage::disk('public');
+
+        // Process flipbook pages to include full image URLs
+        return collect($config->flipbook_pages)
+            ->map(function ($page) use ($disk) {
+                if (!empty($page['image']) && $disk->exists($page['image'])) {
+                    $page['image'] = asset(Storage::url($page['image']));
+                }
+                return $page;
+            })
+            ->filter(function ($page) {
+                // Only include pages that have at least title, body, or image
+                return !empty($page['title']) || !empty($page['body']) || !empty($page['image']);
+            })
+            ->values()
+            ->all();
     }
 }

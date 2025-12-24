@@ -4,7 +4,9 @@ import { Gift } from "lucide-react";
 import SecretCodeGate from "@/Components/Surprise/SecretCodeGate";
 import LoveCursorCanvas from "@/Components/LoveCursorCanvas";
 import JigsawPuzzleGate from "@/Components/Surprise/JigsawPuzzleGate";
-import type { MemoryLaneContent } from "@/data/memoryLaneKit";
+import LuckyBoxGacha, { type Reward } from "@/Components/Surprise/LuckyBoxGacha";
+import FlipBookViewer, { type FlipBookPage } from "@/Components/Surprise/FlipBookViewer";
+import type { MemoryLaneContent } from "@/types/memoryLane";
 
 type SpaceInfo = {
     id: number;
@@ -18,6 +20,8 @@ type MemoryLanePublicProps = {
     skipPuzzle?: boolean;
 };
 
+type LevelState = "puzzle" | "reward" | "flipbook" | "completed";
+
 export default function MemoryLanePublic({
     memoryLane,
     space,
@@ -30,19 +34,45 @@ export default function MemoryLanePublic({
     const puzzleCols = memoryLane.puzzle.grid.cols ?? 4;
     const totalPuzzlePieces = puzzleRows * puzzleCols;
     const levels = memoryLane.puzzle.levels ?? [];
+    
     const [currentLevelIndex, setCurrentLevelIndex] = useState(0);
     const [completedLevels, setCompletedLevels] = useState<number[]>([]);
+    const [levelStates, setLevelStates] = useState<Map<number, LevelState>>(new Map());
     const [kitUnlocked, setKitUnlocked] = useState(skipPuzzle || levels.length === 0);
+    const [selectedRewards, setSelectedRewards] = useState<Map<number, Reward[]>>(new Map());
 
     const activeLevel = !kitUnlocked ? levels[currentLevelIndex] ?? null : null;
+    const currentLevelState = levelStates.get(currentLevelIndex) || "puzzle";
 
     const handlePuzzleSolved = () => {
         if (!completedLevels.includes(currentLevelIndex)) {
             setCompletedLevels((prev) => [...prev, currentLevelIndex]);
         }
-        if (levels.length === 1) {
-            setKitUnlocked(true);
+
+        // Determine what comes after the puzzle
+        const level = levels[currentLevelIndex];
+        if (level?.rewards && level.rewards.length > 0) {
+            // Level 1: Show gacha
+            setLevelStates(prev => new Map(prev).set(currentLevelIndex, "reward"));
+        } else if (level?.flipbook && level.flipbook.length > 0) {
+            // Level 2: Show flipbook
+            setLevelStates(prev => new Map(prev).set(currentLevelIndex, "flipbook"));
+        } else {
+            // No reward/flipbook, mark as completed
+            setLevelStates(prev => new Map(prev).set(currentLevelIndex, "completed"));
+            if (levels.length === 1) {
+                setKitUnlocked(true);
+            }
         }
+    };
+
+    const handleRewardComplete = (rewards: Reward[]) => {
+        setSelectedRewards(prev => new Map(prev).set(currentLevelIndex, rewards));
+        setLevelStates(prev => new Map(prev).set(currentLevelIndex, "completed"));
+    };
+
+    const handleFlipbookComplete = () => {
+        setLevelStates(prev => new Map(prev).set(currentLevelIndex, "completed"));
     };
 
     const handleContinue = () => {
@@ -218,38 +248,84 @@ export default function MemoryLanePublic({
                     )}
 
                     {!kitUnlocked && activeLevel ? (
-                        <JigsawPuzzleGate
-                            key={activeLevel.id}
-                            rows={puzzleRows}
-                            cols={puzzleCols}
-                            missingCount={totalPuzzlePieces}
-                            imageUrl={
-                                activeLevel.image ??
-                                levels[currentLevelIndex]?.image ??
-                                "/images/puzzle/defaultimage.png"
-                            }
-                            title={activeLevel.label ?? memoryLane.puzzle.title}
-                            description={memoryLane.puzzle.description}
-                            solvedTitle={activeLevel.summaryTitle}
-                            solvedDescription={activeLevel.summaryBody}
-                            resetLabel={memoryLane.puzzle.resetLabel}
-                            pretitle={memoryLane.puzzle.pretitle}
-                            dragLabel={memoryLane.puzzle.dragLabel}
-                            movesLabel={memoryLane.puzzle.movesLabel}
-                            onSolved={handlePuzzleSolved}
-                        >
-                            <div className="flex justify-center">
-                                <button
-                                    type="button"
-                                    onClick={handleContinue}
-                                    className="rounded-full bg-white/20 px-6 py-2 text-sm font-semibold uppercase tracking-[0.32em] text-white transition hover:bg-white/30 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/60"
+                        <>
+                            {/* Puzzle Phase */}
+                            {currentLevelState === "puzzle" && (
+                                <JigsawPuzzleGate
+                                    key={activeLevel.id}
+                                    rows={puzzleRows}
+                                    cols={puzzleCols}
+                                    missingCount={totalPuzzlePieces}
+                                    imageUrl={
+                                        activeLevel.image ??
+                                        levels[currentLevelIndex]?.image ??
+                                        "/images/puzzle/defaultimage.png"
+                                    }
+                                    title={activeLevel.label ?? memoryLane.puzzle.title}
+                                    description={memoryLane.puzzle.description}
+                                    solvedTitle={activeLevel.summaryTitle}
+                                    solvedDescription={activeLevel.summaryBody}
+                                    resetLabel={memoryLane.puzzle.resetLabel}
+                                    pretitle={memoryLane.puzzle.pretitle}
+                                    dragLabel={memoryLane.puzzle.dragLabel}
+                                    movesLabel={memoryLane.puzzle.movesLabel}
+                                    onSolved={handlePuzzleSolved}
                                 >
-                                    {currentLevelIndex < levels.length - 1
-                                        ? "Lanjut Level"
-                                        : "Buka Memory Lane"}
-                                </button>
-                            </div>
-                        </JigsawPuzzleGate>
+                                    <div className="flex justify-center">
+                                        <button
+                                            type="button"
+                                            onClick={handleContinue}
+                                            className="rounded-full bg-white/20 px-6 py-2 text-sm font-semibold uppercase tracking-[0.32em] text-white transition hover:bg-white/30 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/60"
+                                        >
+                                            {currentLevelIndex < levels.length - 1
+                                                ? "Lanjut Level"
+                                                : "Buka Memory Lane"}
+                                        </button>
+                                    </div>
+                                </JigsawPuzzleGate>
+                            )}
+
+                            {/* Reward/Gacha Phase (Level 1) */}
+                            {currentLevelState === "reward" && activeLevel.rewards && (
+                                <LuckyBoxGacha
+                                    rewards={activeLevel.rewards}
+                                    maxSelections={2}
+                                    onComplete={handleRewardComplete}
+                                    title="🎁 Lucky Box"
+                                    description="Pilih 2 kotak hadiah dan dapatkan kejutan spesial!"
+                                    selectLabel="Pilih"
+                                    confirmLabel="Lanjutkan"
+                                />
+                            )}
+
+                            {/* Flipbook Phase (Level 2) */}
+                            {currentLevelState === "flipbook" && activeLevel.flipbook && (
+                                <FlipBookViewer
+                                    pages={activeLevel.flipbook}
+                                    onComplete={handleFlipbookComplete}
+                                    title="📖 Scrapbook Kenangan"
+                                    description="Balik tiap halaman untuk melihat kenangan manis kita"
+                                    nextLabel="Halaman Berikutnya"
+                                    prevLabel="Halaman Sebelumnya"
+                                    finishLabel="Selesai"
+                                />
+                            )}
+
+                            {/* Completed Phase - Show Continue Button */}
+                            {currentLevelState === "completed" && (
+                                <div className="flex min-h-[400px] items-center justify-center">
+                                    <button
+                                        type="button"
+                                        onClick={handleContinue}
+                                        className="rounded-full bg-gradient-to-r from-rose-500 to-purple-600 px-8 py-4 text-lg font-semibold text-white shadow-lg transition hover:from-rose-600 hover:to-purple-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/60"
+                                    >
+                                        {currentLevelIndex < levels.length - 1
+                                            ? "Lanjut ke Level Berikutnya"
+                                            : "Buka Memory Lane"}
+                                    </button>
+                                </div>
+                            )}
+                        </>
                     ) : null}
 
                     {kitUnlocked && (
@@ -262,4 +338,3 @@ export default function MemoryLanePublic({
         </div>
     );
 }
-

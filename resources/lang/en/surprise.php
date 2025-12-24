@@ -67,7 +67,7 @@ return [
                     'description' => 'Gift the complete birthday story to your partner.',
                     'button' => 'Open Storybook',
                 ],
-                'footnote' => 'Keep the 160825 code between us, okay?',
+                'footnote' => 'Keep the xxxxx code between us, okay?',
             ],
         ],
         'steps' => [

@@ -25,6 +25,19 @@ class MemoryLaneConfigController extends Controller
         $this->authorizeSpace($space);
 
         $levels = $this->memoryLaneContentService->editorLevels($space);
+        $config = $space->memoryLaneConfig;
+
+        // Process flipbook pages to include full image URLs
+        $flipbookPages = $config?->flipbook_pages ?? [];
+        if (!empty($flipbookPages) && is_array($flipbookPages)) {
+            $disk = Storage::disk('public');
+            $flipbookPages = collect($flipbookPages)->map(function ($page) use ($disk) {
+                if (!empty($page['image']) && $disk->exists($page['image'])) {
+                    $page['image'] = asset(Storage::url($page['image']));
+                }
+                return $page;
+            })->all();
+        }
 
         return Inertia::render('Surprise/MemoryLaneConfig', [
             'space' => [
@@ -33,9 +46,14 @@ class MemoryLaneConfigController extends Controller
                 'title' => $space->title,
             ],
             'levels' => $levels,
-            'pin' => $space->memoryLaneConfig?->pin ?? '00000',
-            'contentSet' => $space->memoryLaneConfig?->content_set ?? false,
-            'activeLevels' => $space->memoryLaneConfig?->active_levels ?? 3,
+            'pin' => $config?->pin ?? '00000',
+            'contentSet' => $config?->content_set ?? false,
+            'activeLevels' => $config?->active_levels ?? 3,
+            'defaultRewards' => config('memory_lane_rewards.default_rewards', []),
+            'customRewards' => $config?->custom_rewards ?? [],
+            'flipbookPages' => $flipbookPages,
+            'flipbookCoverImage' => $config?->flipbook_cover_image ? asset(Storage::url($config->flipbook_cover_image)) : null,
+            'flipbookCoverTitle' => $config?->flipbook_cover_title ?? '',
         ]);
     }
 
@@ -59,12 +77,24 @@ class MemoryLaneConfigController extends Controller
                 'level_three_reset' => ['nullable', 'boolean'],
                 'active_levels' => ['required', 'integer', 'min:0', 'max:3'],
                 'pin' => ['nullable', 'string', 'min:4', 'max:10'],
-                'pin' => ['nullable', 'string', 'min:4', 'max:10'],
+                'custom_rewards' => ['nullable', 'array'],
+                'custom_rewards.*.id' => ['required', 'integer'],
+                'custom_rewards.*.enabled' => ['nullable', 'boolean'],
+                'flipbook_pages' => ['nullable', 'array', 'max:10'],
+                'flipbook_pages.*.id' => ['nullable'],
+                'flipbook_pages.*.title' => ['nullable', 'string', 'max:200'],
+                'flipbook_pages.*.body' => ['nullable', 'string', 'max:2000'],
+                'flipbook_pages.*.image' => ['nullable', 'string'],
+                'flipbook_pages.*.image_file' => ['nullable', 'image', 'max:10240'],
+                'flipbook_cover_image' => ['nullable', 'image', 'max:10240'],
+                'flipbook_cover_title' => ['nullable', 'string', 'max:200'],
             ],
             [
                 'level_one_image.max' => __('errors.memory_lane.kit_image_too_large'),
                 'level_two_image.max' => __('errors.memory_lane.kit_image_too_large'),
                 'level_three_image.max' => __('errors.memory_lane.kit_image_too_large'),
+                'flipbook_pages.*.image_file.max' => __('errors.memory_lane.kit_image_too_large'),
+                'flipbook_cover_image.max' => __('errors.memory_lane.kit_image_too_large'),
             ],
         );
 
@@ -114,8 +144,90 @@ class MemoryLaneConfigController extends Controller
             }
         }
 
-        $config->pin = !empty($validated['pin']) ? $validated['pin'] : '00000';
+        // Normalize PIN: trim whitespace and convert to lowercase for consistency
+        $normalizedPin = !empty($validated['pin'])
+            ? strtolower(trim(preg_replace('/\s+/', '', $validated['pin'])))
+            : '00000';
+        $config->pin = $normalizedPin;
         $config->active_levels = $validated['active_levels'] ?? 3;
+
+        // Process custom rewards
+        if (isset($validated['custom_rewards'])) {
+            $config->custom_rewards = $validated['custom_rewards'];
+        }
+
+        // Process flipbook pages with image uploads
+        if (isset($validated['flipbook_pages'])) {
+            $flipbookPages = [];
+            
+            foreach ($validated['flipbook_pages'] as $index => $page) {
+                // Extract storage path from full URL if needed
+                $existingImagePath = $page['image'] ?? null;
+                if ($existingImagePath && str_starts_with($existingImagePath, '/storage/')) {
+                    // Remove /storage/ prefix to get the actual path
+                    $existingImagePath = substr($existingImagePath, 9);
+                } elseif ($existingImagePath && str_starts_with($existingImagePath, 'http')) {
+                    // If it's a full URL, extract the path after /storage/
+                    $existingImagePath = null; // Don't use URL, will be replaced
+                }
+
+                $processedPage = [
+                    'id' => $page['id'] ?? uniqid('page_'),
+                    'title' => $page['title'] ?? '',
+                    'body' => $page['body'] ?? '',
+                    'image' => $existingImagePath,
+                ];
+
+                // Handle image file upload for this page
+                $imageFileKey = "flipbook_pages.{$index}.image_file";
+                if ($request->hasFile($imageFileKey)) {
+                    // Delete old image if exists
+                    if (!empty($processedPage['image'])) {
+                        Storage::disk('public')->delete($processedPage['image']);
+                    }
+
+                    $stored = $this->fileProcessor->store(
+                        $request->file($imageFileKey),
+                        "{$storagePath}/flipbook",
+                        'public',
+                        'errors.memory_lane.kit_image_too_large',
+                        $imageFileKey,
+                    );
+                    $processedPage['image'] = $stored['path'];
+                }
+
+                // Only add pages that have content
+                if (!empty($processedPage['title']) || !empty($processedPage['body']) || !empty($processedPage['image'])) {
+                    $flipbookPages[] = $processedPage;
+                }
+            }
+
+            $config->flipbook_pages = $flipbookPages;
+        }
+
+        // Process flipbook cover image
+        if ($request->hasFile('flipbook_cover_image')) {
+            // Delete old cover image if exists
+            if (!empty($config->flipbook_cover_image)) {
+                Storage::disk('public')->delete($config->flipbook_cover_image);
+            }
+
+            $stored = $this->fileProcessor->store(
+                $request->file('flipbook_cover_image'),
+                "{$storagePath}/flipbook",
+                'public',
+                'errors.memory_lane.kit_image_too_large',
+                'flipbook_cover_image',
+            );
+            $config->flipbook_cover_image = $stored['path'];
+        }
+
+        // Process flipbook cover title
+        if (array_key_exists('flipbook_cover_title', $validated)) {
+            $config->flipbook_cover_title = filled($validated['flipbook_cover_title'])
+                ? $validated['flipbook_cover_title']
+                : null;
+        }
 
         $config->content_set = $this->memoryLaneContentService->isContentSet($config);
 
@@ -142,7 +254,10 @@ class MemoryLaneConfigController extends Controller
 
         $config = MemoryLaneConfig::where('space_id', $space->id)->first();
 
-        if (!$config || $config->pin !== $validated['pin']) {
+        // Normalize input PIN to match the normalization used when saving
+        $normalizedInputPin = strtolower(trim(preg_replace('/\s+/', '', $validated['pin'])));
+
+        if (!$config || $config->pin !== $normalizedInputPin) {
             return back()->withErrors([
                 'pin' => __('memory_lane.config.access.pin_invalid'),
             ]);

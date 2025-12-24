@@ -89,7 +89,9 @@ Route::get('/surprise/{space:slug}/story', function (\App\Models\Space $space, M
     ]);
 
     $scrapbookMeta = data_get($storyContent, 'scrapbook', []);
-    $scrapbookPages = $memoryLane->scrapbookPages($space);
+    // Use flipbookPages() to get data from flipbook_pages config field
+    $scrapbookPages = $memoryLane->flipbookPages($space);
+    $coverData = $memoryLane->flipbookCoverData($space);
 
     $storyContent['scrapbook'] = [
         'title' => $scrapbookMeta['title'] ?? 'Digital scrapbook',
@@ -98,6 +100,8 @@ Route::get('/surprise/{space:slug}/story', function (\App\Models\Space $space, M
         'cta' => $scrapbookMeta['cta'] ?? null,
         'manage_url' => route('memory-lane.edit', ['space' => $space->slug]),
         'pages' => $scrapbookPages,
+        'coverImage' => $coverData['image'],
+        'coverTitle' => $coverData['title'],
     ];
 
     unset($storyContent['defaults']);

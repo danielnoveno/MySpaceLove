@@ -41,6 +41,8 @@ export type ScrapbookContent = {
     cta?: string;
     manage_url?: string | null;
     pages: ScrapbookPage[];
+    coverImage?: string | null;
+    coverTitle?: string;
 };
 
 export type StoryBookContent = {

@@ -25,6 +25,17 @@ class MemoryLaneConfig extends Model
         'active_levels',
         'pin',
         'content_set',
+        'custom_rewards',
+        'flipbook_pages',
+        'flipbook_cover_image',
+        'flipbook_cover_title',
+    ];
+
+    protected $casts = [
+        'custom_rewards' => 'array',
+        'flipbook_pages' => 'array',
+        'content_set' => 'boolean',
+        'active_levels' => 'integer',
     ];
 
     public function space(): BelongsTo
@@ -35,7 +46,14 @@ class MemoryLaneConfig extends Model
     protected static function booted(): void
     {
         static::deleting(function (MemoryLaneConfig $config): void {
-            foreach (['level_one_image', 'level_two_image', 'level_three_image'] as $attribute) {
+            $imageFields = [
+                'level_one_image',
+                'level_two_image',
+                'level_three_image',
+                'flipbook_cover_image'
+            ];
+            
+            foreach ($imageFields as $attribute) {
                 $path = $config->getAttribute($attribute);
 
                 if (!empty($path)) {
