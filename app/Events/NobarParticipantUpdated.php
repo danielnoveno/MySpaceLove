@@ -20,7 +20,7 @@ class NobarParticipantUpdated implements ShouldBroadcast
 
     public function __construct(NobarParticipant $participant)
     {
-        $this->participant = $participant->loadMissing('user:id,name,profile_photo_path');
+        $this->participant = $participant->loadMissing('user:id,name,profile_image');
     }
 
     public function broadcastOn(): Channel

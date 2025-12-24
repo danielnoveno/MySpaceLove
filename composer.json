@@ -27,7 +27,7 @@
         "filament/support": "v3.3.39",
         "filament/tables": "v3.3.39",
         "filament/widgets": "v3.3.39",
-        "firebase/php-jwt": "v6.11.1",
+        "firebase/php-jwt": "^6.11",
         "fruitcake/php-cors": "v1.3.0",
         "google-gemini-php/client": "2.6.0",
         "google-gemini-php/laravel": "2.0.1",

@@ -7,7 +7,6 @@ use App\Http\Controllers\Api\{
     LoveTimelineApiController,
     DailyMessageApiController,
     CountdownApiController,
-    DailyApiController,
     LoveJournalApiController,
     SurpriseNoteApiController,
     MediaGalleryApiController,
@@ -15,7 +14,7 @@ use App\Http\Controllers\Api\{
     DocApiController,
     ThemeController,
     ChatMessageController,
-    NobarSignalingController
+    JaasController
 };
 use App\Http\Controllers\LocationController;
 
@@ -45,19 +44,10 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('spaces/{space}/chat/messages/read', [ChatMessageController::class, 'markRead'])
         ->name('api.spaces.chat.messages.read');
 
-    // Nobar signaling (self-hosted)
-    Route::get('spaces/{space}/nobar/participants', [NobarSignalingController::class, 'index'])
-        ->name('api.spaces.nobar.participants.index');
-    Route::post('spaces/{space}/nobar/participants/join', [NobarSignalingController::class, 'join'])
-        ->name('api.spaces.nobar.participants.join');
-    Route::post('spaces/{space}/nobar/participants/update', [NobarSignalingController::class, 'update'])
-        ->name('api.spaces.nobar.participants.update');
-    Route::post('spaces/{space}/nobar/participants/leave', [NobarSignalingController::class, 'leave'])
-        ->name('api.spaces.nobar.participants.leave');
-    Route::post('spaces/{space}/nobar/participants/{participant}/kick', [NobarSignalingController::class, 'kick'])
-        ->name('api.spaces.nobar.participants.kick');
-    Route::post('spaces/{space}/nobar/mute-all', [NobarSignalingController::class, 'muteAll'])
-        ->name('api.spaces.nobar.mute-all');
+
+
+    // Nobar signaling (REMOVED - Migrated to Agora)
+
 
     Route::apiResource('spaces.countdowns', CountdownApiController::class)->except(['create', 'edit', 'show'])->scoped([
         'space' => 'slug',
@@ -85,13 +75,14 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('spaces/{space}/separation/request', [SpaceApiController::class, 'requestSeparation'])->name('api.spaces.separation.request');
     Route::post('spaces/{space}/separation/respond', [SpaceApiController::class, 'respondSeparation'])->name('api.spaces.separation.respond');
     Route::post('spaces/{space}/separation/cancel', [SpaceApiController::class, 'cancelSeparation'])->name('api.spaces.separation.cancel');
+    
+    // JaaS Token
+    Route::get('spaces/{space}/jaas/token', [JaasController::class, 'generateToken'])->name('api.spaces.jaas.token');
 
     Route::get('themes', [ThemeController::class, 'index']);
     Route::get('themes/{id}', [ThemeController::class, 'show']);
 
-    Route::post('/daily/create-room', [DailyApiController::class, 'createRoom'])->name('api.daily.create-room');
-    Route::get('/daily/rooms', [DailyApiController::class, 'listRooms']);
-    Route::delete('/daily/rooms/{name}', [DailyApiController::class, 'deleteRoom']);
+
 
     Route::post('location/update', [LocationController::class, 'update']);
     Route::get('location/{user}', [LocationController::class, 'show']);

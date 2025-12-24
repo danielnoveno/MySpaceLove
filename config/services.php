@@ -25,10 +25,21 @@ return [
         'key' => env('RESEND_KEY'),
     ],
 
+    'jaas' => [
+        'app_id' => env('JAAS_APP_ID'),
+        'api_key' => env('JAAS_API_KEY'),
+        'private_key' => env('JAAS_PRIVATE_KEY'),
+    ],
+
     'ses' => [
         'key' => env('AWS_ACCESS_KEY_ID'),
         'secret' => env('AWS_SECRET_ACCESS_KEY'),
         'region' => env('AWS_DEFAULT_REGION', 'us-east-1'),
+    ],
+
+    'agora' => [
+        'app_id' => env('AGORA_APP_ID'),
+        'app_certificate' => env('AGORA_APP_CERTIFICATE'),
     ],
 
     'slack' => [

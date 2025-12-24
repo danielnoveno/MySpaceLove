@@ -4,7 +4,7 @@ require __DIR__ . '/auth.php';
 
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\Api\CountdownApiController;
-use App\Http\Controllers\Api\DailyApiController;
+
 use App\Http\Controllers\Api\DailyMessageApiController;
 use App\Http\Controllers\Api\DocApiController;
 use App\Http\Controllers\Api\LoveJournalApiController;
@@ -300,7 +300,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ]);
     })->where('path', '.*')->name('docs.preview');
 
-    Route::post('/api/daily/create-room', [DailyApiController::class, 'createRoom'])->name('api.daily.create-room');
+
 
     Route::post('/room/{id}/chat', [ChatController::class, 'send']);
 });

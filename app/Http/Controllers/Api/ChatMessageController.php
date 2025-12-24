@@ -19,7 +19,7 @@ class ChatMessageController extends Controller
         $this->authorizeSpace($space);
 
         $messages = Message::query()
-            ->with('sender:id,name,profile_photo_path')
+            ->with('sender:id,name,profile_image')
             ->where('space_id', $space->id)
             ->orderByDesc('id')
             ->paginate(

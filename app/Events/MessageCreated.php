@@ -20,7 +20,7 @@ class MessageCreated implements ShouldBroadcast
 
     public function __construct(Message $message)
     {
-        $this->message = $message->loadMissing('sender:id,name,profile_photo_path');
+        $this->message = $message->loadMissing('sender:id,name,profile_image');
     }
 
     public function broadcastOn(): Channel
