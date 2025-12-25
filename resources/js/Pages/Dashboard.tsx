@@ -126,10 +126,10 @@ export default function Dashboard({ dashboardData, spaceContext }: Props) {
 
     const coupleLockMessage =
         dashboardStrings.locks?.requires_partner ??
-        "Hubungkan pasanganmu terlebih dahulu untuk membuka fitur ini.";
+        "Connect your partner first to unlock this feature.";
     const ownerLockMessage =
         dashboardStrings.locks?.requires_owner ??
-        "Hanya pemilik space yang dapat mengatur fitur ini.";
+        "Only the space owner can manage this feature.";
     const ownerLockBadge =
         dashboardStrings.locks?.owner_badge ?? "Owner only";
     const [dailyMessage, setDailyMessage] = useState<string | null>(null);
@@ -251,10 +251,10 @@ export default function Dashboard({ dashboardData, spaceContext }: Props) {
             {
                 icon: Calendar,
                 label:
-                    quickActionStrings?.add_moment?.label ?? "Tambah Momen",
+                    quickActionStrings?.add_moment?.label ?? "Add Moment",
                 description:
                     quickActionStrings?.add_moment?.description ??
-                    "Catat momen spesial",
+                    "Record a special memory",
                 href: route("timeline.index", { space: spaceSlug }),
                 color: "from-pink-500 to-rose-500",
                 requiresPartner: true,
@@ -266,7 +266,7 @@ export default function Dashboard({ dashboardData, spaceContext }: Props) {
                     "Upcoming Event",
                 description:
                     quickActionStrings?.upcoming_event?.description ??
-                    "Kelola countdown romantis",
+                    "Manage romantic countdowns",
                 href: route("countdown.index", { space: spaceSlug }),
                 color: "from-violet-500 to-indigo-500",
                 requiresPartner: true,
@@ -276,17 +276,17 @@ export default function Dashboard({ dashboardData, spaceContext }: Props) {
                 label: quickActionStrings?.games?.label ?? "Games",
                 description:
                     quickActionStrings?.games?.description ??
-                    "Buka hub permainan & skor space",
+                    "Play and track space scores",
                 href: route("games.index", { space: spaceSlug }),
                 color: "from-indigo-600 to-blue-600",
             },
             {
                 icon: Image,
                 label:
-                    quickActionStrings?.upload_photo?.label ?? "Upload Foto",
+                    quickActionStrings?.upload_photo?.label ?? "Upload Photo",
                 description:
                     quickActionStrings?.upload_photo?.description ??
-                    "Simpan kenangan",
+                    "Save your memories",
                 href: route("gallery.index", { space: spaceSlug }),
                 color: "from-blue-500 to-cyan-500",
                 requiresPartner: true,
@@ -295,10 +295,10 @@ export default function Dashboard({ dashboardData, spaceContext }: Props) {
                 icon: MessageSquare,
                 label:
                     quickActionStrings?.daily_message?.label ??
-                    "Pesan Harian",
+                    "Daily Messages",
                 description:
                     quickActionStrings?.daily_message?.description ??
-                    "Lihat pesan cinta",
+                    "Read love notes",
                 href: route("daily.index", { space: spaceSlug }),
                 color: "from-purple-500 to-indigo-500",
                 requiresPartner: true,
@@ -310,7 +310,7 @@ export default function Dashboard({ dashboardData, spaceContext }: Props) {
                     "Memory Lane Kit",
                 description:
                     quickActionStrings?.memory_lane?.description ??
-                    "Panduan surprise 3 tahap + storybook",
+                    "Three-stage surprise guide + storybook",
                 href: route("surprise.memory.space", { space: spaceSlug }),
                 color: "from-fuchsia-500 to-violet-500",
                 requiresPartner: true,
@@ -319,10 +319,10 @@ export default function Dashboard({ dashboardData, spaceContext }: Props) {
                 icon: Sparkles,
                 label:
                     quickActionStrings?.memory_lane_setup?.label ??
-                    "Atur Memory Lane",
+                    "Configure Memory Lane",
                 description:
                     quickActionStrings?.memory_lane_setup?.description ??
-                    "Upload puzzle & pesan tiap level",
+                    "Upload puzzle photos & level messages",
                 href: route("memory-lane.edit", { space: spaceSlug }),
                 color: "from-amber-500 to-orange-500",
                 requiresOwner: true,
@@ -333,7 +333,7 @@ export default function Dashboard({ dashboardData, spaceContext }: Props) {
                     quickActionStrings?.spotify?.label ?? "Spotify Companion",
                 description:
                     quickActionStrings?.spotify?.description ??
-                    "Sinkronisasi musik & mood jarak jauh",
+                    "Sync music and moods remotely",
                 href: route("spotify.companion", { space: spaceSlug }),
                 color: "from-emerald-500 to-teal-500",
                 requiresPartner: true,
@@ -341,10 +341,10 @@ export default function Dashboard({ dashboardData, spaceContext }: Props) {
             {
                 icon: BookOpen,
                 label:
-                    quickActionStrings?.journal?.label ?? "Tulis Journal",
+                    quickActionStrings?.journal?.label ?? "Write Journal",
                 description:
                     quickActionStrings?.journal?.description ??
-                    "Ekspresikan perasaan",
+                    "Express your feelings",
                 href: route("journal.index", { space: spaceSlug }),
                 color: "from-green-500 to-emerald-500",
                 requiresPartner: true,
@@ -352,10 +352,10 @@ export default function Dashboard({ dashboardData, spaceContext }: Props) {
             {
                 icon: Video,
                 label:
-                    quickActionStrings?.nobar?.label ?? "Masuk Nobar",
+                    quickActionStrings?.nobar?.label ?? "Join Watch Party",
                 description:
                     quickActionStrings?.nobar?.description ??
-                    "Mulai nonton bareng",
+                    "Start a co-watching session",
                 href: route("space.nobar", { space: spaceSlug }),
                 color: "from-red-500 to-orange-500",
                 requiresPartner: true,
@@ -382,7 +382,7 @@ export default function Dashboard({ dashboardData, spaceContext }: Props) {
                 <div className="flex flex-col gap-1">
                     <p className="text-sm text-gray-500">
                         {dashboardStrings.header?.subtitle ??
-                            "Space kamu bersama pasangan"}
+                            "Your shared space"}
                     </p>
                     <h2 className="text-2xl font-semibold text-gray-900">
                         {spaceTitle}
@@ -406,10 +406,10 @@ export default function Dashboard({ dashboardData, spaceContext }: Props) {
                         </div>
                         <div className="flex-1 space-y-1">
                             <p className="text-sm font-semibold uppercase tracking-wide text-amber-700">
-                                Fitur Nobar Segera Hadir
+                                Watch Party Feature Coming Soon
                             </p>
                             <p className="text-sm text-amber-600">
-                                Kami masih menyiapkan pengalaman nobar terbaik. Terima kasih sudah menunggu—kami akan memberi tahu kamu langsung dari dashboard begitu fitur ini siap digunakan.
+                                We're still preparing the best watch party experience. Thank you for waiting—we'll notify you directly from the dashboard as soon as this feature is ready.
                             </p>
                         </div>
                         <button
@@ -446,7 +446,7 @@ export default function Dashboard({ dashboardData, spaceContext }: Props) {
                         </div>
                         <h3 className="mt-4 text-center text-xl font-semibold text-gray-900">
                             {dashboardStrings.modals?.daily_message?.title ??
-                                "Pesan Cinta Hari Ini"}
+                                "Today's Love Message"}
                         </h3>
                         <p className="mt-3 text-center text-sm leading-relaxed text-gray-600">
                             {formattedDailyMessage}
@@ -477,7 +477,7 @@ export default function Dashboard({ dashboardData, spaceContext }: Props) {
                         </div>
                         <h3 className="mt-4 text-xl font-semibold text-gray-900">
                             {dashboardStrings.modals?.locked?.title ??
-                                "Fitur Terkunci"}
+                                "Feature Locked"}
                         </h3>
                         <p className="mt-3 text-sm leading-relaxed text-gray-600">
                             {coupleLockMessage}
@@ -505,12 +505,12 @@ export default function Dashboard({ dashboardData, spaceContext }: Props) {
                                 <div>
                                     <h3 className="text-lg font-semibold text-indigo-900">
                                         {dashboardStrings.cards?.partner_pending?.title ??
-                                            "Pasangan belum terhubung"}
+                                            "Partner not connected yet"}
                                     </h3>
                                     <p className="mt-1 text-sm text-indigo-700">
                                         {dashboardStrings.cards?.partner_pending
                                             ?.description ??
-                                            "Ajak pasanganmu bergabung agar kalian bisa menikmati semua fitur berdua."}
+                                            "Invite your partner so you can enjoy every feature together."}
                                     </p>
                                 </div>
                             </div>
@@ -519,7 +519,7 @@ export default function Dashboard({ dashboardData, spaceContext }: Props) {
                                 className="inline-flex items-center justify-center rounded-full bg-indigo-600 px-5 py-2 text-sm font-semibold text-white transition hover:bg-indigo-700"
                             >
                                 {dashboardStrings.cards?.partner_pending?.cta ??
-                                    "Hubungkan Pasangan"}
+                                    "Connect Partner"}
                             </Link>
                         </div>
                     </div>
@@ -550,7 +550,7 @@ export default function Dashboard({ dashboardData, spaceContext }: Props) {
                             <div>
                                 <p className="text-sm text-gray-500">
                                     {dashboardStrings.cards?.gallery_total ??
-                                        "Foto & Video"}
+                                        "Photos & Videos"}
                                 </p>
                                 <p className="text-2xl font-semibold text-gray-900">
                                     {dashboardData.galleryCount}
@@ -566,7 +566,7 @@ export default function Dashboard({ dashboardData, spaceContext }: Props) {
                             <div>
                                 <p className="text-sm text-purple-100">
                                     {dashboardStrings.cards?.location_share?.title ??
-                                        "Berbagi Lokasi"}
+                                        "Location Sharing"}
                                 </p>
                                 <Link
                                     href={route("location.map", {
@@ -582,7 +582,7 @@ export default function Dashboard({ dashboardData, spaceContext }: Props) {
                                     }`}
                                 >
                                     {dashboardStrings.cards?.location_share?.cta ??
-                                        "Buka Peta"}
+                                        "Open Map"}
                                     <Video className="h-4 w-4" />
                                 </Link>
                             </div>
@@ -593,7 +593,7 @@ export default function Dashboard({ dashboardData, spaceContext }: Props) {
                 <div className="rounded-3xl bg-white p-6 shadow-sm">
                     <h2 className="text-xl font-semibold text-gray-900">
                         {dashboardStrings.cards?.quick_actions?.title ??
-                            "Aksi Cepat"}
+                            "Quick Actions"}
                     </h2>
                     <div className="mt-4 grid gap-4 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5">
                         {quickActions.map((action, index) => {
@@ -604,7 +604,7 @@ export default function Dashboard({ dashboardData, spaceContext }: Props) {
                             const comingSoon = action.comingSoon === true;
                             const disabled = ownerLocked || partnerLocked || comingSoon;
                             const actionTitle = comingSoon
-                                ? "Fitur nobar masih dalam pengembangan. Nantikan segera!"
+                                ? "Watch party feature is still in development. Stay tuned!"
                                 : ownerLocked
                                 ? ownerLockMessage
                                 : partnerLocked
@@ -656,7 +656,7 @@ export default function Dashboard({ dashboardData, spaceContext }: Props) {
                                         {comingSoon && (
                                             <span className="inline-flex items-center justify-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 text-xs font-semibold text-amber-600">
                                                 <Sparkles className="h-3.5 w-3.5" aria-hidden="true" />
-                                                Segera Hadir
+                                                Coming Soon
                                             </span>
                                         )}
                                         {!comingSoon && (ownerLocked || partnerLocked) && (
@@ -682,13 +682,13 @@ export default function Dashboard({ dashboardData, spaceContext }: Props) {
                         <h2 className="mb-4 flex items-center gap-2 text-xl font-semibold text-gray-900">
                             <Calendar className="h-5 w-5 text-orange-500" />
                             {dashboardStrings.cards?.upcoming_events?.title ??
-                                "Event Mendatang"}
+                                "Upcoming Events"}
                         </h2>
                         <div className="space-y-3">
                             {dashboardData.upcomingEvents.length === 0 && (
                                 <p className="rounded-2xl border border-dashed border-orange-200 bg-orange-50 p-4 text-sm text-orange-600">
                                     {dashboardStrings.cards?.upcoming_events?.empty ??
-                                        "Belum ada event yang dijadwalkan. Yuk buat countdown pertama kalian!"}
+                                        "No events scheduled yet. Create your first countdown!"}
                                 </p>
                             )}
                             {dashboardData.upcomingEvents.map(
@@ -709,7 +709,7 @@ export default function Dashboard({ dashboardData, spaceContext }: Props) {
                                                     dashboardStrings.cards
                                                         ?.upcoming_events
                                                         ?.days_left ??
-                                                        ":count hari lagi",
+                                                        ":count days left",
                                                     { count: event.days_left },
                                                 )}
                                             </p>
@@ -740,13 +740,13 @@ export default function Dashboard({ dashboardData, spaceContext }: Props) {
                         <h2 className="mb-4 flex items-center gap-2 text-xl font-semibold text-gray-900">
                             <MessageSquare className="h-5 w-5 text-purple-500" />
                             {dashboardStrings.cards?.recent_messages?.title ??
-                                "Pesan Terbaru"}
+                                "Latest Messages"}
                         </h2>
                         <div className="space-y-3">
                             {dashboardData.recentMessages.length === 0 && (
                                 <p className="rounded-2xl border border-dashed border-purple-200 bg-purple-50 p-4 text-sm text-purple-600">
                                     {dashboardStrings.cards?.recent_messages?.empty ??
-                                        "Belum ada pesan terbaru. Coba tulis pesan spesial untuk pasanganmu!"}
+                                        "No new messages yet. Write something special for your partner!"}
                                 </p>
                             )}
                             {recentMessages.map((message, index) => (
@@ -771,9 +771,9 @@ export default function Dashboard({ dashboardData, spaceContext }: Props) {
                                         >
                                             {expandedMessages[index]
                                                 ? dashboardStrings.cards?.recent_messages?.show_less ??
-                                                  "Sembunyikan"
+                                                  "Hide"
                                                 : dashboardStrings.cards?.recent_messages?.show_more ??
-                                                  "Baca selengkapnya"}
+                                                  "Read more"}
                                         </button>
                                     )}
                                     <p className="mt-3 text-xs text-purple-500">

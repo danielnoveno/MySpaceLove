@@ -9,7 +9,7 @@ use Illuminate\Validation\ValidationException;
 
 class UploadedFileProcessor
 {
-    private const DEFAULT_WEBP_QUALITY = 80;
+    private const DEFAULT_WEBP_QUALITY = 75; // Reduced from 80 for better compression
 
     /**
      * Store the uploaded file, converting images to WebP when possible.

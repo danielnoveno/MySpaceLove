@@ -401,7 +401,7 @@ export default function ComingSoon({ space }: Props) {
                             }
                             className="inline-flex items-center justify-center rounded-full bg-slate-900 px-5 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-slate-800"
                         >
-                            Kembali ke Dashboard
+                            Back to Dashboard
                         </Link>
                     </div>
                 </div>

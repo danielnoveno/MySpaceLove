@@ -161,7 +161,7 @@ export default function DocsIndex({ docs }: Props) {
                     {docs.length === 0 ? (
                         <div className="text-center col-span-full py-20">
                             <FileText className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-                            <p className="text-gray-600">Belum ada dokumen</p>
+                            <p className="text-gray-600">No documents yet</p>
                         </div>
                     ) : (
                         docs.map((doc) => (
@@ -175,6 +175,7 @@ export default function DocsIndex({ docs }: Props) {
                                 <p className="text-gray-500 text-sm mb-3 line-clamp-3">
                                     {doc.notes}
                                 </p>
+                                <p className="text-sm text-gray-500">No files selected yet.</p>
                                 <p className="text-xs text-gray-400 mb-4">
                                     Uploaded {formatDate(doc.created_at)}
                                 </p>
@@ -236,8 +237,8 @@ export default function DocsIndex({ docs }: Props) {
                                         />
                                     );
                                 return (
-                                    <div className="flex items-center justify-center h-full text-gray-600">
-                                        Preview tidak tersedia untuk format ini
+                                    <div className="flex h-72 items-center justify-center text-sm text-gray-400">
+                                        No preview available yet.
                                     </div>
                                 );
                             })()}

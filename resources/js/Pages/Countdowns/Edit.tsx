@@ -344,8 +344,7 @@ export default function CountdownEdit({
                                 </div>
                             ) : (
                                 <p className="rounded-2xl border border-dashed border-violet-200 bg-white/70 px-4 py-6 text-center text-sm text-violet-500">
-                                    Belum ada agenda. Klik &quot;Tambah
-                                    Agenda&quot; untuk mulai menyusun kegiatan romantis kalian.
+                                    No agenda yet. Click &quot;Add Agenda&quot; to start planning your romantic activities.
                                 </p>
                             )}
                         </div>
@@ -400,8 +399,7 @@ export default function CountdownEdit({
                                         />
                                     ) : (
                                         <p className="text-center text-sm text-violet-500">
-                                            Belum ada poster yang ditampilkan.
-                                            Upload poster baru untuk menggantinya.
+                                            No poster displayed yet. Upload a new poster to replace it.
                                         </p>
                                     )}
                                 </div>

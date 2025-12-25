@@ -1,6 +1,6 @@
 import Modal from "@/Components/Modal";
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout";
-import { Head } from "@inertiajs/react";
+import { Head, usePage } from "@inertiajs/react";
 import axios from "axios";
 import {
     Calendar,
@@ -16,6 +16,7 @@ import {
     Users,
 } from "lucide-react";
 import { FormEvent, useCallback, useEffect, useMemo, useState, type CSSProperties } from "react";
+import { useTranslation } from "@/hooks/useTranslation";
 
 type SpaceInfo = {
     id: number;
@@ -185,22 +186,37 @@ function formatDateTime(value: string | null | undefined): string {
     });
 }
 
-function formatDate(value: string | null | undefined): string {
+function formatDate(value?: string | null, locale: string = "en"): string {
     if (!value) {
         return "-";
     }
 
     const date = new Date(value);
 
-    return date.toLocaleDateString("id-ID", {
+    return date.toLocaleDateString(locale, {
         day: "2-digit",
         month: "long",
         year: "numeric",
     });
 }
 export default function LongDistanceSpotifyHub({ space }: Props) {
+    const { props } = usePage();
+    const locale = (props as any).locale ?? "en";
+    const { translations: spotifyTrans } = useTranslation("spotify");
+    
+    // Extract translation groups
+    const header = spotifyTrans.header ?? {};
+    const connection = spotifyTrans.connection ?? {};
+    const playlist = spotifyTrans.playlist ?? {};
+    const mood = spotifyTrans.mood ?? {};
+    const listening = spotifyTrans.listening ?? {};
+    const surprise = spotifyTrans.surprise ?? {};
+    const capsule = spotifyTrans.capsule ?? {};
+    const loading: any = spotifyTrans.loading ?? {};
+    const messages: any = spotifyTrans.messages ?? {};
+    
     const [dashboard, setDashboard] = useState<SpotifyDashboardResponse | null>(null);
-    const [loading, setLoading] = useState(true);
+    const [loadingState, setLoadingState] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [selectedMoodId, setSelectedMoodId] = useState<string | null>(null);
     const [actionMessage, setActionMessage] = useState<ActionMessage | null>(null);
@@ -235,7 +251,7 @@ export default function LongDistanceSpotifyHub({ space }: Props) {
     }, [authorizeHref]);
 
     const fetchDashboard = useCallback(async () => {
-        setLoading(true);
+        setLoadingState(true);
         setError(null);
 
         try {
@@ -260,16 +276,16 @@ export default function LongDistanceSpotifyHub({ space }: Props) {
                         ? (err.response?.data as { message?: string }).message
                         : undefined;
 
-                setError(responseMessage ?? err.message ?? "Gagal memuat data Spotify.");
+                setError(responseMessage ?? err.message ?? (messages.error?.load_failed ?? "Failed to load Spotify data."));
             } else if (err instanceof Error) {
-                setError(err.message);
                 setDashboard(null);
+                setError(messages.error?.load_failed ?? "Failed to load Spotify data.");
             } else {
-                setError("Gagal memuat data Spotify.");
                 setDashboard(null);
+                setError(messages.error?.load_failed ?? "Failed to load Spotify data.");
             }
         } finally {
-            setLoading(false);
+            setLoadingState(false);
         }
     }, [space.slug]);
 
@@ -283,7 +299,7 @@ export default function LongDistanceSpotifyHub({ space }: Props) {
 
         const trackId = extractSpotifyTrackId(surpriseForm.trackInput);
         if (!trackId) {
-            setSurpriseError("Masukkan tautan atau ID lagu Spotify yang valid.");
+            setSurpriseError(messages.error?.invalid_track ?? "Enter a valid Spotify track link or ID.");
             return;
         }
 
@@ -322,16 +338,16 @@ export default function LongDistanceSpotifyHub({ space }: Props) {
             setSurpriseModalOpen(false);
             setActionMessage({
                 type: "success",
-                message: "Lagu kejutan berhasil dijadwalkan!",
+                message: messages.success?.surprise_scheduled ?? "Surprise song successfully scheduled!",
             });
         } catch (err) {
             if (axios.isAxiosError(err)) {
                 const message = (err.response?.data as { message?: string })?.message;
-                setSurpriseError(message ?? "Gagal menjadwalkan lagu kejutan. Coba lagi.");
+                setSurpriseError(message ?? (messages.error?.surprise_failed ?? "Failed to schedule surprise song. Try again."));
             } else if (err instanceof Error) {
                 setSurpriseError(err.message);
             } else {
-                setSurpriseError("Gagal menjadwalkan lagu kejutan. Coba lagi.");
+                setSurpriseError(messages.error?.surprise_failed ?? "Failed to schedule surprise song. Try again.");
             }
         } finally {
             setSurpriseSubmitting(false);
@@ -348,7 +364,7 @@ export default function LongDistanceSpotifyHub({ space }: Props) {
 
         const trackId = extractSpotifyTrackId(capsuleForm.trackInput);
         if (!trackId) {
-            setCapsuleError("Masukkan tautan atau ID lagu Spotify yang valid.");
+            setCapsuleError(messages.error?.invalid_track ?? "Enter a valid Spotify track link or ID.");
             return;
         }
 
@@ -389,16 +405,16 @@ export default function LongDistanceSpotifyHub({ space }: Props) {
             setCapsuleModalOpen(false);
             setActionMessage({
                 type: "success",
-                message: "Kapsul memori berhasil disimpan!",
+                message: messages.success?.capsule_saved ?? "Memory capsule successfully saved!",
             });
         } catch (err) {
             if (axios.isAxiosError(err)) {
                 const message = (err.response?.data as { message?: string })?.message;
-                setCapsuleError(message ?? "Gagal menyimpan kapsul memori. Coba lagi.");
+                setCapsuleError(message ?? (messages.error?.capsule_failed ?? "Failed to save memory capsule. Try again."));
             } else if (err instanceof Error) {
                 setCapsuleError(err.message);
             } else {
-                setCapsuleError("Gagal menyimpan kapsul memori. Coba lagi.");
+                setCapsuleError(messages.error?.capsule_failed ?? "Failed to save memory capsule. Try again.");
             }
         } finally {
             setCapsuleSubmitting(false);
@@ -477,7 +493,7 @@ export default function LongDistanceSpotifyHub({ space }: Props) {
         if (!listening?.joinable || !listening.track_id) {
             setActionMessage({
                 type: "error",
-                message: "Tidak ada sesi playback yang bisa diikuti saat ini.",
+                message: messages.error?.no_playback ?? "No playback session available to join right now.",
             });
             return;
         }
@@ -496,14 +512,14 @@ export default function LongDistanceSpotifyHub({ space }: Props) {
 
             setActionMessage({
                 type: "success",
-                message: "Playback kamu sudah sinkron dengan sesi live.",
+                message: messages.success?.playback_synced ?? "Your playback is now synced with the live session.",
             });
         } catch (err) {
             if (axios.isAxiosError(err)) {
                 const message = (err.response?.data as { message?: string })?.message;
                 setActionMessage({
                     type: "error",
-                    message: message ?? "Gagal gabung playback. Pastikan Spotify-mu sedang aktif.",
+                    message: message ?? (messages.error?.join_failed ?? "Failed to join playback. Make sure your Spotify is active."),
                 });
             } else if (err instanceof Error) {
                 setActionMessage({
@@ -513,7 +529,7 @@ export default function LongDistanceSpotifyHub({ space }: Props) {
             } else {
                 setActionMessage({
                     type: "error",
-                    message: "Gagal gabung playback. Coba ulang sebentar lagi.",
+                    message: messages.error?.join_retry ?? "Failed to join playback. Try again in a moment.",
                 });
             }
         } finally {
@@ -545,14 +561,14 @@ export default function LongDistanceSpotifyHub({ space }: Props) {
         <AuthenticatedLayout
             header={
                 <div className="flex flex-col gap-2">
-                    <h2 className="text-2xl font-semibold text-gray-800">Spotify Companion Kit</h2>
+                    <h2 className="text-2xl font-semibold text-gray-800">{header.title ?? "Spotify Companion Kit"}</h2>
                     <p className="text-sm text-purple-600">
-                        Ruang {space.title}: sinkronkan musik, mood, dan momen kalian biar tetap dekat walau terpisah jarak.
+                        {(header.subtitle ?? "Space :space: sync music, moods, and moments to stay close despite the distance.").replace(":space", space.title)}
                     </p>
                 </div>
             }
         >
-            <Head title="Spotify Companion Kit" />
+            <Head title={header.page_title ?? "Spotify Companion Kit"} />
 
             <div className="mx-auto flex w-full max-w-6xl flex-col gap-10 px-4 sm:px-6">
                 {actionMessage && (
@@ -666,7 +682,7 @@ export default function LongDistanceSpotifyHub({ space }: Props) {
                     <section className="flex items-center justify-center rounded-3xl border border-purple-200 bg-white p-8 shadow-sm">
                         <div className="flex items-center gap-3 text-purple-600">
                             <Loader2 className="h-5 w-5 animate-spin" />
-                            <span className="text-sm font-medium">Memuat data Spotify...</span>
+                            <span className="text-sm font-medium">{loading.dashboard ?? "Loading Spotify data..."}</span>
                         </div>
                     </section>
                 )}
@@ -679,7 +695,7 @@ export default function LongDistanceSpotifyHub({ space }: Props) {
                             onClick={() => void fetchDashboard()}
                             className="mt-4 inline-flex items-center justify-center rounded-full bg-rose-500 px-4 py-2 text-xs font-semibold text-white hover:bg-rose-600"
                         >
-                            Coba Muat Ulang
+                            {loading.retry ?? "Try Reload"}
                         </button>
                     </section>
                 )}
@@ -867,7 +883,7 @@ export default function LongDistanceSpotifyHub({ space }: Props) {
                                 <div className="grid gap-3">
                                     {moods.length === 0 && (
                                         <p className="rounded-2xl border border-blue-100 bg-white p-4 text-sm text-blue-500">
-                                            Belum ada riwayat pemutaran terbaru.
+                                            {mood.empty ?? "No mood snapshots yet. Share your first vibe!"}
                                         </p>
                                     )}
 
@@ -953,7 +969,7 @@ export default function LongDistanceSpotifyHub({ space }: Props) {
                                 <div className="space-y-3">
                                     {surpriseDrops.length === 0 && (
                                         <p className="rounded-2xl border border-rose-100 bg-white p-4 text-sm text-rose-500">
-                                            Belum ada lagu kejutan terjadwal. Tambahkan satu untuk moment spesial berikutnya!
+                                            {surprise.empty ?? "No surprise drops scheduled yet. Plan your first musical surprise!"}
                                         </p>
                                     )}
 
@@ -1114,7 +1130,7 @@ export default function LongDistanceSpotifyHub({ space }: Props) {
                                 <div className="space-y-4">
                                     {memoryCapsules.length === 0 && (
                                         <p className="rounded-2xl border border-amber-100 bg-white p-4 text-sm text-amber-600">
-                                            Belum ada kapsul memori. Simpan satu untuk mengenang momen penting kalian.
+                                            {capsule.empty ?? "No memory capsules yet. Start preserving your musical memories!"}
                                         </p>
                                     )}
 

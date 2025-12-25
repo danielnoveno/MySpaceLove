@@ -169,7 +169,7 @@ export default function TimelineIndex({ timelines }: Props) {
             header={
                 <div className="flex flex-col gap-1">
                     <p className="text-xs uppercase tracking-[0.4em] text-pink-400">
-                        Koleksi momen
+                        Moment collection
                     </p>
                     <h2 className="text-3xl font-semibold text-pink-900">
                         Love Timeline – {spaceTitle}

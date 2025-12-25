@@ -182,7 +182,7 @@ export default function CountdownCreate() {
             setImagePreview(URL.createObjectURL(processed));
         } catch (error) {
             console.error("Error processing image:", error);
-            setFileError("Gagal memproses gambar. Pastikan format file didukung dan coba lagi.");
+            setFileError("Failed to process image. Make sure the file format is supported and try again.");
             setData("image", null);
             setImagePreview(null);
         }
@@ -371,8 +371,7 @@ export default function CountdownCreate() {
                                 </div>
                             ) : (
                                 <p className="rounded-2xl border border-dashed border-violet-200 bg-white/70 px-4 py-6 text-center text-sm text-violet-500">
-                                    Belum ada agenda. Klik &quot;Tambah
-                                    Agenda&quot; untuk mulai menyusun kegiatan romantis kalian.
+                                    No agenda yet. Click &quot;Add Agenda&quot; to start planning your romantic activities.
                                 </p>
                             )}
                         </div>

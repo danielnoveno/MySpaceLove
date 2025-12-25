@@ -124,12 +124,12 @@ export default function JournalIndex({ items, space }: Props) {
                 {items.length === 0 ? (
                     <div className="rounded-[28px] border border-dashed border-amber-200 bg-white/85 py-16 text-center shadow-inner">
                         <p className="text-lg font-semibold text-amber-800">
-                            Belum ada catatan.
+                            No entries yet.
                         </p>
                         <p className="mt-2 text-sm text-amber-600">
-                            Mulai tulis cerita pertamamu hari ini. ✍️
+                            Start writing your first story today. ✍️
                         </p>
-                    </div>
+                    </div>", "StartLine">124
                 ) : (
                     <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
                         {items.map((item) => {

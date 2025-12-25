@@ -3,16 +3,22 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\ProfileUpdateRequest;
+use App\Services\UploadedFileProcessor;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Redirect;
+use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 use Inertia\Response;
 
 class ProfileController extends Controller
 {
+    public function __construct(
+        private readonly UploadedFileProcessor $fileProcessor
+    ) {}
+
     /**
      * Display the user's profile form.
      */
@@ -33,8 +39,21 @@ class ProfileController extends Controller
         $user->fill($request->validated());
 
         if ($request->hasFile('profile_image')) {
-            $path = $request->file('profile_image')->store('profile-images', 'public');
-            $user->profile_image = $path;
+            // Delete old profile image if exists
+            if ($user->profile_image) {
+                Storage::disk('public')->delete($user->profile_image);
+            }
+            
+            // Use UploadedFileProcessor for WebP conversion
+            $stored = $this->fileProcessor->store(
+                $request->file('profile_image'),
+                'profile-images',
+                'public',
+                'errors.upload.file_too_large',
+                'profile_image'
+            );
+            
+            $user->profile_image = $stored['path'];
         }
 
         if ($user->isDirty('email')) {

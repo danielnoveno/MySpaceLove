@@ -181,7 +181,7 @@ export default function GalleryIndex({
             header={
                 <div className="flex flex-col gap-1">
                     <p className="text-xs uppercase tracking-[0.42em] text-emerald-400">
-                        Album kenangan
+                        Memory album
                     </p>
                     <h2 className="text-3xl font-semibold text-emerald-900">
                         Gallery Photos — {spaceTitle}

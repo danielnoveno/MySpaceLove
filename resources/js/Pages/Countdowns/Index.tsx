@@ -80,7 +80,7 @@ export default function CountdownIndex({ items }: Props) {
 
             if (!target) {
                 return {
-                    label: "Belum terjadwal",
+                    label: "Not scheduled",
                     tone: "unset",
                     daysUntil: null,
                     timestamp: Number.MAX_SAFE_INTEGER,
@@ -97,7 +97,7 @@ export default function CountdownIndex({ items }: Props) {
 
             if (diffDays > 1) {
                 return {
-                    label: `${diffDays} hari lagi`,
+                    label: `${diffDays} days left`,
                     tone: "future",
                     daysUntil: diffDays,
                     timestamp: target.getTime(),
@@ -106,7 +106,7 @@ export default function CountdownIndex({ items }: Props) {
 
             if (diffDays === 1) {
                 return {
-                    label: "Besok",
+                    label: "Tomorrow",
                     tone: "future",
                     daysUntil: diffDays,
                     timestamp: target.getTime(),
@@ -115,7 +115,7 @@ export default function CountdownIndex({ items }: Props) {
 
             if (diffDays === 0) {
                 return {
-                    label: "Hari ini!",
+                    label: "Today!",
                     tone: "present",
                     daysUntil: diffDays,
                     timestamp: target.getTime(),
@@ -123,7 +123,7 @@ export default function CountdownIndex({ items }: Props) {
             }
 
             return {
-                label: `${Math.abs(diffDays)} hari lalu`,
+                label: `${Math.abs(diffDays)} days ago`,
                 tone: "past",
                 daysUntil: diffDays,
                 timestamp: target.getTime(),
@@ -245,7 +245,7 @@ export default function CountdownIndex({ items }: Props) {
                         <div className="flex h-full w-full flex-col items-center justify-center gap-3 bg-gradient-to-br from-violet-100 via-white to-fuchsia-100 text-violet-600">
                             <Sparkles className="h-10 w-10" />
                             <span className="text-sm font-medium">
-                                Belum ada poster event
+                                No event poster yet
                             </span>
                         </div>
                     )}
@@ -265,7 +265,7 @@ export default function CountdownIndex({ items }: Props) {
                         <p className="text-sm leading-relaxed text-violet-600/80">
                             {event.description?.trim().length
                                 ? event.description
-                                : "Belum ada deskripsi. Tulis sedikit cerita agar event ini terasa makin spesial."}
+                                : "No description yet. Write a little story to make this event more special."}
                         </p>
                         <span
                             className={`inline-flex min-w-[130px] items-center justify-center rounded-full border px-4 py-1.5 text-xs font-semibold uppercase tracking-[0.26em] ${countdownClass}`}
@@ -427,7 +427,7 @@ export default function CountdownIndex({ items }: Props) {
                         </div>
                     ) : !events.length ? (
                         <div className="mt-6 rounded-2xl border border-dashed border-violet-200 bg-violet-50/60 p-6 text-sm text-violet-500">
-                            Belum ada agenda spesial yang tercatat. Yuk mulai isi daftar event romantismu!
+                            No special events recorded yet. Start filling your romantic event list!
                         </div>
                     ) : null}
                 </section>

@@ -222,7 +222,7 @@ export default function GalleryCreate() {
                                     ))}
                                 </div>
                             ) : (
-                                <p className="text-sm text-gray-500">Belum ada file dipilih.</p>
+                                <p className="text-sm text-gray-500">No files selected yet.</p>
                             )}
                         </div>
 

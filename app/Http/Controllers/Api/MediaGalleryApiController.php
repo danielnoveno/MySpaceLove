@@ -119,7 +119,7 @@ class MediaGalleryApiController extends Controller
         $data = $r->validate([
             'title' => 'nullable|string|max:255',
             'files' => 'required|array|min:1|max:12',
-            'files.*' => 'required|file|mimes:jpg,jpeg,png,gif,mp4,mov|max:30720',
+            'files.*' => 'required|file|mimes:jpg,jpeg,png,gif,mp4,mov|max:15360', // 15 MB
             'collection_key' => 'nullable|string|exists:media_galleries,collection_key',
         ]);
 
@@ -224,7 +224,7 @@ class MediaGalleryApiController extends Controller
 
         $data = $r->validate([
             'title' => 'nullable|string|max:255',
-            'file'  => 'nullable|file|mimes:jpg,jpeg,png,gif,mp4,mov|max:30720',
+            'file'  => 'nullable|file|mimes:jpg,jpeg,png,gif,mp4,mov|max:15360', // 15 MB
         ]);
 
         $updates = [

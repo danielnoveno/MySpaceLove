@@ -37,7 +37,7 @@ export default function Room({ spaceId, space, user }: Props) {
             setLoading(false);
         } catch (err) {
             console.error("Failed to fetch JaaS token", err);
-            setError("Gagal memuat layanan video call.");
+            setError("Failed to load video call service.");
             setLoading(false);
         }
     };

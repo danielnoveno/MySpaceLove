@@ -53,7 +53,7 @@ export default function AuthenticatedLayout({ header, children }) {
         : fallbackHref;
     const lockedTooltip =
         navigation.locked_tooltip ??
-        "Fitur couple akan aktif setelah pasanganmu bergabung.";
+        "Couple features unlock after your partner joins.";
 
     const navClass = (locked) =>
         `inline-flex items-center px-1 pt-1 border-b-2 border-transparent text-sm font-medium leading-5 transition duration-150 ease-in-out ${
@@ -150,7 +150,7 @@ export default function AuthenticatedLayout({ header, children }) {
                                                 >
                                                     {currentSpace
                                                         ? currentSpace.title
-                                                        : navigation.choose_space ?? "Pilih Space"}
+                                                        : navigation.choose_space ?? "Choose Space"}
                                                     <svg
                                                         className="ml-2 -mr-0.5 h-4 w-4"
                                                         xmlns="http://www.w3.org/2000/svg"
@@ -179,7 +179,7 @@ export default function AuthenticatedLayout({ header, children }) {
                                                 </Dropdown.Link>
                                             ))}
                                             <Dropdown.Link href={route("spaces.index")}>
-                                                + {navigation.manage_spaces ?? "Kelola Spaces"}
+                                                + {navigation.manage_spaces ?? "Manage Spaces"}
                                             </Dropdown.Link>
                                         </Dropdown.Content>
                                     </Dropdown>
@@ -449,7 +449,7 @@ export default function AuthenticatedLayout({ header, children }) {
                                     ? "opacity-40 pointer-events-none"
                                     : ""
                             }
-                            title={currentSpace === null ? (navigation.choose_space ?? "Pilih Space") : undefined}
+                            title={currentSpace === null ? (navigation.choose_space ?? "Choose Space") : undefined}
                         >
                             <span className="flex items-center justify-between w-full gap-2">
                                 <span className="flex items-center gap-2">

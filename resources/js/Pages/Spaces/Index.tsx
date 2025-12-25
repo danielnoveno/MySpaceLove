@@ -345,11 +345,11 @@ export default function SpacesIndex({
                 const message =
                     (error.response?.data as { message?: string } | undefined)
                         ?.message ??
-                    "Gagal mengonfirmasi undangan. Coba lagi nanti.";
+                    "Failed to confirm invitation. Please try again later.";
                 setAcceptError(message);
             } else {
                 setAcceptError(
-                    "Terjadi kesalahan saat mengonfirmasi undangan."
+                    "An error occurred while confirming the invitation."
                 );
             }
         } finally {
@@ -372,7 +372,7 @@ export default function SpacesIndex({
         const sanitizedCode = joinCode.trim().toUpperCase();
 
         if (!sanitizedCode) {
-            setJoinCodeError("Kode pasangan wajib diisi.");
+            setJoinCodeError("Partner code is required.");
             return;
         }
 
@@ -390,7 +390,7 @@ export default function SpacesIndex({
                 type: "success",
                 message:
                     (response.data?.message as string | undefined) ??
-                    "Berhasil bergabung dengan Space pasanganmu.",
+                    "Successfully joined your partner's Space.",
             });
 
             setJoinCode("");
@@ -426,13 +426,13 @@ export default function SpacesIndex({
                     message:
                         data?.message ??
                         (fieldError ? fieldError.join(", ") : undefined) ??
-                        "Gagal mengajukan permintaan bergabung.",
+                        "Failed to submit join request.",
                 });
             } else {
                 setJoinAlert({
                     type: "error",
                     message:
-                        "Terjadi kesalahan saat mengajukan permintaan bergabung.",
+                        "An error occurred while submitting the join request.",
                 });
             }
         } finally {
@@ -480,11 +480,11 @@ export default function SpacesIndex({
                 [space.id]: {
                     partner_name:
                         partnerName === ""
-                            ? "Nama pasangan wajib diisi."
+                            ? "Partner name is required."
                             : undefined,
                     partner_email:
                         partnerEmail === ""
-                            ? "Email pasangan wajib diisi."
+                            ? "Partner email is required."
                             : undefined,
                 },
             }));
@@ -494,7 +494,7 @@ export default function SpacesIndex({
                 [space.id]: {
                     type: "error",
                     message:
-                        "Lengkapi nama dan email pasangan terlebih dahulu.",
+                        "Please complete partner name and email first.",
                 },
             }));
 
@@ -518,7 +518,7 @@ export default function SpacesIndex({
                     type: "success",
                     message:
                         (response.data?.message as string | undefined) ??
-                        "Undangan berhasil dikirim. Pasanganmu tinggal bergabung.",
+                        "Invitation sent successfully. Your partner just needs to join.",
                 },
             }));
 
@@ -556,7 +556,7 @@ export default function SpacesIndex({
                             data?.message ??
                             fieldErrors.partner_name?.join(", ") ??
                             fieldErrors.partner_email?.join(", ") ??
-                            "Gagal mengirim undangan. Silakan coba lagi.",
+                            "Failed to send invitation. Please try again.",
                     },
                 }));
             } else {
@@ -564,7 +564,7 @@ export default function SpacesIndex({
                     ...previous,
                     [space.id]: {
                         type: "error",
-                        message: "Terjadi kesalahan saat mengirim undangan.",
+                        message: "An error occurred while sending the invitation.",
                     },
                 }));
             }
@@ -580,7 +580,7 @@ export default function SpacesIndex({
         if (
             typeof window !== "undefined" &&
             !window.confirm(
-                "Batalkan undangan ini? Kamu bisa mengundang akun lain setelahnya."
+                "Cancel this invitation? You can invite another account afterwards."
             )
         ) {
             return;
@@ -607,7 +607,7 @@ export default function SpacesIndex({
                     type: "success",
                     message:
                         (response.data?.message as string | undefined) ??
-                        "Undangan berhasil dibatalkan.",
+                        "Invitation cancelled successfully.",
                 },
             }));
 
@@ -615,7 +615,7 @@ export default function SpacesIndex({
             router.reload();
         } catch (error) {
             let message =
-                "Gagal membatalkan undangan. Coba beberapa saat lagi.";
+                "Failed to cancel invitation. Please try again later.";
 
             if (axios.isAxiosError(error)) {
                 const data = error.response?.data as
@@ -649,7 +649,7 @@ export default function SpacesIndex({
         if (!phrase) {
             setSeparationAlert({
                 type: "error",
-                message: "Ketik frasa konfirmasi terlebih dahulu.",
+                message: "Please type the confirmation phrase first.",
             });
             return;
         }
@@ -659,7 +659,7 @@ export default function SpacesIndex({
         ) {
             setSeparationAlert({
                 type: "error",
-                message: `Frasa konfirmasi harus persis "${separationConfirmationPhrase}".`,
+                message: `Confirmation phrase must be exactly "${separationConfirmationPhrase}".`,
             });
             return;
         }
@@ -682,7 +682,7 @@ export default function SpacesIndex({
                 type: "success",
                 message:
                     (response.data?.message as string | undefined) ??
-                    "Permintaan pembubaran berhasil dikirim.",
+                    "Dissolution request sent successfully.",
             });
 
             setSeparationInputs((previous) => ({
@@ -692,7 +692,7 @@ export default function SpacesIndex({
 
             router.reload();
         } catch (error) {
-            let message = "Gagal mengirim permintaan pembubaran.";
+            let message = "Failed to send dissolution request.";
 
             if (axios.isAxiosError(error)) {
                 message =
@@ -724,12 +724,12 @@ export default function SpacesIndex({
                 type: "success",
                 message:
                     (response.data?.message as string | undefined) ??
-                    "Permintaan pembubaran dibatalkan.",
+                    "Dissolution request cancelled.",
             });
 
             router.reload();
         } catch (error) {
-            let message = "Gagal membatalkan permintaan pembubaran.";
+            let message = "Failed to cancel dissolution request.";
 
             if (axios.isAxiosError(error)) {
                 message =
@@ -757,7 +757,7 @@ export default function SpacesIndex({
         if (!phrase) {
             setSeparationAlert({
                 type: "error",
-                message: "Ketik frasa konfirmasi terlebih dahulu.",
+                message: "Please type the confirmation phrase first.",
             });
             return;
         }
@@ -767,7 +767,7 @@ export default function SpacesIndex({
         ) {
             setSeparationAlert({
                 type: "error",
-                message: `Frasa konfirmasi harus persis "${separationConfirmationPhrase}".`,
+                message: `Confirmation phrase must be exactly "${separationConfirmationPhrase}".`,
             });
             return;
         }
@@ -792,8 +792,8 @@ export default function SpacesIndex({
                 message:
                     (response.data?.message as string | undefined) ??
                     (decision === "approve"
-                        ? "Space berhasil diakhiri."
-                        : "Permintaan pembubaran ditolak."),
+                        ? "Space ended successfully."
+                        : "Dissolution request rejected."),
             });
 
             setRespondInputs((previous) => ({
@@ -803,7 +803,7 @@ export default function SpacesIndex({
 
             router.reload();
         } catch (error) {
-            let message = "Gagal memproses konfirmasi pembubaran.";
+            let message = "Failed to process dissolution confirmation.";
 
             if (axios.isAxiosError(error)) {
                 message =
@@ -826,8 +826,7 @@ export default function SpacesIndex({
                     Buat Space Baru
                 </h3>
                 <p className="mt-1 text-sm text-gray-500">
-                    Kamu bisa mengundang pasanganmu setelah Space selesai
-                    dibuat.
+                    You can invite your partner after the Space is created.
                 </p>
 
                 <form onSubmit={submit} className="mt-6 space-y-4">
@@ -931,23 +930,22 @@ export default function SpacesIndex({
         <div className="space-y-6">
             <div className="bg-white shadow-sm rounded-xl p-6 space-y-5">
                 <h3 className="text-lg font-semibold text-gray-900">
-                    Kamu sudah memiliki Space
+                    You already have a Space
                 </h3>
                 <p className="text-sm text-gray-600">
-                    Setiap akun hanya bisa mempunyai satu Space. Jika ingin
-                    membuat Space baru, lepaskan Space yang lama terlebih
-                    dahulu.
+                    Each account can only have one Space. If you want to
+                    create a new Space, release the old Space first.
                 </p>
             </div>
 
             <div className="bg-white shadow-sm rounded-xl p-6 space-y-4">
                 <div>
                     <h3 className="text-lg font-semibold text-gray-900">
-                        Space yang Kamu Punya
+                        Your Spaces
                     </h3>
                     <p className="text-sm text-gray-500">
-                        Kelola Space kamu, undang pasangan, atau akhiri hubungan
-                        Space dari halaman ini.
+                        Manage your Space, invite your partner, or end the Space
+                        relationship from this page.
                     </p>
                 </div>
 
@@ -972,8 +970,8 @@ export default function SpacesIndex({
                                         </p>
                                         <p className="text-sm text-gray-500">
                                             {space.has_partner
-                                                ? "Pasangan sudah terhubung. Nikmati semua fitur berdua."
-                                                : "Belum ada pasangan. Kamu bisa mengundang pasangan kapan saja."}
+                                                ? "Partner already connected. Enjoy all features together."
+                                                : "No partner yet. You can invite a partner anytime."}
                                         </p>
                                         <div className="mt-2 flex flex-wrap items-center gap-4">
                                             {space.users
@@ -1040,10 +1038,10 @@ export default function SpacesIndex({
                                 {pendingSeparation && (
                                     <div className="mt-3 rounded-md border border-red-100 bg-red-50 px-3 py-2 text-sm text-red-700">
                                         {pendingSeparation.initiated_by_you
-                                            ? "Permintaan pembubaran sudah dikirim. Menunggu konfirmasi pasanganmu."
+                                            ? "Dissolution request sent. Waiting for your partner's confirmation."
                                             : pendingSeparation.requires_your_confirmation
-                                            ? "Permintaan pembubaran menunggu keputusanmu."
-                                            : "Permintaan pembubaran sedang diproses."}
+                                            ? "Dissolution request awaiting your decision."
+                                            : "Dissolution request is being processed."}
                                     </div>
                                 )}
 
@@ -1202,11 +1200,11 @@ export default function SpacesIndex({
                                                         </PrimaryButton>
 
                                                         <p className="text-xs text-pink-600">
-                                                            Pasanganmu akan
-                                                            melihat undangan ini
-                                                            saat mereka masuk
-                                                            menggunakan email di
-                                                            atas.
+                                                            Your partner will
+                                                            see this invitation
+                                                            when they log in
+                                                            using the email
+                                                            above.
                                                         </p>
                                                     </form>
                                                 )}
@@ -1308,10 +1306,10 @@ export default function SpacesIndex({
                             </h3>
                             <p>
                                 {pending?.initiated_by_you
-                                    ? "Kamu sudah mengajukan permintaan untuk mengakhiri Space. Pasanganmu harus mengetik frasa konfirmasi agar proses selesai."
+                                    ? "You have submitted a request to end this Space. Your partner must type the confirmation phrase to complete the process."
                                     : pending?.requires_your_confirmation
-                                    ? "Pasanganmu meminta untuk mengakhiri Space ini. Pastikan kamu mempertimbangkan baik-baik sebelum mengambil keputusan."
-                                    : "Permintaan pembubaran sedang diproses."}
+                                    ? "Your partner requested to end this Space. Make sure you consider carefully before making a decision."
+                                    : "Dissolution request is being processed."}
                             </p>
                             {pending?.created_at && (
                                 <p className="mt-1 text-xs text-gray-400">
@@ -1350,8 +1348,8 @@ export default function SpacesIndex({
                     {pending?.initiated_by_you && (
                         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between rounded-xl border border-dashed border-red-200 bg-red-50 p-4">
                             <div className="text-sm text-red-700">
-                                Kamu masih bisa membatalkan permintaan ini jika
-                                berubah pikiran.
+                                You can still cancel this request if you
+                                change your mind.
                             </div>
                             <button
                                 type="button"
@@ -1610,7 +1608,7 @@ export default function SpacesIndex({
                                         Undangan Menunggu
                                     </h3>
                                     <p className="text-sm text-gray-500">
-                                        Kamu menerima undangan untuk bergabung
+                                        You received an invitation to join
                                         ke Space berikut.
                                     </p>
                                     <div className="space-y-3">

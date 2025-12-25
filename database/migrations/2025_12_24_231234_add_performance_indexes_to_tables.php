@@ -89,11 +89,10 @@ return new class extends Migration
                 if (!$this->hasIndex('messages', 'messages_space_id_index')) {
                     $table->index('space_id');
                 }
-                if (!$this->hasIndex('messages', 'messages_user_id_index')) {
-                    $table->index('user_id');
-                }
+                // Note: sender_user_id already has a composite index with space_id
             });
         }
+
 
         // Message reads indexes
         if (Schema::hasTable('message_reads')) {
@@ -260,9 +259,9 @@ return new class extends Migration
         if (Schema::hasTable('messages')) {
             Schema::table('messages', function (Blueprint $table) {
                 $table->dropIndex(['space_id']);
-                $table->dropIndex(['user_id']);
             });
         }
+
 
         if (Schema::hasTable('daily_messages')) {
             Schema::table('daily_messages', function (Blueprint $table) {
@@ -313,9 +312,14 @@ return new class extends Migration
     private function hasIndex(string $table, string $index): bool
     {
         $connection = Schema::getConnection();
-        $doctrineSchemaManager = $connection->getDoctrineSchemaManager();
-        $doctrineTable = $doctrineSchemaManager->introspectTable($table);
+        $database = $connection->getDatabaseName();
         
-        return $doctrineTable->hasIndex($index);
+        $result = $connection->select(
+            "SELECT COUNT(*) as count FROM information_schema.statistics 
+             WHERE table_schema = ? AND table_name = ? AND index_name = ?",
+            [$database, $table, $index]
+        );
+        
+        return $result[0]->count > 0;
     }
 };

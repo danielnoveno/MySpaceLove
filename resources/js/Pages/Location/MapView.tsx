@@ -327,7 +327,7 @@ export default function MapView({
                 console.error("Failed to fetch partner location", error);
                 if (!silent) {
                     showNotification(
-                        "Gagal mengambil lokasi pasangan.",
+                        "Failed to fetch partner location.",
                         "error"
                     );
                 }
@@ -378,7 +378,7 @@ export default function MapView({
                 );
                 setGeneratedPassword(responseData.temporary_password ?? null);
                 showNotification(
-                    "Undangan berhasil dikirim. Minta pasanganmu untuk mengonfirmasi.",
+                    "Invitation sent successfully. Ask your partner to confirm.",
                     "success"
                 );
                 setShowPartnerForm(false);
@@ -386,7 +386,7 @@ export default function MapView({
                 setPartnerEmailInput("");
             } catch (error) {
                 console.error("Failed to connect partner", error);
-                let message = "Gagal menghubungkan pasangan.";
+                let message = "Failed to connect partner.";
                 if (axios.isAxiosError(error)) {
                     const errorData = error.response?.data as {
                         message?: unknown;
@@ -436,7 +436,7 @@ export default function MapView({
                 setLastUpdated(location.updated_at ?? null);
                 if (!silent) {
                     showNotification(
-                        "Lokasimu berhasil diperbarui 💖",
+                        "Your location updated successfully 💖",
                         "success"
                     );
                 }
@@ -444,7 +444,7 @@ export default function MapView({
             } catch (error) {
                 console.error("Failed to update location", error);
                 if (!silent) {
-                    showNotification("Gagal memperbarui lokasi.", "error");
+                    showNotification("Failed to update location.", "error");
                 }
             } finally {
                 if (!silent) {
@@ -658,7 +658,7 @@ export default function MapView({
                     )
                 );
                 setRouteFetchError(
-                    "Gagal memuat rute jalan, menampilkan garis lurus."
+                    "Failed to load road route, showing straight line."
                 );
             } finally {
                 setIsRouteLoading(false);
@@ -693,7 +693,7 @@ export default function MapView({
 
         if (!partner) {
             showNotification(
-                "Pasangan belum terhubung di MySpaceLove. Kamu masih bisa menyalin link lokasi.",
+                "Partner not connected on MySpaceLove yet. You can still copy the location link.",
                 "warning"
             );
         }
@@ -759,7 +759,7 @@ export default function MapView({
             }
         } catch (error) {
             console.error("Failed to copy location link", error);
-            showNotification("Gagal menyalin link lokasi.", "error");
+            showNotification("Failed to copy location link.", "error");
         } finally {
             setIsSharing(false);
         }
@@ -787,11 +787,11 @@ export default function MapView({
                 url: pendingShareUrl,
             });
 
-            showNotification("Link lokasi berhasil dikirim ke email pasangan.", "success");
+            showNotification("Location link sent to partner's email successfully.", "success");
             closeShareOptions();
         } catch (error) {
             console.error("Failed to share location via email", error);
-            showNotification("Gagal mengirim email lokasi.", "error");
+            showNotification("Failed to send location email.", "error");
         } finally {
             setIsSharing(false);
         }
@@ -803,10 +803,10 @@ export default function MapView({
             await axios.delete("/api/location");
             setUserLocation(null);
             setLastUpdated(null);
-            showNotification("Berhenti membagikan lokasi.", "warning");
+            showNotification("Stopped sharing location.", "warning");
         } catch (error) {
             console.error("Failed to stop sharing", error);
-            showNotification("Gagal menghentikan berbagi lokasi.", "error");
+            showNotification("Failed to stop location sharing.", "error");
         } finally {
             setIsStopping(false);
         }
@@ -832,14 +832,14 @@ export default function MapView({
                     <div className="rounded-2xl bg-white p-4 shadow-sm border border-pink-100">
                         <h3 className="mb-1 flex items-center gap-2 font-semibold text-gray-800">
                             <MapPin className="h-4 w-4 text-pink-500" />
-                            Kamu di sini
+                            You are here
                         </h3>
                         <p className="text-sm text-gray-600">
                             {userLocation
                                 ? `${userLocation.latitude.toFixed(
                                       5
                                   )}, ${userLocation.longitude.toFixed(5)}`
-                                : "Belum ada lokasi"}
+                                : "No location yet"}
                         </p>
                         <p className="text-xs text-gray-400 mt-2">
                             {formattedUserUpdated
@@ -861,7 +861,7 @@ export default function MapView({
                                           )}, ${partnerLocation.longitude.toFixed(
                                               5
                                           )}`
-                                        : "Belum ada lokasi"}
+                                        : "No location yet"}
                                 </p>
                                 <p className="text-xs text-gray-400 mt-2">
                                     {formattedPartnerUpdated
@@ -963,10 +963,10 @@ export default function MapView({
                 {generatedPassword && invitedPartnerEmail && (
                     <div className="rounded-2xl border border-yellow-200 bg-yellow-50 px-4 py-3 text-sm text-yellow-800 shadow-sm">
                         <p className="font-semibold">
-                            Akun pasangan berhasil dibuat otomatis.
+                            Partner account created automatically.
                         </p>
                         <p className="mt-1">
-                            Bagikan kredensial ini ke pasanganmu untuk login:
+                            Share these credentials with your partner to login:
                             <br />
                             <span className="font-semibold">Email:</span>{" "}
                             {invitedPartnerEmail}{" "}
@@ -1020,12 +1020,12 @@ export default function MapView({
                                         >
                                             <span className="inline-flex items-center gap-1 font-semibold text-pink-500">
                                                 <MapPin className="h-4 w-4" />
-                                                Kamu di sini
+                                                You are here
                                             </span>
                                             <br />
                                             {formattedUserUpdated
-                                                ? `Terakhir update: ${formattedUserUpdated}`
-                                                : "Belum ada data"}
+                                                ? `Last updated: ${formattedUserUpdated}`
+                                                : "No data yet"}
                                         </Popup>
                                     </Marker>
                                 )}
@@ -1050,8 +1050,8 @@ export default function MapView({
                                             </span>
                                             <br />
                                             {formattedPartnerUpdated
-                                                ? `Terakhir update: ${formattedPartnerUpdated}`
-                                                : "Belum ada data"}
+                                                ? `Last updated: ${formattedPartnerUpdated}`
+                                                : "No data yet"}
                                         </Popup>
                                     </Marker>
                                 )}

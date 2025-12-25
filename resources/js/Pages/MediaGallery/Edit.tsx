@@ -264,7 +264,7 @@ export default function GalleryEdit({ item }: { item: MediaGalleryItem }) {
                                     />
                                 ) : (
                                     <div className="flex h-72 items-center justify-center text-sm text-gray-400">
-                                        Belum ada pratinjau tersedia.
+                                        No preview available yet.
                                     </div>
                                 )}
                             </div>
