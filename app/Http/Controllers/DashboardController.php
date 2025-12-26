@@ -69,6 +69,7 @@ class DashboardController extends Controller
                 'has_partner' => $space->user_two_id !== null,
                 'is_owner' => $space->user_one_id === Auth::id(),
             ],
+            'shouldShowTour' => Auth::user()->tour_completed_at === null,
         ]);
     }
 

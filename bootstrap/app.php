@@ -1,6 +1,10 @@
 <?php
 
 use App\Http\Middleware\EnsureSpaceAccess;
+use App\Http\Middleware\SecurityHeaders;
+use App\Http\Middleware\SanitizeInput;
+use App\Http\Middleware\DetectSuspiciousActivity;
+use App\Http\Middleware\RateLimitMiddleware;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -24,6 +28,9 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
 
         $middleware->web(append: [
+            \App\Http\Middleware\SecurityHeaders::class,
+            \App\Http\Middleware\SanitizeInput::class,
+            \App\Http\Middleware\DetectSuspiciousActivity::class,
             \App\Http\Middleware\SetLocale::class,
             \App\Http\Middleware\HandleInertiaRequests::class,
             \Illuminate\Http\Middleware\AddLinkHeadersForPreloadedAssets::class,
@@ -31,11 +38,15 @@ return Application::configure(basePath: dirname(__DIR__))
 
         $middleware->api(prepend: [
             EnsureFrontendRequestsAreStateful::class,
+            \App\Http\Middleware\SecurityHeaders::class,
+            \App\Http\Middleware\SanitizeInput::class,
+            \App\Http\Middleware\DetectSuspiciousActivity::class,
         ]);
 
         $middleware->alias([
             'space.access' => EnsureSpaceAccess::class,
             'verified' => \App\Http\Middleware\EnsureEmailIsVerified::class,
+            'rate.limit' => \App\Http\Middleware\RateLimitMiddleware::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

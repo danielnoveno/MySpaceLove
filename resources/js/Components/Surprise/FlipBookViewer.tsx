@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo, memo } from "react";
 import { ChevronLeft, ChevronRight, Book, Heart, Star, Sparkles, Flower2 } from "lucide-react";
 
 export interface FlipBookPage {
@@ -106,7 +106,35 @@ const pageTemplates = [
     },
 ];
 
-export default function FlipBookViewer({
+// Memoized decoration component
+const DecorationIcon = memo(({ deco, idx }: { deco: any; idx: number }) => {
+    const IconComponent = deco.icon;
+    return (
+        <div
+            className="absolute animate-float"
+            style={{
+                top: deco.top,
+                bottom: deco.bottom,
+                left: deco.left,
+                right: deco.right,
+                transform: `rotate(${deco.rotation}deg)`,
+                opacity: deco.opacity,
+                animationDelay: `${idx * 0.5}s`,
+            }}
+        >
+            <IconComponent 
+                size={deco.size} 
+                color={deco.color}
+                fill={deco.color}
+                strokeWidth={1.5}
+            />
+        </div>
+    );
+});
+
+DecorationIcon.displayName = 'DecorationIcon';
+
+function FlipBookViewer({
     pages,
     onComplete,
     title = "📖 Scrapbook Kenangan",
@@ -142,12 +170,25 @@ export default function FlipBookViewer({
         onComplete();
     };
 
+    const handlePageJump = (index: number) => {
+        if (!isFlipping && index !== currentPage) {
+            setIsFlipping(true);
+            setTimeout(() => {
+                setCurrentPage(index);
+                setIsFlipping(false);
+            }, 300);
+        }
+    };
+
     const isLastPage = currentPage === pages.length - 1;
     const isFirstPage = currentPage === 0;
     const page = pages[currentPage];
     
-    // Pilih template berdasarkan index halaman (cycle through templates)
-    const template = pageTemplates[currentPage % pageTemplates.length];
+    // Memoize template to avoid recalculation
+    const template = useMemo(() => 
+        pageTemplates[currentPage % pageTemplates.length],
+        [currentPage]
+    );
 
     if (!page) {
         return (
@@ -206,31 +247,9 @@ export default function FlipBookViewer({
                         
                         {/* Decorative elements */}
                         <div className="absolute inset-0 pointer-events-none overflow-hidden">
-                            {template.decorations.map((deco, idx) => {
-                                const IconComponent = deco.icon;
-                                return (
-                                    <div
-                                        key={idx}
-                                        className="absolute animate-float"
-                                        style={{
-                                            top: deco.top,
-                                            bottom: deco.bottom,
-                                            left: deco.left,
-                                            right: deco.right,
-                                            transform: `rotate(${deco.rotation}deg)`,
-                                            opacity: deco.opacity,
-                                            animationDelay: `${idx * 0.5}s`,
-                                        }}
-                                    >
-                                        <IconComponent 
-                                            size={deco.size} 
-                                            color={deco.color}
-                                            fill={deco.color}
-                                            strokeWidth={1.5}
-                                        />
-                                    </div>
-                                );
-                            })}
+                            {template.decorations.map((deco, idx) => (
+                                <DecorationIcon key={idx} deco={deco} idx={idx} />
+                            ))}
                         </div>
 
                         {/* Corner decorations */}
@@ -241,13 +260,15 @@ export default function FlipBookViewer({
 
                         {/* Page Content */}
                         <div className="relative z-10 p-8 md:p-12 space-y-6">
-                            {/* Image */}
+                            {/* Image with lazy loading */}
                             {page.image && (
                                 <div className="overflow-hidden rounded-2xl border-4 border-white shadow-xl transform hover:scale-[1.02] transition-transform duration-300">
                                     <img
                                         src={page.image}
                                         alt={page.title}
                                         className="h-64 w-full object-cover md:h-80"
+                                        loading="lazy"
+                                        decoding="async"
                                     />
                                 </div>
                             )}
@@ -277,15 +298,7 @@ export default function FlipBookViewer({
                                 {pages.map((_, index) => (
                                     <button
                                         key={index}
-                                        onClick={() => {
-                                            if (!isFlipping && index !== currentPage) {
-                                                setIsFlipping(true);
-                                                setTimeout(() => {
-                                                    setCurrentPage(index);
-                                                    setIsFlipping(false);
-                                                }, 300);
-                                            }
-                                        }}
+                                        onClick={() => handlePageJump(index)}
                                         className={`h-2.5 rounded-full transition-all duration-300 ${
                                             index === currentPage
                                                 ? "w-10 shadow-md"
@@ -353,3 +366,5 @@ export default function FlipBookViewer({
         </div>
     );
 }
+
+export default memo(FlipBookViewer);

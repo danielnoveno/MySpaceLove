@@ -402,4 +402,87 @@ return [
             'time_format' => 'F j, Y g:i A T',
         ],
     ],
+    'tour' => [
+        'start_tour' => 'Start Tour',
+        'next' => 'Next',
+        'previous' => 'Previous',
+        'done' => 'Done',
+        'exit_confirm' => 'Are you sure you want to exit the tour?',
+        'welcome' => [
+            'title' => 'Welcome to LoveSpace! 💕',
+            'description' => 'Let\'s take a quick tour to help you get started with all the amazing features designed for couples like you!',
+        ],
+        'stats' => [
+            'title' => 'Your Love Statistics 📊',
+            'description' => 'Track your relationship milestones: days together, memories created, and special moments shared. Watch your love story grow!',
+        ],
+        'timeline' => [
+            'title' => 'Love Timeline 📅',
+            'description' => 'Create and cherish your relationship timeline. Add photos, videos, and notes for each special moment. Build your digital scrapbook together!',
+        ],
+        'gallery' => [
+            'title' => 'Media Gallery 📸',
+            'description' => 'Store all your precious photos and videos in one beautiful gallery. Organize by albums and relive your memories anytime.',
+        ],
+        'countdown' => [
+            'title' => 'Special Countdowns ⏰',
+            'description' => 'Create countdowns for anniversaries, birthdays, trips, and other special events. Never miss an important date again!',
+        ],
+        'daily_messages' => [
+            'title' => 'Daily Love Messages 💌',
+            'description' => 'Send sweet daily messages to your partner. AI-generated or write your own. Schedule them or send instantly via email.',
+        ],
+        'journal' => [
+            'title' => 'Love Journal 📖',
+            'description' => 'Write private or shared journal entries. Document your feelings, thoughts, and relationship journey together.',
+        ],
+        'location' => [
+            'title' => 'Location Sharing 📍',
+            'description' => 'Share your real-time location with your partner. Perfect for long-distance relationships! Stay connected wherever you are.',
+        ],
+        'spotify' => [
+            'title' => 'Spotify Companion 🎵',
+            'description' => 'Listen to music together! Create shared playlists, schedule surprise songs, sync playback, and share your music moods.',
+        ],
+        'games' => [
+            'title' => 'Couple Games 🎮',
+            'description' => 'Play fun games together: Chess, Tic-Tac-Toe, and more! Compete, have fun, and track your scores.',
+        ],
+        'memory_lane' => [
+            'title' => 'Memory Lane 🎁',
+            'description' => 'Create interactive surprise experiences with puzzles, lucky boxes, and digital flipbooks! Perfect for special occasions.',
+        ],
+        'video_call' => [
+            'title' => 'Video Call Room 📹',
+            'description' => 'Start instant video calls with your partner. Secure and private room just for you two. No third-party apps needed!',
+        ],
+        'wishlist' => [
+            'title' => 'Wishlist 🎁',
+            'description' => 'Create and share wishlists. Know exactly what your partner wants for birthdays, anniversaries, and special occasions!',
+        ],
+        'docs' => [
+            'title' => 'Important Documents 📄',
+            'description' => 'Store important documents and files securely. Access them anytime, anywhere. Perfect for travel docs, tickets, and more.',
+        ],
+        'surprise_notes' => [
+            'title' => 'Surprise Notes 💝',
+            'description' => 'Leave surprise notes for your partner to discover. Make their day special with unexpected sweet messages!',
+        ],
+        'goals' => [
+            'title' => 'Relationship Goals 🎯',
+            'description' => 'Set and track relationship goals together. Build your future as a team! Plan trips, savings, and life milestones.',
+        ],
+        'notifications' => [
+            'title' => 'Notifications 🔔',
+            'description' => 'Stay updated with all activities. Get notified when your partner adds new content or interacts with yours.',
+        ],
+        'profile' => [
+            'title' => 'Your Profile ⚙️',
+            'description' => 'Manage your profile, change language, customize theme, and adjust settings. Make LoveSpace truly yours!',
+        ],
+        'complete' => [
+            'title' => 'You\'re All Set! 🎉',
+            'description' => 'Start creating beautiful memories with your partner. You can replay this tour anytime from your profile settings. Enjoy LoveSpace!',
+        ],
+    ],
 ];

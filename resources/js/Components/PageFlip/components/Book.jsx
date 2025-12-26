@@ -148,14 +148,139 @@ function Book({ pages = [], coverImage = null, coverTitle = "Our Story" }) {
   const defaultCoverImage = "https://upload.wikimedia.org/wikipedia/commons/9/98/International_Pok%C3%A9mon_logo.svg";
 
   return (
-    <HTMLFlipBook
-      width={370}
-      height={500}
-      maxShadowOpacity={0.5}
-      drawShadow={true}
-      showCover={true}
-      size='fixed'
-    >
+    <div style={{
+      display: 'flex',
+      justifyContent: 'center',
+      alignItems: 'center',
+      minHeight: '100vh',
+      padding: '2rem',
+      background: 'linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%)',
+      position: 'relative',
+      overflow: 'hidden',
+    }}>
+      {/* Animated Background Particles */}
+      <div style={{
+        position: 'absolute',
+        inset: 0,
+        pointerEvents: 'none',
+        overflow: 'hidden',
+      }}>
+        {/* Large floating emojis */}
+        <div style={{ position: 'absolute', top: '8%', left: '10%', fontSize: '4rem', opacity: 0.15, animation: 'float 4s ease-in-out infinite' }}>💕</div>
+        <div style={{ position: 'absolute', top: '15%', right: '12%', fontSize: '3.5rem', opacity: 0.12, animation: 'float 5s ease-in-out infinite', animationDelay: '0.5s' }}>⭐</div>
+        <div style={{ position: 'absolute', top: '45%', left: '5%', fontSize: '3.8rem', opacity: 0.13, animation: 'float 4.5s ease-in-out infinite', animationDelay: '1s' }}>🌸</div>
+        <div style={{ position: 'absolute', bottom: '20%', right: '8%', fontSize: '4.2rem', opacity: 0.14, animation: 'float 5.5s ease-in-out infinite', animationDelay: '1.5s' }}>💖</div>
+        <div style={{ position: 'absolute', bottom: '35%', left: '15%', fontSize: '3.6rem', opacity: 0.12, animation: 'float 4.8s ease-in-out infinite', animationDelay: '2s' }}>✨</div>
+        <div style={{ position: 'absolute', top: '60%', right: '18%', fontSize: '3.9rem', opacity: 0.13, animation: 'float 5.2s ease-in-out infinite', animationDelay: '2.5s' }}>🦋</div>
+        <div style={{ position: 'absolute', top: '30%', left: '25%', fontSize: '3.4rem', opacity: 0.11, animation: 'float 4.3s ease-in-out infinite', animationDelay: '3s' }}>🌺</div>
+        <div style={{ position: 'absolute', bottom: '15%', left: '35%', fontSize: '3.7rem', opacity: 0.12, animation: 'float 5.8s ease-in-out infinite', animationDelay: '3.5s' }}>💝</div>
+        
+        {/* Geometric shapes with gradients */}
+        <div style={{
+          position: 'absolute',
+          top: '10%',
+          right: '5%',
+          width: '300px',
+          height: '300px',
+          borderRadius: '50%',
+          background: 'radial-gradient(circle, rgba(255,105,180,0.15) 0%, transparent 70%)',
+          filter: 'blur(60px)',
+          animation: 'pulse 8s ease-in-out infinite',
+        }} />
+        <div style={{
+          position: 'absolute',
+          bottom: '10%',
+          left: '5%',
+          width: '350px',
+          height: '350px',
+          borderRadius: '50%',
+          background: 'radial-gradient(circle, rgba(147,51,234,0.15) 0%, transparent 70%)',
+          filter: 'blur(60px)',
+          animation: 'pulse 10s ease-in-out infinite',
+          animationDelay: '2s',
+        }} />
+        <div style={{
+          position: 'absolute',
+          top: '50%',
+          left: '50%',
+          transform: 'translate(-50%, -50%)',
+          width: '400px',
+          height: '400px',
+          borderRadius: '50%',
+          background: 'radial-gradient(circle, rgba(56,189,248,0.1) 0%, transparent 70%)',
+          filter: 'blur(80px)',
+          animation: 'pulse 12s ease-in-out infinite',
+          animationDelay: '4s',
+        }} />
+      </div>
+
+      {/* Header with title */}
+      <div style={{
+        position: 'absolute',
+        top: '2rem',
+        left: '50%',
+        transform: 'translateX(-50%)',
+        zIndex: 10,
+        textAlign: 'center',
+      }}>
+        <div style={{
+          display: 'inline-flex',
+          alignItems: 'center',
+          gap: '0.75rem',
+          padding: '0.75rem 1.5rem',
+          borderRadius: '9999px',
+          background: 'rgba(255,255,255,0.1)',
+          backdropFilter: 'blur(10px)',
+          border: '1px solid rgba(255,255,255,0.2)',
+          boxShadow: '0 8px 32px rgba(0,0,0,0.1)',
+        }}>
+          <span style={{ fontSize: '1.5rem' }}>📖</span>
+          <span style={{
+            fontSize: '1rem',
+            fontWeight: '700',
+            color: 'white',
+            letterSpacing: '0.1em',
+            textTransform: 'uppercase',
+          }}>
+            Memory Flipbook
+          </span>
+          <span style={{ fontSize: '1.5rem' }}>💕</span>
+        </div>
+      </div>
+
+      {/* Main flipbook container with glow */}
+      <div style={{
+        position: 'relative',
+        zIndex: 5,
+        width: '1000px', // Minimum width for 2-page spread (450px * 2 + spacing)
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+      }}>
+        {/* Glow effect behind flipbook */}
+        <div style={{
+          position: 'absolute',
+          top: '50%',
+          left: '50%',
+          transform: 'translate(-50%, -50%)',
+          width: '1100px',
+          height: '750px',
+          background: 'radial-gradient(ellipse, rgba(255,105,180,0.3) 0%, rgba(147,51,234,0.2) 50%, transparent 70%)',
+          filter: 'blur(40px)',
+          animation: 'glow 4s ease-in-out infinite',
+          pointerEvents: 'none',
+          zIndex: -1,
+        }} />
+
+        {/* The actual flipbook */}
+        <HTMLFlipBook
+          width={450}
+          height={600}
+          maxShadowOpacity={0.5}
+          drawShadow={true}
+          showCover={true}
+          size='fixed'
+        >
       {/* Cover Page */}
       <div className="page" style={{ 
         background: 'linear-gradient(135deg, #ffeef8 0%, #ffe0f0 30%, #e9d5ff 70%, #dcc3ff 100%)',
@@ -583,6 +708,40 @@ function Book({ pages = [], coverImage = null, coverTitle = "Our Story" }) {
         );
       })}
     </HTMLFlipBook>
+      </div>
+
+      {/* CSS Animations */}
+      <style>{`
+        @keyframes float {
+          0%, 100% {
+            transform: translateY(0px) rotate(0deg);
+          }
+          50% {
+            transform: translateY(-20px) rotate(5deg);
+          }
+        }
+        
+        @keyframes pulse {
+          0%, 100% {
+            opacity: 0.5;
+            transform: scale(1);
+          }
+          50% {
+            opacity: 0.8;
+            transform: scale(1.1);
+          }
+        }
+        
+        @keyframes glow {
+          0%, 100% {
+            opacity: 0.3;
+          }
+          50% {
+            opacity: 0.6;
+          }
+        }
+      `}</style>
+    </div>
   );
 }
 

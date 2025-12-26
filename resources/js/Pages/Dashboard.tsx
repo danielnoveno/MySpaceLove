@@ -21,6 +21,7 @@ import {
 import { useTranslation } from "@/hooks/useTranslation";
 import { replacePlaceholders } from "@/utils/translation";
 import { PageProps } from "@/types";
+import ProductTour from "@/Components/ProductTour/ProductTour";
 
 interface DashboardData {
     timelineCount: number;
@@ -108,6 +109,7 @@ export default function Dashboard({ dashboardData, spaceContext }: Props) {
                 has_partner?: boolean;
                 is_owner?: boolean;
             } | null;
+            shouldShowTour?: boolean;
         }
     >();
 
@@ -249,6 +251,7 @@ export default function Dashboard({ dashboardData, spaceContext }: Props) {
     const quickActions = useMemo(
         () => [
             {
+                id: "timeline-section",
                 icon: Calendar,
                 label:
                     quickActionStrings?.add_moment?.label ?? "Add Moment",
@@ -281,6 +284,7 @@ export default function Dashboard({ dashboardData, spaceContext }: Props) {
                 color: "from-indigo-600 to-blue-600",
             },
             {
+                id: "gallery-section",
                 icon: Image,
                 label:
                     quickActionStrings?.upload_photo?.label ?? "Upload Photo",
@@ -339,6 +343,7 @@ export default function Dashboard({ dashboardData, spaceContext }: Props) {
                 requiresPartner: true,
             },
             {
+                id: "journal-section",
                 icon: BookOpen,
                 label:
                     quickActionStrings?.journal?.label ?? "Write Journal",
@@ -379,7 +384,7 @@ export default function Dashboard({ dashboardData, spaceContext }: Props) {
     return (
         <AuthenticatedLayout
             header={
-                <div className="flex flex-col gap-1">
+                <div id="space-title" className="flex flex-col gap-1">
                     <p className="text-sm text-gray-500">
                         {dashboardStrings.header?.subtitle ??
                             "Your shared space"}
@@ -525,7 +530,7 @@ export default function Dashboard({ dashboardData, spaceContext }: Props) {
                     </div>
                 )}
 
-                <div className="grid gap-6 md:grid-cols-3">
+                <div id="stats-section" className="grid gap-6 md:grid-cols-3">
                     <div className="rounded-3xl bg-white p-6 shadow-sm">
                         <div className="flex items-center gap-3">
                             <span className="flex h-10 w-10 items-center justify-center rounded-full bg-pink-100">
@@ -590,7 +595,7 @@ export default function Dashboard({ dashboardData, spaceContext }: Props) {
                     </div>
                 </div>
 
-                <div className="rounded-3xl bg-white p-6 shadow-sm">
+                <div id="quick-actions-section" className="rounded-3xl bg-white p-6 shadow-sm">
                     <h2 className="text-xl font-semibold text-gray-900">
                         {dashboardStrings.cards?.quick_actions?.title ??
                             "Quick Actions"}
@@ -634,6 +639,7 @@ export default function Dashboard({ dashboardData, spaceContext }: Props) {
                             return (
                                 <Link
                                     key={index}
+                                    id={action.id}
                                     href={comingSoon ? "#" : action.href}
                                     onClick={handleActionClick}
                                     title={actionTitle}
@@ -678,7 +684,7 @@ export default function Dashboard({ dashboardData, spaceContext }: Props) {
                 </div>
 
                 <div className="grid gap-8 lg:grid-cols-2">
-                    <div className="rounded-3xl border border-orange-100 bg-white p-6 shadow-sm">
+                    <div id="countdown-section" className="rounded-3xl border border-orange-100 bg-white p-6 shadow-sm">
                         <h2 className="mb-4 flex items-center gap-2 text-xl font-semibold text-gray-900">
                             <Calendar className="h-5 w-5 text-orange-500" />
                             {dashboardStrings.cards?.upcoming_events?.title ??
@@ -736,7 +742,7 @@ export default function Dashboard({ dashboardData, spaceContext }: Props) {
                         </Link>
                     </div>
 
-                    <div className="rounded-3xl border border-purple-100 bg-white p-6 shadow-sm">
+                    <div id="daily-messages-section" className="rounded-3xl border border-purple-100 bg-white p-6 shadow-sm">
                         <h2 className="mb-4 flex items-center gap-2 text-xl font-semibold text-gray-900">
                             <MessageSquare className="h-5 w-5 text-purple-500" />
                             {dashboardStrings.cards?.recent_messages?.title ??
@@ -799,6 +805,11 @@ export default function Dashboard({ dashboardData, spaceContext }: Props) {
                     </div>
                 </div>
             </div>
+
+            {/* Product Tour for New Users */}
+            <ProductTour 
+                autoStart={props.shouldShowTour ?? false}
+            />
         </AuthenticatedLayout>
     );
 }

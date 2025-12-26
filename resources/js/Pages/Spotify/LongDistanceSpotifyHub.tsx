@@ -205,13 +205,13 @@ export default function LongDistanceSpotifyHub({ space }: Props) {
     const { translations: spotifyTrans } = useTranslation("spotify");
     
     // Extract translation groups
-    const header = spotifyTrans.header ?? {};
-    const connection = spotifyTrans.connection ?? {};
-    const playlist = spotifyTrans.playlist ?? {};
-    const mood = spotifyTrans.mood ?? {};
-    const listening = spotifyTrans.listening ?? {};
-    const surprise = spotifyTrans.surprise ?? {};
-    const capsule = spotifyTrans.capsule ?? {};
+    const header: any = spotifyTrans.header ?? {};
+    const connection: any = spotifyTrans.connection ?? {};
+    const playlistTrans: any = spotifyTrans.playlist ?? {};
+    const moodTrans: any = spotifyTrans.mood ?? {};
+    const listeningTrans: any = spotifyTrans.listening ?? {};
+    const surprise: any = spotifyTrans.surprise ?? {};
+    const capsule: any = spotifyTrans.capsule ?? {};
     const loading: any = spotifyTrans.loading ?? {};
     const messages: any = spotifyTrans.messages ?? {};
     
@@ -883,7 +883,7 @@ export default function LongDistanceSpotifyHub({ space }: Props) {
                                 <div className="grid gap-3">
                                     {moods.length === 0 && (
                                         <p className="rounded-2xl border border-blue-100 bg-white p-4 text-sm text-blue-500">
-                                            {mood.empty ?? "No mood snapshots yet. Share your first vibe!"}
+                                            {moodTrans.empty ?? "No mood snapshots yet. Share your first vibe!"}
                                         </p>
                                     )}
 
@@ -969,7 +969,7 @@ export default function LongDistanceSpotifyHub({ space }: Props) {
                                 <div className="space-y-3">
                                     {surpriseDrops.length === 0 && (
                                         <p className="rounded-2xl border border-rose-100 bg-white p-4 text-sm text-rose-500">
-                                            {surprise.empty ?? "No surprise drops scheduled yet. Plan your first musical surprise!"}
+                                            {(surprise as any).empty ?? "No surprise drops scheduled yet. Plan your first musical surprise!"}
                                         </p>
                                     )}
 
@@ -1130,7 +1130,7 @@ export default function LongDistanceSpotifyHub({ space }: Props) {
                                 <div className="space-y-4">
                                     {memoryCapsules.length === 0 && (
                                         <p className="rounded-2xl border border-amber-100 bg-white p-4 text-sm text-amber-600">
-                                            {capsule.empty ?? "No memory capsules yet. Start preserving your musical memories!"}
+                                            {(capsule as any).empty ?? "No memory capsules yet. Start preserving your musical memories!"}
                                         </p>
                                     )}
 

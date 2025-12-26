@@ -402,4 +402,87 @@ return [
             'time_format' => 'd F Y H.i T',
         ],
     ],
+    'tour' => [
+        'start_tour' => 'Mulai Tur',
+        'next' => 'Lanjut',
+        'previous' => 'Sebelumnya',
+        'done' => 'Selesai',
+        'exit_confirm' => 'Yakin ingin keluar dari tur?',
+        'welcome' => [
+            'title' => 'Selamat Datang di LoveSpace! 💕',
+            'description' => 'Yuk, kita tur singkat untuk mengenalkan semua fitur keren yang dirancang khusus untuk pasangan seperti kalian!',
+        ],
+        'stats' => [
+            'title' => 'Statistik Cinta Kalian 📊',
+            'description' => 'Pantau pencapaian hubungan: hari bersama, kenangan yang tercipta, dan momen spesial yang dibagikan. Lihat cerita cinta kalian berkembang!',
+        ],
+        'timeline' => [
+            'title' => 'Timeline Cinta 📅',
+            'description' => 'Buat dan kenang timeline hubungan kalian. Tambahkan foto, video, dan catatan untuk setiap momen spesial. Bangun scrapbook digital bersama!',
+        ],
+        'gallery' => [
+            'title' => 'Galeri Media 📸',
+            'description' => 'Simpan semua foto dan video berharga dalam satu galeri cantik. Atur berdasarkan album dan kenang kembali kapan saja.',
+        ],
+        'countdown' => [
+            'title' => 'Countdown Spesial ⏰',
+            'description' => 'Buat countdown untuk anniversary, ulang tahun, liburan, dan acara spesial lainnya. Jangan sampai terlewat tanggal penting!',
+        ],
+        'daily_messages' => [
+            'title' => 'Pesan Cinta Harian 💌',
+            'description' => 'Kirim pesan manis harian ke pasangan. AI-generated atau tulis sendiri. Jadwalkan atau kirim langsung via email.',
+        ],
+        'journal' => [
+            'title' => 'Jurnal Cinta 📖',
+            'description' => 'Tulis catatan jurnal pribadi atau bersama. Dokumentasikan perasaan, pikiran, dan perjalanan hubungan kalian.',
+        ],
+        'location' => [
+            'title' => 'Berbagi Lokasi 📍',
+            'description' => 'Bagikan lokasi real-time ke pasangan. Sempurna untuk hubungan jarak jauh! Tetap terhubung di mana pun kalian berada.',
+        ],
+        'spotify' => [
+            'title' => 'Spotify Companion 🎵',
+            'description' => 'Dengarkan musik bersama! Buat playlist bersama, jadwalkan lagu kejutan, sinkronkan playback, dan bagikan mood musik kalian.',
+        ],
+        'games' => [
+            'title' => 'Game Couple 🎮',
+            'description' => 'Main game seru bersama: Catur, Tic-Tac-Toe, dan lainnya! Berkompetisi, bersenang-senang, dan pantau skor kalian.',
+        ],
+        'memory_lane' => [
+            'title' => 'Memory Lane 🎁',
+            'description' => 'Buat pengalaman kejutan interaktif dengan puzzle, lucky box, dan flipbook digital! Sempurna untuk acara spesial.',
+        ],
+        'video_call' => [
+            'title' => 'Ruang Video Call 📹',
+            'description' => 'Mulai video call instan dengan pasangan. Ruang aman dan privat khusus untuk kalian berdua. Tanpa aplikasi pihak ketiga!',
+        ],
+        'wishlist' => [
+            'title' => 'Wishlist 🎁',
+            'description' => 'Buat dan bagikan wishlist. Tahu persis apa yang pasangan inginkan untuk ulang tahun, anniversary, dan acara spesial!',
+        ],
+        'docs' => [
+            'title' => 'Dokumen Penting 📄',
+            'description' => 'Simpan dokumen dan file penting dengan aman. Akses kapan saja, di mana saja. Sempurna untuk dokumen travel, tiket, dan lainnya.',
+        ],
+        'surprise_notes' => [
+            'title' => 'Catatan Kejutan 💝',
+            'description' => 'Tinggalkan catatan kejutan untuk pasangan. Buat hari mereka spesial dengan pesan manis yang tak terduga!',
+        ],
+        'goals' => [
+            'title' => 'Target Hubungan 🎯',
+            'description' => 'Tetapkan dan pantau target hubungan bersama. Bangun masa depan sebagai tim! Rencanakan liburan, tabungan, dan milestone hidup.',
+        ],
+        'notifications' => [
+            'title' => 'Notifikasi 🔔',
+            'description' => 'Tetap update dengan semua aktivitas. Dapatkan notifikasi saat pasangan menambah konten baru atau berinteraksi dengan kontenmu.',
+        ],
+        'profile' => [
+            'title' => 'Profil Kamu ⚙️',
+            'description' => 'Kelola profil, ganti bahasa, kustomisasi tema, dan atur pengaturan. Buat LoveSpace benar-benar milik kalian!',
+        ],
+        'complete' => [
+            'title' => 'Semua Siap! 🎉',
+            'description' => 'Mulai ciptakan kenangan indah dengan pasangan. Kamu bisa ulangi tur ini kapan saja dari pengaturan profil. Selamat menikmati LoveSpace!',
+        ],
+    ],
 ];

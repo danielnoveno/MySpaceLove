@@ -154,6 +154,14 @@ Route::middleware(['auth', 'verified'])->group(function () {
         return back()->withCookie(cookie()->forever('locale', $locale));
     })->name('locale.switch');
 
+    Route::post('/tour/complete', function (Request $request) {
+        $user = $request->user();
+        $user->tour_completed_at = now();
+        $user->save();
+
+        return response()->json(['success' => true]);
+    })->name('tour.complete');
+
     Route::get('/games', [GamesController::class, 'index'])->name('games.index');
     Route::get('/games/{slug}/leaderboard', [GamesController::class, 'leaderboard'])
         ->name('games.leaderboard');

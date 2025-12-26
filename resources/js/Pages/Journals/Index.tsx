@@ -79,11 +79,6 @@ export default function JournalIndex({ items, space }: Props) {
 
     return (
         <AuthenticatedLayout
-            loveCursor={{
-                color: "#f97316",
-                heartCount: 36,
-                className: "opacity-60",
-            }}
             header={
                 <div className="flex flex-col gap-1">
                     <p className="text-sm uppercase tracking-[0.35em] text-amber-500">
@@ -129,7 +124,7 @@ export default function JournalIndex({ items, space }: Props) {
                         <p className="mt-2 text-sm text-amber-600">
                             Start writing your first story today. ✍️
                         </p>
-                    </div>", "StartLine">124
+                    </div>
                 ) : (
                     <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
                         {items.map((item) => {
