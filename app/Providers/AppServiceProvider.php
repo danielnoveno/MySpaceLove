@@ -22,13 +22,7 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        if (
-            !$this->app->runningInConsole()
-            && config('session.driver') === 'database'
-            && !Schema::hasTable(config('session.table', 'sessions'))
-        ) {
-            config(['session.driver' => 'file']);
-        }
+
 
         $appUrl = config('app.url');
 

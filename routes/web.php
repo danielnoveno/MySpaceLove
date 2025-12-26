@@ -12,6 +12,7 @@ use App\Http\Controllers\Api\LoveTimelineApiController;
 use App\Http\Controllers\Api\MediaGalleryApiController;
 use App\Http\Controllers\Api\SpaceApiController;
 use App\Http\Controllers\Api\SurpriseNoteApiController;
+use App\Http\Controllers\PublicSurpriseController;
 use App\Http\Controllers\Api\WishlistApiController;
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\ChatController;
@@ -47,88 +48,10 @@ Route::get('/about', function () {
 })->name('about');
 
 Route::get('/location/{space:slug}', [LocationController::class, 'publicView'])->name('location.public');
-Route::get('/surprise/story', function (MemoryLaneContentService $memoryLane) {
-    $storyBase = __('surprise.story_book');
-    $defaultSpaceTitle = data_get($storyBase, 'defaults.spaceTitle', 'My Favorite Person');
-
-    $storyContent = __('surprise.story_book', [
-        'spaceTitle' => $defaultSpaceTitle,
-    ]);
-
-    $scrapbookMeta = data_get($storyContent, 'scrapbook', []);
-    $scrapbookPages = $memoryLane->scrapbookPages();
-
-    $storyContent['scrapbook'] = [
-        'title' => $scrapbookMeta['title'] ?? 'Digital scrapbook',
-        'subtitle' => $scrapbookMeta['subtitle'] ?? '',
-        'empty' => $scrapbookMeta['empty'] ?? '',
-        'cta' => $scrapbookMeta['cta'] ?? null,
-        'manage_url' => null,
-        'pages' => $scrapbookPages,
-    ];
-
-    unset($storyContent['defaults']);
-
-    return Inertia::render('Surprise/StoryBook', [
-        'storyBook' => $storyContent,
-    ]);
-})->name('surprise.story');
-Route::get('/surprise/memory', function (MemoryLaneContentService $memoryLane, Request $request) {
-    $memoryContent = $memoryLane->resolve();
-    $skipPuzzle = config('app.debug') || $request->boolean('skipPuzzle');
-
-    return Inertia::render('Surprise/MemoryLanePublic', [
-        'memoryLane' => $memoryContent,
-        'skipPuzzle' => $skipPuzzle,
-    ]);
-})->name('surprise.memory');
-Route::get('/surprise/{space:slug}/story', function (\App\Models\Space $space, MemoryLaneContentService $memoryLane) {
-    $storyBase = __('surprise.story_book');
-    $storyContent = __('surprise.story_book', [
-        'spaceTitle' => $space->title ?? data_get($storyBase, 'defaults.spaceTitle', 'My Favorite Person'),
-    ]);
-
-    $scrapbookMeta = data_get($storyContent, 'scrapbook', []);
-    // Use flipbookPages() to get data from flipbook_pages config field
-    $scrapbookPages = $memoryLane->flipbookPages($space);
-    $coverData = $memoryLane->flipbookCoverData($space);
-
-    $storyContent['scrapbook'] = [
-        'title' => $scrapbookMeta['title'] ?? 'Digital scrapbook',
-        'subtitle' => $scrapbookMeta['subtitle'] ?? '',
-        'empty' => $scrapbookMeta['empty'] ?? '',
-        'cta' => $scrapbookMeta['cta'] ?? null,
-        'manage_url' => route('memory-lane.edit', ['space' => $space->slug]),
-        'pages' => $scrapbookPages,
-        'coverImage' => $coverData['image'],
-        'coverTitle' => $coverData['title'],
-    ];
-
-    unset($storyContent['defaults']);
-
-    return Inertia::render('Surprise/StoryBook', [
-        'space' => [
-            'id' => $space->id,
-            'slug' => $space->slug,
-            'title' => $space->title,
-        ],
-        'storyBook' => $storyContent,
-    ]);
-})->name('surprise.story.space');
-Route::get('/surprise/{space:slug}/memory', function (\App\Models\Space $space, MemoryLaneContentService $memoryLane, Request $request) {
-    $memoryContent = $memoryLane->resolve($space);
-    $skipPuzzle = config('app.debug') || $request->boolean('skipPuzzle');
-
-    return Inertia::render('Surprise/MemoryLanePublic', [
-        'space' => [
-            'id' => $space->id,
-            'slug' => $space->slug,
-            'title' => $space->title,
-        ],
-        'memoryLane' => $memoryContent,
-        'skipPuzzle' => $skipPuzzle,
-    ]);
-})->name('surprise.memory.space');
+Route::get('/surprise/story', [PublicSurpriseController::class, 'story'])->name('surprise.story');
+Route::get('/surprise/memory', [PublicSurpriseController::class, 'memory'])->name('surprise.memory');
+Route::get('/surprise/{space:slug}/story', [PublicSurpriseController::class, 'spaceStory'])->name('surprise.story.space');
+Route::get('/surprise/{space:slug}/memory', [PublicSurpriseController::class, 'spaceMemory'])->name('surprise.memory.space');
 
 Route::post('/surprise/{space:slug}/memory/verify-pin', [MemoryLaneConfigController::class, 'verifyPin'])->name('surprise.memory.verifyPin');
 
@@ -192,6 +115,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     Route::middleware('space.access')->group(function () {
         Route::get('/spaces/{space:slug}/notifications', [NotificationController::class, 'index'])->name('spaces.notifications.index');
+        Route::get('/spaces/{space:slug}/notifications/recent', [NotificationController::class, 'recent'])->name('spaces.notifications.recent');
         Route::post('/spaces/{space:slug}/notifications/read-all', [NotificationController::class, 'markAllAsRead'])->name('spaces.notifications.readAll');
         Route::post('/spaces/{space:slug}/notifications/{notification}/read', [NotificationController::class, 'markAsRead'])->name('spaces.notifications.read');
         Route::delete('/spaces/{space:slug}/notifications/{notification}', [NotificationController::class, 'destroy'])->name('spaces.notifications.destroy');
@@ -214,6 +138,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/spaces/{space:slug}/daily-messages/create', [DailyMessageApiController::class, 'create'])->name('daily.create');
         Route::post('/spaces/{space:slug}/daily-messages', [DailyMessageApiController::class, 'store'])->name('daily.store');
         Route::post('/spaces/{space:slug}/daily-messages/{id}/email', [DailyMessageApiController::class, 'sendEmail'])->name('daily.email');
+        Route::post('/spaces/{space:slug}/daily-messages/{id}/regenerate', [DailyMessageApiController::class, 'regenerate'])->name('daily.regenerate');
 
         // Countdown Routes
         Route::get('/spaces/{space:slug}/countdowns', [CountdownApiController::class, 'index'])->name('countdown.index');

@@ -1,6 +1,7 @@
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout";
 import { Head, Link } from "@inertiajs/react";
 import { useCallback, useEffect, useMemo, useState } from "react";
+import TargetCursor from "@/Components/TargetCursor";
 
 interface GameSummary {
     id: number;
@@ -157,8 +158,14 @@ export default function GamesIndex({
     );
 
     return (
-        <AuthenticatedLayout>
+        <AuthenticatedLayout showSplashCursor={false}>
             <Head title="Games" />
+            <TargetCursor 
+                targetSelector="a, button, input, textarea, .cursor-target"
+                hideDefaultCursor={true}
+                spinDuration={2}
+                parallaxOn={true}
+            />
             <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div className="mb-8">
                     <h1 className="text-3xl font-semibold text-gray-900">

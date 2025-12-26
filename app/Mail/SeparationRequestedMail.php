@@ -8,7 +8,9 @@ use Illuminate\Bus\Queueable;
 use Illuminate\Mail\Mailable;
 use Illuminate\Queue\SerializesModels;
 
-class SeparationRequestedMail extends Mailable
+use Illuminate\Contracts\Queue\ShouldQueue;
+
+class SeparationRequestedMail extends Mailable implements ShouldQueue
 {
     use Queueable, SerializesModels;
 

@@ -11,7 +11,7 @@ import SecondaryButton from "@/Components/SecondaryButton";
 import { useCurrentSpace } from "@/hooks/useCurrentSpace";
 import { useTranslation } from "@/hooks/useTranslation";
 import axios from "axios";
-import { Loader2, X } from "lucide-react";
+import { Loader2, Sparkles, X } from "lucide-react";
 
 const ExpandableText = ({
     text,
@@ -197,6 +197,54 @@ export default function DailyMessageIndex({
         }
     };
 
+    const handleRegenerate = async (message: DailyMessage) => {
+        if (sendingEmailId !== null) {
+            return;
+        }
+
+        const messageId = String(message.id);
+        setSendingEmailId(messageId);
+        setLoadingOverlay({
+            title: "Regenerating message with AI...",
+            description:
+                "Tunggu sebentar, kami sedang membuat pesan baru untukmu ✨",
+        });
+
+        try {
+            const response = await axios.post(
+                route("daily.regenerate", { space: spaceSlug, id: message.id }),
+            );
+
+            const successMessage =
+                response.data?.success ??
+                "Pesan berhasil di-regenerate! 🎉";
+
+            setFeedbackBanner({
+                type: "success",
+                message: successMessage,
+            });
+
+            // Reload the page to show the new message
+            router.reload({ only: ['messages'] });
+        } catch (error) {
+            let fallbackMessage = "Gagal regenerate pesan. Coba lagi nanti, ya.";
+
+            if (axios.isAxiosError(error)) {
+                if (typeof error.response?.data?.error === "string") {
+                    fallbackMessage = error.response.data.error;
+                }
+            }
+
+            setFeedbackBanner({
+                type: "error",
+                message: fallbackMessage,
+            });
+        } finally {
+            setLoadingOverlay(null);
+            setSendingEmailId(null);
+        }
+    };
+
     const sanitize = (text: string) => {
         let sanitizedText = text
             .replace(/<[^>]*>/g, "")
@@ -305,7 +353,21 @@ export default function DailyMessageIndex({
                                             "Baca lebih sedikit"
                                         }
                                     />
-                                    <div className="mt-4 flex justify-end">
+                                    <div className="mt-4 flex justify-end gap-2">
+                                        <button
+                                            type="button"
+                                            onClick={() => void handleRegenerate(message)}
+                                            className={`flex items-center gap-1.5 px-3 py-1 text-sm rounded-lg bg-purple-500 text-white transition hover:bg-purple-600 ${
+                                                sendingEmailId === String(message.id)
+                                                    ? "opacity-70 cursor-not-allowed"
+                                                    : ""
+                                            }`}
+                                            disabled={sendingEmailId === String(message.id)}
+                                            title="Regenerate message with AI"
+                                        >
+                                            <Sparkles className="h-3.5 w-3.5" />
+                                            Regenerate
+                                        </button>
                                         <button
                                             type="button"
                                             onClick={() => void handleSendEmail(message)}

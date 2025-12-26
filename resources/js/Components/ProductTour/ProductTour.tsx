@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { driver } from 'driver.js';
 import 'driver.js/dist/driver.css';
 import { usePage } from '@inertiajs/react';
+import axios from 'axios';
 
 interface ProductTourProps {
     onComplete?: () => void;
@@ -31,7 +32,10 @@ export default function ProductTour({
             element: '#space-title',
             popover: {
                 title: t('tour.welcome.title', 'Welcome to LoveSpace! 💕'),
-                description: t('tour.welcome.description', 'Let\'s take a quick tour to help you get started with all the amazing features!'),
+                description: t('tour.welcome.description', 'Let\'s take a quick tour to help you get started with all the amazing features!') + 
+                    '<br/><br/><small style="opacity: 0.8;">💡 ' + 
+                    (locale === 'id' ? 'Anda bisa melewati tour ini kapan saja dengan klik tombol ✕ atau tekan ESC' : 'You can skip this tour anytime by clicking the ✕ button or pressing ESC') + 
+                    '</small>',
                 side: 'bottom',
                 align: 'center'
             }
@@ -214,24 +218,18 @@ export default function ProductTour({
                 return element !== null;
             }),
             onDestroyStarted: () => {
-                if (!driverObj.hasNextStep() || confirm(t('tour.exit_confirm', 'Are you sure you want to exit the tour?'))) {
-                    driverObj.destroy();
-                    setIsActive(false);
-                    
-                    // Mark tour as completed in backend
-                    if (onComplete) {
-                        onComplete();
-                    }
-                    
-                    // Call backend to save completion
-                    fetch('/tour/complete', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
-                        },
-                    }).catch(err => console.error('Failed to save tour completion:', err));
+                // Allow users to close the tour anytime without confirmation
+                driverObj.destroy();
+                setIsActive(false);
+                
+                // Mark tour as completed in backend
+                if (onComplete) {
+                    onComplete();
                 }
+                
+                // Call backend to save completion (mark as skipped/completed)
+                axios.post('/tour/complete')
+                    .catch(err => console.error('Failed to save tour completion:', err));
             },
             onDestroyed: () => {
                 setIsActive(false);
@@ -244,6 +242,11 @@ export default function ProductTour({
             smoothScroll: true,
             allowClose: true,
             disableActiveInteraction: false,
+            allowKeyboardControl: true, // Enable ESC key to close
+            onCloseClick: () => {
+                // Explicitly handle close button click
+                driverObj.destroy();
+            },
         });
 
         driverObj.drive();
@@ -328,13 +331,27 @@ export default function ProductTour({
                     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
                 }
 
+
                 .lovespace-tour-popover .driver-popover-close-btn {
-                    color: white;
-                    opacity: 0.8;
+                    color: white !important;
+                    background: rgba(255, 255, 255, 0.2) !important;
+                    width: 32px !important;
+                    height: 32px !important;
+                    border-radius: 50% !important;
+                    display: flex !important;
+                    align-items: center !important;
+                    justify-content: center !important;
+                    font-size: 20px !important;
+                    font-weight: bold !important;
+                    opacity: 1 !important;
+                    transition: all 0.2s !important;
+                    cursor: pointer !important;
                 }
 
                 .lovespace-tour-popover .driver-popover-close-btn:hover {
-                    opacity: 1;
+                    background: rgba(255, 255, 255, 0.3) !important;
+                    transform: scale(1.1) !important;
+                    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2) !important;
                 }
 
                 .driver-active-element {

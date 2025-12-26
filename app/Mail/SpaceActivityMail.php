@@ -8,81 +8,83 @@ use Illuminate\Bus\Queueable;
 use Illuminate\Mail\Mailable;
 use Illuminate\Queue\SerializesModels;
 
-class SpaceActivityMail extends Mailable
+use Illuminate\Contracts\Queue\ShouldQueue;
+
+class SpaceActivityMail extends Mailable implements ShouldQueue
 {
     use Queueable, SerializesModels;
 
     public function __construct(
-        public ?Space ,
-        public User ,
-        public ?User ,
-        public string ,
-        public array  = []
+        public ?Space $space,
+        public User $actor,
+        public ?User $recipient,
+        public string $type,
+        public array $context = []
     ) {
     }
 
     public function build(): self
     {
-         = ->resolvePayload();
+        $payload = $this->resolvePayload();
 
-        return ->subject(['subject'])
+        return $this->subject($payload['subject'])
             ->view('emails.space_activity', [
-                'title' => ['title'],
-                'message' => ['message'],
-                'cta' => ['cta'],
+                'title' => $payload['title'],
+                'message' => $payload['message'],
+                'cta' => $payload['cta'],
                 'appName' => config('app.name'),
-                'space' => ->space,
-                'actor' => ->actor,
-                'recipient' => ->recipient,
+                'space' => $this->space,
+                'actor' => $this->actor,
+                'recipient' => $this->recipient,
             ]);
     }
 
     private function resolvePayload(): array
     {
-         = ->space?->title ?? config('app.name');
-         = ->space?->slug;
-         = ->actor?->name ?? 'Pasanganmu';
+        $spaceTitle = $this->space?->title ?? config('app.name');
+        $spaceSlug = $this->space?->slug;
+        $actorName = $this->actor?->name ?? 'Pasanganmu';
 
-        return match (->type) {
+        return match ($this->type) {
             'timeline_created' => [
-                'subject' => .' menambahkan momen baru',
+                'subject' => $actorName . ' menambahkan momen baru',
                 'title' => 'Ada momen baru di Love Timeline',
-                'message' => .' baru saja menambahkan "'.(->context['timeline_title'] ?? 'momen spesial').'" pada Timeline '..'. Ajak dia mengenang cerita ini bersama.',
-                'cta' =>  ? [
+                'message' => $actorName . ' baru saja menambahkan "' . ($this->context['timeline_title'] ?? 'momen spesial') . '" pada Timeline ' . $spaceTitle . '. Ajak dia mengenang cerita ini bersama.',
+                'cta' => $spaceSlug ? [
                     'label' => 'Lihat Timeline',
-                    'url' => route('timeline.index', ['space' => ]),
+                    'url' => route('timeline.index', ['space' => $spaceSlug]),
                 ] : null,
             ],
             'gallery_uploaded' => [
-                'subject' => .' menambah foto ke galeri',
+                'subject' => $actorName . ' menambah foto ke galeri',
                 'title' => 'Galeri kalian makin penuh cinta',
-                'message' => .' baru saja mengunggah '.(->context['count'] ?? 1).' file ke galeri '..'. Jangan lupa kasih komentar manis ya!',
-                'cta' =>  ? [
+                'message' => $actorName . ' baru saja mengunggah ' . ($this->context['count'] ?? 1) . ' file ke galeri ' . $spaceTitle . '. Jangan lupa kasih komentar manis ya!',
+                'cta' => $spaceSlug ? [
                     'label' => 'Buka Galeri',
-                    'url' => route('gallery.index', ['space' => ]),
+                    'url' => route('gallery.index', ['space' => $spaceSlug]),
                 ] : null,
             ],
             'space_created' => [
                 'subject' => 'Space kamu berhasil dibuat',
                 'title' => 'Space pertamamu siap dipenuhi cerita',
-                'message' => 'Selamat! Space "'.(->space?->title ?? 'MySpaceLove').'" sudah siap. Undang pasanganmu dan mulai lengkapi fitur-fiturnya.',
-                'cta' =>  ? [
+                'message' => 'Selamat! Space "' . ($this->space?->title ?? 'MySpaceLove') . '" sudah siap. Undang pasanganmu dan mulai lengkapi fitur-fiturnya.',
+                'cta' => $spaceSlug ? [
                     'label' => 'Buka Dashboard Space',
-                    'url' => route('spaces.dashboard', ['space' => ]),
+                    'url' => route('spaces.dashboard', ['space' => $spaceSlug]),
                 ] : null,
             ],
             'space_deleted' => [
                 'subject' => 'Space kalian telah dihapus',
-                'title' => 'Space '..' dinonaktifkan',
-                'message' => .' menghapus Space "'..'". Jika ini di luar kesepakatan, silakan saling menghubungi dan buat Space baru kapan pun siap.',
+                'title' => 'Space ' . $spaceTitle . ' dinonaktifkan',
+                'message' => $actorName . ' menghapus Space "' . $spaceTitle . '". Jika ini di luar kesepakatan, silakan saling menghubungi dan buat Space baru kapan pun siap.',
                 'cta' => [
                     'label' => 'Lihat Daftar Space',
                     'url' => route('spaces.index'),
                 ],
             ],
             'user_registered' => [
-                'subject' => 'Selamat datang di '.config('app.name'),
-                'title' => 'Hai '.->recipient->name.'! Yuk mulai buat kenangan',
+                'subject' => 'Selamat datang di ' . config('app.name'),
+                'title' => 'Hai ' . $this->recipient->name . '! Yuk mulai buat kenangan',
                 'message' => 'Akunmu berhasil dibuat. Kamu bisa membuat Space baru atau bergabung dengan pasanganmu menggunakan kode pasangan.',
                 'cta' => [
                     'label' => 'Buka Dashboard MySpaceLove',
@@ -90,12 +92,12 @@ class SpaceActivityMail extends Mailable
                 ],
             ],
             default => [
-                'subject' => 'Aktivitas terbaru di '.,
+                'subject' => 'Aktivitas terbaru di ' . $spaceTitle,
                 'title' => 'Ada kabar baru di Space kalian',
-                'message' => .' melakukan aktivitas terbaru.',
-                'cta' =>  ? [
+                'message' => $actorName . ' melakukan aktivitas terbaru.',
+                'cta' => $spaceSlug ? [
                     'label' => 'Buka Dashboard Space',
-                    'url' => route('spaces.dashboard', ['space' => ]),
+                    'url' => route('spaces.dashboard', ['space' => $spaceSlug]),
                 ] : null,
             ],
         };

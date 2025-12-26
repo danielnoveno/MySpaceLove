@@ -292,6 +292,8 @@ return [
             'filter_all' => 'Semua',
             'filter_unread' => 'Belum dibaca',
             'mark_read' => 'Tandai sudah dibaca',
+            'delete' => 'Hapus notifikasi',
+            'view_all' => 'Lihat Semua Notifikasi',
         ],
         'summary' => [
             'recent' => 'Aktivitas terbaru',
@@ -300,6 +302,10 @@ return [
         'empty' => [
             'title' => 'Belum ada notifikasi',
             'body' => 'Setiap aktivitas di space kalian akan tampil di sini.',
+        ],
+        'dropdown' => [
+            'no_notifications' => 'Tidak ada notifikasi',
+            'no_notifications_desc' => 'Semua sudah terbaca!',
         ],
         'view' => [
             'opened_at' => 'Dibuka :date',

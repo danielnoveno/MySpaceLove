@@ -4,15 +4,28 @@ import { createContext, useContext, useState } from 'react';
 
 const DropDownContext = createContext();
 
-const Dropdown = ({ children }) => {
+const Dropdown = ({ children, onOpenChange }) => {
     const [open, setOpen] = useState(false);
 
     const toggleOpen = () => {
-        setOpen((previousState) => !previousState);
+        setOpen((previousState) => {
+            const newState = !previousState;
+            if (onOpenChange) {
+                onOpenChange(newState);
+            }
+            return newState;
+        });
+    };
+
+    const setOpenWithCallback = (value) => {
+        setOpen(value);
+        if (onOpenChange) {
+            onOpenChange(value);
+        }
     };
 
     return (
-        <DropDownContext.Provider value={{ open, setOpen, toggleOpen }}>
+        <DropDownContext.Provider value={{ open, setOpen: setOpenWithCallback, toggleOpen }}>
             <div className="relative">{children}</div>
         </DropDownContext.Provider>
     );
@@ -55,6 +68,8 @@ const Content = ({
 
     if (width === '48') {
         widthClasses = 'w-48';
+    } else if (width === '96') {
+        widthClasses = 'w-96';
     }
 
     return (

@@ -50,7 +50,7 @@ return [
             'label' => 'Language',
             'options' => [
                 'en' => 'English',
-                'id' => 'Bahasa Indonesia',
+                'id' => 'Indonesia',
             ],
         ],
     ],
@@ -292,6 +292,8 @@ return [
             'filter_all' => 'All',
             'filter_unread' => 'Unread',
             'mark_read' => 'Mark as read',
+            'delete' => 'Delete notification',
+            'view_all' => 'View All Notifications',
         ],
         'summary' => [
             'recent' => 'Recent activity',
@@ -300,6 +302,10 @@ return [
         'empty' => [
             'title' => 'No notifications yet',
             'body' => 'We will store every activity from your space right here.',
+        ],
+        'dropdown' => [
+            'no_notifications' => 'No notifications',
+            'no_notifications_desc' => 'You\'re all caught up!',
         ],
         'view' => [
             'opened_at' => 'Opened :date',

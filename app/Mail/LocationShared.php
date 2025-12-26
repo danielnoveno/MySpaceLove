@@ -7,7 +7,9 @@ use Illuminate\Bus\Queueable;
 use Illuminate\Mail\Mailable;
 use Illuminate\Queue\SerializesModels;
 
-class LocationShared extends Mailable
+use Illuminate\Contracts\Queue\ShouldQueue;
+
+class LocationShared extends Mailable implements ShouldQueue
 {
     use Queueable, SerializesModels;
 

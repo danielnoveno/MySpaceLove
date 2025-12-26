@@ -9,7 +9,9 @@ use Illuminate\Bus\Queueable;
 use Illuminate\Mail\Mailable;
 use Illuminate\Queue\SerializesModels;
 
-class SpaceInvitationMail extends Mailable
+use Illuminate\Contracts\Queue\ShouldQueue;
+
+class SpaceInvitationMail extends Mailable implements ShouldQueue
 {
     use Queueable, SerializesModels;
 

@@ -156,6 +156,55 @@ class DailyMessageApiController extends Controller
         }
     }
 
+    public function regenerate(Request $request, Space $space, $id)
+    {
+        $this->authorizeSpace($space);
+
+        $dailyMessage = DailyMessage::where('space_id', $space->id)
+            ->where('id', $id)
+            ->firstOrFail();
+
+        // Get names for personalization
+        [$fromName, $partnerName] = $this->resolveNamePair($space);
+
+        if (!$this->hasUsableNamePair($fromName, $partnerName)) {
+            return response()->json([
+                'error' => 'Cannot regenerate message: incomplete name information.',
+            ], 422);
+        }
+
+        // Get recent messages for context
+        $recentMessages = $this->recentMessagesForWeek($space, $dailyMessage->date);
+        
+        // Generate new message
+        $text = $this->dailyMessageGenerator->generate(null, $fromName, $partnerName, $recentMessages);
+
+        if (!$text) {
+            return response()->json([
+                'error' => 'Failed to generate new message.',
+            ], 500);
+        }
+
+        // Update the message
+        $dailyMessage->update([
+            'message' => $text,
+            'generated_by' => 'ai',
+        ]);
+
+        // Log the regeneration
+        Log::info('Daily message regenerated', [
+            'space_id' => $space->id,
+            'message_id' => $dailyMessage->id,
+            'date' => $dailyMessage->date,
+            'generator_error' => $this->dailyMessageGenerator->getLastErrorMessage(),
+        ]);
+
+        return response()->json([
+            'message' => $dailyMessage->fresh(),
+            'success' => 'Message regenerated successfully!',
+        ]);
+    }
+
     private function currentDailyMessageNow(): Carbon
     {
         return now($this->dailyMessageTimezone());

@@ -28,14 +28,12 @@ class LocationController extends Controller
 
         $pendingInvitation = null;
 
-        if (Schema::hasTable('space_invitations')) {
-            $space->loadMissing('pendingInvitation');
-            $pendingInvitation = $space->pendingInvitation ? [
-                'email' => $space->pendingInvitation->invitee_email,
-                'status' => $space->pendingInvitation->status,
-                'created_at' => optional($space->pendingInvitation->created_at)->toIso8601String(),
-            ] : null;
-        }
+        $space->loadMissing('pendingInvitation');
+        $pendingInvitation = $space->pendingInvitation ? [
+            'email' => $space->pendingInvitation->invitee_email,
+            'status' => $space->pendingInvitation->status,
+            'created_at' => optional($space->pendingInvitation->created_at)->toIso8601String(),
+        ] : null;
 
         $userLocation = $user?->location;
         $partnerLocation = $partner?->location;
@@ -285,9 +283,7 @@ class LocationController extends Controller
 
     private function logActivity($recipients, string $event, string $title, string $body, array $data = [], bool $sendMail = true): void
     {
-        if (!Schema::hasTable('notifications')) {
-            return;
-        }
+
 
         $this->activityLogger->log($recipients, $event, $title, $body, $data, $sendMail);
     }

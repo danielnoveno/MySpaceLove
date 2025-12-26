@@ -1,4 +1,5 @@
 import { ButtonHTMLAttributes } from 'react';
+import { cn } from '@/utils/helpers';
 
 export default function SecondaryButton({
     type = 'button',
@@ -6,16 +7,36 @@ export default function SecondaryButton({
     disabled,
     children,
     ...props
-}: ButtonHTMLAttributes<HTMLButtonElement>) {
+}: ButtonHTMLAttributes<HTMLButtonElement> & { type?: 'submit' | 'button' | 'reset' }) {
     return (
         <button
             {...props}
             type={type}
-            className={
-                `inline-flex items-center justify-center rounded-full border-2 border-violet-300 bg-gradient-to-r from-white/95 to-violet-50/80 px-5 py-3 text-sm font-semibold text-violet-600 shadow-sm transition-all duration-300 ease-in-out hover:border-violet-400 hover:bg-gradient-to-r hover:from-violet-50 hover:to-violet-100/90 hover:text-violet-700 hover:shadow-md hover:scale-105 focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-300 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:scale-100 ${
-                    disabled ? 'pointer-events-none' : ''
-                } ${className}`
-            }
+            className={cn(
+                // Base styles
+                'inline-flex items-center justify-center',
+                'rounded-xl px-6 py-2.5',
+                'text-sm font-semibold',
+                'transition-all duration-200 ease-in-out',
+                
+                // LoveSpace secondary theme (outline style)
+                'bg-white text-pink-600',
+                'border-2 border-pink-200',
+                'hover:bg-pink-50 hover:border-pink-300',
+                'active:bg-pink-100',
+                
+                // Shadow and effects
+                'shadow-sm hover:shadow-md',
+                'transform hover:scale-[1.02] active:scale-[0.98]',
+                
+                // Focus state
+                'focus:outline-none focus:ring-2 focus:ring-pink-500 focus:ring-offset-2',
+                
+                // Disabled state
+                disabled && 'opacity-50 cursor-not-allowed hover:scale-100',
+                
+                className
+            )}
             disabled={disabled}
         >
             {children}

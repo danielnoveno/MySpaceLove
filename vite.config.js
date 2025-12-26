@@ -11,6 +11,7 @@ export default defineConfig({
         alias: {
             '@': resolve(basePath, 'resources/js'),
         },
+        dedupe: ['react', 'react-dom'],
     },
     plugins: [
         laravel({
@@ -130,6 +131,11 @@ export default defineConfig({
             '@inertiajs/react',
             '@headlessui/react',
             'lucide-react',
+            'react-spring',
+            'react-use-gesture',
+            'framer-motion',
+            'gsap',
+            '@gsap/react',
         ],
         exclude: [
             // Exclude heavy dependencies from pre-bundling
@@ -137,6 +143,7 @@ export default defineConfig({
             'react-pdf',
             '@jitsi/react-sdk',
         ],
+        force: true,
     },
     server: {
         host: '0.0.0.0',

@@ -22,6 +22,7 @@ import { useTranslation } from "@/hooks/useTranslation";
 import { replacePlaceholders } from "@/utils/translation";
 import { PageProps } from "@/types";
 import ProductTour from "@/Components/ProductTour/ProductTour";
+import MagicBento, { MagicCard } from "@/Components/MagicBento";
 
 interface DashboardData {
     timelineCount: number;
@@ -394,6 +395,7 @@ export default function Dashboard({ dashboardData, spaceContext }: Props) {
                     </h2>
                 </div>
             }
+            dimNav={showModal}
         >
             <Head
                 title={replacePlaceholders(
@@ -431,7 +433,7 @@ export default function Dashboard({ dashboardData, spaceContext }: Props) {
 
             {showModal && dailyMessage && (
                 <div
-                    className="fixed inset-0 z-40 flex items-center justify-center bg-black/30 px-4"
+                    className="fixed inset-0 z-[1050] flex items-center justify-center bg-black/60 backdrop-blur-sm px-4"
                     onClick={() => setShowModal(false)}
                 >
                     <div
@@ -600,7 +602,13 @@ export default function Dashboard({ dashboardData, spaceContext }: Props) {
                         {dashboardStrings.cards?.quick_actions?.title ??
                             "Quick Actions"}
                     </h2>
-                    <div className="mt-4 grid gap-4 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5">
+                    <MagicBento
+                        className="mt-4 grid gap-4 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5"
+                        glowColor="236, 72, 153" // Pink-500 matches the theme
+                        enableSpotlight={true}
+                        enableBorderGlow={true}
+                        enableTilt={true}
+                    >
                         {quickActions.map((action, index) => {
                             const ownerLocked =
                                 action.requiresOwner && !isSpaceOwner;
@@ -637,14 +645,18 @@ export default function Dashboard({ dashboardData, spaceContext }: Props) {
                             })();
 
                             return (
-                                <Link
+                                <MagicCard
                                     key={index}
+                                    as={Link}
                                     id={action.id}
                                     href={comingSoon ? "#" : action.href}
                                     onClick={handleActionClick}
                                     title={actionTitle}
                                     aria-disabled={disabled}
-                                    className={`group relative rounded-2xl border border-gray-100 bg-white p-6 shadow-sm transition ${
+                                    enableTilt={true}
+                                    enableMagnetism={true}
+                                    glowColor="236, 72, 153"
+                                    className={`card card--border-glow group relative rounded-2xl border border-gray-100 bg-white p-6 shadow-sm transition ${
                                         disabled
                                             ? "cursor-not-allowed opacity-70"
                                             : "hover:border-transparent hover:shadow-lg"
@@ -677,10 +689,10 @@ export default function Dashboard({ dashboardData, spaceContext }: Props) {
                                     <p className="mt-1 text-sm text-gray-600">
                                         {action.description}
                                     </p>
-                                </Link>
+                                </MagicCard>
                             );
                         })}
-                    </div>
+                    </MagicBento>
                 </div>
 
                 <div className="grid gap-8 lg:grid-cols-2">

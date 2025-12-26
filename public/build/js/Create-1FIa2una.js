@@ -1,0 +1,1 @@
+import{j as r}from"./react-core-D6zAYO7y.js";import"./maps-CE4s2ps8.js";import"./vendor-CngpSwo7.js";const e=()=>r.jsx("div",{children:r.jsx("h1",{children:"CreateSurpriseNotes"})});export{e as default};

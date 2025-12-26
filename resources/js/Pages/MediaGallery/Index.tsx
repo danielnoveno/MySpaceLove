@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import { useMemo, useState, useRef } from "react";
 import type { ChangeEvent } from "react";
+import Stack from "@/Components/Stack";
 
 type GalleryMediaItem = {
     id: number;
@@ -30,7 +31,6 @@ type GalleryCollection = {
     count: number;
     items: GalleryMediaItem[];
 };
-
 
 const formatFullDate = (value?: string | null) => {
     if (!value) {
@@ -169,8 +169,6 @@ export default function GalleryIndex({
         });
     };
 
-
-
     return (
         <AuthenticatedLayout
             loveCursor={{
@@ -227,59 +225,71 @@ export default function GalleryIndex({
                         </p>
                     </div>
                 ) : (
-                    <div className="columns-2 gap-4 sm:columns-3 lg:columns-4 [column-fill:_balance]">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
                         {nonEmptyCollections.map((collection) => {
-                            const cover = collection.items[0];
-                            const coverUrl =
-                                cover?.url ??
-                                "https://placehold.co/600x800?text=Gallery";
+                            const stackCards = collection.items.slice(0, 5).map((item, i) => (
+                                <img
+                                    key={i}
+                                    src={item.url}
+                                    alt={item.title ?? "Gallery Item"}
+                                    className="h-full w-full object-cover rounded-xl shadow-lg border-2 border-white"
+                                />
+                            ));
 
                             return (
                                 <article
-                                    key={
-                                        collection.collection_key ?? `collection-${cover?.id}`
-                                    }
-                                    className="group mb-4 break-inside-avoid rounded-3xl bg-white/95 shadow-sm ring-1 ring-slate-100 transition duration-300 hover:-translate-y-1 hover:shadow-lg hover:ring-emerald-100"
+                                    key={collection.collection_key ?? `collection-${collection.items[0]?.id}`}
+                                    className="group break-inside-avoid rounded-3xl bg-white/95 shadow-sm ring-1 ring-slate-100 transition duration-300 hover:-translate-y-1 hover:shadow-lg hover:ring-emerald-100 flex flex-col overflow-hidden"
                                 >
-                                    <button
-                                        type="button"
+                                    <div
+                                        className="relative w-full h-80 p-6 bg-slate-50/50 cursor-pointer"
                                         onClick={() => openCollection(collection)}
-                                        className="relative block w-full overflow-hidden rounded-3xl"
                                     >
-                                        <img
-                                            src={coverUrl}
-                                            alt={collection.title ?? "Koleksi galeri"}
-                                            className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
-                                        />
-                                        <div className="pointer-events-none absolute inset-x-0 bottom-0 h-28 bg-gradient-to-t from-black/70 via-black/0 to-transparent opacity-90" />
-                                        <div className="absolute inset-x-0 bottom-0 flex items-center justify-between px-5 pb-5 text-left text-white">
+                                        <div className="w-full h-full"> 
+                                            <Stack 
+                                                cards={stackCards} 
+                                                sensitivity={100}
+                                                sendToBackOnClick={false}
+                                                randomRotation={true}
+                                                pauseOnHover={true}
+                                            />
+                                        </div>
+                                    </div>
+
+                                    <div 
+                                        onClick={() => openCollection(collection)}
+                                        className="flex flex-col px-5 pb-5 pt-4 cursor-pointer"
+                                    >
+                                        <div className="flex items-center justify-between">
                                             <div>
-                                                <p className="text-sm font-semibold">
-                                                    {collection.title?.trim() ||
-                                                        "Koleksi tanpa judul"}
+                                                <p className="text-sm font-semibold text-slate-800">
+                                                    {collection.title?.trim() || "Koleksi tanpa judul"}
                                                 </p>
-                                                <p className="text-xs text-white/80">
+                                                <p className="text-xs text-slate-500">
                                                     {formatFullDate(collection.created_at)}
                                                 </p>
                                             </div>
                                             {collection.count > 1 && (
-                                                <span className="inline-flex items-center gap-1 rounded-full bg-white/15 px-3 py-1 text-xs font-medium text-white backdrop-blur">
+                                                <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-3 py-1 text-xs font-medium text-emerald-700">
                                                     <Images className="h-3.5 w-3.5" />
                                                     {collection.count}
                                                 </span>
                                             )}
                                         </div>
-                                    </button>
+                                    </div>
 
-                                    <div className="flex items-center justify-between px-3 pb-3 pt-2 text-xs text-slate-500">
-                                        <div className="inline-flex items-center gap-2 rounded-full bg-emerald-50 px-3 py-1 font-medium text-emerald-700">
-                                            <ImagePlus className="h-3.5 w-3.5" />
+                                    <div className="flex items-center justify-between px-3 pb-3 text-xs text-slate-500 border-t border-slate-100 pt-3 mx-4 mb-3">
+                                        <div className="inline-flex items-center gap-2 rounded-full px-2 py-0.5 font-medium text-emerald-700/60 bg-emerald-50/50">
+                                            <ImagePlus className="h-3 w-3" />
                                             Koleksi
                                         </div>
                                         <div className="flex items-center gap-1">
                                             <button
                                                 type="button"
-                                                onClick={() => setPendingDeleteCollection(collection)}
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    setPendingDeleteCollection(collection);
+                                                }}
                                                 className="inline-flex items-center gap-1 rounded-full border border-slate-200 px-3 py-1 text-xs font-medium text-slate-600 transition hover:border-rose-200 hover:bg-rose-50 hover:text-rose-700"
                                             >
                                                 <Trash2 className="h-3.5 w-3.5" />
@@ -288,8 +298,11 @@ export default function GalleryIndex({
                                             <Link
                                                 href={route("gallery.edit", {
                                                     space: spaceSlug,
-                                                    id: cover?.id,
+                                                    id: collection.items[0]?.id,
                                                 })}
+                                                 onClick={(e) => {
+                                                    e.stopPropagation();
+                                                }}
                                                 className="inline-flex items-center gap-1 rounded-full border border-slate-200 px-3 py-1 text-xs font-medium text-slate-600 transition hover:border-emerald-200 hover:bg-emerald-50 hover:text-emerald-700"
                                             >
                                                 <Edit className="h-3.5 w-3.5" />

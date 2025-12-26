@@ -24,33 +24,21 @@ class SpaceController extends Controller
     {
         $user = Auth::user();
         $userId = $user?->id;
-        $hasInvitationTable = Schema::hasTable('space_invitations');
-        $hasSeparationTable = Schema::hasTable('space_separation_requests');
-
         $spacesQuery = Space::query()
             ->where(function ($query) use ($userId): void {
                 $query->where('user_one_id', $userId)
                     ->orWhere('user_two_id', $userId);
             });
 
-        if ($hasInvitationTable || $hasSeparationTable) {
-            $relations = [];
+        $relations = [
+            'invitations' => function ($query): void {
+                $query->orderByDesc('created_at');
+            },
+            'pendingInvitation',
+            'pendingSeparationRequest',
+        ];
 
-            if ($hasInvitationTable) {
-                $relations[] = 'pendingInvitation';
-                $relations['invitations'] = function ($query): void {
-                    $query->orderByDesc('created_at');
-                };
-            }
-
-            if ($hasSeparationTable) {
-                $relations[] = 'pendingSeparationRequest';
-            }
-
-            if (!empty($relations)) {
-                $spacesQuery->with($relations);
-            }
-        }
+        $spacesQuery->with($relations);
 
         $spacesQuery->with([
             'userOne:id,name,profile_image',
@@ -79,14 +67,14 @@ class SpaceController extends Controller
                         'profile_photo_url' => $space->userTwo->profile_photo_url,
                     ] : null,
                 ],
-                'pending_invitation' => ($hasInvitationTable && $space->relationLoaded('pendingInvitation') && $space->pendingInvitation) ? [
+                'pending_invitation' => ($space->relationLoaded('pendingInvitation') && $space->pendingInvitation) ? [
                     'id' => $space->pendingInvitation->id,
                     'email' => $space->pendingInvitation->invitee_email,
                     'status' => $space->pendingInvitation->status,
                     'status_label' => SpaceInvitation::statusLabel($space->pendingInvitation->status),
                     'sent_at' => SpaceInvitation::formatTimestamp($space->pendingInvitation->created_at),
                 ] : null,
-                'pending_separation' => ($hasSeparationTable && $space->relationLoaded('pendingSeparationRequest') && $space->pendingSeparationRequest) ? [
+                'pending_separation' => ($space->relationLoaded('pendingSeparationRequest') && $space->pendingSeparationRequest) ? [
                     'id' => $space->pendingSeparationRequest->id,
                     'status' => $space->pendingSeparationRequest->status,
                     'initiated_by_you' => $space->pendingSeparationRequest->initiator_id === $userId,
@@ -99,7 +87,7 @@ class SpaceController extends Controller
                         'partner' => $space->pendingSeparationRequest->partner_reason,
                     ],
                 ] : null,
-                'invitations' => ($hasInvitationTable && $space->relationLoaded('invitations')) ? $space->invitations
+                'invitations' => ($space->relationLoaded('invitations')) ? $space->invitations
                     ->map(fn (SpaceInvitation $invitation): array => [
                         'id' => $invitation->id,
                         'email' => $invitation->invitee_email,
@@ -116,7 +104,7 @@ class SpaceController extends Controller
 
         $pendingInvitations = collect();
 
-        if ($user && $hasInvitationTable) {
+        if ($user) {
             $pendingInvitations = SpaceInvitation::query()
                 ->pending()
                 ->where(function ($query) use ($user): void {
@@ -142,7 +130,7 @@ class SpaceController extends Controller
 
         $pendingSeparation = [];
 
-        if ($user && $hasSeparationTable) {
+        if ($user) {
             $pendingSeparation = SpaceSeparationRequest::query()
                 ->pending()
                 ->where(function ($query) use ($userId): void {

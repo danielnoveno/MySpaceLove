@@ -10,7 +10,9 @@ use Illuminate\Mail\Mailable;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Carbon;
 
-class DailyMessageMail extends Mailable
+use Illuminate\Contracts\Queue\ShouldQueue;
+
+class DailyMessageMail extends Mailable implements ShouldQueue
 {
     use Queueable, SerializesModels;
 

@@ -59,6 +59,28 @@ class NotificationController extends Controller
         ]);
     }
 
+    public function recent(Request $request, Space $space)
+    {
+        /** @var \App\Models\User $user */
+        $user = Auth::user();
+
+        $notifications = $user->notifications()
+            ->latest()
+            ->take(50) // Take more initially to filter
+            ->get()
+            ->filter(function ($notification) use ($space) {
+                $data = $notification->data;
+                $spaceId = (int) ($data['space_id'] ?? data_get($data, 'meta.space_id'));
+                return $spaceId === (int) $space->id;
+            })
+            ->take(5) // Return only 5 most recent for dropdown
+            ->values();
+
+        return response()->json([
+            'notifications' => $notifications,
+        ]);
+    }
+
     public function markAsRead(Request $request, Space $space, string $notificationId): RedirectResponse
     {
         /** @var \App\Models\User $user */
