@@ -1,0 +1,46 @@
+# robots.txt - Security and SEO Configuration
+
+User-agent: *
+
+# Allow general access
+Allow: /
+
+# Disallow sensitive areas
+Disallow: /admin
+Disallow: /api/
+Disallow: /storage/
+Disallow: /vendor/
+Disallow: /.env
+Disallow: /.git/
+Disallow: /config/
+Disallow: /database/
+Disallow: /routes/
+Disallow: /tests/
+Disallow: /bootstrap/
+
+# Disallow user-specific pages
+Disallow: /login
+Disallow: /register
+Disallow: /password/
+Disallow: /email/verify
+Disallow: /spaces/*/edit
+Disallow: /profile/edit
+
+# Disallow search and filter pages
+Disallow: /*?*
+
+# Block bad bots
+User-agent: AhrefsBot
+Disallow: /
+
+User-agent: SemrushBot
+Disallow: /
+
+User-agent: MJ12bot
+Disallow: /
+
+User-agent: DotBot
+Disallow: /
+
+# Sitemap location (update with your actual sitemap URL)
+Sitemap: https://your-domain.com/sitemap.xml

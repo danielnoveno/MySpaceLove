@@ -1,0 +1,20 @@
+<svg width="500" height="500" viewBox="0 0 500 500" fill="none" xmlns="http://www.w3.org/2000/svg">
+<defs>
+<linearGradient id="mainGradientIsotype" x1="150" y1="50" x2="350" y2="300" gradientUnits="userSpaceOnUse">
+<stop offset="0%" stop-color="#f472b6"/>
+<stop offset="100%" stop-color="#ec4899"/>
+</linearGradient>
+</defs>
+
+<g transform="translate(0, -60) scale(0.8)" transform-origin="center">
+<g stroke-linecap="round" stroke-linejoin="round" stroke-width="32">
+<path d="M250 430C250 430 110 350 110 230C110 169.249 159.249 120 220 120C238.565 120 256.034 125.528 270.972 135.137C290 100 340 80 390 105C436.551 128.275 455 180 440 230C422.055 289.818 350 350 250 430Z" stroke="url(#mainGradientIsotype)" fill="none"/>
+<path d="M140 180C120 220 140 280 190 310" stroke="url(#mainGradientIsotype)" fill="none" opacity="0.8"/>
+<path d="M360 160C380 130 360 90 320 80" stroke="url(#mainGradientIsotype)" fill="none" opacity="0.8"/>
+<path d="M145 230C145 195 170 160 210 155" stroke="#ffe4e6" stroke-width="16" stroke-linecap="round" fill="none" opacity="0.7"/>
+<path d="M360 120L370 100L380 120L400 130L380 140L370 160L360 140L340 130L360 120Z" fill="#a855f7"/>
+</g>
+</g>
+
+<text x="250" y="400" text-anchor="middle" font-family="'Nunito', 'Quicksand', 'Arial Rounded MT Bold', sans-serif" font-weight="700" font-size="48" fill="#ec4899" letter-spacing="1">MySpaceLove</text>
+</svg>

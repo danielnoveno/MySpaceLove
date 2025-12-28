@@ -1,0 +1,40 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+[data-love-hover] {
+    position: relative;
+    overflow: hidden;
+    transition: transform 0.2s ease;
+    isolation: isolate;
+}
+
+[data-love-hover]::before,
+[data-love-hover]::after {
+    content: "\2665";
+    position: absolute;
+    opacity: 0;
+    pointer-events: none;
+    color: var(--love-hover-color, #ec4899);
+    font-size: 0.75rem;
+    transform: translate(-50%, -50%) scale(0.6);
+    transition: opacity 0.25s ease, transform 0.3s ease;
+}
+
+[data-love-hover]::before {
+    top: 22%;
+    left: 24%;
+}
+
+[data-love-hover]::after {
+    bottom: 20%;
+    right: 18%;
+}
+
+[data-love-hover]:hover::before,
+[data-love-hover]:hover::after,
+[data-love-hover]:focus-visible::before,
+[data-love-hover]:focus-visible::after {
+    opacity: 0.55;
+    transform: translate(-50%, -50%) scale(1.4);
+}
