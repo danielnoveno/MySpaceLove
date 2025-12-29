@@ -1,0 +1,1 @@
+import{j as o}from"./vendor-DtplsvIg.js";function r({className:r="",...s}){return o.jsx("input",{...s,type:"checkbox",className:"rounded border-gray-300 text-indigo-600 shadow-sm focus:ring-indigo-500 "+r})}export{r as C};
