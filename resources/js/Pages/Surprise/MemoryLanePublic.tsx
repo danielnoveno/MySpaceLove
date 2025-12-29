@@ -335,6 +335,20 @@ export default function MemoryLanePublic({
                     )}
                 </div>
             </SecretCodeGate>
+
+            {space?.slug && (
+                <div className="fixed bottom-6 right-6 z-50">
+                    <Link
+                        href={route("surprise.story.space", { space: space.slug })}
+                        className="group flex items-center gap-2 rounded-full bg-white/10 p-3 pr-5 backdrop-blur-md transition hover:bg-white/20"
+                    >
+                        <span className="flex h-10 w-10 items-center justify-center rounded-full bg-rose-500 text-white shadow-lg transition group-hover:scale-110 group-hover:bg-rose-600">
+                            <Gift className="h-5 w-5" />
+                        </span>
+                        <span className="text-sm font-semibold text-white">Buka Story Book</span>
+                    </Link>
+                </div>
+            )}
         </div>
     );
 }

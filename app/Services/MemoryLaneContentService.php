@@ -249,13 +249,51 @@ class MemoryLaneContentService
 
     private function getRewards(MemoryLaneConfig $config): array
     {
-        // If custom rewards are set, use them; otherwise use defaults
-        if (!empty($config->custom_rewards) && is_array($config->custom_rewards)) {
-            return $config->custom_rewards;
+        // Start with defaults
+        $defaults = config('memory_lane_rewards.default_rewards', []);
+        $customs = $config->custom_rewards ?? [];
+
+        if (empty($customs) || !is_array($customs)) {
+            return $defaults;
         }
 
-        // Return default rewards from config
-        return config('memory_lane_rewards.default_rewards', []);
+        $merged = [];
+        $customCollection = collect($customs);
+        $defaultIds = collect($defaults)->pluck('id')->all();
+
+        // 1. Process defaults (apply overrides)
+        foreach ($defaults as $default) {
+            $override = $customCollection->firstWhere('id', $default['id']);
+            if ($override) {
+                // Merge default with override (e.g. enabled status)
+                $merged[] = array_merge($default, $override);
+            } else {
+                // No override, keep default
+                $merged[] = $default;
+            }
+        }
+
+        // 2. Add pure custom rewards
+        $pureCustoms = $customCollection->filter(function ($item) use ($defaultIds) {
+            return !in_array($item['id'] ?? null, $defaultIds);
+        });
+
+        foreach ($pureCustoms as $custom) {
+            // Ensure pure custom rewards have necessary fields
+            if (!empty($custom['title'])) {
+                $merged[] = array_merge([
+                    'category' => 'custom',
+                    'enabled' => true,
+                    'icon' => '🎁',
+                ], $custom);
+            }
+        }
+
+        // Return only enabled rewards for the public view
+        return collect($merged)
+            ->filter(fn ($r) => $r['enabled'] ?? true)
+            ->values()
+            ->all();
     }
 
     private function getFlipbookPages(MemoryLaneConfig $config): array
