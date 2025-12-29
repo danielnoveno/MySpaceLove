@@ -74,7 +74,7 @@ class SecurityHeaders
             "font-src 'self' data: https://fonts.gstatic.com https://fonts.bunny.net",
             "img-src 'self' data: https: blob:",
             "media-src 'self' blob: https:",
-            "connect-src 'self' https://api.daily.co https://generativelanguage.googleapis.com https://8x8.vc https://*.jitsi.net https://*.jitsi.org wss: ws: http://localhost:* http://127.0.0.1:* ws://localhost:* ws://127.0.0.1:*",
+            "connect-src 'self' https://api.daily.co https://generativelanguage.googleapis.com https://8x8.vc https://*.jitsi.net https://*.jitsi.org https://ipapi.co https://router.project-osrm.org wss: ws: http://localhost:* http://127.0.0.1:* ws://localhost:* ws://127.0.0.1:*",
             "frame-src 'self' https://www.youtube.com https://player.vimeo.com https://*.daily.co https://8x8.vc https://*.jitsi.net https://*.jitsi.org",
             "object-src 'none'",
             "base-uri 'self'",

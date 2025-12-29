@@ -43,22 +43,7 @@ export default defineConfig({
             output: {
                 // Manual chunk splitting for better caching and lazy loading
                 manualChunks: (id) => {
-                    // CRITICAL: React core must be detected first and loaded before everything else
-                    // Use flexible matching to catch ALL React-related modules
                     if (id.includes('node_modules')) {
-                        // Match any React or React-DOM module (including subdirectories)
-                        if (
-                            id.includes('/react/') || 
-                            id.includes('/react-dom/') || 
-                            id.includes('/scheduler/') ||
-                            id.match(/\/react\//) ||
-                            id.match(/\/react-dom\//) ||
-                            id.match(/node_modules\/react$/) ||
-                            id.match(/node_modules\/react-dom$/)
-                        ) {
-                            return 'react-core';
-                        }
-                        
                         // Inertia.js
                         if (id.includes('/@inertiajs/')) {
                             return 'inertia';
@@ -70,9 +55,7 @@ export default defineConfig({
                         }
                         
                         // Heavy feature chunks (lazy loaded)
-                        if (id.includes('/leaflet/') || id.includes('/react-leaflet/')) {
-                            return 'maps';
-                        }
+
                         if (id.includes('/react-pdf/')) {
                             return 'pdf';
                         }

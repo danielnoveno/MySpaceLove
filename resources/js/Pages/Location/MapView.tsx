@@ -525,12 +525,37 @@ export default function MapView({
         [fallbackToIp, persistLocation]
     );
 
+    const readXsrfToken = useCallback((): string | null => {
+        const match = document.cookie.match(/XSRF-TOKEN=([^;]+)/);
+        return match ? decodeURIComponent(match[1]) : null;
+    }, []);
+
+    const ensureCsrf = useCallback(async () => {
+        const token = readXsrfToken();
+
+        if (!token) {
+            await axios.get("/sanctum/csrf-cookie", { withCredentials: true });
+        }
+
+        const refreshedToken = readXsrfToken();
+        if (refreshedToken) {
+            axios.defaults.headers.common["X-XSRF-TOKEN"] = refreshedToken;
+        }
+    }, [readXsrfToken]);
+
     useEffect(() => {
         if (!isClient) {
             return;
         }
-        requestLocation({ silent: true });
-        void fetchPartnerLocation(true);
+
+        const init = async () => {
+            await ensureCsrf();
+            requestLocation({ silent: true });
+            void fetchPartnerLocation(true);
+        };
+        
+        void init();
+
         const interval = window.setInterval(() => {
             requestLocation({ silent: true });
             void fetchPartnerLocation(true);
@@ -539,7 +564,7 @@ export default function MapView({
         return () => {
             window.clearInterval(interval);
         };
-    }, [fetchPartnerLocation, isClient, requestLocation]);
+    }, [ensureCsrf, fetchPartnerLocation, isClient, requestLocation]);
 
     const mapCenter = useMemo<LatLngExpression>(() => {
         if (userLocation) {

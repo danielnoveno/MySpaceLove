@@ -158,7 +158,7 @@ class DailyMessageApiController extends Controller
         $partner = $this->resolvePartnerUser($space);
         
         if (!$partner) {
-             return response()->json(['message' => null], 404);
+             return response()->json(['message' => null]);
         }
 
         // We want the message FROM the partner
@@ -169,7 +169,7 @@ class DailyMessageApiController extends Controller
             $message->load('user');
             return response()->json(['message' => $message]);
         } else {
-            return response()->json(['message' => null], 404);
+            return response()->json(['message' => null]);
         }
     }
 

@@ -147,7 +147,8 @@ export default function Dashboard({ dashboardData, spaceContext }: Props) {
     const [showLockModal, setShowLockModal] = useState(false);
     const [showComingSoonNotice, setShowComingSoonNotice] = useState(false);
     // Tour is active only when it's actually running, not just when shouldShowTour is true
-    const [isTourActive, setIsTourActive] = useState(false);
+    // Initialize with shouldShowTour to prevent daily message from appearing before tour starts
+    const [isTourActive, setIsTourActive] = useState(props.shouldShowTour ?? false);
     const [pendingDailyMessage, setPendingDailyMessage] = useState<string | null>(null);
 
     const handleLockedNavigation = useCallback(
