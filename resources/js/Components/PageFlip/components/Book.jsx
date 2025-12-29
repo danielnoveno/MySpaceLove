@@ -90,62 +90,47 @@ const pageTemplates = [
 ];
 
 function Book({ pages = [], coverImage = null, coverTitle = "Our Story" }) {
-  // Default Pokemon data as fallback if no pages provided
+  // Load fonts for canvas elements
+  useEffect(() => {
+    const link = document.createElement('link');
+    link.href = 'https://fonts.googleapis.com/css2?family=Dancing+Script:wght@400;700&family=Pacifico&family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Inter:wght@400;500;600;700&display=swap';
+    link.rel = 'stylesheet';
+    document.head.appendChild(link);
+    return () => {
+      if (document.head.contains(link)) {
+        document.head.removeChild(link);
+      }
+    };
+  }, []);
+
+  // Default placeholder data as fallback if no pages provided
   const defaultPages = [
     {
-      id: "006",
-      title: "Charizard",
-      body: "Flies in search of strong opponents. Breathes extremely hot fire that melts anything, but never uses it on weaker foes.",
-      image: "https://www.pokemon.com/static-assets/content-assets/cms2/img/pokedex/full/006.png",
-      types: ["Fire", "Flying"]
+      id: "001",
+      title: "Kenangan Pertama",
+      body: "Ini adalah tempat untuk menuliskan cerita indah tentang momen pertama kita. Tambahkan detail tentang apa yang kita rasakan saat itu.",
+      image: "https://images.unsplash.com/photo-1518199266791-5375a83190b7?q=80&w=1000&auto=format&fit=crop",
+      types: ["Momen", "Cinta"]
     },
     {
-      id: "025",
-      title: "Pikachu",
-      body: "When Pikachu meet, they touch tails to exchange electricity as a greeting.",
-      image: "https://www.pokemon.com/static-assets/content-assets/cms2/img/pokedex/full/025.png",
-      types: ["Electric"]
+      id: "002",
+      title: "Petualangan Bersama",
+      body: "Ceritakan tentang perjalanan atau petualangan seru yang pernah kita lalui. Setiap langkah terasa lebih berarti saat bersamamu.",
+      image: "https://images.unsplash.com/photo-1522673607200-1648832cee98?q=80&w=1000&auto=format&fit=crop",
+      types: ["Trip", "Bahagia"]
     },
     {
-      id: "125",
-      title: "Electabuzz",
-      body: "Often kept at power plants to regulate electricity. Competes with others to attract lightning during storms.",
-      image: "https://www.pokemon.com/static-assets/content-assets/cms2/img/pokedex/full/125.png",
-      types: ["Electric"]
-    },
-    {
-      id: "185",
-      title: "Sudowoodo",
-      body: "Despite looking like a tree, its body is more like rock. Hates water and hides when it rains.",
-      image: "https://www.pokemon.com/static-assets/content-assets/cms2/img/pokedex/full/185.png",
-      types: ["Rock"]
-    },
-    {
-      id: "448",
-      title: "Lucario",
-      body: "Can read thoughts and movements by sensing others' aura. No foe can hide from Lucario.",
-      image: "https://www.pokemon.com/static-assets/content-assets/cms2/img/pokedex/full/448.png",
-      types: ["Fighting", "Steel"]
-    },
-    {
-      id: "658",
-      title: "Greninja",
-      body: "Creates throwing stars from compressed water that can slice through metal when thrown at high speed.",
-      image: "https://www.pokemon.com/static-assets/content-assets/cms2/img/pokedex/full/658.png",
-      types: ["Water", "Dark"]
-    },
-    {
-      id: "491",
-      title: "Darkrai",
-      body: "A legendary Pokémon that appears on moonless nights, putting people to sleep and giving them nightmares.",
-      image: "https://www.pokemon.com/static-assets/content-assets/cms2/img/pokedex/full/491.png",
-      types: ["Dark"]
+      id: "003",
+      title: "Momen Spesial",
+      body: "Waktu seakan berhenti setiap kali kita menghabiskan waktu bersama. Kenangan ini akan selalu tersimpan rapi di dalam hati.",
+      image: "https://images.unsplash.com/photo-1494972308255-a03c1101349a?q=80&w=1000&auto=format&fit=crop",
+      types: ["Spesial", "Abadi"]
     }
   ];
 
   // Use provided pages or fall back to default
   const displayPages = pages.length > 0 ? pages : defaultPages;
-  const defaultCoverImage = "https://upload.wikimedia.org/wikipedia/commons/9/98/International_Pok%C3%A9mon_logo.svg";
+  const defaultCoverImage = "https://images.unsplash.com/photo-1544924222-b131ea92f6b3?q=80&w=1000&auto=format&fit=crop";
 
   return (
     <div style={{
@@ -500,12 +485,12 @@ function Book({ pages = [], coverImage = null, coverTitle = "Our Story" }) {
         const template = pageTemplates[index % pageTemplates.length];
         
         return (
-          <div className="page" key={page.id || `page-${index}`} style={{ background: template.background }}>
+          <div className="page" key={page.id || `page-${index}`} style={{ background: page.type === 'canvas' ? (page.bg_color || '#fff5f5') : template.background }}>
             <div className="page-content" style={{ 
               position: 'relative',
               overflow: 'hidden',
               height: '100%',
-              padding: '1.5rem',
+              padding: page.type === 'canvas' ? '0' : '1.5rem',
               borderRadius: '1rem',
             }}>
               {/* Pattern overlay */}
@@ -515,31 +500,30 @@ function Book({ pages = [], coverImage = null, coverTitle = "Our Story" }) {
                 background: template.pattern,
                 pointerEvents: 'none',
               }} />
-
               {/* Notebook Lines Effect */}
               <div style={{
-                position: 'absolute',
-                inset: 0,
-                pointerEvents: 'none',
-                backgroundImage: `
-                  repeating-linear-gradient(
-                    transparent,
-                    transparent 29px,
-                    ${template.borderColor} 29px,
-                    ${template.borderColor} 30px
-                  ),
-                  linear-gradient(
-                    to right,
-                    transparent 0,
-                    transparent 40px,
-                    rgba(255, 182, 193, 0.3) 40px,
-                    rgba(255, 182, 193, 0.3) 42px,
-                    transparent 42px
-                  )
-                `,
-                backgroundSize: '100% 30px, 100% 100%',
-                opacity: 0.4,
-              }} />
+                  position: 'absolute',
+                  inset: 0,
+                  pointerEvents: 'none',
+                  backgroundImage: `
+                    repeating-linear-gradient(
+                      transparent,
+                      transparent 29px,
+                      ${template.borderColor} 29px,
+                      ${template.borderColor} 30px
+                    ),
+                    linear-gradient(
+                      to right,
+                      transparent 0,
+                      transparent 40px,
+                      rgba(255, 182, 193, 0.3) 40px,
+                      rgba(255, 182, 193, 0.3) 42px,
+                      transparent 42px
+                    )
+                  `,
+                  backgroundSize: '100% 30px, 100% 100%',
+                  opacity: 0.4,
+                }} />
 
               {/* Decorative elements */}
               <div style={{
@@ -570,127 +554,183 @@ function Book({ pages = [], coverImage = null, coverTitle = "Our Story" }) {
               </div>
 
               {/* Corner decorations */}
-              <div style={{
-                position: 'absolute',
-                top: 0,
-                left: 0,
-                width: '60px',
-                height: '60px',
-                borderLeft: `3px solid ${template.borderColor}`,
-                borderTop: `3px solid ${template.borderColor}`,
-                borderTopLeftRadius: '1rem',
-                opacity: 0.5,
-              }} />
-              <div style={{
-                position: 'absolute',
-                top: 0,
-                right: 0,
-                width: '60px',
-                height: '60px',
-                borderRight: `3px solid ${template.borderColor}`,
-                borderTop: `3px solid ${template.borderColor}`,
-                borderTopRightRadius: '1rem',
-                opacity: 0.5,
-              }} />
-              <div style={{
-                position: 'absolute',
-                bottom: 0,
-                left: 0,
-                width: '60px',
-                height: '60px',
-                borderLeft: `3px solid ${template.borderColor}`,
-                borderBottom: `3px solid ${template.borderColor}`,
-                borderBottomLeftRadius: '1rem',
-                opacity: 0.5,
-              }} />
-              <div style={{
-                position: 'absolute',
-                bottom: 0,
-                right: 0,
-                width: '60px',
-                height: '60px',
-                borderRight: `3px solid ${template.borderColor}`,
-                borderBottom: `3px solid ${template.borderColor}`,
-                borderBottomRightRadius: '1rem',
-                opacity: 0.5,
-              }} />
+              <>
+                <div style={{
+                  position: 'absolute',
+                  top: 0,
+                  left: 0,
+                  width: '60px',
+                  height: '60px',
+                  borderLeft: `3px solid ${template.borderColor}`,
+                  borderTop: `3px solid ${template.borderColor}`,
+                  borderTopLeftRadius: '1rem',
+                  opacity: 0.5,
+                }} />
+                <div style={{
+                  position: 'absolute',
+                  top: 0,
+                  right: 0,
+                  width: '60px',
+                  height: '60px',
+                  borderRight: `3px solid ${template.borderColor}`,
+                  borderTop: `3px solid ${template.borderColor}`,
+                  borderTopRightRadius: '1rem',
+                  opacity: 0.5,
+                }} />
+                <div style={{
+                  position: 'absolute',
+                  bottom: 0,
+                  left: 0,
+                  width: '60px',
+                  height: '60px',
+                  borderLeft: `3px solid ${template.borderColor}`,
+                  borderBottom: `3px solid ${template.borderColor}`,
+                  borderBottomLeftRadius: '1rem',
+                  opacity: 0.5,
+                }} />
+                <div style={{
+                  position: 'absolute',
+                  bottom: 0,
+                  right: 0,
+                  width: '60px',
+                  height: '60px',
+                  borderRight: `3px solid ${template.borderColor}`,
+                  borderBottom: `3px solid ${template.borderColor}`,
+                  borderBottomRightRadius: '1rem',
+                  opacity: 0.5,
+                }} />
+              </>
 
               {/* Content */}
-              <div style={{ position: 'relative', zIndex: 10, height: '100%', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-                {page.image && (
-                  <div style={{
-                    overflow: 'hidden',
-                    borderRadius: '1rem',
-                    border: '3px solid white',
-                    boxShadow: '0 10px 25px rgba(0,0,0,0.15)',
-                    backgroundColor: 'white',
-                  }}>
-                    <img
-                      src={page.image}
-                      alt={page.title || 'Page image'}
-                      style={{ 
-                        width: '100%', 
-                        height: '200px', 
-                        objectFit: 'cover',
-                        display: 'block',
-                      }}
-                    />
-                  </div>
-                )}
-                
-                <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                  <h2 style={{ 
-                    fontSize: '1.5rem', 
-                    fontWeight: 'bold', 
-                    color: template.titleColor,
-                    margin: 0,
-                    textShadow: '0 2px 4px rgba(0,0,0,0.1)',
-                  }}>
-                    {page.title || 'Untitled'}
-                  </h2>
-                  
-                  {page.id && (
-                    <p style={{ 
-                      fontSize: '0.875rem', 
-                      color: template.textColor,
-                      opacity: 0.7,
-                      margin: 0,
-                    }}>
-                      #{page.id}
-                    </p>
-                  )}
-                  
-                  {page.types && page.types.length > 0 && (
-                    <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
-                      {page.types.map((type) => (
-                        <span 
-                          key={type} 
-                          style={{
-                            padding: '0.25rem 0.75rem',
-                            borderRadius: '9999px',
-                            fontSize: '0.75rem',
-                            fontWeight: '600',
-                            backgroundColor: template.borderColor,
-                            color: template.titleColor,
-                          }}
+              {page.type === 'canvas' ? (
+                <div style={{ position: 'relative', width: '100%', height: '100%', overflow: 'hidden' }}>
+                    {/* Book Fold Line */}
+                    <div style={{ position: 'absolute', insetY: 0, left: 0, width: '1px', backgroundColor: 'rgba(0,0,0,0.05)', zIndex: 50 }} />
+                    
+                    {page.canvas_elements?.map((el) => (
+                        <div
+                            key={el.id}
+                            style={{
+                                position: 'absolute',
+                                left: `${el.x}%`,
+                                top: `${el.y}%`,
+                                width: el.width ? `${el.width}%` : 'auto',
+                                transform: `translate(-50%, -50%) rotate(${el.rotate || 0}deg)`,
+                                zIndex: el.zIndex,
+                                cursor: 'default',
+                                userSelect: 'none'
+                            }}
                         >
-                          {type}
-                        </span>
-                      ))}
-                    </div>
-                  )}
-                  
-                  <p style={{ 
-                    fontSize: '0.875rem', 
-                    lineHeight: '1.6',
-                    color: template.textColor,
-                    margin: 0,
-                    fontWeight: '500',
-                  }}>
-                    {page.body || ''}
-                  </p>
+                            {el.type === 'image' && el.image_url && (
+                                <img 
+                                    src={el.image_url} 
+                                    alt="Canvas element" 
+                                    style={{ width: '100%', height: 'auto', display: 'block', borderRadius: '2px', boxShadow: '0 4px 6px rgba(0,0,0,0.1)' }} 
+                                />
+                            )}
+                            {el.type === 'text' && (
+                                <div style={{ 
+                                    whiteSpace: 'pre-wrap', 
+                                    wordBreak: 'break-word', 
+                                    paddingLeft: '0.5rem', 
+                                    paddingRight: '0.5rem', 
+                                    lineHeight: 1.6,
+                                    fontFamily: el.fontFamily || 'serif',
+                                    fontSize: `${el.fontSize || 16}px`,
+                                    color: el.color || '#333'
+                                }}>
+                                    {el.content}
+                                </div>
+                            )}
+                            {el.type === 'sticker' && (
+                                <div style={{ fontSize: `${el.fontSize || 40}px` }}>
+                                    {el.content}
+                                </div>
+                            )}
+                        </div>
+                    ))}
                 </div>
-              </div>
+              ) : (
+                <div style={{ position: 'relative', zIndex: 10, height: '100%', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                    {page.image && (
+                    <div style={{
+                        overflow: 'hidden',
+                        borderRadius: '1rem',
+                        border: '3px solid white',
+                        boxShadow: '0 10px 25px rgba(0,0,0,0.15)',
+                        backgroundColor: 'white',
+                    }}>
+                        <img
+                        src={page.image}
+                        alt={page.title || 'Page image'}
+                        style={{ 
+                            width: '100%', 
+                            height: '200px', 
+                            objectFit: 'cover',
+                            display: 'block',
+                        }}
+                        />
+                    </div>
+                    )}
+                    
+                    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                    <h2 style={{ 
+                        fontSize: '1.5rem', 
+                        fontWeight: 'bold', 
+                        color: template.titleColor,
+                        margin: 0,
+                        textShadow: '0 2px 4px rgba(0,0,0,0.1)',
+                    }}>
+                        {page.title || 'Untitled'}
+                    </h2>
+                    
+                    {(page.label || page.id) && (
+                        <p style={{ 
+                        fontSize: '0.875rem', 
+                        color: template.textColor,
+                        opacity: 0.7,
+                        margin: 0,
+                        fontWeight: '600',
+                        }}>
+                        {page.label || `#${page.id}`}
+                        </p>
+                    )}
+                    
+                    {page.types && page.types.length > 0 && (
+                        <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap' }}>
+                        {page.types.map((type, idx) => (
+                            <span 
+                            key={idx} 
+                            style={{
+                                padding: '0.2rem 0.6rem',
+                                borderRadius: '6px',
+                                fontSize: '0.65rem',
+                                fontWeight: '800',
+                                backgroundColor: template.borderColor,
+                                color: template.titleColor,
+                                textTransform: 'uppercase',
+                                letterSpacing: '0.05em',
+                                boxShadow: '0 1px 2px rgba(0,0,0,0.05)',
+                            }}
+                            >
+                            {type}
+                            </span>
+                        ))}
+                        </div>
+                    )}
+                    
+                    <p style={{ 
+                        fontSize: '0.875rem', 
+                        lineHeight: '1.6',
+                        color: template.textColor,
+                        margin: 0,
+                        fontWeight: '500',
+                    }}>
+                        {page.body || ''}
+                    </p>
+                    </div>
+                </div>
+              )}
 
               {/* CSS Animation */}
               <style>{`

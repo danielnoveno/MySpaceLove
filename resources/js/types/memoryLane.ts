@@ -10,12 +10,35 @@ export interface Reward {
 }
 
 // Flipbook Page Types
+export interface CanvasElement {
+    id: string;
+    type: "image" | "text" | "sticker";
+    x: number; // percentage
+    y: number; // percentage
+    width?: number; // percentage
+    height?: number; // auto if not set
+    rotate?: number; // degrees
+    content?: string; // for text or sticker id
+    fontSize?: number; // px or scale
+    fontFamily?: string;
+    color?: string;
+    image_url?: string;
+    image_file?: File;
+    borderRadius?: string;
+    zIndex: number;
+}
+
 export interface FlipbookPage {
     id: string | number;
     title: string;
     body: string;
+    label?: string;
+    types?: string[];
     image?: string | null;
     image_file?: File | null;
+    type?: "standard" | "canvas";
+    canvas_elements?: CanvasElement[];
+    bg_color?: string;
 }
 
 // Memory Lane Level Types

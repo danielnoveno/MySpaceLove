@@ -17,11 +17,14 @@ class PublicSurpriseController extends Controller
     public function story(): Response
     {
         $storyBase = __('surprise.story_book');
-        $defaultSpaceTitle = data_get($storyBase, 'defaults.spaceTitle', 'My Favorite Person');
+        $defaultSpaceTitle = data_get($storyBase, 'defaults.spaceTitle', 'kita');
 
         $storyContent = __('surprise.story_book', [
             'spaceTitle' => $defaultSpaceTitle,
         ]);
+
+        $memoryLaneContent = $this->memoryLane->resolve();
+        $storyContent['secretGate']['code'] = $memoryLaneContent['secretGate']['code'] ?? '00000';
 
         $scrapbookMeta = data_get($storyContent, 'scrapbook', []);
         $scrapbookPages = $this->memoryLane->scrapbookPages();
@@ -37,8 +40,12 @@ class PublicSurpriseController extends Controller
 
         unset($storyContent['defaults']);
 
+        // Check verification for generic (session might use 'default' or similar)
+        $isVerified = session()->get("memory_lane_access_default", false);
+
         return Inertia::render('Surprise/StoryBook', [
             'storyBook' => $storyContent,
+            'isVerified' => $isVerified,
         ]);
     }
 
@@ -46,8 +53,11 @@ class PublicSurpriseController extends Controller
     {
         $storyBase = __('surprise.story_book');
         $storyContent = __('surprise.story_book', [
-            'spaceTitle' => $space->title ?? data_get($storyBase, 'defaults.spaceTitle', 'My Favorite Person'),
+            'spaceTitle' => $space->title ?? data_get($storyBase, 'defaults.spaceTitle', 'kita'),
         ]);
+
+        $memoryLaneContent = $this->memoryLane->resolve($space);
+        $storyContent['secretGate']['code'] = $memoryLaneContent['secretGate']['code'] ?? '00000';
 
         $scrapbookMeta = data_get($storyContent, 'scrapbook', []);
         
@@ -67,6 +77,8 @@ class PublicSurpriseController extends Controller
 
         unset($storyContent['defaults']);
 
+        $isVerified = session()->get("memory_lane_access_{$space->slug}", false);
+
         return Inertia::render('Surprise/StoryBook', [
             'space' => [
                 'id' => $space->id,
@@ -74,6 +86,7 @@ class PublicSurpriseController extends Controller
                 'title' => $space->title,
             ],
             'storyBook' => $storyContent,
+            'isVerified' => $isVerified,
         ]);
     }
 
@@ -81,10 +94,12 @@ class PublicSurpriseController extends Controller
     {
         $memoryContent = $this->memoryLane->resolve();
         $skipPuzzle = config('app.debug') || $request->boolean('skipPuzzle');
+        $isVerified = session()->get("memory_lane_access_default", false);
 
         return Inertia::render('Surprise/MemoryLanePublic', [
             'memoryLane' => $memoryContent,
             'skipPuzzle' => $skipPuzzle,
+            'isVerified' => $isVerified,
         ]);
     }
 
@@ -92,6 +107,7 @@ class PublicSurpriseController extends Controller
     {
         $memoryContent = $this->memoryLane->resolve($space);
         $skipPuzzle = config('app.debug') || $request->boolean('skipPuzzle');
+        $isVerified = session()->get("memory_lane_access_{$space->slug}", false);
 
         return Inertia::render('Surprise/MemoryLanePublic', [
             'space' => [
@@ -101,6 +117,7 @@ class PublicSurpriseController extends Controller
             ],
             'memoryLane' => $memoryContent,
             'skipPuzzle' => $skipPuzzle,
+            'isVerified' => $isVerified,
         ]);
     }
 }

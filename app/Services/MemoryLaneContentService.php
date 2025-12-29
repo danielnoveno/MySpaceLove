@@ -263,7 +263,11 @@ class MemoryLaneContentService
 
         // 1. Process defaults (apply overrides)
         foreach ($defaults as $default) {
-            $override = $customCollection->firstWhere('id', $default['id']);
+            // Use loose comparison to handle string vs int IDs
+            $override = $customCollection->first(function ($item) use ($default) {
+                return (string)($item['id'] ?? '') === (string)$default['id'];
+            });
+
             if ($override) {
                 // Merge default with override (e.g. enabled status)
                 $merged[] = array_merge($default, $override);
@@ -275,7 +279,9 @@ class MemoryLaneContentService
 
         // 2. Add pure custom rewards
         $pureCustoms = $customCollection->filter(function ($item) use ($defaultIds) {
-            return !in_array($item['id'] ?? null, $defaultIds);
+            $itemId = (string)($item['id'] ?? '');
+            $stringDefaultIds = array_map('strval', $defaultIds);
+            return !empty($itemId) && !in_array($itemId, $stringDefaultIds);
         });
 
         foreach ($pureCustoms as $custom) {
@@ -307,14 +313,31 @@ class MemoryLaneContentService
         // Process flipbook pages to include full image URLs
         return collect($config->flipbook_pages)
             ->map(function ($page) use ($disk) {
+                // Handle standard image
                 if (!empty($page['image']) && $disk->exists($page['image'])) {
                     $page['image'] = asset(Storage::url($page['image']));
                 }
+
+                // Handle canvas elements images
+                if (($page['type'] ?? 'standard') === 'canvas' && isset($page['canvas_elements'])) {
+                    $elements = $page['canvas_elements'];
+                    foreach ($elements as $key => $el) {
+                        if ($el['type'] === 'image' && !empty($el['image_url'])) {
+                            // Convert relative /storage/ path to asset URL if needed
+                            if (str_starts_with($el['image_url'], '/storage/')) {
+                                $el['image_url'] = asset($el['image_url']);
+                            }
+                        }
+                        $elements[$key] = $el;
+                    }
+                    $page['canvas_elements'] = $elements;
+                }
+                
                 return $page;
             })
             ->filter(function ($page) {
-                // Only include pages that have at least title, body, or image
-                return !empty($page['title']) || !empty($page['body']) || !empty($page['image']);
+                // Only include pages that have content or are canvas type
+                return ($page['type'] ?? 'standard') === 'canvas' || !empty($page['title']) || !empty($page['body']) || !empty($page['image']);
             })
             ->values()
             ->all();

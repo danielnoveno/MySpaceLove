@@ -23,16 +23,19 @@ export default function RewardsConfig({
 
     // 1. Process Default Rewards (overridden by customRewards state)
     const processedDefaultRewards = defaultRewards.map(reward => {
-        const custom = customRewards.find(r => r.id === reward.id);
+        // Use == to handle string vs number IDs from database/config
+        const custom = customRewards.find(r => String(r.id) === String(reward.id));
         return {
             ...reward,
             enabled: custom?.enabled ?? true, // Default enabled unless strictly disabled
         };
     });
 
-    // 2. Identify Pure Custom Rewards (those not matching default IDs)
+    // 2. Identify Pure Custom Rewards (those not matching default IDs and have content)
     const pureCustomRewards = customRewards.filter(
-        (custom) => !defaultRewards.some((def) => def.id === custom.id)
+        (custom) => 
+            !defaultRewards.some((def) => String(def.id) === String(custom.id)) &&
+            custom.title // Only include if it has a title to avoid "empty boxes" from legacy data
     );
 
     const rewardsDisplay = [
@@ -44,16 +47,16 @@ export default function RewardsConfig({
 
     const handleToggle = (id: number | string) => {
         // Check if it's a default reward or a custom one
-        const isDefault = defaultRewards.some(r => r.id === id);
+        const isDefault = defaultRewards.some(r => String(r.id) === String(id));
 
         if (isDefault) {
             // For default rewards, we add/update an entry in customRewards to track the state
-            const existingOverride = customRewards.find(r => r.id === id);
+            const existingOverride = customRewards.find(r => String(r.id) === String(id));
             let newCustomRewards;
             
             if (existingOverride) {
                 newCustomRewards = customRewards.map(r => 
-                    r.id === id ? { ...r, enabled: !r.enabled } : r
+                    String(r.id) === String(id) ? { ...r, enabled: !r.enabled } : r
                 );
             } else {
                 // Determine current state (true by default) and flip it
@@ -63,7 +66,7 @@ export default function RewardsConfig({
         } else {
             // For pure custom rewards, just toggle the enabled flag in the array
              const newCustomRewards = customRewards.map(r => 
-                r.id === id ? { ...r, enabled: !r.enabled } : r
+                String(r.id) === String(id) ? { ...r, enabled: !r.enabled } : r
             );
             onChange(newCustomRewards);
         }
@@ -101,7 +104,7 @@ export default function RewardsConfig({
     };
 
     const handleDeleteCustomReward = (id: number | string) => {
-        onChange(customRewards.filter(r => r.id !== id));
+        onChange(customRewards.filter(r => String(r.id) !== String(id)));
     };
 
     const categoryGroups = {

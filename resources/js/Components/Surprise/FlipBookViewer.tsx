@@ -1,11 +1,32 @@
-import { useState, useMemo, memo } from "react";
+import { useState, useMemo, useEffect, memo } from "react";
 import { ChevronLeft, ChevronRight, Book, Heart, Star, Sparkles, Flower2 } from "lucide-react";
+
+export interface CanvasElement {
+    id: string;
+    type: "image" | "text" | "sticker";
+    x: number;
+    y: number;
+    width?: number;
+    height?: number;
+    rotate?: number;
+    content?: string;
+    fontSize?: number;
+    fontFamily?: string;
+    color?: string;
+    image_url?: string;
+    zIndex: number;
+}
 
 export interface FlipBookPage {
     id: string | number;
     title: string;
     body: string;
+    label?: string;
+    types?: string[];
     image?: string | null;
+    type?: "standard" | "canvas";
+    canvas_elements?: CanvasElement[];
+    bg_color?: string;
 }
 
 interface FlipBookViewerProps {
@@ -146,6 +167,19 @@ function FlipBookViewer({
     const [currentPage, setCurrentPage] = useState(0);
     const [isFlipping, setIsFlipping] = useState(false);
 
+    // Load fonts for canvas elements
+    useEffect(() => {
+        const link = document.createElement('link');
+        link.href = 'https://fonts.googleapis.com/css2?family=Dancing+Script:wght@400;700&family=Pacifico&family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Inter:wght@400;500;600;700&display=swap';
+        link.rel = 'stylesheet';
+        document.head.appendChild(link);
+        return () => {
+            if (document.head.contains(link)) {
+                document.head.removeChild(link);
+            }
+        };
+    }, []);
+
     const handleNext = () => {
         if (currentPage < pages.length - 1 && !isFlipping) {
             setIsFlipping(true);
@@ -233,16 +267,40 @@ function FlipBookViewer({
                     <div className="absolute -inset-2 rounded-[2rem] bg-black/10 blur-xl" />
                     
                     <div 
-                        className="relative rounded-[2rem] border-4 shadow-2xl overflow-hidden"
+                        className="relative rounded-[2rem] border-4 shadow-2xl overflow-hidden min-h-[500px] md:min-h-[600px]"
                         style={{
-                            background: template.background,
-                            borderColor: template.borderColor,
+                            background: page.type === "canvas" ? (page.bg_color || "#fff5f5") : template.background,
+                            borderColor: page.type === "canvas" ? "rgba(0,0,0,0.1)" : template.borderColor,
                         }}
                     >
                         {/* Pattern overlay */}
                         <div 
                             className="absolute inset-0 pointer-events-none"
                             style={{ background: template.pattern }}
+                        />
+                        
+                        {/* Notebook Lines Effect */}
+                        <div 
+                            className="absolute inset-0 pointer-events-none opacity-40"
+                            style={{
+                                backgroundImage: `
+                                    repeating-linear-gradient(
+                                        transparent,
+                                        transparent 29px,
+                                        ${template.borderColor} 29px,
+                                        ${template.borderColor} 30px
+                                    ),
+                                    linear-gradient(
+                                        to right,
+                                        transparent 0,
+                                        transparent 40px,
+                                        rgba(255, 182, 193, 0.3) 40px,
+                                        rgba(255, 182, 193, 0.3) 42px,
+                                        transparent 42px
+                                    )
+                                `,
+                                backgroundSize: '100% 30px, 100% 100%',
+                            }}
                         />
                         
                         {/* Decorative elements */}
@@ -253,48 +311,128 @@ function FlipBookViewer({
                         </div>
 
                         {/* Corner decorations */}
-                        <div className="absolute top-0 left-0 w-20 h-20 border-l-4 border-t-4 rounded-tl-[2rem] opacity-30" style={{ borderColor: template.borderColor }} />
-                        <div className="absolute top-0 right-0 w-20 h-20 border-r-4 border-t-4 rounded-tr-[2rem] opacity-30" style={{ borderColor: template.borderColor }} />
-                        <div className="absolute bottom-0 left-0 w-20 h-20 border-l-4 border-b-4 rounded-bl-[2rem] opacity-30" style={{ borderColor: template.borderColor }} />
-                        <div className="absolute bottom-0 right-0 w-20 h-20 border-r-4 border-b-4 rounded-br-[2rem] opacity-30" style={{ borderColor: template.borderColor }} />
+                        <>
+                            <div className="absolute top-0 left-0 w-20 h-20 border-l-4 border-t-4 rounded-tl-[2rem] opacity-30" style={{ borderColor: template.borderColor }} />
+                            <div className="absolute top-0 right-0 w-20 h-20 border-r-4 border-t-4 rounded-tr-[2rem] opacity-30" style={{ borderColor: template.borderColor }} />
+                            <div className="absolute bottom-0 left-0 w-20 h-20 border-l-4 border-b-4 rounded-bl-[2rem] opacity-30" style={{ borderColor: template.borderColor }} />
+                            <div className="absolute bottom-0 right-0 w-20 h-20 border-r-4 border-b-4 rounded-br-[2rem] opacity-30" style={{ borderColor: template.borderColor }} />
+                        </>
 
                         {/* Page Content */}
-                        <div className="relative z-10 p-8 md:p-12 space-y-6">
-                            {/* Image with lazy loading */}
-                            {page.image && (
-                                <div className="overflow-hidden rounded-2xl border-4 border-white shadow-xl transform hover:scale-[1.02] transition-transform duration-300">
-                                    <img
-                                        src={page.image}
-                                        alt={page.title}
-                                        className="h-64 w-full object-cover md:h-80"
-                                        loading="lazy"
-                                        decoding="async"
-                                    />
+                        <div className="relative z-10 w-full h-full">
+                            {page.type === "canvas" ? (
+                                <div className="relative w-full h-[500px] md:h-[600px] overflow-hidden">
+                                     {/* Book Fold Effect */}
+                                     <div className="absolute inset-y-0 left-0 w-1 bg-black/5 z-50" />
+                                     
+                                     {page.canvas_elements?.map((el) => (
+                                         <div
+                                             key={el.id}
+                                             className="absolute select-none"
+                                             style={{
+                                                 left: `${el.x}%`,
+                                                 top: `${el.y}%`,
+                                                 width: el.width ? `${el.width}%` : "auto",
+                                                 transform: `translate(-50%, -50%) rotate(${el.rotate || 0}deg)`,
+                                                 zIndex: el.zIndex,
+                                             }}
+                                         >
+                                             {el.type === "image" && el.image_url && (
+                                                 <img 
+                                                     src={el.image_url} 
+                                                     alt="Canvas Content" 
+                                                     className="w-full h-auto block rounded-sm shadow-md"
+                                                 />
+                                             )}
+                                             {el.type === "text" && (
+                                                 <div 
+                                                     className="whitespace-pre-wrap break-words px-2 leading-relaxed"
+                                                     style={{ 
+                                                         fontFamily: el.fontFamily, 
+                                                         fontSize: `${el.fontSize}px`, 
+                                                         color: el.color || "#333"
+                                                     }}
+                                                 >
+                                                     {el.content}
+                                                 </div>
+                                             )}
+                                             {el.type === "sticker" && (
+                                                 <div style={{ fontSize: `${el.fontSize || 40}px` }}>
+                                                     {el.content}
+                                                 </div>
+                                             )}
+                                         </div>
+                                     ))}
+                                </div>
+                            ) : (
+                                <div className="p-8 md:p-12 space-y-6">
+                                    {/* Image with lazy loading */}
+                                    {page.image && (
+                                        <div className="overflow-hidden rounded-2xl border-4 border-white shadow-xl transform hover:scale-[1.02] transition-transform duration-300">
+                                            <img
+                                                src={page.image}
+                                                alt={page.title}
+                                                className="h-64 w-full object-cover md:h-80"
+                                                loading="lazy"
+                                                decoding="async"
+                                            />
+                                        </div>
+                                    )}
+
+                                    {/* Title Section */}
+                                    <div className="space-y-2">
+                                        <h3 
+                                            className="text-2xl md:text-4xl font-bold drop-shadow-sm"
+                                            style={{ color: template.titleColor }}
+                                        >
+                                            {page.title}
+                                        </h3>
+                                        
+                                        <div className="flex flex-wrap items-center gap-3">
+                                            {page.label && (
+                                                <span 
+                                                    className="text-sm md:text-lg font-bold opacity-60 uppercase tracking-widest"
+                                                    style={{ color: template.textColor }}
+                                                >
+                                                    {page.label}
+                                                </span>
+                                            )}
+                                            
+                                            {page.types && page.types.length > 0 && (
+                                                <div className="flex flex-wrap gap-2">
+                                                    {page.types.map((type, idx) => (
+                                                        <span 
+                                                            key={idx} 
+                                                            className="px-3 py-1 rounded-full text-[10px] md:text-xs font-black uppercase tracking-tighter shadow-sm"
+                                                            style={{ 
+                                                                backgroundColor: template.borderColor,
+                                                                color: template.titleColor
+                                                            }}
+                                                        >
+                                                            {type}
+                                                        </span>
+                                                    ))}
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+
+                                    {/* Body */}
+                                    {page.body && (
+                                        <div className="prose prose-lg max-w-none">
+                                            <p 
+                                                className="text-base md:text-lg leading-relaxed whitespace-pre-wrap font-medium"
+                                                style={{ color: template.textColor }}
+                                            >
+                                                {page.body}
+                                            </p>
+                                        </div>
+                                    )}
                                 </div>
                             )}
 
-                            {/* Title */}
-                            <h3 
-                                className="text-2xl md:text-4xl font-bold drop-shadow-sm"
-                                style={{ color: template.titleColor }}
-                            >
-                                {page.title}
-                            </h3>
-
-                            {/* Body */}
-                            {page.body && (
-                                <div className="prose prose-lg max-w-none">
-                                    <p 
-                                        className="text-base md:text-lg leading-relaxed whitespace-pre-wrap font-medium"
-                                        style={{ color: template.textColor }}
-                                    >
-                                        {page.body}
-                                    </p>
-                                </div>
-                            )}
-
-                            {/* Page Number Indicator */}
-                            <div className="pt-6 flex justify-center gap-2">
+                            {/* Page Navigation Dots */}
+                            <div className={`absolute bottom-6 left-0 right-0 flex justify-center gap-2 z-50 ${page.type === "canvas" ? "bg-black/5 py-2 backdrop-blur-sm" : ""}`}>
                                 {pages.map((_, index) => (
                                     <button
                                         key={index}
@@ -306,8 +444,8 @@ function FlipBookViewer({
                                         }`}
                                         style={{
                                             backgroundColor: index === currentPage 
-                                                ? template.titleColor 
-                                                : `${template.titleColor}40`,
+                                                ? (page.type === "canvas" ? "#f43f5e" : template.titleColor)
+                                                : (page.type === "canvas" ? "rgba(0,0,0,0.2)" : `${template.titleColor}40`),
                                         }}
                                         aria-label={`Go to page ${index + 1}`}
                                     />

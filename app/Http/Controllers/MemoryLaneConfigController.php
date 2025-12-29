@@ -83,11 +83,17 @@ class MemoryLaneConfigController extends Controller
                 'custom_rewards.*.icon' => ['nullable', 'string', 'max:10'],
                 'custom_rewards.*.title' => ['nullable', 'string', 'max:100'],
                 'custom_rewards.*.description' => ['nullable', 'string', 'max:255'],
+                'custom_rewards.*.category' => ['nullable', 'string'],
                 'flipbook_pages' => ['nullable', 'array', 'max:10'],
                 'flipbook_pages.*.id' => ['nullable'],
+                'flipbook_pages.*.type' => ['nullable', 'string'],
+                'flipbook_pages.*.bg_color' => ['nullable', 'string'],
+                'flipbook_pages.*.canvas_elements' => ['nullable', 'array'],
                 'flipbook_pages.*.title' => ['nullable', 'string', 'max:200'],
                 'flipbook_pages.*.body' => ['nullable', 'string', 'max:2000'],
                 'flipbook_pages.*.image' => ['nullable', 'string'],
+                'flipbook_pages.*.label' => ['nullable', 'string', 'max:50'],
+                'flipbook_pages.*.types' => ['nullable', 'array'],
                 'flipbook_pages.*.image_file' => ['nullable', 'image', 'max:10240'],
                 'flipbook_cover_image' => ['nullable', 'image', 'max:10240'],
                 'flipbook_cover_title' => ['nullable', 'string', 'max:200'],
@@ -167,11 +173,9 @@ class MemoryLaneConfigController extends Controller
                 // Extract storage path from full URL if needed
                 $existingImagePath = $page['image'] ?? null;
                 if ($existingImagePath && str_starts_with($existingImagePath, '/storage/')) {
-                    // Remove /storage/ prefix to get the actual path
                     $existingImagePath = substr($existingImagePath, 9);
                 } elseif ($existingImagePath && str_starts_with($existingImagePath, 'http')) {
-                    // If it's a full URL, extract the path after /storage/
-                    $existingImagePath = null; // Don't use URL, will be replaced
+                    $existingImagePath = null; 
                 }
 
                 $processedPage = [
@@ -179,16 +183,18 @@ class MemoryLaneConfigController extends Controller
                     'title' => $page['title'] ?? '',
                     'body' => $page['body'] ?? '',
                     'image' => $existingImagePath,
+                    'type' => $page['type'] ?? 'standard',
+                    'bg_color' => $page['bg_color'] ?? '#fff5f5',
+                    'label' => $page['label'] ?? '',
+                    'types' => $page['types'] ?? [],
                 ];
 
-                // Handle image file upload for this page
+                // Handle Standard image file upload
                 $imageFileKey = "flipbook_pages.{$index}.image_file";
                 if ($request->hasFile($imageFileKey)) {
-                    // Delete old image if exists
                     if (!empty($processedPage['image'])) {
                         Storage::disk('public')->delete($processedPage['image']);
                     }
-
                     $stored = $this->fileProcessor->store(
                         $request->file($imageFileKey),
                         "{$storagePath}/flipbook",
@@ -199,8 +205,46 @@ class MemoryLaneConfigController extends Controller
                     $processedPage['image'] = $stored['path'];
                 }
 
+                // Handle Canvas Elements
+                if ($processedPage['type'] === 'canvas' && isset($page['canvas_elements'])) {
+                    $elements = [];
+                    foreach ($page['canvas_elements'] as $elIndex => $element) {
+                        $processedElement = $element;
+                        
+                        // Handle canvas image upload
+                        $elFileKey = "flipbook_pages.{$index}.canvas_elements.{$elIndex}.image_file";
+                        if ($request->hasFile($elFileKey)) {
+                            // Extract old path if exists to delete
+                            $oldUrl = $element['image_url'] ?? null;
+                            if ($oldUrl && str_starts_with($oldUrl, '/storage/')) {
+                                Storage::disk('public')->delete(substr($oldUrl, 9));
+                            }
+
+                            $stored = $this->fileProcessor->store(
+                                $request->file($elFileKey),
+                                "{$storagePath}/flipbook/canvas",
+                                'public',
+                                'errors.memory_lane.kit_image_too_large',
+                                $elFileKey,
+                            );
+                            $processedElement['image_url'] = Storage::url($stored['path']);
+                        }
+                        
+                        // Remove File objects before saving to JSON
+                        unset($processedElement['image_file']);
+                        $elements[] = $processedElement;
+                    }
+                    $processedPage['canvas_elements'] = $elements;
+                }
+
                 // Only add pages that have content
-                if (!empty($processedPage['title']) || !empty($processedPage['body']) || !empty($processedPage['image'])) {
+                if ($processedPage['type'] === 'canvas' 
+                    || !empty($processedPage['title']) 
+                    || !empty($processedPage['body']) 
+                    || !empty($processedPage['image'])
+                    || !empty($processedPage['label'])
+                    || !empty($processedPage['types'])
+                ) {
                     $flipbookPages[] = $processedPage;
                 }
             }

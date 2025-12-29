@@ -3,6 +3,7 @@ import { useMemo, useState } from "react";
 import { BookOpen, Sparkles, Heart, ArrowRight, Star } from "lucide-react";
 import type { ScrapbookContent, ScrapbookPage, StoryBookContent } from "@/data/loveStoryChapters";
 import Book from "@/Components/PageFlip/components/Book.jsx";
+import SecretCodeGate from "@/Components/Surprise/SecretCodeGate";
 import "@/Components/PageFlip/App.css";
 
 type SpaceInfo = {
@@ -14,11 +15,13 @@ type SpaceInfo = {
 type StoryBookProps = {
     storyBook: StoryBookContent;
     space?: SpaceInfo;
+    isVerified?: boolean;
 };
 
 export default function StoryBook({
     storyBook,
     space,
+    isVerified = false,
 }: StoryBookProps): JSX.Element {
     const nextHref = space?.slug
         ? route("location.public", { space: space.slug })
@@ -27,6 +30,7 @@ export default function StoryBook({
     const hero = storyBook.hero;
     const footer = storyBook.footer;
     const scrapbook: ScrapbookContent | undefined = storyBook.scrapbook;
+    const gate = storyBook.secretGate;
 
     const scrapbookPages = useMemo<ScrapbookPage[]>(() => {
         const pages = scrapbook?.pages ?? [];
@@ -43,12 +47,13 @@ export default function StoryBook({
                     page.body && page.body.trim().length > 0
                         ? page.body
                         : undefined,
-            }))
+                }))
             .filter(
                 (page) =>
-                    (page.title && page.title.trim().length > 0) ||
+                    (page.title && page.title.trim().length > 0 && !page.title.startsWith('Page ')) ||
                     (page.body && page.body.trim().length > 0) ||
-                    Boolean(page.image),
+                    Boolean(page.image) ||
+                    (page as any).type === 'canvas',
             );
     }, [scrapbook?.pages]);
     const [showBook, setShowBook] = useState(false);
@@ -61,15 +66,20 @@ export default function StoryBook({
     // Prepare pages for Book component
     const bookPages = scrapbookPages.map((page, index) => ({
         id: page.id || `page-${index}`,
+        label: page.label || `Page ${index + 1}`,
         title: page.title || page.label || `Page ${index + 1}`,
         body: page.body || '',
         image: page.image || null,
+        type: (page as any).type || 'standard',
+        types: (page as any).types || [],
+        canvas_elements: (page as any).canvas_elements || [],
+        bg_color: (page as any).bg_color || null,
     }));
 
     const coverImage = scrapbook?.coverImage || null;
     const coverTitle = scrapbook?.coverTitle || 'Our Story';
 
-    return (
+    const content = (
         <div className="relative min-h-screen overflow-hidden" style={{
             background: 'linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%)',
         }}>
@@ -200,4 +210,28 @@ export default function StoryBook({
             )}
         </div>
     );
+
+    const isGateEnabled = gate?.enabled !== false;
+    const skipGate = isVerified || !isGateEnabled;
+
+    if (gate && !skipGate) {
+        return (
+            <SecretCodeGate
+                code={gate.code}
+                title={gate.title}
+                description={gate.description}
+                placeholder={gate.placeholder}
+                buttonLabel={gate.buttonLabel}
+                errorMessage={gate.errorMessage}
+                hint={gate.hint}
+                hintLabel={gate.hintLabel}
+                accessLabel={gate.accessLabel}
+                inputLabel={gate.inputLabel}
+            >
+                {content}
+            </SecretCodeGate>
+        );
+    }
+
+    return content;
 }

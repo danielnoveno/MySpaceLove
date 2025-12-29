@@ -9,6 +9,9 @@ import {
 type SecretCodeGateProps = {
     code: string;
     children: ReactNode | ((args: { unlockCode: string }) => ReactNode);
+    onSubmit?: (pin: string) => void;
+    isSubmitting?: boolean;
+    isUnlocked?: boolean;
     title?: string;
     description?: string;
     placeholder?: string;
@@ -23,6 +26,9 @@ type SecretCodeGateProps = {
 export function SecretCodeGate({
     code,
     children,
+    onSubmit,
+    isSubmitting = false,
+    isUnlocked: initialIsUnlocked = false,
     title = "Enter Secret Code",
     description = "You need a sweet code to unlock this page.",
     placeholder = "Example: 160825",
@@ -39,13 +45,19 @@ export function SecretCodeGate({
     );
 
     const [input, setInput] = useState("");
-    const [isUnlocked, setIsUnlocked] = useState(false);
+    const [isUnlocked, setIsUnlocked] = useState(initialIsUnlocked);
     const [hasError, setHasError] = useState(false);
 
     const handleSubmit = useCallback(
         (event: FormEvent<HTMLFormElement>) => {
             event.preventDefault();
             const normalizedInput = input.replace(/\s+/g, "").toLowerCase();
+            
+            if (onSubmit) {
+                onSubmit(normalizedInput);
+                return;
+            }
+
             if (normalizedInput === normalizedCode) {
                 setIsUnlocked(true);
                 setHasError(false);
@@ -53,7 +65,7 @@ export function SecretCodeGate({
             }
             setHasError(true);
         },
-        [input, normalizedCode],
+        [input, normalizedCode, onSubmit],
     );
 
     if (isUnlocked) {
@@ -102,9 +114,10 @@ export function SecretCodeGate({
 
                     <button
                         type="submit"
-                        className="w-full rounded-2xl bg-white/90 px-4 py-3 text-sm font-semibold uppercase tracking-[0.3em] text-slate-900 transition hover:bg-white"
+                        disabled={isSubmitting}
+                        className="w-full rounded-2xl bg-white/90 px-4 py-3 text-sm font-semibold uppercase tracking-[0.3em] text-slate-900 transition hover:bg-white disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                        {buttonLabel}
+                        {isSubmitting ? "Processing..." : buttonLabel}
                     </button>
                 </form>
 
