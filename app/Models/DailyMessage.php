@@ -10,6 +10,7 @@ class DailyMessage extends Model
     use HasFactory;
     protected $fillable = [
         'space_id',
+        'user_id',
         'date',
         'message',
         'generated_by'
@@ -18,5 +19,10 @@ class DailyMessage extends Model
     public function space()
     {
         return $this->belongsTo(Space::class);
+    }
+
+    public function user()
+    {
+        return $this->belongsTo(User::class);
     }
 }

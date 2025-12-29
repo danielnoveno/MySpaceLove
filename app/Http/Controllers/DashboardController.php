@@ -53,9 +53,10 @@ class DashboardController extends Controller
                     ->selectRaw('id, event_name, event_date, description, DATEDIFF(event_date, CURDATE()) as days_left')
                     ->get(),
                 'recentMessages' => DailyMessage::where('space_id', $space->id)
+                    ->with('user:id,name')
                     ->orderBy('date', 'desc')
                     ->limit(5)
-                    ->select(['id', 'message', 'date'])
+                    ->select(['id', 'message', 'date', 'user_id'])
                     ->get(),
             ];
         });

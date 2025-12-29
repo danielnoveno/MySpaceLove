@@ -12,8 +12,10 @@ class CreateDocsTable extends Migration
             $table->id();
             $table->foreignId('space_id')->constrained('spaces')->cascadeOnDelete();
             $table->foreignId('user_id')->constrained('users')->cascadeOnDelete();
+            
+            $table->index('space_id');
             $table->string('title')->nullable();
-            $table->string('file_path');
+            $table->string('file_path')->index();
             $table->text('notes')->nullable();
             $table->timestamps();
         });

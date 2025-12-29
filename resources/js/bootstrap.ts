@@ -72,23 +72,65 @@ declare module 'axios' {
 if (typeof window !== 'undefined') {
     void ensureCsrfCookie();
 
+    window.axios.interceptors.request.use(
+        async (config) => {
+            // Ensure CSRF token is always present before making requests
+            const xsrf = readXsrfToken();
+            const csrfMeta = readMetaCsrfToken();
+            
+            if (xsrf) {
+                config.headers['X-XSRF-TOKEN'] = xsrf;
+            }
+            
+            if (csrfMeta) {
+                config.headers['X-CSRF-TOKEN'] = csrfMeta;
+            }
+            
+            return config;
+        },
+        (error) => Promise.reject(error)
+    );
+
     window.axios.interceptors.response.use(
         (response) => response,
         async (error: AxiosError) => {
             const { response, config } = error;
 
             if (response?.status === 419 && config && !config._retried) {
+                console.warn('CSRF token mismatch (419). Attempting to refresh token and retry...');
+                
                 try {
-                    await window.axios.get('/sanctum/csrf-cookie', { withCredentials: true });
-                    const newToken = document.head.querySelector('meta[name="csrf-token"]');
-                    if (newToken) {
-                        window.axios.defaults.headers.common['X-CSRF-TOKEN'] = newToken.getAttribute('content');
+                    // Fetch a fresh CSRF cookie
+                    await window.axios.get('/sanctum/csrf-cookie', { 
+                        withCredentials: true,
+                        _retried: true // Prevent infinite loops
+                    } as any);
+                    
+                    // Wait a bit for the cookie to be set
+                    await new Promise(resolve => setTimeout(resolve, 100));
+                    
+                    // Re-read tokens after refresh
+                    const newXsrf = readXsrfToken();
+                    const newCsrfMeta = readMetaCsrfToken();
+                    
+                    if (newXsrf) {
+                        window.axios.defaults.headers.common['X-XSRF-TOKEN'] = newXsrf;
+                        config.headers = config.headers || {};
+                        config.headers['X-XSRF-TOKEN'] = newXsrf;
                     }
-                    applyXsrfHeader();
+                    
+                    if (newCsrfMeta) {
+                        window.axios.defaults.headers.common['X-CSRF-TOKEN'] = newCsrfMeta;
+                        config.headers = config.headers || {};
+                        config.headers['X-CSRF-TOKEN'] = newCsrfMeta;
+                    }
+                    
                     config._retried = true;
+                    console.log('CSRF token refreshed. Retrying request...');
                     return window.axios(config as AxiosRequestConfig);
                 } catch (csrfError) {
                     console.error('Unable to refresh CSRF token after 419 response.', csrfError);
+                    console.error('Original request config:', config);
                 }
             }
 

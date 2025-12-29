@@ -11,11 +11,17 @@ class CreateDailyMessagesTable extends Migration
         Schema::create('daily_messages', function (Blueprint $table) {
             $table->id();
             $table->foreignId('space_id')->constrained('spaces')->cascadeOnDelete();
+            $table->foreignId('user_id')->nullable()->constrained('users')->cascadeOnDelete();
             $table->date('date');
             $table->text('message');
-            $table->enum('generated_by', ['ai', 'manual'])->default('ai');
+            $table->enum('generated_by', ['ai', 'manual', 'fallback'])->default('ai');
             $table->timestamps();
-            $table->unique(['space_id', 'date']);
+            
+            // Unique constraint for each user in a space per day
+            $table->unique(['space_id', 'user_id', 'date']);
+            
+            // Performance index for querying all messages in a space by date
+            $table->index(['space_id', 'date']);
         });
     }
 

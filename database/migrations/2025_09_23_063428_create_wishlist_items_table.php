@@ -11,6 +11,8 @@ class CreateWishlistItemsTable extends Migration
         Schema::create('wishlist_items', function (Blueprint $table) {
             $table->id();
             $table->foreignId('space_id')->constrained('spaces')->cascadeOnDelete();
+            
+            $table->index('space_id');
             $table->string('title');
             $table->text('description')->nullable();
             $table->string('location')->nullable();

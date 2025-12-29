@@ -14,8 +14,11 @@ class CreateCountdownsTable extends Migration
             $table->string('event_name');
             $table->date('event_date');
             $table->text('description')->nullable();
+            $table->string('image')->nullable()->index();
             $table->json('activities')->nullable();
             $table->timestamps();
+
+            $table->index(['space_id', 'event_date']);
         });
     }
 

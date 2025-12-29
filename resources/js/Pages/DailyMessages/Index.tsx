@@ -341,6 +341,9 @@ export default function DailyMessageIndex({
                                     <h4 className="font-semibold text-gray-800">
                                         {message.date}
                                     </h4>
+                                    <p className="text-xs text-gray-500 mb-2">
+                                        {message.user ? `From: ${message.user.name}` : ''}
+                                    </p>
                                     <ExpandableText
                                         text={sanitize(`"${message.message}"`)}
                                         wordLimit={50}
@@ -519,4 +522,8 @@ interface DailyMessage {
     message: string;
     searchKeyword?: string;
     searchDate?: string;
+    user?: {
+        id: number;
+        name: string;
+    };
 }

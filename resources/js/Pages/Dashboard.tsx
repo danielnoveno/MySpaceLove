@@ -34,6 +34,10 @@ interface DashboardData {
     recentMessages: Array<{
         message: string;
         date: string;
+        user?: {
+            id: number;
+            name: string;
+        };
     }>;
 }
 
@@ -142,6 +146,9 @@ export default function Dashboard({ dashboardData, spaceContext }: Props) {
     >({});
     const [showLockModal, setShowLockModal] = useState(false);
     const [showComingSoonNotice, setShowComingSoonNotice] = useState(false);
+    // Tour is active only when it's actually running, not just when shouldShowTour is true
+    const [isTourActive, setIsTourActive] = useState(false);
+    const [pendingDailyMessage, setPendingDailyMessage] = useState<string | null>(null);
 
     const handleLockedNavigation = useCallback(
         (event: MouseEvent<Element>) => {
@@ -196,14 +203,20 @@ export default function Dashboard({ dashboardData, spaceContext }: Props) {
         });
     }, [dailyMessage]);
 
-    const openDailyMessageModal = useCallback((value: string | null) => {
+    const openDailyMessageModal = useCallback((value: string | null) =>{
         if (typeof value !== "string" || value.trim() === "") {
+            return;
+        }
+
+        // If tour is active, store message as pending instead of showing immediately
+        if (isTourActive) {
+            setPendingDailyMessage(value);
             return;
         }
 
         setDailyMessage(value);
         setShowModal(true);
-    }, []);
+    }, [isTourActive]);
 
     const extractDailyMessageText = useCallback((payload: unknown): string | null => {
         if (typeof payload === "string") {
@@ -224,6 +237,15 @@ export default function Dashboard({ dashboardData, spaceContext }: Props) {
 
     useEffect(() => {
         const fetchDailyMessage = async () => {
+            // Check if daily message was already shown in this session
+            const sessionKey = `daily_message_shown_${spaceSlug}`;
+            const alreadyShown = sessionStorage.getItem(sessionKey);
+            
+            if (alreadyShown) {
+                console.log('Daily message already shown in this session');
+                return;
+            }
+            
             try {
                 const response = await axios.get(
                     route("api.spaces.daily-message", { space: spaceSlug }),
@@ -235,10 +257,15 @@ export default function Dashboard({ dashboardData, spaceContext }: Props) {
 
                 if (response.status === 200 && messageText) {
                     openDailyMessageModal(messageText);
+                    // Mark as shown for this session
+                    sessionStorage.setItem(sessionKey, 'true');
                     return;
                 }
-            } catch (error) {
-                console.error("Error fetching daily message:", error);
+            } catch (error: any) {
+                // 404 is expected when no daily message is available - don't log it
+                if (error?.response?.status !== 404) {
+                    console.error("Error fetching daily message:", error);
+                }
             }
         };
 
@@ -247,6 +274,19 @@ export default function Dashboard({ dashboardData, spaceContext }: Props) {
             await fetchDailyMessage();
         })();
     }, [ensureCsrf, extractDailyMessageText, openDailyMessageModal, spaceSlug]);
+
+    // Show pending daily message after tour completes
+    useEffect(() => {
+        if (!isTourActive && pendingDailyMessage) {
+            setDailyMessage(pendingDailyMessage);
+            setShowModal(true);
+            setPendingDailyMessage(null);
+            
+            // Mark as shown in session storage
+            const sessionKey = `daily_message_shown_${spaceSlug}`;
+            sessionStorage.setItem(sessionKey, 'true');
+        }
+    }, [isTourActive, pendingDailyMessage, spaceSlug]);
 
     const quickActionStrings = dashboardStrings.cards?.quick_actions;
     const quickActions = useMemo(
@@ -264,6 +304,7 @@ export default function Dashboard({ dashboardData, spaceContext }: Props) {
                 requiresPartner: true,
             },
             {
+                id: "upcoming-event-action",
                 icon: Clock,
                 label:
                     quickActionStrings?.upcoming_event?.label ??
@@ -276,6 +317,7 @@ export default function Dashboard({ dashboardData, spaceContext }: Props) {
                 requiresPartner: true,
             },
             {
+                id: "games-action",
                 icon: Gamepad2,
                 label: quickActionStrings?.games?.label ?? "Games",
                 description:
@@ -297,6 +339,7 @@ export default function Dashboard({ dashboardData, spaceContext }: Props) {
                 requiresPartner: true,
             },
             {
+                id: "daily-message-action",
                 icon: MessageSquare,
                 label:
                     quickActionStrings?.daily_message?.label ??
@@ -309,6 +352,7 @@ export default function Dashboard({ dashboardData, spaceContext }: Props) {
                 requiresPartner: true,
             },
             {
+                id: "memory-lane-action",
                 icon: Heart,
                 label:
                     quickActionStrings?.memory_lane?.label ??
@@ -321,6 +365,7 @@ export default function Dashboard({ dashboardData, spaceContext }: Props) {
                 requiresPartner: true,
             },
             {
+                id: "memory-lane-setup-action",
                 icon: Sparkles,
                 label:
                     quickActionStrings?.memory_lane_setup?.label ??
@@ -333,6 +378,7 @@ export default function Dashboard({ dashboardData, spaceContext }: Props) {
                 requiresOwner: true,
             },
             {
+                id: "spotify-action",
                 icon: Music,
                 label:
                     quickActionStrings?.spotify?.label ?? "Spotify Companion",
@@ -356,6 +402,7 @@ export default function Dashboard({ dashboardData, spaceContext }: Props) {
                 requiresPartner: true,
             },
             {
+                id: "watch-party-action",
                 icon: Video,
                 label:
                     quickActionStrings?.nobar?.label ?? "Join Watch Party",
@@ -365,6 +412,7 @@ export default function Dashboard({ dashboardData, spaceContext }: Props) {
                 href: route("space.nobar", { space: spaceSlug }),
                 color: "from-red-500 to-orange-500",
                 requiresPartner: true,
+                comingSoon: false, // Feature is now ready to use
             },
         ],
         [quickActionStrings, spaceSlug, isSpaceOwner]
@@ -772,6 +820,9 @@ export default function Dashboard({ dashboardData, spaceContext }: Props) {
                                     key={`${message.date}-${index}`}
                                     className="rounded-2xl border border-purple-100 bg-purple-50 p-4"
                                 >
+                                    <p className="text-xs text-purple-600 font-semibold mb-1">
+                                        {message.user?.name}
+                                    </p>
                                     <p className="text-sm text-gray-700">
                                         {expandedMessages[index] ||
                                         message.message.length <= 120
@@ -821,6 +872,8 @@ export default function Dashboard({ dashboardData, spaceContext }: Props) {
             {/* Product Tour for New Users */}
             <ProductTour 
                 autoStart={props.shouldShowTour ?? false}
+                onStart={() => setIsTourActive(true)}
+                onComplete={() => setIsTourActive(false)}
             />
         </AuthenticatedLayout>
     );

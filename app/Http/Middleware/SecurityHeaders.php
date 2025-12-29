@@ -35,10 +35,11 @@ class SecurityHeaders
         $response->headers->set('Referrer-Policy', 'strict-origin-when-cross-origin');
 
         // Permissions Policy (formerly Feature Policy)
+        // Allow camera and microphone for Jitsi video calls
         $response->headers->set('Permissions-Policy', 
             'geolocation=(self), ' .
-            'microphone=(self), ' .
-            'camera=(self), ' .
+            'microphone=(self "https://8x8.vc" "https://*.jitsi.net" "https://*.jitsi.org"), ' .
+            'camera=(self "https://8x8.vc" "https://*.jitsi.net" "https://*.jitsi.org"), ' .
             'payment=(), ' .
             'usb=(), ' .
             'magnetometer=(), ' .
@@ -68,13 +69,13 @@ class SecurityHeaders
         
         $policies = [
             "default-src 'self'" . ($isLocal ? " http://localhost:* http://127.0.0.1:*" : ""),
-            "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net https://unpkg.com" . ($isLocal ? " http://localhost:* http://127.0.0.1:*" : ""),
+            "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net https://unpkg.com https://8x8.vc https://*.jitsi.net https://*.jitsi.org" . ($isLocal ? " http://localhost:* http://127.0.0.1:*" : ""),
             "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://fonts.bunny.net" . ($isLocal ? " http://localhost:* http://127.0.0.1:*" : ""),
             "font-src 'self' data: https://fonts.gstatic.com https://fonts.bunny.net",
             "img-src 'self' data: https: blob:",
             "media-src 'self' blob: https:",
-            "connect-src 'self' https://api.daily.co https://generativelanguage.googleapis.com wss: ws:" . ($isLocal ? " http://localhost:* http://127.0.0.1:* ws://localhost:* ws://127.0.0.1:*" : ""),
-            "frame-src 'self' https://www.youtube.com https://player.vimeo.com https://*.daily.co",
+            "connect-src 'self' https://api.daily.co https://generativelanguage.googleapis.com https://8x8.vc https://*.jitsi.net https://*.jitsi.org wss: ws: http://localhost:* http://127.0.0.1:* ws://localhost:* ws://127.0.0.1:*",
+            "frame-src 'self' https://www.youtube.com https://player.vimeo.com https://*.daily.co https://8x8.vc https://*.jitsi.net https://*.jitsi.org",
             "object-src 'none'",
             "base-uri 'self'",
             "form-action 'self'",

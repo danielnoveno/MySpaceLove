@@ -11,6 +11,8 @@ return new class extends Migration
         Schema::create('messages', function (Blueprint $table): void {
             $table->id();
             $table->foreignId('space_id')->constrained()->cascadeOnDelete();
+            
+            $table->index('space_id');
             $table->foreignId('sender_user_id')->constrained('users')->cascadeOnDelete();
             $table->string('type', 30)->default('text');
             $table->text('body')->nullable();

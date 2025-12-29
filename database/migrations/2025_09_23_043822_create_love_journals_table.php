@@ -12,9 +12,11 @@ class CreateLoveJournalsTable extends Migration
             $table->id();
             $table->foreignId('space_id')->constrained('spaces')->cascadeOnDelete();
             $table->foreignId('user_id')->constrained('users')->cascadeOnDelete();
+            
+            $table->index('space_id');
             $table->string('title');
             $table->text('content');
-            $table->enum('mood', ['happy', 'sad', 'miss', 'excited'])->nullable();
+            $table->enum('mood', ['happy', 'sad', 'miss', 'excited', 'grateful'])->nullable();
             $table->timestamps();
         });
     }

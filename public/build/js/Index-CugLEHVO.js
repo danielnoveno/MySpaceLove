@@ -1,1 +1,0 @@
-import{j as r}from"./react-core-DkDn4djD.js";import"./inertia-BBHw8PYu.js";import"./vendor-D-GzWRLi.js";import"./maps-CVSyMViq.js";const s=()=>r.jsx("div",{children:r.jsx("h1",{children:"IndexSurpriseNotes"})});export{s as default};

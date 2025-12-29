@@ -39,31 +39,38 @@ export default function AuthenticatedLayout({
 
         if (activeSpace) {
             baseItems.push({
+                id: "dashboard-menu",
                 label: "Dashboard",
                 href: route("spaces.dashboard", { space: activeSpace.slug }),
             });
             baseItems.push({
+                id: "timeline-menu",
                 label: "Timeline",
                 href: route("timeline.index", { space: activeSpace.slug }),
             });
             baseItems.push({
+                id: "daily-menu",
                 label: "Daily",
                 href: route("daily.index", { space: activeSpace.slug }),
             });
             baseItems.push({
+                id: "gallery-menu",
                 label: "Gallery",
                 href: route("gallery.index", { space: activeSpace.slug }),
             });
              baseItems.push({
+                id: "spotify-menu",
                 label: "Spotify",
                 href: route("spotify.companion", { space: activeSpace.slug }),
             });
              baseItems.push({
+                id: "games-menu",
                 label: "Games",
                 href: route("games.index", { space: activeSpace.slug }),
             });
              // Notifications with Badge and Popup
              baseItems.push({
+                id: "notifications-button",
                 label: "Notifications",
                 href: route("spaces.notifications.index", { space: activeSpace.slug }),
                 badge: unreadNotificationsCount > 0 ? unreadNotificationsCount : undefined,
@@ -78,11 +85,13 @@ export default function AuthenticatedLayout({
         }
 
         baseItems.push({
+            id: "spaces-menu",
             label: "Spaces",
             href: route("spaces.index"),
         });
 
          baseItems.push({
+            id: "profile-menu",
             label: "Profile",
             href: route("profile.edit"),
             dropdownContent: (
@@ -113,6 +122,7 @@ export default function AuthenticatedLayout({
             <Link
                 href={route("locale.switch")}
                 method="post"
+                as="button"
                 data={{ locale: targetLocaleCode }}
                 className="inline-flex items-center gap-2 px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-full text-pink-600 hover:text-pink-800 bg-pink-50 hover:bg-pink-100 focus:outline-none transition-all ease-in-out duration-300 min-w-[100px] justify-center"
                 onMouseEnter={() => setIsLangHovered(true)}

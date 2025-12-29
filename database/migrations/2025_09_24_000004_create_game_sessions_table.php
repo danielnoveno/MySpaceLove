@@ -21,6 +21,8 @@ return new class extends Migration
 
             $table->unique(['game_id', 'space_id', 'session_id']);
             $table->index(['space_id', 'game_id']);
+            $table->index('game_id');
+            $table->index('status');
         });
     }
 

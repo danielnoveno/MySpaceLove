@@ -16,11 +16,13 @@ return new class extends Migration
             $table->unsignedInteger('target_points');
             $table->unsignedInteger('current_points')->default(0);
             $table->boolean('is_active')->default(true);
+            $table->timestamp('completed_at')->nullable();
             $table->json('meta')->nullable();
             $table->timestamps();
 
             $table->index(['space_id']);
             $table->index(['space_id', 'is_active']);
+            $table->index('completed_at');
         });
     }
 

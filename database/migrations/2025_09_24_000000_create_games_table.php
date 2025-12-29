@@ -14,6 +14,7 @@ return new class extends Migration
             $table->string('name');
             $table->text('description')->nullable();
             $table->boolean('is_enabled')->default(true);
+            $table->boolean('supports_multiplayer')->default(false);
             $table->timestamps();
         });
     }

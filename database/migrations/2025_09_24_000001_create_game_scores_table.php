@@ -19,6 +19,7 @@ return new class extends Migration
 
             $table->index(['space_id', 'game_id']);
             $table->index('user_id');
+            $table->index('game_id');
             $table->index(['space_id', 'game_id', 'created_at']);
         });
     }

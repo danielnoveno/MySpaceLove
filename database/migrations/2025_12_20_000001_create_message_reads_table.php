@@ -12,6 +12,9 @@ return new class extends Migration
             $table->id();
             $table->foreignId('message_id')->constrained('messages')->cascadeOnDelete();
             $table->foreignId('user_id')->constrained('users')->cascadeOnDelete();
+            
+            $table->index('message_id');
+            $table->index('user_id');
             $table->timestamp('read_at')->nullable();
             $table->timestamps();
 

@@ -10,8 +10,17 @@ export default defineConfig({
     resolve: {
         alias: {
             '@': resolve(basePath, 'resources/js'),
+            // Force all React imports to use the same instance
+            'react': resolve(basePath, 'node_modules/react'),
+            'react-dom': resolve(basePath, 'node_modules/react-dom'),
         },
-        dedupe: ['react', 'react-dom'],
+        dedupe: [
+            'react', 
+            'react-dom',
+            'react/jsx-runtime',
+            'react/jsx-dev-runtime',
+            'scheduler',
+        ],
     },
     plugins: [
         laravel({
@@ -149,6 +158,9 @@ export default defineConfig({
         include: [
             'react',
             'react-dom',
+            'react/jsx-runtime',
+            'react/jsx-dev-runtime',
+            'scheduler',
             '@inertiajs/react',
             '@headlessui/react',
             'lucide-react',
@@ -164,7 +176,12 @@ export default defineConfig({
             'react-pdf',
             '@jitsi/react-sdk',
         ],
+        // Force re-optimization to clear any cached issues
         force: true,
+        esbuildOptions: {
+            // Ensure React is treated as external in optimized deps
+            mainFields: ['module', 'main'],
+        },
     },
     server: {
         host: '0.0.0.0',
@@ -179,16 +196,16 @@ export default defineConfig({
         },
         proxy: {
             '/storage': {
-                target: 'http://127.0.0.1:8081',
+                target: 'http://127.0.0.1:8000',
                 changeOrigin: true,
             },
             '/sanctum': {
-                target: 'http://127.0.0.1:8081',
+                target: 'http://127.0.0.1:8000',
                 changeOrigin: true,
                 secure: false,
             },
             '/spaces': {
-                target: 'http://127.0.0.1:8081',
+                target: 'http://127.0.0.1:8000',
                 changeOrigin: true,
                 secure: false,
             },

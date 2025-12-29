@@ -1,0 +1,1 @@
+import{j as e}from"./react-core-Qj66Ha7M.js";function a({value:a,className:r="",children:t,...s}){return e.jsx("label",{...s,className:"block text-sm font-medium text-gray-700 "+r,children:a||t})}export{a as I};

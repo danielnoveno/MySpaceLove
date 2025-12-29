@@ -5,6 +5,7 @@ import { gsap } from 'gsap';
 export type PillNavItem = {
   label: string;
   href: string;
+  id?: string;
   ariaLabel?: string;
   badge?: number | string;
   dropdownContent?: React.ReactNode;
@@ -432,6 +433,7 @@ const PillNav: React.FC<PillNavProps> = ({
               return (
                 <li 
                     key={item.href} 
+                    id={item.id}
                     role="none" 
                     className="flex h-full relative"
                     onMouseEnter={() => handleEnter(i)}

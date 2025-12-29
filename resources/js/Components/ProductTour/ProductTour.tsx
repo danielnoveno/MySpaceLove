@@ -1,17 +1,19 @@
 import React, { useEffect, useState } from 'react';
-import { driver } from 'driver.js';
+import { driver, type DriveStep, type Config } from 'driver.js';
 import 'driver.js/dist/driver.css';
-import { usePage } from '@inertiajs/react';
+import { usePage, router } from '@inertiajs/react';
 import axios from 'axios';
 
 interface ProductTourProps {
     onComplete?: () => void;
+    onStart?: () => void;
     autoStart?: boolean;
     tourType?: 'dashboard' | 'full';
 }
 
 export default function ProductTour({ 
-    onComplete, 
+    onComplete,
+    onStart,
     autoStart = false,
     tourType = 'dashboard' 
 }: ProductTourProps) {
@@ -27,178 +29,233 @@ export default function ProductTour({
         return value || fallback;
     };
 
-    const dashboardSteps = [
+    // Reorganized tour steps in logical order
+    const dashboardSteps: DriveStep[] = [
+        // 1. Welcome
         {
             element: '#space-title',
             popover: {
                 title: t('tour.welcome.title', 'Welcome to LoveSpace! 💕'),
                 description: t('tour.welcome.description', 'Let\'s take a quick tour to help you get started with all the amazing features!') + 
                     '<br/><br/><small style="opacity: 0.8;">💡 ' + 
-                    (locale === 'id' ? 'Anda bisa melewati tour ini kapan saja dengan klik tombol ✕ atau tekan ESC' : 'You can skip this tour anytime by clicking the ✕ button or pressing ESC') + 
+                    (locale === 'id' ? 'Gunakan Enter untuk lanjut, ← (panah kiri) untuk kembali, atau ESC untuk keluar.' : 'Use Enter to continue, ← (arrow left) to go back, or ESC to exit.') + 
                     '</small>',
-                side: 'bottom',
-                align: 'center'
+                side: 'bottom' as const,
+                align: 'center' as const
             }
         },
+        
+        // 2. Dashboard Overview - Stats
         {
             element: '#stats-section',
             popover: {
                 title: t('tour.stats.title', 'Your Love Statistics 📊'),
                 description: t('tour.stats.description', 'Track your relationship milestones: days together, memories created, and special moments shared.'),
-                side: 'bottom',
-                align: 'start'
+                side: 'bottom' as const,
+                align: 'start' as const
             }
         },
+        
+        // 3-10. Quick Actions (in visual order)
         {
             element: '#timeline-section',
             popover: {
-                title: t('tour.timeline.title', 'Love Timeline 📅'),
-                description: t('tour.timeline.description', 'Create and cherish your relationship timeline. Add photos, videos, and notes for each special moment.'),
-                side: 'top',
-                align: 'start'
+                title: t('tour.quick_timeline.title', 'Add Moment 📅'),
+                description: t('tour.quick_timeline.description', 'Quick action to add special moments to your timeline.'),
+                side: 'top' as const,
+                align: 'start' as const
+            }
+        },
+        {
+            element: '#upcoming-event-action',
+            popover: {
+                title: t('tour.quick_countdown.title', 'Upcoming Events ⏰'),
+                description: t('tour.quick_countdown.description', 'Create and manage countdowns for special dates and anniversaries.'),
+                side: 'top' as const,
+                align: 'start' as const
+            }
+        },
+        {
+            element: '#games-action',
+            popover: {
+                title: t('tour.quick_games.title', 'Game Hub 🎮'),
+                description: t('tour.quick_games.description', 'Play fun games together: Chess, Tic-Tac-Toe, and more!'),
+                side: 'top' as const,
+                align: 'start' as const
             }
         },
         {
             element: '#gallery-section',
             popover: {
-                title: t('tour.gallery.title', 'Media Gallery 📸'),
-                description: t('tour.gallery.description', 'Store all your precious photos and videos in one beautiful gallery. Organize by albums and relive your memories.'),
-                side: 'top',
-                align: 'start'
+                title: t('tour.quick_gallery.title', 'Upload Photos & Videos 📸'),
+                description: t('tour.quick_gallery.description', 'Quick access to upload and manage your precious memories.'),
+                side: 'top' as const,
+                align: 'start' as const
             }
         },
         {
-            element: '#countdown-section',
+            element: '#daily-message-action',
             popover: {
-                title: t('tour.countdown.title', 'Special Countdowns ⏰'),
-                description: t('tour.countdown.description', 'Create countdowns for anniversaries, birthdays, trips, and other special events. Never miss an important date!'),
-                side: 'top',
-                align: 'start'
+                title: t('tour.quick_daily.title', 'Daily Messages 💌'),
+                description: t('tour.quick_daily.description', 'Send sweet daily messages to your partner via email.'),
+                side: 'top' as const,
+                align: 'start' as const
             }
         },
         {
-            element: '#daily-messages-section',
+            element: '#memory-lane-action',
             popover: {
-                title: t('tour.daily_messages.title', 'Daily Love Messages 💌'),
-                description: t('tour.daily_messages.description', 'Send sweet daily messages to your partner. Schedule them or send instantly via email.'),
-                side: 'top',
-                align: 'start'
+                title: t('tour.quick_memory.title', 'Memory Lane Kit 🎁'),
+                description: t('tour.quick_memory.description', 'Create interactive surprise experiences with puzzles and flipbooks!'),
+                side: 'top' as const,
+                align: 'start' as const
+            }
+        },
+        {
+            element: '#memory-lane-setup-action',
+            popover: {
+                title: t('tour.quick_memory_setup.title', 'Configure Memory Lane ⚙️'),
+                description: t('tour.quick_memory_setup.description', 'Upload puzzle photos and customize level messages for surprises.'),
+                side: 'top' as const,
+                align: 'start' as const
+            }
+        },
+        {
+            element: '#spotify-action',
+            popover: {
+                title: t('tour.quick_spotify.title', 'Spotify Companion 🎵'),
+                description: t('tour.quick_spotify.description', 'Listen to music together with shared playlists and sync playback.'),
+                side: 'top' as const,
+                align: 'start' as const
             }
         },
         {
             element: '#journal-section',
             popover: {
-                title: t('tour.journal.title', 'Love Journal 📖'),
-                description: t('tour.journal.description', 'Write private or shared journal entries. Document your feelings, thoughts, and relationship journey.'),
-                side: 'top',
-                align: 'start'
+                title: t('tour.quick_journal.title', 'Write Journal 📖'),
+                description: t('tour.quick_journal.description', 'Document your feelings and relationship journey in private or shared entries.'),
+                side: 'top' as const,
+                align: 'start' as const
             }
         },
         {
-            element: '#location-menu',
+            element: '#watch-party-action',
             popover: {
-                title: t('tour.location.title', 'Location Sharing 📍'),
-                description: t('tour.location.description', 'Share your real-time location with your partner. Perfect for long-distance relationships!'),
-                side: 'right',
-                align: 'start'
+                title: t('tour.quick_watch.title', 'Join Watch Party 📺'),
+                description: t('tour.quick_watch.description', 'Start a co-watching session with your partner.'),
+                side: 'top' as const,
+                align: 'start' as const
+            }
+        },
+        
+        // 11-12. Dashboard Sections
+        {
+            element: '#countdown-section',
+            popover: {
+                title: t('tour.countdown_section.title', 'Upcoming Events Widget ⏰'),
+                description: t('tour.countdown_section.description', 'See your upcoming special dates at a glance.'),
+                side: 'top' as const,
+                align: 'start' as const
+            }
+        },
+        {
+            element: '#daily-messages-section',
+            popover: {
+                title: t('tour.daily_section.title', 'Recent Messages Widget 💌'),
+                description: t('tour.daily_section.description', 'View your latest love messages here.'),
+                side: 'top' as const,
+                align: 'start' as const
+            }
+        },
+        
+        // 13-19. Top Navigation Bar
+        {
+            element: '#dashboard-menu',
+            popover: {
+                title: t('tour.navbar_dashboard.title', 'Dashboard Menu 🏠'),
+                description: t('tour.navbar_dashboard.description', 'Return to your dashboard from anywhere.'),
+                side: 'bottom' as const,
+                align: 'start' as const
+            }
+        },
+        {
+            element: '#timeline-menu',
+            popover: {
+                title: t('tour.navbar_timeline.title', 'Timeline Menu 📅'),
+                description: t('tour.navbar_timeline.description', 'View all your special moments chronologically.'),
+                side: 'bottom' as const,
+                align: 'start' as const
+            }
+        },
+        {
+            element: '#daily-menu',
+            popover: {
+                title: t('tour.navbar_daily.title', 'Daily Messages Menu 💌'),
+                description: t('tour.navbar_daily.description', 'Access your daily messages inbox.'),
+                side: 'bottom' as const,
+                align: 'start' as const
+            }
+        },
+        {
+            element: '#gallery-menu',
+            popover: {
+                title: t('tour.navbar_gallery.title', 'Gallery Menu 📸'),
+                description: t('tour.navbar_gallery.description', 'Browse your photo and video collection.'),
+                side: 'bottom' as const,
+                align: 'start' as const
             }
         },
         {
             element: '#spotify-menu',
             popover: {
-                title: t('tour.spotify.title', 'Spotify Companion 🎵'),
-                description: t('tour.spotify.description', 'Listen to music together! Create shared playlists, schedule surprise songs, and sync playback.'),
-                side: 'right',
-                align: 'start'
+                title: t('tour.navbar_spotify.title', 'Spotify Menu 🎵'),
+                description: t('tour.navbar_spotify.description', 'Quick access to Spotify Companion features.'),
+                side: 'bottom' as const,
+                align: 'start' as const
             }
         },
         {
             element: '#games-menu',
             popover: {
-                title: t('tour.games.title', 'Couple Games 🎮'),
-                description: t('tour.games.description', 'Play fun games together: Chess, Tic-Tac-Toe, and more! Compete and have fun.'),
-                side: 'right',
-                align: 'start'
-            }
-        },
-        {
-            element: '#memory-lane-menu',
-            popover: {
-                title: t('tour.memory_lane.title', 'Memory Lane 🎁'),
-                description: t('tour.memory_lane.description', 'Create interactive surprise experiences with puzzles, lucky boxes, and digital flipbooks!'),
-                side: 'right',
-                align: 'start'
-            }
-        },
-        {
-            element: '#video-call-menu',
-            popover: {
-                title: t('tour.video_call.title', 'Video Call Room 📹'),
-                description: t('tour.video_call.description', 'Start instant video calls with your partner. Secure and private room just for you two.'),
-                side: 'right',
-                align: 'start'
-            }
-        },
-        {
-            element: '#wishlist-menu',
-            popover: {
-                title: t('tour.wishlist.title', 'Wishlist 🎁'),
-                description: t('tour.wishlist.description', 'Create and share wishlists. Know exactly what your partner wants for special occasions!'),
-                side: 'right',
-                align: 'start'
-            }
-        },
-        {
-            element: '#docs-menu',
-            popover: {
-                title: t('tour.docs.title', 'Important Documents 📄'),
-                description: t('tour.docs.description', 'Store important documents and files securely. Access them anytime, anywhere.'),
-                side: 'right',
-                align: 'start'
-            }
-        },
-        {
-            element: '#surprise-notes-menu',
-            popover: {
-                title: t('tour.surprise_notes.title', 'Surprise Notes 💝'),
-                description: t('tour.surprise_notes.description', 'Leave surprise notes for your partner to discover. Make their day special!'),
-                side: 'right',
-                align: 'start'
-            }
-        },
-        {
-            element: '#goals-menu',
-            popover: {
-                title: t('tour.goals.title', 'Relationship Goals 🎯'),
-                description: t('tour.goals.description', 'Set and track relationship goals together. Build your future as a team!'),
-                side: 'right',
-                align: 'start'
+                title: t('tour.navbar_games.title', 'Games Menu 🎮'),
+                description: t('tour.navbar_games.description', 'Jump to your game collection.'),
+                side: 'bottom' as const,
+                align: 'start' as const
             }
         },
         {
             element: '#notifications-button',
             popover: {
                 title: t('tour.notifications.title', 'Notifications 🔔'),
-                description: t('tour.notifications.description', 'Stay updated with all activities. Get notified when your partner adds new content or interacts with yours.'),
-                side: 'bottom',
-                align: 'end'
+                description: t('tour.notifications.description', 'Stay updated with all activities and interactions.'),
+                side: 'bottom' as const,
+                align: 'end' as const
+            }
+        },
+        {
+            element: '#spaces-menu',
+            popover: {
+                title: t('tour.spaces.title', 'Spaces Manager 🏡'),
+                description: t('tour.spaces.description', 'Manage multiple spaces for different relationships.'),
+                side: 'bottom' as const,
+                align: 'end' as const
             }
         },
         {
             element: '#profile-menu',
             popover: {
                 title: t('tour.profile.title', 'Your Profile ⚙️'),
-                description: t('tour.profile.description', 'Manage your profile, change language, customize theme, and adjust settings.'),
-                side: 'bottom',
-                align: 'end'
+                description: t('tour.profile.description', 'Manage settings, language, and preferences.'),
+                side: 'bottom' as const,
+                align: 'end' as const
             }
         },
+        
+        // 20. Completion
         {
             popover: {
                 title: t('tour.complete.title', 'You\'re All Set! 🎉'),
-                description: t('tour.complete.description', 'Start creating beautiful memories with your partner. You can replay this tour anytime from your profile settings. Enjoy LoveSpace!'),
-                side: 'center',
-                align: 'center'
+                description: t('tour.complete.description', 'Start creating beautiful memories with your partner. You can replay this tour anytime from the help button. Enjoy LoveSpace!')
             }
         }
     ];
@@ -222,14 +279,24 @@ export default function ProductTour({
                 driverObj.destroy();
                 setIsActive(false);
                 
-                // Mark tour as completed in backend
+                // Call backend to save completion (mark as skipped/completed)
+                const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+                axios.post(route('tour.complete'), {}, {
+                    headers: {
+                        'X-CSRF-TOKEN': csrfToken
+                    }
+                })
+                .then(() => {
+                    console.log('Tour completion saved successfully');
+                })
+                .catch((err) => {
+                    console.error('Failed to save tour completion:', err);
+                });
+                
+                // Mark tour as completed in parent component
                 if (onComplete) {
                     onComplete();
                 }
-                
-                // Call backend to save completion (mark as skipped/completed)
-                axios.post('/tour/complete')
-                    .catch(err => console.error('Failed to save tour completion:', err));
             },
             onDestroyed: () => {
                 setIsActive(false);
@@ -242,15 +309,49 @@ export default function ProductTour({
             smoothScroll: true,
             allowClose: true,
             disableActiveInteraction: false,
-            allowKeyboardControl: true, // Enable ESC key to close
             onCloseClick: () => {
                 // Explicitly handle close button click
                 driverObj.destroy();
             },
         });
 
+        // Add keyboard shortcuts with proper event handling
+        const handleKeyPress = (e: KeyboardEvent) =>{
+            // Check if tour popover is visible
+            const tourPopover = document.querySelector('.driver-popover');
+            if (!tourPopover) return;
+            
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                e.stopPropagation();
+                driverObj.moveNext();
+            } else if (e.key === 'ArrowLeft' || (e.key === 'Escape' && driverObj.getActiveIndex && driverObj.getActiveIndex() > 0)) {
+                // Use ArrowLeft for previous, or ESC if not on first step
+                if (e.key === 'ArrowLeft' || driverObj.getActiveIndex() > 0) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    driverObj.movePrevious();
+                }
+            }
+        };
+
+        // Use capture phase to intercept before driver.js
+        document.addEventListener('keydown', handleKeyPress, true);
+        
+        // Store cleanup function
+        const originalDestroy = driverObj.destroy.bind(driverObj);
+        driverObj.destroy = () => {
+            document.removeEventListener('keydown', handleKeyPress, true);
+            originalDestroy();
+        };
+
         driverObj.drive();
         setIsActive(true);
+        
+        // Notify parent that tour has started
+        if (onStart) {
+            onStart();
+        }
     };
 
     useEffect(() => {
@@ -334,24 +435,42 @@ export default function ProductTour({
 
                 .lovespace-tour-popover .driver-popover-close-btn {
                     color: white !important;
-                    background: rgba(255, 255, 255, 0.2) !important;
-                    width: 32px !important;
-                    height: 32px !important;
+                    background: rgba(255, 255, 255, 0.15) !important;
+                    backdrop-filter: blur(10px) !important;
+                    width: 24px !important;
+                    height: 24px !important;
+                    min-width: 24px !important;
+                    min-height: 24px !important;
+                    max-width: 24px !important;
+                    max-height: 24px !important;
                     border-radius: 50% !important;
+                    padding: 0 !important;
                     display: flex !important;
                     align-items: center !important;
                     justify-content: center !important;
-                    font-size: 20px !important;
-                    font-weight: bold !important;
-                    opacity: 1 !important;
-                    transition: all 0.2s !important;
+                    font-size: 16px !important;
+                    font-weight: 600 !important;
+                    line-height: 1 !important;
+                    opacity: 0.9 !important;
+                    transition: all 0.25s ease !important;
                     cursor: pointer !important;
+                    position: absolute !important;
+                    top: 12px !important;
+                    right: 12px !important;
+                    border: 1px solid rgba(255, 255, 255, 0.2) !important;
+                    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1) !important;
                 }
 
                 .lovespace-tour-popover .driver-popover-close-btn:hover {
-                    background: rgba(255, 255, 255, 0.3) !important;
-                    transform: scale(1.1) !important;
-                    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2) !important;
+                    background: rgba(255, 255, 255, 0.25) !important;
+                    opacity: 1 !important;
+                    transform: scale(1.05) rotate(90deg) !important;
+                    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2) !important;
+                    border-color: rgba(255, 255, 255, 0.3) !important;
+                }
+
+                .lovespace-tour-popover .driver-popover-close-btn:active {
+                    transform: scale(0.95) rotate(90deg) !important;
                 }
 
                 .driver-active-element {

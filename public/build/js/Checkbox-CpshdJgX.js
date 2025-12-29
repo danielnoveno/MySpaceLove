@@ -1,0 +1,1 @@
+import{j as o}from"./react-core-Qj66Ha7M.js";function r({className:r="",...e}){return o.jsx("input",{...e,type:"checkbox",className:"rounded border-gray-300 text-indigo-600 shadow-sm focus:ring-indigo-500 "+r})}export{r as C};

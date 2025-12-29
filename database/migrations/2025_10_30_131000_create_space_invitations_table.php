@@ -12,9 +12,12 @@ return new class extends Migration {
             $table->foreignId('space_id')->constrained()->cascadeOnDelete();
             $table->foreignId('inviter_id')->constrained('users')->cascadeOnDelete();
             $table->foreignId('invitee_id')->nullable()->constrained('users')->nullOnDelete();
-            $table->string('invitee_email');
+            
+            $table->index('space_id');
+            $table->index('invitee_id');
+            $table->string('invitee_email')->index();
             $table->string('token')->unique();
-            $table->enum('status', ['pending', 'accepted', 'declined', 'cancelled'])->default('pending');
+            $table->enum('status', ['pending', 'accepted', 'declined', 'cancelled'])->default('pending')->index();
             $table->timestamp('accepted_at')->nullable();
             $table->timestamp('cancelled_at')->nullable();
             $table->timestamps();

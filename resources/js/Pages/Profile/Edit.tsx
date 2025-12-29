@@ -5,6 +5,7 @@ import { Head } from '@inertiajs/react';
 import DeleteUserForm from './Partials/DeleteUserForm';
 import UpdatePasswordForm from './Partials/UpdatePasswordForm';
 import UpdateProfileInformationForm from './Partials/UpdateProfileInformationForm';
+import PartnerCodeSection from './Partials/PartnerCodeSection';
 
 type ProfileStrings = {
     profile?: {
@@ -42,7 +43,6 @@ export default function Edit({
                     </p>
                 </div>
             }
-            loveCursor={{ color: '#8b5cf6', heartCount: 24, trailColor: 'rgba(139, 92, 246, 0.35)' }}
         >
             <Head title="Profile" />
 
@@ -53,6 +53,8 @@ export default function Edit({
                         status={status}
                         className="rounded-3xl border border-white/70 bg-white/80 p-6 shadow-lg backdrop-blur-lg sm:p-8"
                     />
+
+                    <PartnerCodeSection className="rounded-3xl border border-white/70 bg-white/80 p-6 shadow-lg backdrop-blur-lg sm:p-8" />
 
                     <UpdatePasswordForm className="rounded-3xl border border-white/70 bg-white/80 p-6 shadow-lg backdrop-blur-lg sm:p-8" />
 

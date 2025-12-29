@@ -15,10 +15,19 @@ return new class extends Migration
             $table->id();
             $table->string('name');
             $table->string('email')->unique();
+             $table->string('profile_image')->nullable()->index();
             $table->timestamp('email_verified_at')->nullable();
+            $table->timestamp('tour_completed_at')->nullable();
             $table->string('password');
             $table->string('username')->unique();
             $table->string('partner_code')->nullable(); // untuk pasangan unik
+            
+            // Google / Social Auth fields
+            $table->string('auth_provider', 32)->nullable()->index();
+            $table->string('provider_id', 191)->nullable();
+            $table->string('provider_avatar')->nullable();
+            $table->unique(['auth_provider', 'provider_id'], 'users_auth_provider_provider_id_unique');
+            
             $table->rememberToken();
             $table->timestamps();
         });
