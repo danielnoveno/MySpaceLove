@@ -5,6 +5,7 @@ import { ChangeEvent, FormEvent, useEffect, useMemo, useRef, useState } from "re
 import { useCurrentSpace } from "@/hooks/useCurrentSpace";
 import { convertImageToWebP } from "@/utils/imageConverter";
 import { useTranslation } from "@/hooks/useTranslation";
+import { useToast } from "@/Contexts/ToastContext";
 
 const MAX_FILES = 5;
 const MAX_UPLOAD_BYTES = 10 * 1024 * 1024;
@@ -13,6 +14,7 @@ type TimelineTranslations = Record<string, any>;
 
 export default function TimelineCreate() {
     const currentSpace = useCurrentSpace();
+    const { showSuccess, showError } = useToast();
     const { translations: timelineStrings } =
         useTranslation<TimelineTranslations>("timeline");
     const { t: errorTranslator } = useTranslation("errors");
@@ -71,7 +73,12 @@ export default function TimelineCreate() {
             forceFormData: true,
             preserveScroll: true,
             onSuccess: () => {
+                showSuccess("Momen spesial berhasil ditambahkan!");
                 router.visit(route("timeline.index", { space: spaceSlug }));
+            },
+            onError: (errors) => {
+                console.error("Timeline creation failed", errors);
+                showError("Gagal menyimpan momen. Silakan periksa kembali input Anda.");
             },
         });
     };

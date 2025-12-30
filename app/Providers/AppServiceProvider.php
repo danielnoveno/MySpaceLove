@@ -2,10 +2,9 @@
 
 namespace App\Providers;
 
-use Illuminate\Support\Facades\Vite;
-use Illuminate\Support\Facades\URL;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\ServiceProvider;
-use Illuminate\Support\Facades\Schema;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -22,28 +21,40 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-
-
-        $appUrl = config('app.url');
-
-        if ($appUrl) {
-            $scheme = parse_url($appUrl, PHP_URL_SCHEME);
-            if ($scheme === 'https') {
-                URL::forceScheme('https');
-                config(['session.secure' => true]);
+        // Log slow database queries (lebih dari 1 detik)
+        DB::listen(function ($query) {
+            if ($query->time > 1000) {
+                Log::warning('Slow Database Query', [
+                    'sql' => $query->sql,
+                    'bindings' => $query->bindings,
+                    'time' => $query->time . 'ms',
+                ]);
             }
+        });
 
-            $host = parse_url($appUrl, PHP_URL_HOST);
-            if ($host && !config('session.domain')) {
-                $isIpAddress = filter_var($host, FILTER_VALIDATE_IP) !== false;
-                $isLocalhost = $host === 'localhost';
-
-                if (! $isIpAddress && ! $isLocalhost) {
-                    config(['session.domain' => '.' . ltrim($host, '.')]);
-                }
-            }
+        // Log semua database queries (hanya di local/staging untuk debugging)
+        if (config('app.debug') && config('app.log_queries', false)) {
+            DB::listen(function ($query) {
+                Log::info('Database Query', [
+                    'sql' => $query->sql,
+                    'bindings' => $query->bindings,
+                    'time' => $query->time . 'ms',
+                ]);
+            });
         }
 
-        Vite::prefetch(concurrency: 3);
+        // Log failed database transactions
+        DB::transactionCommitted(function () {
+            if (config('app.debug')) {
+                Log::debug('Database transaction committed');
+            }
+        });
+
+        DB::transactionRolledBack(function () {
+            Log::warning('Database transaction rolled back', [
+                'url' => request()->fullUrl(),
+                'user_id' => auth()->id() ?? 'guest',
+            ]);
+        });
     }
 }

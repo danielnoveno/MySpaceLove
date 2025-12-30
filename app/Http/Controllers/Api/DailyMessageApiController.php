@@ -35,7 +35,24 @@ class DailyMessageApiController extends Controller
         $search = $request->input('search');
         $date = $request->input('date');
 
-        $query = DailyMessage::where('space_id', $space->id)->with('user');
+        // Get partner user
+        $partner = $this->resolvePartnerUser($space);
+        
+        if (!$partner) {
+            return Inertia::render('DailyMessages/Index', [
+                'messages' => [],
+                'space' => $this->spacePayload($space),
+                'filters' => [
+                    'search' => $search,
+                    'date' => $date,
+                ],
+            ]);
+        }
+
+        // Query only messages FROM the partner (not from current user)
+        $query = DailyMessage::where('space_id', $space->id)
+            ->where('user_id', $partner->id)
+            ->with('user');
 
         if ($search) {
             $query->where('message', 'like', '%' . $search . '%');
@@ -50,15 +67,14 @@ class DailyMessageApiController extends Controller
         if ($messages->isEmpty() && !$search && !$date) {
             $now = $this->currentDailyMessageNow();
             
-            // Ensure messages for BOTH users
-            $users = [$space->userOne, $space->userTwo];
-            foreach ($users as $user) {
-                if ($user) {
-                    $this->ensureDailyMessageFor($space, $user, $now);
-                }
-            }
+            // Ensure daily message FOR the partner (so it appears for current user)
+            $this->ensureDailyMessageFor($space, $partner, $now);
 
-            $messages = DailyMessage::where('space_id', $space->id)->with('user')->latest()->get();
+            $messages = DailyMessage::where('space_id', $space->id)
+                ->where('user_id', $partner->id)
+                ->with('user')
+                ->latest()
+                ->get();
         }
 
         if (request()->has('json')) {

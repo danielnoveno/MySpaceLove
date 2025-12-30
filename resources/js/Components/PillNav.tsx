@@ -9,6 +9,7 @@ export type PillNavItem = {
   ariaLabel?: string;
   badge?: number | string;
   dropdownContent?: React.ReactNode;
+  navigateOnClick?: boolean;
 };
 
 export interface PillNavProps {
@@ -197,8 +198,8 @@ const PillNav: React.FC<PillNavProps> = ({
     });
   };
 
-  const handleClick = (e: React.MouseEvent, i: number, hasDropdown: boolean) => {
-      if (hasDropdown) {
+  const handleClick = (e: React.MouseEvent, i: number, hasDropdown: boolean, item?: PillNavItem) => {
+      if (hasDropdown && !item?.navigateOnClick) {
           e.preventDefault();
           // Toggle if clicked
           if (activeDropdownIndex === i) {
@@ -442,22 +443,22 @@ const PillNav: React.FC<PillNavProps> = ({
                   {isRouterLink(item.href) ? (
                     <Link
                       role="menuitem"
-                      href={hasDropdown ? '#' : item.href}
+                      href={hasDropdown && !item.navigateOnClick ? '#' : item.href}
                       className={basePillClasses}
                       style={pillStyle}
                       aria-label={item.ariaLabel || item.label}
-                      onClick={(e) => handleClick(e, i, hasDropdown)}
+                      onClick={(e) => handleClick(e, i, hasDropdown, item)}
                     >
                       {PillInner}
                     </Link>
                   ) : (
                     <a
                       role="menuitem"
-                      href={hasDropdown ? '#' : item.href}
+                      href={hasDropdown && !item.navigateOnClick ? '#' : item.href}
                       className={basePillClasses}
                       style={pillStyle}
                       aria-label={item.ariaLabel || item.label}
-                      onClick={(e) => handleClick(e, i, hasDropdown)}
+                      onClick={(e) => handleClick(e, i, hasDropdown, item)}
                     >
                        {PillInner}
                     </a>

@@ -1,1 +1,0 @@
-import{j as e}from"./vendor-DtplsvIg.js";function a({value:a,className:r="",children:s,...t}){return e.jsx("label",{...t,className:"block text-sm font-medium text-gray-700 "+r,children:a||s})}export{a as I};

@@ -151,31 +151,35 @@ export default function GalleryIndex({
     const [deletingCollection, setDeletingCollection] = useState(false);
 
     const performDeleteCollection = () => {
-        if (!pendingDeleteCollection) {
+        if (!pendingDeleteCollection || !pendingDeleteCollection.collection_key) {
             return;
         }
         setDeletingCollection(true);
-        const promises = pendingDeleteCollection.items.map((item) => {
-            return router.delete(
-                route("gallery.destroy", { space: spaceSlug, id: item.id }),
-                {
-                    preserveScroll: true,
-                }
-            );
-        });
-        Promise.all(promises).then(() => {
-            setPendingDeleteCollection(null);
-            setDeletingCollection(false);
-        });
+        
+        router.delete(
+            route("gallery.destroyCollection", {
+                space: spaceSlug,
+                collection_key: pendingDeleteCollection.collection_key
+            }),
+            {
+                preserveScroll: true,
+                onSuccess: () => {
+                    setPendingDeleteCollection(null);
+                    closeCollection(); // Close modal if open
+                },
+                onError: (errors) => {
+                    console.error("Failed to delete collection:", errors);
+                    setPendingDeleteCollection(null);
+                },
+                onFinish: () => {
+                    setDeletingCollection(false);
+                },
+            }
+        );
     };
 
     return (
         <AuthenticatedLayout
-            loveCursor={{
-                color: "#10b981",
-                heartCount: 28,
-                className: "opacity-60",
-            }}
             header={
                 <div className="flex flex-col gap-1">
                     <p className="text-xs uppercase tracking-[0.42em] text-emerald-400">
@@ -232,7 +236,7 @@ export default function GalleryIndex({
                                     key={i}
                                     src={item.url}
                                     alt={item.title ?? "Gallery Item"}
-                                    className="h-full w-full object-cover rounded-xl shadow-lg border-2 border-white"
+                                    className="h-full w-full object-cover rounded-xl shadow-lg border-2 border-white pointer-events-none"
                                 />
                             ));
 
@@ -241,11 +245,8 @@ export default function GalleryIndex({
                                     key={collection.collection_key ?? `collection-${collection.items[0]?.id}`}
                                     className="group break-inside-avoid rounded-3xl bg-white/95 shadow-sm ring-1 ring-slate-100 transition duration-300 hover:-translate-y-1 hover:shadow-lg hover:ring-emerald-100 flex flex-col overflow-hidden"
                                 >
-                                    <div
-                                        className="relative w-full h-80 p-6 bg-slate-50/50 cursor-pointer"
-                                        onClick={() => openCollection(collection)}
-                                    >
-                                        <div className="w-full h-full"> 
+                                    <div className="relative w-full h-80 p-6 bg-slate-50/50">
+                                        <div className="w-full h-full relative"> 
                                             <Stack 
                                                 cards={stackCards} 
                                                 sensitivity={100}

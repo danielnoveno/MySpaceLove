@@ -376,7 +376,7 @@ export default function Dashboard({ dashboardData, spaceContext }: Props) {
                     "Upload puzzle photos & level messages",
                 href: route("memory-lane.edit", { space: spaceSlug }),
                 color: "from-amber-500 to-orange-500",
-                requiresOwner: true,
+                requiresOwner: false,
             },
             {
                 id: "spotify-action",

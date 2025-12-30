@@ -1,5 +1,6 @@
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout";
 import { Head, Link, useForm } from "@inertiajs/react";
+import { useToast } from "@/Contexts/ToastContext";
 import { useCurrentSpace } from "@/hooks/useCurrentSpace";
 import {
     ArrowLeft,
@@ -73,6 +74,7 @@ const compressImageToJpeg = async (file: File): Promise<File> => {
 
 export default function CountdownCreate() {
     const currentSpace = useCurrentSpace();
+    const { showSuccess, showError } = useToast();
 
     if (!currentSpace) {
         return null;
@@ -140,6 +142,13 @@ export default function CountdownCreate() {
         });
         post(route("countdown.store", { space: spaceSlug }), {
             forceFormData: true,
+            onSuccess: () => {
+                showSuccess("Event countdown berhasil dibuat!");
+            },
+            onError: (errors) => {
+                console.error("Countdown creation failed", errors);
+                showError("Gagal membuat countdown. Silakan periksa kembali input Anda.");
+            },
         });
     };
 

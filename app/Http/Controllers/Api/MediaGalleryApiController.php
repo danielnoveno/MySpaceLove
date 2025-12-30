@@ -119,7 +119,7 @@ class MediaGalleryApiController extends Controller
         $data = $r->validate([
             'title' => 'nullable|string|max:255',
             'files' => 'required|array|min:1|max:12',
-            'files.*' => 'required|file|mimes:jpg,jpeg,png,gif,mp4,mov|max:15360', // 15 MB
+            'files.*' => 'required|file|mimes:jpg,jpeg,png,gif,mp4,mov,webp|max:15360', // 15 MB
             'collection_key' => 'nullable|string|exists:media_galleries,collection_key',
         ]);
 
@@ -274,6 +274,45 @@ class MediaGalleryApiController extends Controller
         return redirect()
             ->route('gallery.index', ['space' => $space->slug])
             ->with('success', __('Foto berhasil dihapus.'));
+    }
+
+    public function destroyCollection(Request $request, Space $space, string $collectionKey)
+    {
+        $this->authorizeSpace($space);
+
+        // Find all media items in the collection
+        $mediaItems = MediaGallery::where('space_id', $space->id)
+            ->where('collection_key', $collectionKey)
+            ->get();
+
+        if ($mediaItems->isEmpty()) {
+            abort(404, 'Collection not found');
+        }
+
+        // Check if user owns at least one item (all should have same owner)
+        $firstItem = $mediaItems->first();
+        if ($firstItem->user_id !== Auth::id()) {
+            abort(403, 'Unauthorized');
+        }
+
+        // Delete all files from storage and database
+        foreach ($mediaItems as $media) {
+            if ($media->file_path) {
+                Storage::disk('public')->delete($media->file_path);
+            }
+            $media->delete();
+        }
+
+        if ($request->wantsJson()) {
+            return response()->json([
+                'message' => 'Collection deleted',
+                'deleted_count' => $mediaItems->count()
+            ]);
+        }
+
+        return redirect()
+            ->route('gallery.index', ['space' => $space->slug])
+            ->with('success', __('Koleksi berhasil dihapus.'));
     }
 
     private function supportsCollections(): bool

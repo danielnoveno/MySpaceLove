@@ -5,6 +5,7 @@ import { createInertiaApp } from '@inertiajs/react';
 import { resolvePageComponent } from 'laravel-vite-plugin/inertia-helpers';
 import { createRoot } from 'react-dom/client';
 import { lazy, Suspense } from 'react';
+import { ToastProvider } from '@/Contexts/ToastContext';
 
 const appName = import.meta.env.VITE_APP_NAME || 'Laravel';
 
@@ -36,11 +37,13 @@ createInertiaApp({
     setup({ el, App, props }) {
         const root = createRoot(el);
 
-        // Wrap App with Suspense for lazy loading
+        // Wrap App with ToastProvider and Suspense
         root.render(
-            <Suspense fallback={<PageLoader />}>
-                <App {...props} />
-            </Suspense>
+            <ToastProvider>
+                <Suspense fallback={<PageLoader />}>
+                    <App {...props} />
+                </Suspense>
+            </ToastProvider>
         );
     },
     progress: {

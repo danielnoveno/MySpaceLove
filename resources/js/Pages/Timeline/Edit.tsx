@@ -11,6 +11,7 @@ import {
 import { useCurrentSpace } from "@/hooks/useCurrentSpace";
 import { convertImageToWebP } from "@/utils/imageConverter";
 import { useTranslation } from "@/hooks/useTranslation";
+import { useToast } from "@/Contexts/ToastContext";
 
 interface TimelineItem {
     uuid: string;
@@ -37,6 +38,7 @@ type MediaItem = ExistingMediaItem | NewMediaItem;
 
 export default function TimelineEdit({ item }: { item: TimelineItem }) {
     const currentSpace = useCurrentSpace();
+    const { showSuccess, showError } = useToast();
     const { t: errorTranslator } = useTranslation("errors");
     const { translations: timelineStrings } = useTranslation<Record<string, any>>("timeline");
     const MAX_UPLOAD_BYTES = 10 * 1024 * 1024;
@@ -303,8 +305,14 @@ export default function TimelineEdit({ item }: { item: TimelineItem }) {
         e.preventDefault();
         post(route("timeline.update", { space: spaceSlug, timeline: item.uuid }), {
             forceFormData: true,
-            onSuccess: () =>
-                router.visit(route("timeline.index", { space: spaceSlug })),
+            onSuccess: () => {
+                showSuccess("Momen berhasil diperbarui!");
+                router.visit(route("timeline.index", { space: spaceSlug }));
+            },
+            onError: (errors) => {
+                console.error("Timeline update failed", errors);
+                showError("Gagal memperbarui momen. Silakan periksa kembali input Anda.");
+            },
         });
     };
 
