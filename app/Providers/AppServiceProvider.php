@@ -2,7 +2,10 @@
 
 namespace App\Providers;
 
+use Illuminate\Database\Events\TransactionCommitted;
+use Illuminate\Database\Events\TransactionRolledBack;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\ServiceProvider;
 
@@ -43,15 +46,20 @@ class AppServiceProvider extends ServiceProvider
             });
         }
 
-        // Log failed database transactions
-        DB::transactionCommitted(function () {
+
+        // Log committed database transactions
+        Event::listen(TransactionCommitted::class, function (TransactionCommitted $event) {
             if (config('app.debug')) {
-                Log::debug('Database transaction committed');
+                Log::debug('Database transaction committed', [
+                    'connection' => $event->connectionName,
+                ]);
             }
         });
 
-        DB::transactionRolledBack(function () {
+        // Log rolled back database transactions
+        Event::listen(TransactionRolledBack::class, function (TransactionRolledBack $event) {
             Log::warning('Database transaction rolled back', [
+                'connection' => $event->connectionName,
                 'url' => request()->fullUrl(),
                 'user_id' => auth()->id() ?? 'guest',
             ]);
