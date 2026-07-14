@@ -34,6 +34,7 @@ class User extends Authenticatable
         'provider_id',
         'provider_avatar',
         'profile_image',
+        'tour_completed_at',
     ];
 
     /**

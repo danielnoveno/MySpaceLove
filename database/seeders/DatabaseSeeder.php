@@ -25,7 +25,7 @@ class DatabaseSeeder extends Seeder
 
         $this->call([
             ThemeSeeder::class,
-            SpaceSeeder::class,
+            // SpaceSeeder::class,
             GameSeeder::class,
         ]);
     }

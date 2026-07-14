@@ -79,8 +79,12 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     Route::post('/tour/complete', function (Request $request) {
         $user = $request->user();
+        \Illuminate\Support\Facades\Log::info('Tour completion requested for user: ' . $user->id);
+        
         $user->tour_completed_at = now();
-        $user->save();
+        $saved = $user->save();
+        
+        \Illuminate\Support\Facades\Log::info('Tour completion saved: ' . ($saved ? 'yes' : 'no'));
 
         return response()->json(['success' => true]);
     })->name('tour.complete');
