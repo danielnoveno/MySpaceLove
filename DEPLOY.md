@@ -3,187 +3,278 @@
 ## Arsitektur Deploy
 
 ```
-┌─────────────────────────────────────────────────────────┐
-│                    INTERNET                              │
-│                                                         │
-│  ┌──────────────┐    ┌──────────────┐    ┌───────────┐ │
-│  │   Railway    │───▶│  PlanetScale │    │Cloudflare │ │
-│  │  (Backend)   │    │  (Database)  │    │   R2      │ │
-│  │  PHP/Laravel │    │  MySQL Free  │    │(File 10GB)│ │
-│  └──────────────┘    └──────────────┘    └───────────┘ │
-│                                                         │
-│  Total: $0/bulan (semua free tier)                      │
-└─────────────────────────────────────────────────────────┘
+┌─────────────────────────────────────────────────────┐
+│              ORACLE CLOUD (GRATIS SELAMANYA)         │
+│                                                     │
+│  ┌──────────────┐     ┌──────────────────────────┐  │
+│  │  Ubuntu VM   │     │  Clever Cloud MySQL      │  │
+│  │  2 OCPU ARM  │────▶│  (Free DEV plan)         │  │
+│  │  12 GB RAM   │     │  Database: lovespace     │  │
+│  │  200 GB      │     └──────────────────────────┘  │
+│  │              │                                   │
+│  │  Nginx       │                                   │
+│  │  PHP 8.2     │                                   │
+│  │  Laravel 12  │                                   │
+│  └──────────────┘                                   │
+│                                                     │
+│  Biaya: $0/bulan SELAMANYA                          │
+└─────────────────────────────────────────────────────┘
 ```
 
 ---
 
-## Langkah 1: Setup PlanetScale (Database Gratis)
+## Langkah 1: Setup Oracle Cloud (VM Server)
 
-1. Buka [planetscale.com](https://planetscale.com)
-2. Sign up dengan GitHub/Google
-3. Klik **"Create database"**
-   - Name: `lovespace`
-   - Region: `us-east-1` (atau terdekat)
-4. Setelah database dibuat, klik **"Connect"**
-5. Pilih **"PHP"** → Copy connection string
-6. Catat values ini:
-   - `DB_HOST` = `aws.connect.psdb.cloud`
-   - `DB_USERNAME` = `your_username`
-   - `DB_PASSWORD` = `your_password`
+1. Buka **[cloud.oracle.com](https://cloud.oracle.com)**
+2. Sign up (gratis, butuh credit card untuk verifikasi saja)
+3. Buat VM Instance:
+   - **Name:** `lovespace-server`
+   - **Image:** Ubuntu 22.04 or 24.04
+   - **Shape:** VM.Standard.A1.Flex (ARM)
+   - **OCPU:** 2
+   - **RAM:** 12 GB
+   - **Boot Volume:** 50 GB
+4. Upload **SSH public key**
+5. Catat **Public IP** (contoh: `129.154.xx.xx`)
 
----
+### Setup Security Rules
 
-## Langkah 2: Setup Cloudflare R2 (File Storage Gratis)
+Oracle Cloud memblokir semua port. Buka port yang dibutuhkan:
 
-1. Buka [dash.cloudflare.com](https://dash.cloudflare.com)
-2. Login atau buat akun
-3. Klik **"R2"** di sidebar
-4. Klik **"Create bucket"**
-   - Name: `lovespace-uploads`
-   - Location: `Automatic`
-5. Setelah bucket dibuat, klik **"Manage R2 API Tokens"**
-6. Klik **"Create API token"**
-   - Permissions: `Object Read & Write`
-   - Scope: `lovespace-uploads`
-7. Catat values ini:
-   - `R2_ENDPOINT` = `https://<account-id>.r2.cloudflarestorage.com`
-   - `R2_KEY` = `<access_key_id>`
-   - `R2_SECRET` = `<secret_access_key>`
-   - `R2_BUCKET` = `lovespace-uploads`
+1. **Oracle Console** → **Networking** → **Virtual Cloud Networks** → **Security Lists**
+2. Klik **"Add Ingress Rules"**:
+
+| Port | Protocol | Source | Purpose |
+|---|---|---|---|
+| 22 | TCP | **IP Anda saja** | SSH |
+| 80 | TCP | 0.0.0.0/0 | HTTP |
+| 443 | TCP | 0.0.0.0/0 | HTTPS |
 
 ---
 
-## Langkah 3: Setup Railway (Backend Gratis)
+## Langkah 2: Setup Clever Cloud (Database MySQL)
 
-1. Buka [railway.app](https://railway.app)
-2. Sign up dengan GitHub
-3. Klik **"New Project"** → **"Deploy from GitHub repo"**
-4. Pilih repository `MySpaceLove`
-5. Railway akan mendeteksi Dockerfile otomatis
+1. Buka **[clever.cloud](https://www.clever.cloud)**
+2. Sign up (gratis, dapat €20 credit)
+3. Klik **"Create an add-on"** → **"MySQL"**
+4. Pilih **"DEV"** plan (gratis)
+5. Isi nama: `lovespace`
+6. Catat koneksi:
 
-### Set Environment Variables:
-Klik tab **"Variables"** lalu tambahkan:
+```
+Host: mysql-xxxxx.clever-cloud.com
+Port: 3306
+Database: databases_xxxxx
+User: uxxxxx
+Password: xxxxxxxx
+```
+
+---
+
+## Langkah 3: Setup Server (SSH ke VM)
 
 ```bash
-# App
+# Connect ke VM
+ssh -i ~/.ssh/oracle_key ubuntu@129.154.xx.xx
+
+# Jalankan script setup otomatis
+curl -sL https://raw.githubusercontent.com/danielnoveno/MySpaceLove/main/server-setup.sh | bash
+```
+
+Atau manual:
+
+```bash
+# Update system
+sudo apt update && sudo apt upgrade -y
+
+# Install PHP 8.2 + extensions
+sudo apt install -y \
+  php8.2 php8.2-fpm php8.2-cli \
+  php8.2-mbstring php8.2-xml php8.2-curl \
+  php8.2-mysql php8.2-zip php8.2-bcmath \
+  php8.2-tokenizer php8.2-gd php8.2-intl \
+  unzip git nginx certbot python3-certbot-nginx
+
+# Install Composer
+curl -sS https://getcomposer.org/installer | php
+sudo mv composer.phar /usr/local/bin/composer
+
+# Install Node.js
+curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
+sudo apt install -y nodejs
+```
+
+---
+
+## Langkah 4: Deploy Laravel
+
+```bash
+# Buat directory
+sudo mkdir -p /var/www/lovespace
+sudo chown ubuntu:ubuntu /var/www/lovespace
+cd /var/www/lovespace
+
+# Clone repository
+git clone https://github.com/danielnoveno/MySpaceLove.git .
+
+# Install dependencies
+composer install --optimize-autoloader --no-dev
+npm ci --only=production
+npm run build
+
+# Setup environment
+cp .env.production.example .env
+php artisan key:generate
+
+# Edit .env (isi kredensial Clever Cloud)
+nano .env
+```
+
+Isi `.env`:
+```env
 APP_NAME=LoveSpace
 APP_ENV=production
-APP_KEY=base64:generate_this_with_php_artisan_key_generate
+APP_KEY=base64:xxx
 APP_DEBUG=false
-APP_URL=https://your-app.up.railway.app
+APP_URL=http://129.154.xx.xx
 
-# Database (dari PlanetScale)
 DB_CONNECTION=mysql
-DB_HOST=aws.connect.psdb.cloud
+DB_HOST=mysql-xxxxx.clever-cloud.com
 DB_PORT=3306
-DB_DATABASE=lovespace
-DB_USERNAME=your_planetscale_username
-DB_PASSWORD=your_planetscale_password
-DB_SSLMODE=require
+DB_DATABASE=databases_xxxxx
+DB_USERNAME=uxxxxx
+DB_PASSWORD=xxxxxxxx
 
-# Session/Cache/Queue (Database driver - Gratis)
 SESSION_DRIVER=database
 CACHE_STORE=database
 QUEUE_CONNECTION=database
-
-# File Storage (dari Cloudflare R2)
-FILESYSTEM_DISK=r2
-R2_ENDPOINT=https://your-account.r2.cloudflarestorage.com
-R2_KEY=your_r2_key
-R2_SECRET=your_r2_secret
-R2_BUCKET=lovespace-uploads
-R2_REGION=auto
-
-# Mail (opsional - pakai Mailtrap free)
-MAIL_MAILER=smtp
-MAIL_HOST=smtp.mailtrap.io
-MAIL_PORT=587
-MAIL_USERNAME=your_mailtrap_user
-MAIL_PASSWORD=your_mailtrap_pass
-MAIL_ENCRYPTION=tls
-
-# Logging
-LOG_CHANNEL=stack
-LOG_STACK=daily
-LOG_LEVEL=error
+FILESYSTEM_DISK=local
 ```
 
----
-
-## Langkah 4: Deploy!
-
-1. Setelah variables diisi, Railway akan otomatis rebuild
-2. Tunggu 3-5 menit untuk build selesai
-3. Klik tab **"Settings"** → **"Networking"**
-4. Klik **"Generate Domain"** untuk dapat URL gratis
-5. Website akan bisa diakses di: `https://your-app.up.railway.app`
-
----
-
-## Langkah 5: Setup Database Tables
-
-1. Buka terminal di Railway (atau SSH ke container)
-2. Jalankan:
 ```bash
+# Migrate & optimize
 php artisan migrate --force
+php artisan config:cache
+php artisan route:cache
+php artisan view:cache
+php artisan optimize
+
+# Set permissions
+sudo chown -R www-data:www-data storage bootstrap/cache
+sudo chmod -R 775 storage bootstrap/cache
 ```
 
 ---
 
-## (Opsional) Setup Domain Sendiri
+## Langkah 5: Setup Nginx
 
-1. Beli domain di [Namecheap](https://namecheap.com) atau [Cloudflare Registrar](https://cloudflare.com/products/registrar/)
-2. Di Railway → Settings → Networking → Custom Domain
-3. Tambahkan domain Anda
-4. Update DNS records sesuai instruksi Railway
-5. Update `APP_URL` dan `SESSION_DOMAIN` di environment variables
+```bash
+sudo nano /etc/nginx/sites-available/lovespace
+```
+
+```nginx
+server {
+    listen 80;
+    listen [::]:80;
+    server_name yourdomain.com www.yourdomain.com;
+
+    root /var/www/lovespace/public;
+    index index.php index.html;
+
+    location / {
+        try_files $uri $uri/ /index.php?$query_string;
+    }
+
+    location ~ \.php$ {
+        fastcgi_pass unix:/var/run/php/php8.2-fpm.sock;
+        fastcgi_param SCRIPT_FILENAME $realpath_root$fastcgi_script_name;
+        include fastcgi_params;
+    }
+
+    location ~ /\.ht {
+        deny all;
+    }
+
+    location ~* \.(jpg|jpeg|png|gif|ico|css|js|svg|woff|woff2)$ {
+        expires 30d;
+        add_header Cache-Control "public, immutable";
+    }
+}
+```
+
+```bash
+sudo ln -s /etc/nginx/sites-available/lovespace /etc/nginx/sites-enabled/
+sudo rm /etc/nginx/sites-enabled/default
+sudo nginx -t
+sudo systemctl restart nginx
+sudo systemctl restart php8.2-fpm
+```
 
 ---
 
-## Troubleshooting
+## Langkah 6: SSL (Opsional - butuh domain)
 
-### Error 502 Bad Pasti
-- Cek logs di Railway → Deployments → View Logs
-- Pastikan `APP_KEY` sudah di-set
-- Pastikan database connection string benar
-
-### File Upload Gagal
-- Pastikan `FILESYSTEM_DISK=r2`
-- Pastikan R2 credentials benar
-- Cek R2 bucket permissions
-
-### Session Expired
-- Pastikan `SESSION_DRIVER=database`
-- Jalankan `php artisan migrate` untuk buat sessions table
+```bash
+sudo certbot --nginx -d yourdomain.com -d www.yourdomain.com
+sudo certbot renew --dry-run
+```
 
 ---
 
-## Biaya
+## Langkah 7: Auto Deploy
 
-| Service | Free Tier | Keterangan |
-|---|---|---|
-| Railway | $5/bulan kredit | Cukup untuk app kecil |
-| PlanetScale | 5 GB, 1B reads | MySQL-compatible |
-| Cloudflare R2 | 10 GB, 1 juta requests | S3-compatible |
-| **TOTAL** | **$0/bulan** | Semua gratis! |
+```bash
+# Jalankan deploy script
+cd /var/www/lovespace
+./deploy.sh
+```
 
 ---
 
 ## Useful Commands
 
 ```bash
-# Lihat logs
-railway logs
+# SSH ke server
+ssh -i ~/.ssh/oracle_key ubuntu@129.154.xx.xx
 
-# Jalankan artisan command
-railway run php artisan <command>
+# Deploy update
+cd /var/www/lovespace && ./deploy.sh
+
+# Lihat logs
+sudo tail -f /var/log/nginx/error.log
+sudo tail -f /var/www/lovespace/storage/logs/laravel.log
+
+# Restart services
+sudo systemctl restart php8.2-fpm
+sudo systemctl restart nginx
 
 # Migrate database
-railway run php artisan migrate --force
+php artisan migrate --force
 
 # Clear cache
-railway run php artisan cache:clear
-railway run php artisan config:clear
-railway run php artisan route:clear
+php artisan optimize:clear
 ```
+
+---
+
+## Troubleshooting
+
+| Masalah | Solusi |
+|---|---|
+| **502 Bad Gateway** | Cek PHP-FPM: `sudo systemctl status php8.2-fpm` |
+| **Database connection failed** | Cek kredensial di `.env` |
+| **Permission denied** | Jalankan: `sudo chown -R www-data:www-data storage bootstrap/cache` |
+| **CSS/JS tidak load** | Jalankan: `npm run build` |
+| **Session expired** | Pastikan `SESSION_DRIVER=database` |
+
+---
+
+## Biaya
+
+| Service | Biaya | Keterangan |
+|---|---|---|
+| Oracle Cloud VM | **$0 selamanya** | 2 OCPU, 12 GB RAM, 200 GB |
+| Clever Cloud MySQL | **$0** | DEV plan |
+| SSL | **$0** | Let's Encrypt |
+| Domain | **~$10/tahun** | Opsional |
+| **TOTAL** | **$0/bulan** | Gratis selamanya! |
