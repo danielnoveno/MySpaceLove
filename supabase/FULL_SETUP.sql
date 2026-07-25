@@ -439,7 +439,7 @@ CREATE TABLE IF NOT EXISTS public.nobar_schedules (
 CREATE TABLE IF NOT EXISTS public.notifications (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     user_id UUID NOT NULL REFERENCES public.users(id) ON DELETE CASCADE,
-    space_id UUID REFERENCES public.spaces(id) ON DELETE CASCADE,
+    space_id BIGINT REFERENCES public.spaces(id) ON DELETE CASCADE,
     type VARCHAR(255) NOT NULL,
     notifiable_type VARCHAR(255) NOT NULL,
     notifiable_id BIGINT NOT NULL,

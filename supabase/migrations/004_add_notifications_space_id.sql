@@ -6,7 +6,7 @@
 
 -- Add space_id column (nullable for backwards compatibility)
 ALTER TABLE notifications 
-ADD COLUMN IF NOT EXISTS space_id UUID REFERENCES public.spaces(id) ON DELETE CASCADE;
+ADD COLUMN IF NOT EXISTS space_id BIGINT REFERENCES public.spaces(id) ON DELETE CASCADE;
 
 -- Add index for faster space-scoped queries
 CREATE INDEX IF NOT EXISTS idx_notifications_space_id ON notifications(space_id);
