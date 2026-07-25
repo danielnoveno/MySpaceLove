@@ -7,6 +7,8 @@ import AuthenticatedLayout from '@/layouts/AuthenticatedLayout'
 import { useAuth } from '@/contexts/AuthContext'
 import { createClient } from '@/lib/supabase/client'
 import { Plus, Clock, Heart, Image, MessageCircle, Gamepad2 } from 'lucide-react'
+import LoadingSpinner from '@/components/LoadingSpinner'
+import EmptyState from '@/components/EmptyState'
 
 type Space = {
   id: number
@@ -51,7 +53,7 @@ export default function DashboardPage() {
     return (
       <AuthenticatedLayout>
         <div className="flex items-center justify-center min-h-[60vh]">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-pink-500"></div>
+          <LoadingSpinner size="lg" text="Loading spaces..." />
         </div>
       </AuthenticatedLayout>
     )
@@ -181,22 +183,13 @@ export default function DashboardPage() {
 
       {/* Empty State */}
       {spaces.length === 0 && (
-        <div className="mt-12 text-center">
-          <div className="mx-auto flex h-24 w-24 items-center justify-center rounded-full bg-pink-100 text-pink-500 mb-6">
-            <Heart className="h-12 w-12" />
-          </div>
-          <h2 className="text-2xl font-semibold text-gray-900 mb-2">No spaces yet</h2>
-          <p className="text-gray-600 mb-6">
-            Create your first shared space to start building memories together.
-          </p>
-          <Link
-            href="/spaces/create"
-            className="inline-flex items-center gap-2 rounded-full bg-pink-500 px-6 py-3 font-semibold text-white shadow-sm transition hover:bg-pink-600"
-          >
-            <Plus className="h-5 w-5" />
-            Create Your Space
-          </Link>
-        </div>
+        <EmptyState
+          icon={<Heart className="h-12 w-12" />}
+          title="No spaces yet"
+          description="Create your first shared space to start building memories together."
+          actionLabel="Create Your Space"
+          onAction={() => router.push('/spaces/create')}
+        />
       )}
     </AuthenticatedLayout>
   )

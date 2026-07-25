@@ -7,7 +7,7 @@ export { useTimeline } from './useTimeline'
 export type { TimelineItem } from './useTimeline'
 
 export { useGallery } from './useGallery'
-export type { GalleryCollection, GalleryPhoto } from './useGallery'
+export type { GalleryItem, GalleryCollection } from './useGallery'
 
 export { useJournals } from './useJournals'
 export type { Journal } from './useJournals'
@@ -35,20 +35,23 @@ export type { Notification } from './useNotifications'
 
 export { useSpotify } from './useSpotify'
 export type {
+  SpotifyToken,
   SpotifyCapsule,
   SpotifySurpriseDrop,
   SpotifyListeningPlan,
-  SpotifyConnection,
 } from './useSpotify'
 
 export { useMemoryLane } from './useMemoryLane'
-export type { MemoryLane } from './useMemoryLane'
+export type { MemoryLaneConfig, MemoryLaneLevel } from './useMemoryLane'
 
 export { useLocations } from './useLocations'
 export type { Location } from './useLocations'
 
 export { useNobar } from './useNobar'
-export type { NobarSession } from './useNobar'
+export type { NobarSession, NobarParticipant } from './useNobar'
 
 export { useRoom } from './useRoom'
 export type { Room, RoomSettings } from './useRoom'
+
+export { useSpaceGoals } from './useSpaceGoals'
+export type { SpaceGoal } from './useSpaceGoals'

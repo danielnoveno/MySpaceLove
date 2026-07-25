@@ -270,9 +270,11 @@ export default function SpacesIndex() {
                   className="w-full rounded-2xl border border-gray-300 px-4 py-3 text-gray-800 transition focus:border-pink-500 focus:ring-2 focus:ring-pink-200"
                   placeholder="e.g. Dinda & Aulia's Space"
                   required
+                  aria-describedby={createError ? 'create-error' : undefined}
+                  aria-invalid={!!createError}
                 />
                 {createError && (
-                  <p className="mt-2 text-sm text-red-500">{createError}</p>
+                  <p id="create-error" className="mt-2 text-sm text-red-500" role="alert">{createError}</p>
                 )}
               </div>
 
@@ -333,14 +335,16 @@ export default function SpacesIndex() {
                   onChange={(e) => setJoinCode(e.target.value.toUpperCase())}
                   className="w-full rounded-2xl border border-gray-300 px-4 py-3 text-gray-800 uppercase tracking-widest text-center text-lg font-mono transition focus:border-pink-500 focus:ring-2 focus:ring-pink-200"
                   placeholder="ABCD1234"
+                  aria-describedby={joinCodeError ? 'join-code-error' : undefined}
+                  aria-invalid={!!joinCodeError}
                 />
                 {joinCodeError && (
-                  <p className="mt-2 text-sm text-red-500">{joinCodeError}</p>
+                  <p id="join-code-error" className="mt-2 text-sm text-red-500" role="alert">{joinCodeError}</p>
                 )}
               </div>
 
               {joinAlert && (
-                <div className={`rounded-2xl px-4 py-3 text-sm ${joinAlert.type === 'success' ? 'bg-green-50 text-green-700 border border-green-200' : 'bg-red-50 text-red-700 border border-red-200'}`}>
+                <div role="alert" className={`rounded-2xl px-4 py-3 text-sm ${joinAlert.type === 'success' ? 'bg-green-50 text-green-700 border border-green-200' : 'bg-red-50 text-red-700 border border-red-200'}`}>
                   {joinAlert.message}
                 </div>
               )}
@@ -425,30 +429,36 @@ export default function SpacesIndex() {
                           className="space-y-4 rounded-2xl border border-pink-100 bg-pink-50/60 p-5"
                         >
                           <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">Partner Name</label>
+                            <label htmlFor="invite_name" className="block text-sm font-medium text-gray-700 mb-1">Partner Name</label>
                             <input
+                              id="invite_name"
                               type="text"
                               value={inviteName}
                               onChange={(e) => setInviteName(e.target.value)}
                               className="w-full rounded-xl border border-gray-300 px-4 py-2.5 text-sm transition focus:border-pink-500 focus:ring-2 focus:ring-pink-200"
                               placeholder="e.g. Aulia Rahma"
+                              aria-describedby={inviteErrors.partner_name ? 'invite-name-error' : undefined}
+                              aria-invalid={!!inviteErrors.partner_name}
                             />
                             {inviteErrors.partner_name && (
-                              <p className="mt-1 text-xs text-red-500">{inviteErrors.partner_name}</p>
+                              <p id="invite-name-error" className="mt-1 text-xs text-red-500" role="alert">{inviteErrors.partner_name}</p>
                             )}
                           </div>
 
                           <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">Partner Email</label>
+                            <label htmlFor="invite_email" className="block text-sm font-medium text-gray-700 mb-1">Partner Email</label>
                             <input
+                              id="invite_email"
                               type="email"
                               value={inviteEmail}
                               onChange={(e) => setInviteEmail(e.target.value)}
                               className="w-full rounded-xl border border-gray-300 px-4 py-2.5 text-sm transition focus:border-pink-500 focus:ring-2 focus:ring-pink-200"
                               placeholder="name@email.com"
+                              aria-describedby={inviteErrors.partner_email ? 'invite-email-error' : undefined}
+                              aria-invalid={!!inviteErrors.partner_email}
                             />
                             {inviteErrors.partner_email && (
-                              <p className="mt-1 text-xs text-red-500">{inviteErrors.partner_email}</p>
+                              <p id="invite-email-error" className="mt-1 text-xs text-red-500" role="alert">{inviteErrors.partner_email}</p>
                             )}
                           </div>
 

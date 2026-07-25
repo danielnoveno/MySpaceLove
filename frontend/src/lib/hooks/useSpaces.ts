@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useMemo } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useAuth } from '@/contexts/AuthContext'
 import { User } from '@supabase/supabase-js'
@@ -13,7 +13,9 @@ export type Space = {
   user_one_id: string
   user_two_id: string | null
   is_public: boolean
+  theme_id: number | null
   created_at: string
+  updated_at: string
 }
 
 export type SpaceWithUsers = Space & {
@@ -65,7 +67,7 @@ export function useSpaces(): UseSpacesReturn {
   const [spaces, setSpaces] = useState<Space[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const supabase = createClient()
+  const supabase = useMemo(() => createClient(), [])
 
   const fetchSpaces = useCallback(async () => {
     if (!user) {
@@ -151,8 +153,9 @@ export function useSpaces(): UseSpacesReturn {
 
     const code = partnerCode.trim().toUpperCase()
 
+    // Schema uses 'users' table, NOT 'profiles'
     const { data: owner, error: ownerError } = await supabase
-      .from('profiles')
+      .from('users')
       .select('id')
       .eq('partner_code', code)
       .single()
@@ -207,12 +210,16 @@ export function useSpaces(): UseSpacesReturn {
 
     if (!space) return { error: 'Space not found.' }
 
+    // Schema: space_invitations needs a token
+    const token = crypto.randomUUID()
+
     const { error: insertError } = await supabase
       .from('space_invitations')
       .insert({
         space_id: space.id,
         inviter_id: user.id,
         invitee_email: partnerEmail,
+        token,
         status: 'pending',
       })
 

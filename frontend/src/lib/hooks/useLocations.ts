@@ -1,18 +1,23 @@
 'use client'
 
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useMemo } from 'react'
 import { createClient } from '@/lib/supabase/client'
+
+// Schema: shared_locations table
+// Columns: id, space_id, user_id (NOT added_by), name, address, city, category, notes, rating, latitude, longitude, created_at, updated_at
 
 export type Location = {
   id: number
   space_id: number
+  user_id: string
   name: string
   address: string | null
   city: string | null
   category: string | null
   notes: string | null
   rating: number | null
-  added_by: string
+  latitude: number | null
+  longitude: number | null
   created_at: string
   updated_at: string
 }
@@ -30,6 +35,8 @@ type UseLocationsReturn = {
     category?: string
     notes?: string
     rating?: number
+    latitude?: number
+    longitude?: number
   }) => Promise<{ error?: string; location?: Location }>
   updateLocation: (id: number, data: {
     name?: string
@@ -38,6 +45,8 @@ type UseLocationsReturn = {
     category?: string
     notes?: string
     rating?: number
+    latitude?: number
+    longitude?: number
   }) => Promise<{ error?: string }>
   deleteLocation: (id: number) => Promise<{ error?: string }>
 }
@@ -46,14 +55,14 @@ export function useLocations(): UseLocationsReturn {
   const [locations, setLocations] = useState<Location[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const supabase = createClient()
+  const supabase = useMemo(() => createClient(), [])
 
   const fetchLocations = useCallback(async (spaceId: number) => {
     setLoading(true)
     setError(null)
 
     const { data, error: fetchError } = await supabase
-      .from('locations')
+      .from('shared_locations')
       .select('*')
       .eq('space_id', spaceId)
       .order('name', { ascending: true })
@@ -74,22 +83,26 @@ export function useLocations(): UseLocationsReturn {
     category?: string
     notes?: string
     rating?: number
+    latitude?: number
+    longitude?: number
   }) => {
     try {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) return { error: 'Not authenticated' }
 
       const { data: location, error: insertError } = await supabase
-        .from('locations')
+        .from('shared_locations')
         .insert({
           space_id: data.space_id,
+          user_id: user.id,
           name: data.name,
           address: data.address || null,
           city: data.city || null,
           category: data.category || null,
           notes: data.notes || null,
           rating: data.rating ?? null,
-          added_by: user.id,
+          latitude: data.latitude ?? null,
+          longitude: data.longitude ?? null,
         })
         .select()
         .single()
@@ -112,18 +125,24 @@ export function useLocations(): UseLocationsReturn {
     category?: string
     notes?: string
     rating?: number
+    latitude?: number
+    longitude?: number
   }) => {
     try {
-      const updatePayload: Record<string, unknown> = { updated_at: new Date().toISOString() }
+      const updatePayload: Record<string, unknown> = {}
       if (data.name !== undefined) updatePayload.name = data.name
       if (data.address !== undefined) updatePayload.address = data.address
       if (data.city !== undefined) updatePayload.city = data.city
       if (data.category !== undefined) updatePayload.category = data.category
       if (data.notes !== undefined) updatePayload.notes = data.notes
       if (data.rating !== undefined) updatePayload.rating = data.rating
+      if (data.latitude !== undefined) updatePayload.latitude = data.latitude
+      if (data.longitude !== undefined) updatePayload.longitude = data.longitude
+
+      if (Object.keys(updatePayload).length === 0) return {}
 
       const { error: updateError } = await supabase
-        .from('locations')
+        .from('shared_locations')
         .update(updatePayload)
         .eq('id', id)
 
@@ -131,7 +150,7 @@ export function useLocations(): UseLocationsReturn {
 
       setLocations((prev) =>
         prev.map((loc) =>
-          loc.id === id ? { ...loc, ...data, updated_at: new Date().toISOString() } : loc
+          loc.id === id ? { ...loc, ...data } : loc
         )
       )
       return {}
@@ -145,7 +164,7 @@ export function useLocations(): UseLocationsReturn {
   const deleteLocation = useCallback(async (id: number) => {
     try {
       const { error: deleteError } = await supabase
-        .from('locations')
+        .from('shared_locations')
         .delete()
         .eq('id', id)
 

@@ -68,6 +68,8 @@ export default function NobarSessionDetailPage() {
   const [sendingMessage, setSendingMessage] = useState(false)
   const [joining, setJoining] = useState(false)
   const [leaving, setLeaving] = useState(false)
+  const [watching, setWatching] = useState(false)
+  const [startingWatch, setStartingWatch] = useState(false)
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -204,6 +206,30 @@ export default function NobarSessionDetailPage() {
     setLeaving(false)
   }, [user, sessionId, supabase])
 
+  const startWatching = useCallback(async () => {
+    if (!user) return
+    setStartingWatch(true)
+
+    const { error } = await supabase
+      .from('nobar_sessions')
+      .update({ status: 'watching' })
+      .eq('id', sessionId)
+
+    if (!error) {
+      setWatching(true)
+      // Also post a system-style message
+      await supabase.from('nobar_messages').insert({
+        session_id: sessionId,
+        user_id: user.id,
+        display_name: user.user_metadata?.name || user.email?.split('@')[0],
+        avatar_url: user.user_metadata?.avatar_url || null,
+        content: `🎬 ${user.user_metadata?.name || user.email?.split('@')[0]} started watching!`,
+      })
+    }
+
+    setStartingWatch(false)
+  }, [user, sessionId, supabase])
+
   const sendMessage = useCallback(
     async (e: React.FormEvent) => {
       e.preventDefault()
@@ -307,10 +333,25 @@ export default function NobarSessionDetailPage() {
             <div className="flex items-center gap-3 mt-4 pt-4 border-t border-gray-100">
               {isJoined ? (
                 <>
-                  <button className="inline-flex items-center gap-2 rounded-xl bg-green-500 text-white px-5 py-2.5 text-sm font-semibold transition hover:bg-green-600">
-                    <Play className="h-4 w-4" />
-                    Start Watching
-                  </button>
+                  {watching ? (
+                    <span className="inline-flex items-center gap-2 rounded-xl bg-green-100 text-green-700 px-5 py-2.5 text-sm font-semibold">
+                      <span className="h-2.5 w-2.5 rounded-full bg-green-500 animate-pulse" />
+                      Watching...
+                    </span>
+                  ) : (
+                    <button
+                      onClick={startWatching}
+                      disabled={startingWatch}
+                      className="inline-flex items-center gap-2 rounded-xl bg-green-500 text-white px-5 py-2.5 text-sm font-semibold transition hover:bg-green-600 disabled:opacity-50"
+                    >
+                      {startingWatch ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <Play className="h-4 w-4" />
+                      )}
+                      Start Watching
+                    </button>
+                  )}
                   <button
                     onClick={leaveSession}
                     disabled={leaving}

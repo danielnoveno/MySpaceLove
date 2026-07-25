@@ -7,6 +7,7 @@ import { useAuth } from '@/contexts/AuthContext'
 import { createClient } from '@/lib/supabase/client'
 import { User, Mail, Lock, Upload, Trash2, Copy, Check, ArrowLeft } from 'lucide-react'
 import Link from 'next/link'
+import LoadingSpinner from '@/components/LoadingSpinner'
 
 export default function ProfilePage() {
   const { user, loading: authLoading } = useAuth()
@@ -40,8 +41,19 @@ export default function ProfilePage() {
     setEmail(user.email || '')
     setName(user.user_metadata?.name || '')
 
-    // Generate partner code from user ID
-    setPartnerCode(user.id.slice(0, 8).toUpperCase())
+    // Fetch partner code from users table
+    const { data: profileData } = await supabase
+      .from('users')
+      .select('partner_code')
+      .eq('id', user.id)
+      .single()
+
+    if (profileData?.partner_code) {
+      setPartnerCode(profileData.partner_code)
+    } else {
+      // Fallback: generate from user ID
+      setPartnerCode(user.id.slice(0, 8).toUpperCase())
+    }
 
     setLoading(false)
   }
@@ -132,7 +144,7 @@ export default function ProfilePage() {
     return (
       <AuthenticatedLayout>
         <div className="flex items-center justify-center min-h-[60vh]">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-pink-500" />
+          <LoadingSpinner size="lg" text="Loading profile..." />
         </div>
       </AuthenticatedLayout>
     )
@@ -147,6 +159,7 @@ export default function ProfilePage() {
           <Link
             href="/dashboard"
             className="p-2 rounded-full hover:bg-pink-50 text-gray-600 hover:text-pink-600 transition-colors"
+            aria-label="Back to dashboard"
           >
             <ArrowLeft className="h-5 w-5" />
           </Link>
@@ -161,6 +174,7 @@ export default function ProfilePage() {
         {/* Status Message */}
         {message.text && (
           <div
+            role="alert"
             className={`rounded-xl px-4 py-3 text-sm ${
               message.type === 'error'
                 ? 'bg-red-50 text-red-700 border border-red-100'
@@ -196,6 +210,7 @@ export default function ProfilePage() {
                 onClick={() => fileInputRef.current?.click()}
                 disabled={uploading}
                 className="flex items-center gap-2 rounded-full bg-pink-50 px-4 py-2 text-sm font-medium text-pink-600 hover:bg-pink-100 transition-colors disabled:opacity-50"
+                aria-label={uploading ? 'Uploading avatar' : 'Change profile photo'}
               >
                 <Upload className="h-4 w-4" />
                 {uploading ? 'Uploading...' : 'Change Photo'}
@@ -209,30 +224,34 @@ export default function ProfilePage() {
           <h2 className="text-lg font-semibold text-gray-900 mb-4">Personal Information</h2>
           <form onSubmit={handleUpdateProfile} className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Name</label>
+              <label htmlFor="profile-name" className="block text-sm font-medium text-gray-700 mb-1">Name</label>
               <div className="relative">
                 <User className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
                 <input
+                  id="profile-name"
                   type="text"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   className="w-full rounded-xl border border-pink-100 bg-pink-50/50 py-3 pl-10 pr-4 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-pink-300 focus:border-transparent"
                   placeholder="Your name"
+                  aria-describedby={message.type === 'error' ? 'profile-message' : undefined}
                 />
               </div>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+              <label htmlFor="profile-email" className="block text-sm font-medium text-gray-700 mb-1">Email</label>
               <div className="relative">
                 <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
                 <input
+                  id="profile-email"
                   type="email"
                   value={email}
                   disabled
                   className="w-full rounded-xl border border-pink-100 bg-gray-50 py-3 pl-10 pr-4 text-sm text-gray-500 cursor-not-allowed"
+                  aria-describedby="email-disabled-hint"
                 />
               </div>
-              <p className="text-xs text-gray-400 mt-1">Email cannot be changed</p>
+              <p id="email-disabled-hint" className="text-xs text-gray-400 mt-1">Email cannot be changed</p>
             </div>
             <button
               type="submit"
@@ -249,28 +268,32 @@ export default function ProfilePage() {
           <h2 className="text-lg font-semibold text-gray-900 mb-4">Change Password</h2>
           <form onSubmit={handleChangePassword} className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">New Password</label>
+              <label htmlFor="new-password" className="block text-sm font-medium text-gray-700 mb-1">New Password</label>
               <div className="relative">
                 <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
                 <input
+                  id="new-password"
                   type="password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   className="w-full rounded-xl border border-pink-100 bg-pink-50/50 py-3 pl-10 pr-4 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-pink-300 focus:border-transparent"
                   placeholder="New password"
+                  aria-describedby={message.type === 'error' ? 'profile-message' : undefined}
                 />
               </div>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Confirm Password</label>
+              <label htmlFor="confirm-password" className="block text-sm font-medium text-gray-700 mb-1">Confirm Password</label>
               <div className="relative">
                 <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
                 <input
+                  id="confirm-password"
                   type="password"
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   className="w-full rounded-xl border border-pink-100 bg-pink-50/50 py-3 pl-10 pr-4 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-pink-300 focus:border-transparent"
                   placeholder="Confirm password"
+                  aria-describedby={message.type === 'error' ? 'profile-message' : undefined}
                 />
               </div>
             </div>
@@ -297,6 +320,7 @@ export default function ProfilePage() {
             <button
               onClick={copyPartnerCode}
               className="flex items-center gap-2 rounded-xl bg-pink-50 px-4 py-3 text-sm font-medium text-pink-600 hover:bg-pink-100 transition-colors"
+              aria-label={copied ? 'Copied partner code' : 'Copy partner code to clipboard'}
             >
               {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
               {copied ? 'Copied!' : 'Copy'}

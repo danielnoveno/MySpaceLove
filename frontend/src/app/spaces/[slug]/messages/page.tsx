@@ -7,6 +7,7 @@ import { useAuth } from '@/contexts/AuthContext'
 import { createClient } from '@/lib/supabase/client'
 import { Send, ArrowLeft } from 'lucide-react'
 import Link from 'next/link'
+import LoadingSpinner from '@/components/LoadingSpinner'
 
 type Message = {
   id: number
@@ -157,7 +158,7 @@ export default function MessagesPage() {
     return (
       <AuthenticatedLayout>
         <div className="flex items-center justify-center min-h-[60vh]">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-pink-500" />
+          <LoadingSpinner size="lg" text="Loading messages..." />
         </div>
       </AuthenticatedLayout>
     )
@@ -180,7 +181,7 @@ export default function MessagesPage() {
         </div>
       }
     >
-      <div className="flex flex-col h-[calc(100vh-16rem)]">
+      <div className="flex flex-col min-h-[300px] h-[calc(100dvh-16rem)]">
         {/* Messages List */}
         <div className="flex-1 overflow-y-auto space-y-4 pb-4">
           {messages.length === 0 && (

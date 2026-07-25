@@ -1,10 +1,10 @@
 'use client'
 
-import { useEffect, useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { Suspense, useEffect, useState, useCallback } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
 import AuthenticatedLayout from '@/layouts/AuthenticatedLayout'
 import { useAuth } from '@/contexts/AuthContext'
-import { createClient } from '@/lib/supabase/client'
+import { useNotifications, Notification } from '@/lib/hooks/useNotifications'
 import {
   Bell,
   BellOff,
@@ -18,9 +18,10 @@ import {
 } from 'lucide-react'
 import Link from 'next/link'
 
-type Notification = {
+type DisplayNotification = {
   id: string
   user_id: string
+  space_id: string | null
   type: string
   title: string
   message: string
@@ -43,58 +44,98 @@ const NOTIFICATION_COLORS: Record<string, string> = {
   default: 'bg-pink-100 text-pink-600',
 }
 
-export default function NotificationsPage() {
+function toDisplay(n: Notification): DisplayNotification {
+  const d = n.data as Record<string, unknown> | null
+  return {
+    id: n.id,
+    user_id: n.user_id,
+    space_id: n.space_id,
+    type: n.type,
+    title: (d?.title as string) || n.type,
+    message: (d?.message as string) || '',
+    read: !!n.read_at,
+    data: n.data ?? undefined,
+    created_at: n.created_at,
+  }
+}
+
+function NotificationsContent() {
   const { user, loading: authLoading } = useAuth()
   const router = useRouter()
-  const [notifications, setNotifications] = useState<Notification[]>([])
-  const [loading, setLoading] = useState(true)
-  const supabase = createClient()
+  const searchParams = useSearchParams()
+  const spaceId = searchParams.get('space_id')
+
+  const {
+    notifications: rawNotifications,
+    loading,
+    error,
+    fetchNotifications,
+    markAsRead,
+    markAllAsRead,
+    deleteNotification,
+    deleteNotifications,
+  } = useNotifications()
+
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
+  const [isSelecting, setIsSelecting] = useState(false)
+
+  const notifications = rawNotifications.map(toDisplay)
+  const unreadCount = notifications.filter((n) => !n.read).length
 
   useEffect(() => {
     if (!authLoading && !user) {
       router.push('/auth/login')
       return
     }
-    if (user) fetchNotifications()
-  }, [user, authLoading])
+    if (user) {
+      fetchNotifications(user.id, spaceId)
+    }
+  }, [user, authLoading, spaceId, fetchNotifications])
 
-  const fetchNotifications = async () => {
+  const handleMarkAllRead = useCallback(async () => {
     if (!user) return
+    await markAllAsRead(user.id, spaceId)
+    if (spaceId) {
+      await fetchNotifications(user.id, spaceId)
+    }
+  }, [user, spaceId, markAllAsRead, fetchNotifications])
 
-    const { data } = await supabase
-      .from('notifications')
-      .select('*')
-      .eq('user_id', user.id)
-      .order('created_at', { ascending: false })
+  const handleMarkAsRead = useCallback(async (id: string) => {
+    await markAsRead(id)
+  }, [markAsRead])
 
-    if (data) setNotifications(data)
-    setLoading(false)
-  }
+  const handleDelete = useCallback(async (id: string) => {
+    await deleteNotification(id)
+  }, [deleteNotification])
 
-  const markAsRead = async (id: string) => {
-    await supabase.from('notifications').update({ read: true }).eq('id', id)
-    setNotifications((prev) =>
-      prev.map((n) => (n.id === id ? { ...n, read: true } : n))
-    )
-  }
+  const toggleSelect = useCallback((id: string) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev)
+      if (next.has(id)) {
+        next.delete(id)
+      } else {
+        next.add(id)
+      }
+      return next
+    })
+  }, [])
 
-  const markAllAsRead = async () => {
-    if (!user) return
-    await supabase
-      .from('notifications')
-      .update({ read: true })
-      .eq('user_id', user.id)
-      .eq('read', false)
+  const selectAll = useCallback(() => {
+    setSelectedIds(new Set(notifications.map((n) => n.id)))
+  }, [notifications])
 
-    setNotifications((prev) => prev.map((n) => ({ ...n, read: true })))
-  }
+  const deselectAll = useCallback(() => {
+    setSelectedIds(new Set())
+  }, [])
 
-  const deleteNotification = async (id: string) => {
-    await supabase.from('notifications').delete().eq('id', id)
-    setNotifications((prev) => prev.filter((n) => n.id !== id))
-  }
+  const deleteSelected = useCallback(async () => {
+    if (selectedIds.size === 0) return
+    await deleteNotifications(Array.from(selectedIds))
+    setSelectedIds(new Set())
+    setIsSelecting(false)
+  }, [selectedIds, deleteNotifications])
 
-  const unreadCount = notifications.filter((n) => !n.read).length
+  const headerTitle = spaceId ? 'Space Notifications' : 'All Notifications'
 
   if (authLoading || loading) {
     return (
@@ -118,25 +159,78 @@ export default function NotificationsPage() {
               <ArrowLeft className="h-5 w-5" />
             </Link>
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">Notifications</h1>
+              <h1 className="text-2xl font-bold text-gray-900">{headerTitle}</h1>
               <p className="text-gray-600">
                 {unreadCount > 0 ? `${unreadCount} unread` : 'All caught up!'}
               </p>
             </div>
           </div>
-          {unreadCount > 0 && (
-            <button
-              onClick={markAllAsRead}
-              className="flex items-center gap-2 rounded-full bg-pink-50 px-4 py-2 text-sm font-medium text-pink-600 hover:bg-pink-100 transition-colors"
-            >
-              <CheckCheck className="h-4 w-4" />
-              Mark all read
-            </button>
-          )}
+          <div className="flex items-center gap-2">
+            {isSelecting && selectedIds.size > 0 && (
+              <button
+                onClick={deleteSelected}
+                className="flex items-center gap-2 rounded-full bg-red-50 px-4 py-2 text-sm font-medium text-red-600 hover:bg-red-100 transition-colors"
+              >
+                <Trash2 className="h-4 w-4" />
+                Delete ({selectedIds.size})
+              </button>
+            )}
+            {isSelecting ? (
+              <button
+                onClick={() => {
+                  setIsSelecting(false)
+                  deselectAll()
+                }}
+                className="flex items-center gap-2 rounded-full bg-gray-100 px-4 py-2 text-sm font-medium text-gray-600 hover:bg-gray-200 transition-colors"
+              >
+                Cancel
+              </button>
+            ) : (
+              <button
+                onClick={() => setIsSelecting(true)}
+                className="flex items-center gap-2 rounded-full bg-gray-100 px-4 py-2 text-sm font-medium text-gray-600 hover:bg-gray-200 transition-colors"
+              >
+                <Trash2 className="h-4 w-4" />
+                Select
+              </button>
+            )}
+            {unreadCount > 0 && (
+              <button
+                onClick={handleMarkAllRead}
+                className="flex items-center gap-2 rounded-full bg-pink-50 px-4 py-2 text-sm font-medium text-pink-600 hover:bg-pink-100 transition-colors"
+              >
+                <CheckCheck className="h-4 w-4" />
+                Mark all read
+              </button>
+            )}
+          </div>
         </div>
       }
     >
       <div className="max-w-2xl mx-auto">
+        {error && (
+          <div className="mb-4 rounded-2xl bg-red-50 border border-red-200 p-4 text-sm text-red-700">
+            {error}
+          </div>
+        )}
+
+        {isSelecting && notifications.length > 0 && (
+          <div className="mb-4 flex items-center justify-between">
+            <button
+              onClick={selectAll}
+              className="text-sm text-pink-600 hover:text-pink-700 font-medium"
+            >
+              Select all
+            </button>
+            <button
+              onClick={deselectAll}
+              className="text-sm text-gray-500 hover:text-gray-700 font-medium"
+            >
+              Deselect all
+            </button>
+          </div>
+        )}
+
         {notifications.length === 0 ? (
           <div className="text-center py-16">
             <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-pink-100 text-pink-400 mb-4">
@@ -151,16 +245,34 @@ export default function NotificationsPage() {
               const Icon = NOTIFICATION_ICONS[notification.type] || NOTIFICATION_ICONS.default
               const colorClass =
                 NOTIFICATION_COLORS[notification.type] || NOTIFICATION_COLORS.default
+              const isSelected = selectedIds.has(notification.id)
 
               return (
                 <div
                   key={notification.id}
-                  className={`flex items-start gap-4 rounded-2xl p-4 transition-all ${
-                    notification.read
-                      ? 'bg-white/50 border border-white/70'
-                      : 'bg-white/80 backdrop-blur border border-pink-100 shadow-sm'
+                  className={`flex items-start gap-4 rounded-2xl p-4 transition-all cursor-pointer ${
+                    isSelected
+                      ? 'bg-pink-50 border-2 border-pink-300'
+                      : notification.read
+                        ? 'bg-white/50 border border-white/70'
+                        : 'bg-white/80 backdrop-blur border border-pink-100 shadow-sm'
                   }`}
+                  onClick={() => isSelecting && toggleSelect(notification.id)}
                 >
+                  {isSelecting && (
+                    <div className="mt-1 shrink-0">
+                      <div
+                        className={`h-5 w-5 rounded-full border-2 flex items-center justify-center transition-colors ${
+                          isSelected
+                            ? 'bg-pink-500 border-pink-500'
+                            : 'border-gray-300'
+                        }`}
+                      >
+                        {isSelected && <Check className="h-3 w-3 text-white" />}
+                      </div>
+                    </div>
+                  )}
+
                   <div
                     className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full ${colorClass}`}
                   >
@@ -192,24 +304,32 @@ export default function NotificationsPage() {
                     </p>
                   </div>
 
-                  <div className="flex items-center gap-1 shrink-0">
-                    {!notification.read && (
+                  {!isSelecting && (
+                    <div className="flex items-center gap-1 shrink-0">
+                      {!notification.read && (
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            handleMarkAsRead(notification.id)
+                          }}
+                          className="p-2 rounded-full text-gray-400 hover:text-green-600 hover:bg-green-50 transition-colors"
+                          title="Mark as read"
+                        >
+                          <Check className="h-4 w-4" />
+                        </button>
+                      )}
                       <button
-                        onClick={() => markAsRead(notification.id)}
-                        className="p-2 rounded-full text-gray-400 hover:text-green-600 hover:bg-green-50 transition-colors"
-                        title="Mark as read"
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          handleDelete(notification.id)
+                        }}
+                        className="p-2 rounded-full text-gray-400 hover:text-red-600 hover:bg-red-50 transition-colors"
+                        title="Delete"
                       >
-                        <Check className="h-4 w-4" />
+                        <Trash2 className="h-4 w-4" />
                       </button>
-                    )}
-                    <button
-                      onClick={() => deleteNotification(notification.id)}
-                      className="p-2 rounded-full text-gray-400 hover:text-red-600 hover:bg-red-50 transition-colors"
-                      title="Delete"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </button>
-                  </div>
+                    </div>
+                  )}
                 </div>
               )
             })}
@@ -217,5 +337,19 @@ export default function NotificationsPage() {
         )}
       </div>
     </AuthenticatedLayout>
+  )
+}
+
+export default function NotificationsPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex items-center justify-center min-h-[60vh]">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-pink-500" />
+        </div>
+      }
+    >
+      <NotificationsContent />
+    </Suspense>
   )
 }

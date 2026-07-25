@@ -1,15 +1,22 @@
 'use client'
 
-import { useState, useCallback, useRef, useEffect } from 'react'
+import { useState, useCallback, useRef, useEffect, useMemo } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { RealtimeChannel } from '@supabase/supabase-js'
+
+// Schema: messages table
+// Columns: id, space_id, sender_user_id (NOT sender_id), type, body (NOT content), meta_json, created_at, updated_at, deleted_at
 
 export type Message = {
   id: number
   space_id: number
-  sender_id: string
-  content: string
+  sender_user_id: string
+  type: string
+  body: string | null
+  meta_json: Record<string, unknown> | null
   created_at: string
+  updated_at: string
+  deleted_at: string | null
 }
 
 type UseMessagesReturn = {
@@ -17,7 +24,7 @@ type UseMessagesReturn = {
   loading: boolean
   error: string | null
   fetchMessages: (spaceId: number) => Promise<void>
-  sendMessage: (spaceId: number, content: string) => Promise<{ error?: string; message?: Message }>
+  sendMessage: (spaceId: number, body: string) => Promise<{ error?: string; message?: Message }>
   subscribeToMessages: (spaceId: number, callback?: (message: Message) => void) => void
   unsubscribeFromMessages: () => void
 }
@@ -27,7 +34,7 @@ export function useMessages(): UseMessagesReturn {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const channelRef = useRef<RealtimeChannel | null>(null)
-  const supabase = createClient()
+  const supabase = useMemo(() => createClient(), [])
 
   useEffect(() => {
     return () => {
@@ -43,9 +50,10 @@ export function useMessages(): UseMessagesReturn {
     setError(null)
 
     const { data, error: fetchError } = await supabase
-      .from('space_messages')
+      .from('messages')
       .select('*')
       .eq('space_id', spaceId)
+      .is('deleted_at', null)
       .order('created_at', { ascending: true })
       .limit(200)
 
@@ -57,17 +65,18 @@ export function useMessages(): UseMessagesReturn {
     setLoading(false)
   }, [supabase])
 
-  const sendMessage = useCallback(async (spaceId: number, content: string) => {
+  const sendMessage = useCallback(async (spaceId: number, body: string) => {
     try {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) return { error: 'Not authenticated' }
 
       const { data: message, error: insertError } = await supabase
-        .from('space_messages')
+        .from('messages')
         .insert({
           space_id: spaceId,
-          sender_id: user.id,
-          content,
+          sender_user_id: user.id,
+          type: 'text',
+          body,
         })
         .select()
         .single()
@@ -94,7 +103,7 @@ export function useMessages(): UseMessagesReturn {
         {
           event: 'INSERT',
           schema: 'public',
-          table: 'space_messages',
+          table: 'messages',
           filter: `space_id=eq.${spaceId}`,
         },
         (payload) => {

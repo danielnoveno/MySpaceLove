@@ -110,6 +110,7 @@ export default function CreateJournalPage() {
           <Link
             href={`/spaces/${slug}/journals`}
             className="p-2 text-gray-400 hover:text-pink-600 hover:bg-pink-50 rounded-full transition-colors"
+            aria-label="Back to journals"
           >
             <ArrowLeft className="h-5 w-5" />
           </Link>
@@ -123,7 +124,7 @@ export default function CreateJournalPage() {
       <div className="max-w-2xl mx-auto">
         <form onSubmit={handleSubmit} className="space-y-6">
           {error && (
-            <div className="rounded-2xl bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-700">
+            <div id="journal-error" role="alert" className="rounded-2xl bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-700">
               {error}
             </div>
           )}
@@ -133,7 +134,7 @@ export default function CreateJournalPage() {
             <label className="block text-sm font-medium text-gray-700 mb-3">
               How are you feeling?
             </label>
-            <div className="flex flex-wrap gap-3">
+            <div role="radiogroup" aria-label="Mood selection" className="flex flex-wrap gap-3">
               {moods.map((m) => {
                 const Icon = m.icon
                 const isActive = mood === m.value
@@ -141,6 +142,8 @@ export default function CreateJournalPage() {
                   <button
                     key={m.value}
                     type="button"
+                    role="radio"
+                    aria-checked={isActive}
                     onClick={() => setMood(m.value)}
                     className={`inline-flex items-center gap-2 rounded-full border-2 px-4 py-2.5 text-sm font-medium transition-all ${
                       isActive ? m.activeColor : m.color + ' hover:shadow-sm'
@@ -166,6 +169,8 @@ export default function CreateJournalPage() {
               onChange={(e) => setTitle(e.target.value)}
               placeholder="Give your thoughts a title..."
               className="w-full rounded-xl border border-gray-200 px-4 py-3 text-gray-900 placeholder-gray-400 focus:border-pink-400 focus:ring-2 focus:ring-pink-100 outline-none transition-all"
+              aria-describedby={error ? 'journal-error' : undefined}
+              aria-invalid={!!error}
             />
           </div>
 
@@ -181,6 +186,8 @@ export default function CreateJournalPage() {
               rows={8}
               placeholder="Write from the heart..."
               className="w-full rounded-xl border border-gray-200 px-4 py-3 text-gray-900 placeholder-gray-400 focus:border-pink-400 focus:ring-2 focus:ring-pink-100 outline-none transition-all resize-none"
+              aria-describedby={error ? 'journal-error' : undefined}
+              aria-invalid={!!error}
             />
           </div>
 

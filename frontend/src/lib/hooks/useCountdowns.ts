@@ -1,17 +1,22 @@
 'use client'
 
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useMemo } from 'react'
 import { createClient } from '@/lib/supabase/client'
+
+// Schema: countdowns table
+// Columns: id, space_id, event_name (NOT name), event_date (NOT date), description, image, activities (JSONB), created_at, updated_at
+// NOTE: No user/author column — countdowns are space-level
 
 export type Countdown = {
   id: number
   space_id: number
-  name: string
-  date: string
+  event_name: string
+  event_date: string
   description: string | null
-  activities: string[] | null
-  created_by: string
+  image: string | null
+  activities: unknown
   created_at: string
+  updated_at: string
 }
 
 type UseCountdownsReturn = {
@@ -21,10 +26,10 @@ type UseCountdownsReturn = {
   fetchCountdowns: (spaceId: number) => Promise<void>
   createCountdown: (data: {
     space_id: number
-    name: string
-    date: string
+    event_name: string
+    event_date: string
     description?: string
-    activities?: string[]
+    activities?: unknown
   }) => Promise<{ error?: string; countdown?: Countdown }>
   deleteCountdown: (id: number) => Promise<{ error?: string }>
 }
@@ -33,7 +38,7 @@ export function useCountdowns(): UseCountdownsReturn {
   const [countdowns, setCountdowns] = useState<Countdown[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const supabase = createClient()
+  const supabase = useMemo(() => createClient(), [])
 
   const fetchCountdowns = useCallback(async (spaceId: number) => {
     setLoading(true)
@@ -43,7 +48,7 @@ export function useCountdowns(): UseCountdownsReturn {
       .from('countdowns')
       .select('*')
       .eq('space_id', spaceId)
-      .order('date', { ascending: true })
+      .order('event_date', { ascending: true })
 
     if (fetchError) {
       setError(fetchError.message)
@@ -55,31 +60,27 @@ export function useCountdowns(): UseCountdownsReturn {
 
   const createCountdown = useCallback(async (data: {
     space_id: number
-    name: string
-    date: string
+    event_name: string
+    event_date: string
     description?: string
-    activities?: string[]
+    activities?: unknown
   }) => {
     try {
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) return { error: 'Not authenticated' }
-
       const { data: countdown, error: insertError } = await supabase
         .from('countdowns')
         .insert({
           space_id: data.space_id,
-          name: data.name,
-          date: data.date,
+          event_name: data.event_name,
+          event_date: data.event_date,
           description: data.description || null,
           activities: data.activities || null,
-          created_by: user.id,
         })
         .select()
         .single()
 
       if (insertError) return { error: insertError.message }
 
-      setCountdowns((prev) => [...prev, countdown].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()))
+      setCountdowns((prev) => [...prev, countdown].sort((a, b) => new Date(a.event_date).getTime() - new Date(b.event_date).getTime()))
       return { countdown }
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Failed to create countdown'

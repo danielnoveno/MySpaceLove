@@ -1,11 +1,12 @@
 'use client'
 
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState, useCallback, useMemo } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import AuthenticatedLayout from '@/layouts/AuthenticatedLayout'
 import { useAuth } from '@/contexts/AuthContext'
 import { createClient } from '@/lib/supabase/client'
+import dynamic from 'next/dynamic'
 import {
   Plus,
   MapPin,
@@ -21,6 +22,23 @@ import {
   StickyNote,
 } from 'lucide-react'
 
+const MapContainer = dynamic(
+  () => import('react-leaflet').then((mod) => mod.MapContainer),
+  { ssr: false }
+)
+const TileLayer = dynamic(
+  () => import('react-leaflet').then((mod) => mod.TileLayer),
+  { ssr: false }
+)
+const Marker = dynamic(
+  () => import('react-leaflet').then((mod) => mod.Marker),
+  { ssr: false }
+)
+const Popup = dynamic(
+  () => import('react-leaflet').then((mod) => mod.Popup),
+  { ssr: false }
+)
+
 type Location = {
   id: string
   space_id: string
@@ -31,6 +49,8 @@ type Location = {
   notes: string | null
   rating: number | null
   saved_at: string | null
+  latitude: number | null
+  longitude: number | null
   created_at: string
 }
 
@@ -42,6 +62,15 @@ const CATEGORIES = [
   { id: 'travel', label: 'Travel', icon: Plane, color: 'text-blue-500 bg-blue-100' },
   { id: 'other', label: 'Other', icon: StickyNote, color: 'text-gray-500 bg-gray-100' },
 ]
+
+const CATEGORY_ICONS: Record<string, string> = {
+  restaurant: '🍽️',
+  cafe: '☕',
+  park: '🌳',
+  activity: '🎫',
+  travel: '✈️',
+  other: '📌',
+}
 
 export default function LocationsPage() {
   const params = useParams()
@@ -105,6 +134,30 @@ export default function LocationsPage() {
       ? locations
       : locations.filter((l) => l.category === filter)
 
+  // Locations that have coordinates for the map
+  const mappedLocations = useMemo(
+    () => filteredLocations.filter((l) => l.latitude != null && l.longitude != null),
+    [filteredLocations]
+  )
+
+  // Compute map center from all locations with coordinates
+  const mapCenter = useMemo(() => {
+    const allWithCoords = locations.filter(
+      (l) => l.latitude != null && l.longitude != null
+    )
+    if (allWithCoords.length === 0) {
+      // Default: Jakarta, Indonesia
+      return { lat: -6.2088, lng: 106.8456 }
+    }
+    const lat =
+      allWithCoords.reduce((sum, l) => sum + (l.latitude as number), 0) /
+      allWithCoords.length
+    const lng =
+      allWithCoords.reduce((sum, l) => sum + (l.longitude as number), 0) /
+      allWithCoords.length
+    return { lat, lng }
+  }, [locations])
+
   if (authLoading || loading) {
     return (
       <AuthenticatedLayout>
@@ -137,18 +190,55 @@ export default function LocationsPage() {
         </div>
       }
     >
-      {/* Map Placeholder */}
-      <div className="rounded-3xl bg-gradient-to-br from-pink-100 to-purple-100 border border-pink-200 h-48 flex items-center justify-center mb-6">
-        <div className="text-center">
-          <MapPin className="h-10 w-10 text-pink-400 mx-auto mb-2" />
-          <p className="text-sm font-medium text-pink-600">
-            Map integration coming soon
-          </p>
-          <p className="text-xs text-pink-400">
-            Add Google Maps to see your locations
-          </p>
+      {/* Interactive Map */}
+      {locations.length > 0 && (
+        <div className="mb-6 rounded-3xl overflow-hidden border border-pink-200 shadow-sm">
+          <MapContainer
+            center={[mapCenter.lat, mapCenter.lng]}
+            zoom={mappedLocations.length === 1 ? 14 : 11}
+            scrollWheelZoom={false}
+            style={{ height: '400px', width: '100%' }}
+          >
+            <TileLayer
+              attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+              url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+            />
+            {mappedLocations.map((location) => (
+              <Marker
+                key={location.id}
+                position={[location.latitude as number, location.longitude as number]}
+              >
+                <Popup>
+                  <div className="min-w-[180px]">
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className="text-lg">{CATEGORY_ICONS[location.category] || '📌'}</span>
+                      <strong className="text-gray-900">{location.name}</strong>
+                    </div>
+                    {location.address && (
+                      <p className="text-gray-600 text-xs">
+                        {location.address}
+                        {location.city ? `, ${location.city}` : ''}
+                      </p>
+                    )}
+                    {location.rating && (
+                      <div className="flex items-center gap-0.5 mt-1">
+                        {Array.from({ length: location.rating }).map((_, i) => (
+                          <span key={i} className="text-yellow-400 text-xs">★</span>
+                        ))}
+                      </div>
+                    )}
+                    {location.notes && (
+                      <p className="text-gray-500 text-xs mt-1 line-clamp-2">
+                        {location.notes}
+                      </p>
+                    )}
+                  </div>
+                </Popup>
+              </Marker>
+            ))}
+          </MapContainer>
         </div>
-      </div>
+      )}
 
       {/* Category Filter */}
       <div className="flex flex-wrap items-center gap-2 mb-6">

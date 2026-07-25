@@ -66,6 +66,7 @@ export default function CreateSpacePage() {
           <Link
             href="/spaces"
             className="rounded-lg p-2 transition hover:bg-gray-100"
+            aria-label="Back to spaces"
           >
             <ArrowLeft className="h-5 w-5" />
           </Link>
@@ -101,9 +102,11 @@ export default function CreateSpacePage() {
                 className="w-full rounded-2xl border border-gray-300 px-5 py-4 text-gray-800 transition focus:border-pink-500 focus:ring-2 focus:ring-pink-200"
                 placeholder="e.g. Dinda & Aulia's Space"
                 required
+                aria-describedby={error ? 'create-space-error' : undefined}
+                aria-invalid={!!error}
               />
               {error && (
-                <p className="mt-2 text-sm text-red-500">{error}</p>
+                <p id="create-space-error" className="mt-2 text-sm text-red-500" role="alert">{error}</p>
               )}
             </div>
 

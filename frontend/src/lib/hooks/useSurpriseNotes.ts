@@ -1,16 +1,20 @@
 'use client'
 
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useMemo } from 'react'
 import { createClient } from '@/lib/supabase/client'
+
+// Schema: surprise_notes table
+// Columns: id, space_id, user_id (NOT created_by), title, message, unlock_date, created_at, updated_at
 
 export type SurpriseNote = {
   id: number
   space_id: number
-  title: string
+  user_id: string
+  title: string | null
   message: string
   unlock_date: string
-  created_by: string
   created_at: string
+  updated_at: string
 }
 
 type UseSurpriseNotesReturn = {
@@ -20,7 +24,7 @@ type UseSurpriseNotesReturn = {
   fetchNotes: (spaceId: number) => Promise<void>
   createNote: (data: {
     space_id: number
-    title: string
+    title?: string
     message: string
     unlock_date: string
   }) => Promise<{ error?: string; note?: SurpriseNote }>
@@ -32,7 +36,7 @@ export function useSurpriseNotes(): UseSurpriseNotesReturn {
   const [notes, setNotes] = useState<SurpriseNote[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const supabase = createClient()
+  const supabase = useMemo(() => createClient(), [])
 
   const fetchNotes = useCallback(async (spaceId: number) => {
     setLoading(true)
@@ -54,7 +58,7 @@ export function useSurpriseNotes(): UseSurpriseNotesReturn {
 
   const createNote = useCallback(async (data: {
     space_id: number
-    title: string
+    title?: string
     message: string
     unlock_date: string
   }) => {
@@ -66,10 +70,10 @@ export function useSurpriseNotes(): UseSurpriseNotesReturn {
         .from('surprise_notes')
         .insert({
           space_id: data.space_id,
-          title: data.title,
+          user_id: user.id,
+          title: data.title || null,
           message: data.message,
           unlock_date: data.unlock_date,
-          created_by: user.id,
         })
         .select()
         .single()

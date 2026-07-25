@@ -1,7 +1,11 @@
 'use client'
 
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useMemo } from 'react'
 import { createClient } from '@/lib/supabase/client'
+
+// Schema: rooms table (per-space real-time room state)
+// Columns: id, space_id (UNIQUE), is_active, settings (JSONB), created_at, updated_at
+// Default settings: {"background_music_url": null, "ambient_sound": null, "theme": "default", "font_size": "medium", "showActivity": true}
 
 export type RoomSettings = {
   background_music_url: string | null
@@ -29,19 +33,19 @@ type UseRoomReturn = {
   toggleActive: (spaceId: number) => Promise<{ error?: string }>
 }
 
+const DEFAULT_SETTINGS: RoomSettings = {
+  background_music_url: null,
+  ambient_sound: null,
+  theme: 'default',
+  font_size: 'medium',
+  showActivity: true,
+}
+
 export function useRoom(): UseRoomReturn {
   const [room, setRoom] = useState<Room | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const supabase = createClient()
-
-  const defaultSettings: RoomSettings = {
-    background_music_url: null,
-    ambient_sound: null,
-    theme: 'default',
-    font_size: 'medium',
-    showActivity: true,
-  }
+  const supabase = useMemo(() => createClient(), [])
 
   const getRoom = useCallback(async (spaceId: number) => {
     setLoading(true)
@@ -58,12 +62,13 @@ export function useRoom(): UseRoomReturn {
     } else if (data) {
       setRoom(data)
     } else {
+      // Create default room if it doesn't exist
       const { data: newRoom, error: createError } = await supabase
         .from('rooms')
         .insert({
           space_id: spaceId,
           is_active: false,
-          settings: defaultSettings,
+          settings: DEFAULT_SETTINGS,
         })
         .select()
         .single()
@@ -87,7 +92,6 @@ export function useRoom(): UseRoomReturn {
         .from('rooms')
         .update({
           settings: updatedSettings,
-          updated_at: new Date().toISOString(),
         })
         .eq('space_id', spaceId)
 
@@ -95,7 +99,7 @@ export function useRoom(): UseRoomReturn {
 
       setRoom((prev) =>
         prev
-          ? { ...prev, settings: updatedSettings, updated_at: new Date().toISOString() }
+          ? { ...prev, settings: updatedSettings }
           : prev
       )
       return {}
@@ -116,7 +120,6 @@ export function useRoom(): UseRoomReturn {
         .from('rooms')
         .update({
           is_active: newActiveState,
-          updated_at: new Date().toISOString(),
         })
         .eq('space_id', spaceId)
 
@@ -124,7 +127,7 @@ export function useRoom(): UseRoomReturn {
 
       setRoom((prev) =>
         prev
-          ? { ...prev, is_active: newActiveState, updated_at: new Date().toISOString() }
+          ? { ...prev, is_active: newActiveState }
           : prev
       )
       return {}

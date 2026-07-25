@@ -26,22 +26,55 @@ export default function Modal({
   size = 'md',
 }: ModalProps) {
   const contentRef = useRef<HTMLDivElement>(null);
+  const previousFocusRef = useRef<HTMLElement | null>(null);
 
   const handleKeyDown = useCallback(
     (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose();
+      if (e.key === 'Escape') {
+        onClose();
+        return;
+      }
+
+      // Focus trap: keep Tab inside modal
+      if (e.key === 'Tab' && contentRef.current) {
+        const focusableElements = contentRef.current.querySelectorAll<HTMLElement>(
+          'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+        );
+        const firstElement = focusableElements[0];
+        const lastElement = focusableElements[focusableElements.length - 1];
+
+        if (e.shiftKey) {
+          if (document.activeElement === firstElement) {
+            e.preventDefault();
+            lastElement?.focus();
+          }
+        } else {
+          if (document.activeElement === lastElement) {
+            e.preventDefault();
+            firstElement?.focus();
+          }
+        }
+      }
     },
     [onClose]
   );
 
   useEffect(() => {
     if (isOpen) {
+      // Save the element that had focus before opening the modal
+      previousFocusRef.current = document.activeElement as HTMLElement;
       document.addEventListener('keydown', handleKeyDown);
       document.body.style.overflow = 'hidden';
+      // Focus the modal content after render
+      requestAnimationFrame(() => {
+        contentRef.current?.focus();
+      });
     }
     return () => {
       document.removeEventListener('keydown', handleKeyDown);
       document.body.style.overflow = 'unset';
+      // Return focus to the element that triggered the modal
+      previousFocusRef.current?.focus();
     };
   }, [isOpen, handleKeyDown]);
 
@@ -52,10 +85,15 @@ export default function Modal({
       <div
         className="fixed inset-0 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200"
         onClick={onClose}
+        aria-hidden="true"
       />
       <div
         ref={contentRef}
-        className={`relative bg-white rounded-2xl shadow-xl w-full ${sizeClasses[size]} animate-in zoom-in-95 fade-in duration-200 flex flex-col max-h-[90vh]`}
+        role="dialog"
+        aria-modal="true"
+        aria-label={title || 'Dialog'}
+        tabIndex={-1}
+        className={`relative bg-white rounded-2xl shadow-xl w-full ${sizeClasses[size]} animate-in zoom-in-95 fade-in duration-200 flex flex-col max-h-[90vh] outline-none`}
       >
         {title && (
           <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">

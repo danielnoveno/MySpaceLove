@@ -7,6 +7,9 @@ import AuthenticatedLayout from '@/layouts/AuthenticatedLayout'
 import { useAuth } from '@/contexts/AuthContext'
 import { createClient } from '@/lib/supabase/client'
 import { ArrowLeft, RotateCcw, Trophy } from 'lucide-react'
+import Tetris from '@/components/games/Tetris'
+import Game2048 from '@/components/games/Game2048'
+import Sudoku from '@/components/games/Sudoku'
 
 const GAMES_CONFIG: Record<string, { name: string; icon: string }> = {
   tetris: { name: 'Tetris', icon: '🧱' },
@@ -343,6 +346,12 @@ export default function GamePlayPage() {
         return <TicTacToeGame onScore={handleScore} />
       case 'memory':
         return <MemoryGame onScore={handleScore} />
+      case 'tetris':
+        return <Tetris onScore={handleScore} />
+      case '2048':
+        return <Game2048 onScore={handleScore} />
+      case 'sudoku':
+        return <Sudoku onScore={handleScore} />
       default:
         return <GenericGame gameSlug={gameSlug} />
     }

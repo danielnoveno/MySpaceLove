@@ -1,15 +1,18 @@
 'use client'
 
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useMemo } from 'react'
 import { createClient } from '@/lib/supabase/client'
+
+// Schema: love_journals table
+// Columns: id, space_id, user_id (NOT author_id), title, content, mood, created_at, updated_at
 
 export type Journal = {
   id: number
   space_id: number
+  user_id: string
   title: string
   content: string
   mood: string | null
-  author_id: string
   created_at: string
   updated_at: string
 }
@@ -37,14 +40,14 @@ export function useJournals(): UseJournalsReturn {
   const [journals, setJournals] = useState<Journal[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const supabase = createClient()
+  const supabase = useMemo(() => createClient(), [])
 
   const fetchJournals = useCallback(async (spaceId: number) => {
     setLoading(true)
     setError(null)
 
     const { data, error: fetchError } = await supabase
-      .from('journals')
+      .from('love_journals')
       .select('*')
       .eq('space_id', spaceId)
       .order('created_at', { ascending: false })
@@ -68,13 +71,13 @@ export function useJournals(): UseJournalsReturn {
       if (!user) return { error: 'Not authenticated' }
 
       const { data: journal, error: insertError } = await supabase
-        .from('journals')
+        .from('love_journals')
         .insert({
           space_id: data.space_id,
+          user_id: user.id,
           title: data.title,
           content: data.content,
           mood: data.mood || null,
-          author_id: user.id,
         })
         .select()
         .single()
@@ -97,12 +100,11 @@ export function useJournals(): UseJournalsReturn {
   }) => {
     try {
       const { error: updateError } = await supabase
-        .from('journals')
+        .from('love_journals')
         .update({
           title: data.title,
           content: data.content,
           mood: data.mood || null,
-          updated_at: new Date().toISOString(),
         })
         .eq('id', id)
 
@@ -126,7 +128,7 @@ export function useJournals(): UseJournalsReturn {
   const deleteJournal = useCallback(async (id: number) => {
     try {
       const { error: deleteError } = await supabase
-        .from('journals')
+        .from('love_journals')
         .delete()
         .eq('id', id)
 

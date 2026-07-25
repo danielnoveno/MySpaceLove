@@ -1,7 +1,10 @@
 'use client'
 
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useMemo } from 'react'
 import { createClient } from '@/lib/supabase/client'
+
+// Schema: love_timelines table
+// Columns: id, uuid, space_id, title, description, date, media_path, media_paths (JSONB), thumbnail_path, created_at, updated_at
 
 export type TimelineItem = {
   id: number
@@ -10,9 +13,11 @@ export type TimelineItem = {
   title: string
   description: string | null
   date: string
-  media_paths: string[]
+  media_path: string | null
+  media_paths: string[] | null
   thumbnail_path: string | null
   created_at: string
+  updated_at: string
 }
 
 type UseTimelineReturn = {
@@ -41,7 +46,7 @@ export function useTimeline(): UseTimelineReturn {
   const [timelines, setTimelines] = useState<TimelineItem[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const supabase = createClient()
+  const supabase = useMemo(() => createClient(), [])
 
   const fetchTimelines = useCallback(async (spaceId: number) => {
     setLoading(true)
@@ -69,7 +74,7 @@ export function useTimeline(): UseTimelineReturn {
       const filePath = `spaces/${spaceId}/timeline/${Date.now()}-${Math.random().toString(36).substring(2, 8)}.${fileExt}`
 
       const { error: uploadError } = await supabase.storage
-        .from('public')
+        .from('love-timelines')
         .upload(filePath, file, { contentType: file.type })
 
       if (uploadError) {
@@ -83,17 +88,8 @@ export function useTimeline(): UseTimelineReturn {
     return paths
   }, [supabase])
 
-  const getPublicUrl = useCallback((path: string): string => {
-    const { data } = supabase.storage.from('public').getPublicUrl(path)
-    return data.publicUrl
-  }, [supabase])
-
   const generateUuid = useCallback((): string => {
-    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
-      const r = (Math.random() * 16) | 0
-      const v = c === 'x' ? r : (r & 0x3) | 0x8
-      return v.toString(16)
-    })
+    return crypto.randomUUID()
   }, [])
 
   const createTimeline = useCallback(async (spaceId: number, data: {
@@ -118,6 +114,7 @@ export function useTimeline(): UseTimelineReturn {
         title: data.title,
         description: data.description || null,
         date: data.date,
+        media_path: mediaPaths[0] || null,
         media_paths: mediaPaths,
         thumbnail_path: mediaPaths[0] || null,
       })
@@ -145,7 +142,7 @@ export function useTimeline(): UseTimelineReturn {
 
     if (data.removed && data.removed.length > 0) {
       for (const path of data.removed) {
-        await supabase.storage.from('public').remove([path])
+        await supabase.storage.from('love-timelines').remove([path])
       }
       existingPaths = existingPaths.filter((p) => !data.removed!.includes(p))
     }
@@ -168,6 +165,7 @@ export function useTimeline(): UseTimelineReturn {
         title: data.title,
         description: data.description || null,
         date: data.date,
+        media_path: finalPaths[0] || null,
         media_paths: finalPaths,
         thumbnail_path: thumbnailPath,
       })
@@ -178,7 +176,7 @@ export function useTimeline(): UseTimelineReturn {
     setTimelines((prev) =>
       prev.map((t) =>
         t.uuid === uuid
-          ? { ...t, title: data.title, description: data.description || null, date: data.date, media_paths: finalPaths, thumbnail_path: thumbnailPath }
+          ? { ...t, title: data.title, description: data.description || null, date: data.date, media_path: finalPaths[0] || null, media_paths: finalPaths, thumbnail_path: thumbnailPath }
           : t
       )
     )
@@ -191,7 +189,7 @@ export function useTimeline(): UseTimelineReturn {
 
     if (existing?.media_paths) {
       for (const path of existing.media_paths) {
-        await supabase.storage.from('public').remove([path])
+        await supabase.storage.from('love-timelines').remove([path])
       }
     }
 

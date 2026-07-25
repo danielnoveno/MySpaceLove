@@ -1,7 +1,11 @@
 'use client'
 
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useMemo } from 'react'
 import { createClient } from '@/lib/supabase/client'
+
+// Schema: wishlist_items table
+// Columns: id, space_id, title, description, location, status, notes, created_at, updated_at
+// NOTE: No user/author column — wishlist items are space-level
 
 export type WishlistItem = {
   id: number
@@ -11,7 +15,6 @@ export type WishlistItem = {
   location: string | null
   notes: string | null
   status: 'pending' | 'done'
-  added_by: string
   created_at: string
   updated_at: string
 }
@@ -42,7 +45,7 @@ export function useWishlist(): UseWishlistReturn {
   const [items, setItems] = useState<WishlistItem[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const supabase = createClient()
+  const supabase = useMemo(() => createClient(), [])
 
   const fetchWishlist = useCallback(async (spaceId: number) => {
     setLoading(true)
@@ -70,9 +73,6 @@ export function useWishlist(): UseWishlistReturn {
     notes?: string
   }) => {
     try {
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) return { error: 'Not authenticated' }
-
       const { data: item, error: insertError } = await supabase
         .from('wishlist_items')
         .insert({
@@ -82,7 +82,6 @@ export function useWishlist(): UseWishlistReturn {
           location: data.location || null,
           notes: data.notes || null,
           status: 'pending',
-          added_by: user.id,
         })
         .select()
         .single()
@@ -105,11 +104,13 @@ export function useWishlist(): UseWishlistReturn {
     notes?: string
   }) => {
     try {
-      const updatePayload: Record<string, unknown> = { updated_at: new Date().toISOString() }
+      const updatePayload: Record<string, unknown> = {}
       if (data.title !== undefined) updatePayload.title = data.title
       if (data.description !== undefined) updatePayload.description = data.description
       if (data.location !== undefined) updatePayload.location = data.location
       if (data.notes !== undefined) updatePayload.notes = data.notes
+
+      if (Object.keys(updatePayload).length === 0) return {}
 
       const { error: updateError } = await supabase
         .from('wishlist_items')
@@ -120,7 +121,7 @@ export function useWishlist(): UseWishlistReturn {
 
       setItems((prev) =>
         prev.map((item) =>
-          item.id === id ? { ...item, ...data, updated_at: new Date().toISOString() } : item
+          item.id === id ? { ...item, ...data } : item
         )
       )
       return {}
@@ -158,7 +159,7 @@ export function useWishlist(): UseWishlistReturn {
 
       const { error: updateError } = await supabase
         .from('wishlist_items')
-        .update({ status: newStatus, updated_at: new Date().toISOString() })
+        .update({ status: newStatus })
         .eq('id', id)
 
       if (updateError) return { error: updateError.message }

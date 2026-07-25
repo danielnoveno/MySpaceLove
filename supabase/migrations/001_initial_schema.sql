@@ -4,7 +4,7 @@
 -- =====================================================
 
 -- Enable necessary extensions
-CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+-- uuid-ossp extension may already exist on Supabase
 
 -- =====================================================
 -- 1. USERS TABLE
@@ -172,7 +172,7 @@ CREATE INDEX idx_media_galleries_space_created ON media_galleries(space_id, crea
 -- =====================================================
 CREATE TABLE love_timelines (
     id BIGSERIAL PRIMARY KEY,
-    uuid UUID NOT NULL UNIQUE DEFAULT uuid_generate_v4(),
+    uuid UUID NOT NULL UNIQUE DEFAULT gen_random_uuid(),
     space_id BIGINT NOT NULL REFERENCES spaces(id) ON DELETE CASCADE,
     title VARCHAR(255) NOT NULL,
     description TEXT,
@@ -451,7 +451,7 @@ CREATE TABLE nobar_schedules (
 -- 25. NOTIFICATIONS TABLE
 -- =====================================================
 CREATE TABLE notifications (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id BIGINT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     type VARCHAR(255) NOT NULL,
     notifiable_type VARCHAR(255) NOT NULL,

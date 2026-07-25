@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { useParams } from 'next/navigation'
 import Link from 'next/link'
 import AuthenticatedLayout from '@/layouts/AuthenticatedLayout'
@@ -24,6 +24,58 @@ type Countdown = {
   description: string | null
   activities: string | null
   created_at: string
+}
+
+type TimeRemaining = {
+  days: number
+  hours: number
+  minutes: number
+  seconds: number
+}
+
+function getCountdownTimeRemaining(eventDate: string): TimeRemaining | null {
+  const now = new Date().getTime()
+  const event = new Date(eventDate).getTime()
+  const diff = event - now
+
+  if (diff <= 0) return null
+
+  const days = Math.floor(diff / (1000 * 60 * 60 * 24))
+  const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60))
+  const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60))
+  const seconds = Math.floor((diff % (1000 * 60)) / 1000)
+
+  return { days, hours, minutes, seconds }
+}
+
+function CountdownTimer({ eventDate }: { eventDate: string }) {
+  const [time, setTime] = useState<TimeRemaining | null>(null)
+
+  const updateTimer = useCallback(() => {
+    setTime(getCountdownTimeRemaining(eventDate))
+  }, [eventDate])
+
+  useEffect(() => {
+    updateTimer()
+    const interval = setInterval(updateTimer, 1000)
+    return () => clearInterval(interval)
+  }, [updateTimer])
+
+  if (!time) return null
+
+  return (
+    <div className="mt-2 flex items-center gap-1.5 text-sm font-mono">
+      <Clock className="h-3.5 w-3.5 text-pink-400" />
+      <span className="text-pink-600 font-semibold">
+        {time.days > 0 && <>{time.days}d </>}
+        {time.hours > 0 && <>{time.hours}h </>}
+        {time.minutes > 0 && <>{time.minutes}m </>}
+        <span className={time.days === 0 && time.hours === 0 ? 'text-orange-500' : ''}>
+          {time.seconds}s
+        </span>
+      </span>
+    </div>
+  )
 }
 
 export default function CountdownsPage() {
@@ -181,6 +233,12 @@ export default function CountdownsPage() {
                     </div>
 
                     <div className="flex items-center gap-2">
+                      <Link
+                        href={`/spaces/${slug}/countdowns/${countdown.id}/edit`}
+                        className="p-2 rounded-full text-gray-400 hover:text-pink-600 hover:bg-pink-50 transition-colors"
+                      >
+                        <Edit3 className="h-4 w-4" />
+                      </Link>
                       <button
                         onClick={() => deleteCountdown(countdown.id)}
                         className="p-2 rounded-full text-gray-400 hover:text-red-600 hover:bg-red-50 transition-colors"
@@ -201,9 +259,13 @@ export default function CountdownsPage() {
                         🎉 Today!
                       </span>
                     ) : (
-                      <span className="inline-flex items-center rounded-full bg-pink-100 px-3 py-1 text-sm font-medium text-pink-700">
-                        {days} day{days !== 1 ? 's' : ''} remaining
-                      </span>
+                      <>
+                        <span className="inline-flex items-center rounded-full bg-pink-100 px-3 py-1 text-sm font-medium text-pink-700">
+                          {days} day{days !== 1 ? 's' : ''} remaining
+                        </span>
+                        {/* Live countdown timer */}
+                        <CountdownTimer eventDate={countdown.event_date} />
+                      </>
                     )}
                   </div>
                 </div>

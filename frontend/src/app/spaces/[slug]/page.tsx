@@ -6,7 +6,8 @@ import Link from 'next/link'
 import AuthenticatedLayout from '@/layouts/AuthenticatedLayout'
 import { useAuth } from '@/contexts/AuthContext'
 import { createClient } from '@/lib/supabase/client'
-import { Clock, Image, MessageCircle, Music, Gamepad2, Heart, FileText, MapPin, Star, Loader2 } from 'lucide-react'
+import { Clock, Image, MessageCircle, Music, Gamepad2, Heart, FileText, MapPin, Star, MessageSquare, Calendar } from 'lucide-react'
+import LoadingSpinner from '@/components/LoadingSpinner'
 
 type Space = {
   id: number
@@ -26,6 +27,7 @@ export default function SpaceDashboardPage() {
   const supabase = createClient()
 
   const [space, setSpace] = useState<Space | null>(null)
+  const [stats, setStats] = useState({ events: 0, photos: 0, messages: 0 })
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -57,6 +59,19 @@ export default function SpaceDashboardPage() {
     }
 
     setSpace(data)
+
+    // Fetch stats
+    const [eventsRes, photosRes, messagesRes] = await Promise.all([
+      supabase.from('events').select('id', { count: 'exact', head: true }).eq('space_id', data.id),
+      supabase.from('photos').select('id', { count: 'exact', head: true }).eq('space_id', data.id),
+      supabase.from('messages').select('id', { count: 'exact', head: true }).eq('space_id', data.id),
+    ])
+
+    setStats({
+      events: eventsRes.count ?? 0,
+      photos: photosRes.count ?? 0,
+      messages: messagesRes.count ?? 0,
+    })
     setLoading(false)
   }
 
@@ -64,7 +79,7 @@ export default function SpaceDashboardPage() {
     return (
       <AuthenticatedLayout>
         <div className="flex items-center justify-center min-h-[60vh]">
-          <Loader2 className="h-12 w-12 text-pink-500 animate-spin" />
+          <LoadingSpinner size="lg" text="Loading space..." />
         </div>
       </AuthenticatedLayout>
     )
@@ -149,24 +164,24 @@ export default function SpaceDashboardPage() {
         <div className="grid gap-4 sm:grid-cols-3">
           <div className="rounded-2xl bg-white/80 backdrop-blur p-6 shadow-sm border border-white/70 text-center">
             <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-pink-100 text-pink-500 mb-3">
-              <Clock className="h-6 w-6" />
+              <Calendar className="h-6 w-6" />
             </div>
-            <p className="text-2xl font-bold text-gray-900">Timeline</p>
-            <p className="text-sm text-gray-500">Track your journey</p>
+            <p className="text-2xl font-bold text-gray-900">{stats.events}</p>
+            <p className="text-sm text-gray-500">{stats.events === 1 ? 'Event' : 'Events'}</p>
           </div>
           <div className="rounded-2xl bg-white/80 backdrop-blur p-6 shadow-sm border border-white/70 text-center">
             <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-purple-100 text-purple-500 mb-3">
               <Image className="h-6 w-6" />
             </div>
-            <p className="text-2xl font-bold text-gray-900">Gallery</p>
-            <p className="text-sm text-gray-500">Store memories</p>
+            <p className="text-2xl font-bold text-gray-900">{stats.photos}</p>
+            <p className="text-sm text-gray-500">{stats.photos === 1 ? 'Photo' : 'Photos'}</p>
           </div>
           <div className="rounded-2xl bg-white/80 backdrop-blur p-6 shadow-sm border border-white/70 text-center">
             <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-blue-100 text-blue-500 mb-3">
-              <MessageCircle className="h-6 w-6" />
+              <MessageSquare className="h-6 w-6" />
             </div>
-            <p className="text-2xl font-bold text-gray-900">Messages</p>
-            <p className="text-sm text-gray-500">Stay connected</p>
+            <p className="text-2xl font-bold text-gray-900">{stats.messages}</p>
+            <p className="text-sm text-gray-500">{stats.messages === 1 ? 'Message' : 'Messages'}</p>
           </div>
         </div>
       </div>

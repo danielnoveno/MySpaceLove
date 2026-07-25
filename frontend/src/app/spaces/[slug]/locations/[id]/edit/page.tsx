@@ -1,11 +1,12 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import AuthenticatedLayout from '@/layouts/AuthenticatedLayout'
 import { useAuth } from '@/contexts/AuthContext'
 import { createClient } from '@/lib/supabase/client'
+import dynamic from 'next/dynamic'
 import {
   ArrowLeft,
   Loader2,
@@ -20,7 +21,10 @@ import {
   Ticket,
   Plane,
   StickyNote,
+  Crosshair,
 } from 'lucide-react'
+
+const PickMap = dynamic(() => import('../../create/PickMap'), { ssr: false })
 
 const CATEGORIES = [
   { id: 'restaurant', label: 'Restaurant', icon: Utensils },
@@ -46,6 +50,9 @@ export default function EditLocationPage() {
   const [notes, setNotes] = useState('')
   const [rating, setRating] = useState(0)
   const [savedAt, setSavedAt] = useState('')
+  const [latitude, setLatitude] = useState<string>('')
+  const [longitude, setLongitude] = useState<string>('')
+  const [showMap, setShowMap] = useState(false)
   const [saving, setSaving] = useState(false)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
@@ -93,10 +100,18 @@ export default function EditLocationPage() {
             ? new Date(location.saved_at).toISOString().split('T')[0]
             : ''
         )
+        setLatitude(location.latitude?.toString() || '')
+        setLongitude(location.longitude?.toString() || '')
         setLoading(false)
       })()
     }
   }, [user, authLoading, router, slug, locationId, supabase])
+
+  const handleMapPick = useCallback((lat: number, lng: number) => {
+    setLatitude(lat.toFixed(6))
+    setLongitude(lng.toFixed(6))
+    setShowMap(false)
+  }, [])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -123,6 +138,8 @@ export default function EditLocationPage() {
         notes: notes.trim() || null,
         rating: rating || null,
         saved_at: savedAt ? new Date(savedAt).toISOString() : null,
+        latitude: latitude ? parseFloat(latitude) : null,
+        longitude: longitude ? parseFloat(longitude) : null,
       })
       .eq('id', locationId)
 
@@ -283,6 +300,60 @@ export default function EditLocationPage() {
                 </span>
               )}
             </div>
+          </div>
+
+          {/* Pin on Map */}
+          <div className="rounded-3xl bg-white/80 backdrop-blur shadow-sm border border-white/70 p-6">
+            <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-3">
+              <Crosshair className="h-4 w-4 text-pink-500" />
+              Pin Location on Map
+            </label>
+            <p className="text-xs text-gray-500 mb-3">
+              Optionally pin this location on the map for easier discovery.
+            </p>
+            <div className="flex gap-3 mb-3">
+              <div className="flex-1">
+                <label htmlFor="latitude" className="block text-xs text-gray-500 mb-1">
+                  Latitude
+                </label>
+                <input
+                  id="latitude"
+                  type="number"
+                  step="any"
+                  value={latitude}
+                  onChange={(e) => setLatitude(e.target.value)}
+                  placeholder="-6.2088"
+                  className="w-full rounded-xl border border-gray-200 px-3 py-2 text-sm text-gray-900 placeholder-gray-400 focus:border-pink-400 focus:ring-2 focus:ring-pink-100 outline-none transition-all"
+                />
+              </div>
+              <div className="flex-1">
+                <label htmlFor="longitude" className="block text-xs text-gray-500 mb-1">
+                  Longitude
+                </label>
+                <input
+                  id="longitude"
+                  type="number"
+                  step="any"
+                  value={longitude}
+                  onChange={(e) => setLongitude(e.target.value)}
+                  placeholder="106.8456"
+                  className="w-full rounded-xl border border-gray-200 px-3 py-2 text-sm text-gray-900 placeholder-gray-400 focus:border-pink-400 focus:ring-2 focus:ring-pink-100 outline-none transition-all"
+                />
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={() => setShowMap(!showMap)}
+              className="inline-flex items-center gap-2 rounded-xl bg-pink-50 px-4 py-2 text-sm font-medium text-pink-600 hover:bg-pink-100 transition-colors"
+            >
+              <MapPin className="h-4 w-4" />
+              {showMap ? 'Close Map' : 'Pick on Map'}
+            </button>
+            {showMap && (
+              <div className="mt-3">
+                <PickMap onPick={handleMapPick} />
+              </div>
+            )}
           </div>
 
           {/* Notes */}

@@ -96,6 +96,7 @@ export default function CreateWishlistPage() {
           <Link
             href={`/spaces/${slug}/wishlist`}
             className="p-2 text-gray-400 hover:text-pink-600 hover:bg-pink-50 rounded-full transition-colors"
+            aria-label="Back to wishlist"
           >
             <ArrowLeft className="h-5 w-5" />
           </Link>
@@ -109,7 +110,7 @@ export default function CreateWishlistPage() {
       <div className="max-w-2xl mx-auto">
         <form onSubmit={handleSubmit} className="space-y-6">
           {error && (
-            <div className="rounded-2xl bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-700">
+            <div id="wishlist-error" role="alert" className="rounded-2xl bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-700">
               {error}
             </div>
           )}
@@ -126,6 +127,8 @@ export default function CreateWishlistPage() {
               onChange={(e) => setTitle(e.target.value)}
               placeholder="e.g. Visit Paris, Buy matching watches..."
               className="w-full rounded-xl border border-gray-200 px-4 py-3 text-gray-900 placeholder-gray-400 focus:border-pink-400 focus:ring-2 focus:ring-pink-100 outline-none transition-all"
+              aria-describedby={error ? 'wishlist-error' : undefined}
+              aria-invalid={!!error}
             />
           </div>
 

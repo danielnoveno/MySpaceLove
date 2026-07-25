@@ -1,54 +1,74 @@
 'use client'
 
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useMemo } from 'react'
 import { createClient } from '@/lib/supabase/client'
 
+// Schema: spotify_tokens
+// Columns: id, user_id, space_id, access_token, refresh_token, expires_in, expires_at, scope, token_type, shared_playlist_id
+export type SpotifyToken = {
+  id: number
+  user_id: string
+  space_id: number | null
+  access_token: string
+  refresh_token: string | null
+  expires_in: number
+  expires_at: string
+  scope: string | null
+  token_type: string
+  shared_playlist_id: string | null
+  created_at: string
+  updated_at: string
+}
+
+// Schema: spotify_capsules
+// Columns: id, space_id, user_id, spotify_track_id, track_name, artists, moment, description, saved_at, preview_url
 export type SpotifyCapsule = {
   id: number
   space_id: number
-  title: string
+  user_id: string
+  spotify_track_id: string
+  track_name: string
+  artists: string
+  moment: string | null
   description: string | null
-  playlist_url: string
-  cover_image: string | null
-  created_by: string
+  saved_at: string | null
+  preview_url: string | null
   created_at: string
+  updated_at: string
 }
 
+// Schema: spotify_surprise_drops
+// Columns: id, space_id, user_id, spotify_track_id, track_name, artists, scheduled_for, note, curator_name
 export type SpotifySurpriseDrop = {
   id: number
   space_id: number
-  title: string
-  message: string | null
-  playlist_url: string
-  unlock_date: string
-  created_by: string
+  user_id: string
+  spotify_track_id: string
+  track_name: string
+  artists: string
+  scheduled_for: string
+  note: string | null
+  curator_name: string | null
   created_at: string
+  updated_at: string
 }
 
+// Schema: listening_plans
+// Columns: id, space_id, user_id, title, description, scheduled_at, spotify_playlist_id
 export type SpotifyListeningPlan = {
   id: number
   space_id: number
+  user_id: string
   title: string
   description: string | null
-  playlist_url: string
-  scheduled_date: string | null
-  created_by: string
+  scheduled_at: string | null
+  spotify_playlist_id: string | null
   created_at: string
-}
-
-export type SpotifyConnection = {
-  id: number
-  space_id: number
-  access_token: string
-  refresh_token: string
-  expires_at: string
-  spotify_user_id: string | null
-  display_name: string | null
-  connected_at: string
+  updated_at: string
 }
 
 type UseSpotifyReturn = {
-  connection: SpotifyConnection | null
+  token: SpotifyToken | null
   capsules: SpotifyCapsule[]
   surpriseDrops: SpotifySurpriseDrop[]
   listeningPlans: SpotifyListeningPlan[]
@@ -60,19 +80,24 @@ type UseSpotifyReturn = {
   fetchCapsules: (spaceId: number) => Promise<void>
   createCapsule: (data: {
     space_id: number
-    title: string
+    spotify_track_id: string
+    track_name: string
+    artists: string
+    moment?: string
     description?: string
-    playlist_url: string
-    cover_image?: string
+    saved_at?: string
+    preview_url?: string
   }) => Promise<{ error?: string; capsule?: SpotifyCapsule }>
   deleteCapsule: (id: number) => Promise<{ error?: string }>
   fetchSurpriseDrops: (spaceId: number) => Promise<void>
   createSurpriseDrop: (data: {
     space_id: number
-    title: string
-    message?: string
-    playlist_url: string
-    unlock_date: string
+    spotify_track_id: string
+    track_name: string
+    artists: string
+    scheduled_for: string
+    note?: string
+    curator_name?: string
   }) => Promise<{ error?: string; drop?: SpotifySurpriseDrop }>
   deleteSurpriseDrop: (id: number) => Promise<{ error?: string }>
   fetchListeningPlans: (spaceId: number) => Promise<void>
@@ -80,32 +105,34 @@ type UseSpotifyReturn = {
     space_id: number
     title: string
     description?: string
-    playlist_url: string
-    scheduled_date?: string
+    spotify_playlist_id?: string
+    scheduled_at?: string
   }) => Promise<{ error?: string; plan?: SpotifyListeningPlan }>
   deleteListeningPlan: (id: number) => Promise<{ error?: string }>
 }
 
 export function useSpotify(): UseSpotifyReturn {
-  const [connection, setConnection] = useState<SpotifyConnection | null>(null)
+  const [token, setToken] = useState<SpotifyToken | null>(null)
   const [capsules, setCapsules] = useState<SpotifyCapsule[]>([])
   const [surpriseDrops, setSurpriseDrops] = useState<SpotifySurpriseDrop[]>([])
   const [listeningPlans, setListeningPlans] = useState<SpotifyListeningPlan[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const supabase = createClient()
+  const supabase = useMemo(() => createClient(), [])
 
   const getAccessToken = useCallback(async (spaceId: number): Promise<string | null> => {
     try {
       const { data, error: fetchError } = await supabase
-        .from('spotify_connections')
+        .from('spotify_tokens')
         .select('*')
         .eq('space_id', spaceId)
         .single()
 
       if (fetchError || !data) return null
 
+      // Check if token is expired
       if (new Date(data.expires_at) < new Date()) {
+        // Try refresh via API route
         const refreshResponse = await fetch('/api/spotify/refresh', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -115,19 +142,23 @@ export function useSpotify(): UseSpotifyReturn {
         if (!refreshResponse.ok) return null
 
         const refreshed = await refreshResponse.json()
+        const newExpiresAt = new Date(Date.now() + refreshed.expires_in * 1000).toISOString()
+
         await supabase
-          .from('spotify_connections')
+          .from('spotify_tokens')
           .update({
             access_token: refreshed.access_token,
-            expires_at: new Date(Date.now() + refreshed.expires_in * 1000).toISOString(),
+            expires_in: refreshed.expires_in,
+            expires_at: newExpiresAt,
           })
           .eq('id', data.id)
 
-        setConnection({ ...data, access_token: refreshed.access_token, expires_at: new Date(Date.now() + refreshed.expires_in * 1000).toISOString() })
+        const updatedToken = { ...data, access_token: refreshed.access_token, expires_at: newExpiresAt }
+        setToken(updatedToken)
         return refreshed.access_token
       }
 
-      setConnection(data)
+      setToken(data)
       return data.access_token
     } catch {
       return null
@@ -151,13 +182,13 @@ export function useSpotify(): UseSpotifyReturn {
   const disconnectSpotify = useCallback(async (spaceId: number) => {
     try {
       const { error: deleteError } = await supabase
-        .from('spotify_connections')
+        .from('spotify_tokens')
         .delete()
         .eq('space_id', spaceId)
 
       if (deleteError) return { error: deleteError.message }
 
-      setConnection(null)
+      setToken(null)
       return {}
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Failed to disconnect Spotify'
@@ -186,10 +217,13 @@ export function useSpotify(): UseSpotifyReturn {
 
   const createCapsule = useCallback(async (data: {
     space_id: number
-    title: string
+    spotify_track_id: string
+    track_name: string
+    artists: string
+    moment?: string
     description?: string
-    playlist_url: string
-    cover_image?: string
+    saved_at?: string
+    preview_url?: string
   }) => {
     try {
       const { data: { user } } = await supabase.auth.getUser()
@@ -199,11 +233,14 @@ export function useSpotify(): UseSpotifyReturn {
         .from('spotify_capsules')
         .insert({
           space_id: data.space_id,
-          title: data.title,
+          user_id: user.id,
+          spotify_track_id: data.spotify_track_id,
+          track_name: data.track_name,
+          artists: data.artists,
+          moment: data.moment || null,
           description: data.description || null,
-          playlist_url: data.playlist_url,
-          cover_image: data.cover_image || null,
-          created_by: user.id,
+          saved_at: data.saved_at || null,
+          preview_url: data.preview_url || null,
         })
         .select()
         .single()
@@ -245,7 +282,7 @@ export function useSpotify(): UseSpotifyReturn {
       .from('spotify_surprise_drops')
       .select('*')
       .eq('space_id', spaceId)
-      .order('unlock_date', { ascending: true })
+      .order('scheduled_for', { ascending: true })
 
     if (fetchError) {
       setError(fetchError.message)
@@ -257,10 +294,12 @@ export function useSpotify(): UseSpotifyReturn {
 
   const createSurpriseDrop = useCallback(async (data: {
     space_id: number
-    title: string
-    message?: string
-    playlist_url: string
-    unlock_date: string
+    spotify_track_id: string
+    track_name: string
+    artists: string
+    scheduled_for: string
+    note?: string
+    curator_name?: string
   }) => {
     try {
       const { data: { user } } = await supabase.auth.getUser()
@@ -270,18 +309,20 @@ export function useSpotify(): UseSpotifyReturn {
         .from('spotify_surprise_drops')
         .insert({
           space_id: data.space_id,
-          title: data.title,
-          message: data.message || null,
-          playlist_url: data.playlist_url,
-          unlock_date: data.unlock_date,
-          created_by: user.id,
+          user_id: user.id,
+          spotify_track_id: data.spotify_track_id,
+          track_name: data.track_name,
+          artists: data.artists,
+          scheduled_for: data.scheduled_for,
+          note: data.note || null,
+          curator_name: data.curator_name || null,
         })
         .select()
         .single()
 
       if (insertError) return { error: insertError.message }
 
-      setSurpriseDrops((prev) => [...prev, drop].sort((a, b) => new Date(a.unlock_date).getTime() - new Date(b.unlock_date).getTime()))
+      setSurpriseDrops((prev) => [...prev, drop].sort((a, b) => new Date(a.scheduled_for).getTime() - new Date(b.scheduled_for).getTime()))
       return { drop }
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Failed to create surprise drop'
@@ -313,10 +354,10 @@ export function useSpotify(): UseSpotifyReturn {
     setError(null)
 
     const { data, error: fetchError } = await supabase
-      .from('spotify_listening_plans')
+      .from('listening_plans')
       .select('*')
       .eq('space_id', spaceId)
-      .order('scheduled_date', { ascending: true })
+      .order('scheduled_at', { ascending: true })
 
     if (fetchError) {
       setError(fetchError.message)
@@ -330,22 +371,22 @@ export function useSpotify(): UseSpotifyReturn {
     space_id: number
     title: string
     description?: string
-    playlist_url: string
-    scheduled_date?: string
+    spotify_playlist_id?: string
+    scheduled_at?: string
   }) => {
     try {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) return { error: 'Not authenticated' }
 
       const { data: plan, error: insertError } = await supabase
-        .from('spotify_listening_plans')
+        .from('listening_plans')
         .insert({
           space_id: data.space_id,
+          user_id: user.id,
           title: data.title,
           description: data.description || null,
-          playlist_url: data.playlist_url,
-          scheduled_date: data.scheduled_date || null,
-          created_by: user.id,
+          spotify_playlist_id: data.spotify_playlist_id || null,
+          scheduled_at: data.scheduled_at || null,
         })
         .select()
         .single()
@@ -364,7 +405,7 @@ export function useSpotify(): UseSpotifyReturn {
   const deleteListeningPlan = useCallback(async (id: number) => {
     try {
       const { error: deleteError } = await supabase
-        .from('spotify_listening_plans')
+        .from('listening_plans')
         .delete()
         .eq('id', id)
 
@@ -380,7 +421,7 @@ export function useSpotify(): UseSpotifyReturn {
   }, [supabase])
 
   return {
-    connection,
+    token,
     capsules,
     surpriseDrops,
     listeningPlans,

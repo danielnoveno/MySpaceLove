@@ -439,6 +439,7 @@ CREATE TABLE IF NOT EXISTS public.nobar_schedules (
 CREATE TABLE IF NOT EXISTS public.notifications (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     user_id UUID NOT NULL REFERENCES public.users(id) ON DELETE CASCADE,
+    space_id UUID REFERENCES public.spaces(id) ON DELETE CASCADE,
     type VARCHAR(255) NOT NULL,
     notifiable_type VARCHAR(255) NOT NULL,
     notifiable_id BIGINT NOT NULL,
@@ -447,6 +448,8 @@ CREATE TABLE IF NOT EXISTS public.notifications (
     created_at TIMESTAMPTZ DEFAULT NOW(),
     updated_at TIMESTAMPTZ DEFAULT NOW()
 );
+
+CREATE INDEX IF NOT EXISTS idx_notifications_space_id ON notifications(space_id);
 
 -- =====================================================
 -- 26. LISTENING PLANS
@@ -521,6 +524,18 @@ CREATE TABLE IF NOT EXISTS public.nobar_signaling_messages (
     sender_user_id UUID NOT NULL REFERENCES public.users(id) ON DELETE CASCADE,
     type VARCHAR(30) NOT NULL,
     payload JSONB,
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- =====================================================
+-- 31. ROOMS (per-space real-time room state)
+-- =====================================================
+CREATE TABLE IF NOT EXISTS public.rooms (
+    id BIGSERIAL PRIMARY KEY,
+    space_id BIGINT NOT NULL UNIQUE REFERENCES public.spaces(id) ON DELETE CASCADE,
+    is_active BOOLEAN NOT NULL DEFAULT FALSE,
+    settings JSONB DEFAULT '{"background_music_url": null, "ambient_sound": null, "theme": "default", "font_size": "medium", "showActivity": true}',
     created_at TIMESTAMPTZ DEFAULT NOW(),
     updated_at TIMESTAMPTZ DEFAULT NOW()
 );
@@ -629,6 +644,10 @@ DO $$ BEGIN
     CREATE TRIGGER update_notifications_updated_at BEFORE UPDATE ON notifications FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 EXCEPTION WHEN duplicate_object THEN NULL;
 END $$;
+DO $$ BEGIN
+    CREATE TRIGGER update_rooms_updated_at BEFORE UPDATE ON rooms FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
 
 -- =====================================================
 -- ROW LEVEL SECURITY
@@ -664,6 +683,7 @@ ALTER TABLE messages ENABLE ROW LEVEL SECURITY;
 ALTER TABLE message_reads ENABLE ROW LEVEL SECURITY;
 ALTER TABLE nobar_participants ENABLE ROW LEVEL SECURITY;
 ALTER TABLE nobar_signaling_messages ENABLE ROW LEVEL SECURITY;
+ALTER TABLE rooms ENABLE ROW LEVEL SECURITY;
 
 -- Helper function
 CREATE OR REPLACE FUNCTION public.is_user_in_space(space BIGINT)
@@ -703,7 +723,7 @@ CREATE POLICY "Delete own timelines" ON timelines FOR DELETE USING (user_id = au
 
 -- DAILY MESSAGES
 CREATE POLICY "View daily messages" ON daily_messages FOR SELECT USING (is_user_in_space(space_id));
-CREATE POLICY "System can insert daily messages" ON daily_messages FOR INSERT WITH CHECK (TRUE);
+CREATE POLICY "Users can insert daily messages in their space" ON daily_messages FOR INSERT WITH CHECK (user_id = auth.uid() AND is_user_in_space(space_id));
 
 -- COUNTDOWNS
 CREATE POLICY "View countdowns" ON countdowns FOR SELECT USING (is_user_in_space(space_id));
@@ -785,7 +805,7 @@ CREATE POLICY "Manage nobar schedules" ON nobar_schedules FOR ALL USING (is_user
 -- NOTIFICATIONS
 CREATE POLICY "View own notifications" ON notifications FOR SELECT USING (user_id = auth.uid());
 CREATE POLICY "Update own notifications" ON notifications FOR UPDATE USING (user_id = auth.uid());
-CREATE POLICY "System can create notifications" ON notifications FOR INSERT WITH CHECK (TRUE);
+CREATE POLICY "Users can create own notifications" ON notifications FOR INSERT WITH CHECK (user_id = auth.uid());
 
 -- LISTENING PLANS
 CREATE POLICY "View listening plans" ON listening_plans FOR SELECT USING (is_user_in_space(space_id));
@@ -809,6 +829,10 @@ CREATE POLICY "Manage nobar participation" ON nobar_participants FOR ALL USING (
 -- NOBAR SIGNALING
 CREATE POLICY "View signaling" ON nobar_signaling_messages FOR SELECT USING (is_user_in_space(space_id));
 CREATE POLICY "Send signaling" ON nobar_signaling_messages FOR INSERT WITH CHECK (sender_user_id = auth.uid() AND is_user_in_space(space_id));
+
+-- ROOMS
+CREATE POLICY "View room in space" ON rooms FOR SELECT USING (is_user_in_space(space_id));
+CREATE POLICY "Manage room in space" ON rooms FOR ALL USING (is_user_in_space(space_id));
 
 -- =====================================================
 -- STORAGE BUCKETS
@@ -848,3 +872,4 @@ CREATE POLICY "Memory upload" ON storage.objects FOR INSERT WITH CHECK (bucket_i
 -- =====================================================
 ALTER PUBLICATION supabase_realtime ADD TABLE messages;
 ALTER PUBLICATION supabase_realtime ADD TABLE nobar_signaling_messages;
+ALTER PUBLICATION supabase_realtime ADD TABLE notifications;

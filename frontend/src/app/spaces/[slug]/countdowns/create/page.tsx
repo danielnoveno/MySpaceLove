@@ -79,6 +79,7 @@ export default function CreateCountdownPage() {
           <Link
             href={`/spaces/${slug}/countdowns`}
             className="p-2 rounded-full hover:bg-pink-50 text-gray-600 hover:text-pink-600 transition-colors"
+            aria-label="Back to countdowns"
           >
             <ArrowLeft className="h-5 w-5" />
           </Link>
@@ -92,34 +93,38 @@ export default function CreateCountdownPage() {
       <div className="max-w-lg mx-auto">
         <div className="rounded-3xl bg-white/80 backdrop-blur p-6 shadow-sm border border-white/70">
           {error && (
-            <div className="mb-4 rounded-xl bg-red-50 text-red-700 border border-red-100 px-4 py-3 text-sm">
+            <div id="countdown-error" role="alert" className="mb-4 rounded-xl bg-red-50 text-red-700 border border-red-100 px-4 py-3 text-sm">
               {error}
             </div>
           )}
 
           <form onSubmit={handleSubmit} className="space-y-5">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label htmlFor="event-name" className="block text-sm font-medium text-gray-700 mb-1">
                 Event Name *
               </label>
               <div className="relative">
                 <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
                 <input
+                  id="event-name"
                   type="text"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   required
                   className="w-full rounded-xl border border-pink-100 bg-pink-50/50 py-3 pl-10 pr-4 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-pink-300 focus:border-transparent"
                   placeholder="e.g., Anniversary, Vacation, Birthday"
+                  aria-describedby={error ? 'countdown-error' : undefined}
+                  aria-invalid={!!error}
                 />
               </div>
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label htmlFor="event-date" className="block text-sm font-medium text-gray-700 mb-1">
                 Event Date *
               </label>
               <input
+                id="event-date"
                 type="date"
                 value={eventDate}
                 onChange={(e) => setEventDate(e.target.value)}
@@ -129,10 +134,11 @@ export default function CreateCountdownPage() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label htmlFor="countdown-description" className="block text-sm font-medium text-gray-700 mb-1">
                 Description
               </label>
               <textarea
+                id="countdown-description"
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 rows={3}
@@ -142,10 +148,11 @@ export default function CreateCountdownPage() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label htmlFor="countdown-activities" className="block text-sm font-medium text-gray-700 mb-1">
                 Activities / Plans
               </label>
               <textarea
+                id="countdown-activities"
                 value={activities}
                 onChange={(e) => setActivities(e.target.value)}
                 rows={3}

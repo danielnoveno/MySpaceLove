@@ -1,17 +1,23 @@
 'use client'
 
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useMemo } from 'react'
 import { createClient } from '@/lib/supabase/client'
 
+// Schema: notifications table
+// Columns: id (UUID), user_id, space_id (UUID), type, notifiable_type, notifiable_id, data (JSONB), read_at (TIMESTAMPTZ), created_at, updated_at
+// "read" is determined by: read_at !== null
+
 export type Notification = {
-  id: number
+  id: string // UUID
   user_id: string
-  title: string
-  message: string
+  space_id: string | null
   type: string
-  read: boolean
-  link: string | null
+  notifiable_type: string
+  notifiable_id: number
+  data: Record<string, unknown> | null
+  read_at: string | null
   created_at: string
+  updated_at: string
 }
 
 type UseNotificationsReturn = {
@@ -19,11 +25,12 @@ type UseNotificationsReturn = {
   unreadCount: number
   loading: boolean
   error: string | null
-  fetchNotifications: (userId: string) => Promise<void>
-  markAsRead: (id: number) => Promise<{ error?: string }>
-  markAllAsRead: (userId: string) => Promise<{ error?: string }>
-  deleteNotification: (id: number) => Promise<{ error?: string }>
-  getUnreadCount: (userId: string) => Promise<number>
+  fetchNotifications: (userId: string, spaceId?: string | null) => Promise<void>
+  markAsRead: (id: string) => Promise<{ error?: string }>
+  markAllAsRead: (userId: string, spaceId?: string | null) => Promise<{ error?: string }>
+  deleteNotification: (id: string) => Promise<{ error?: string }>
+  deleteNotifications: (ids: string[]) => Promise<{ error?: string }>
+  getUnreadCount: (userId: string, spaceId?: string | null) => Promise<number>
 }
 
 export function useNotifications(): UseNotificationsReturn {
@@ -31,16 +38,22 @@ export function useNotifications(): UseNotificationsReturn {
   const [unreadCount, setUnreadCount] = useState(0)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const supabase = createClient()
+  const supabase = useMemo(() => createClient(), [])
 
-  const fetchNotifications = useCallback(async (userId: string) => {
+  const fetchNotifications = useCallback(async (userId: string, spaceId?: string | null) => {
     setLoading(true)
     setError(null)
 
-    const { data, error: fetchError } = await supabase
+    let query = supabase
       .from('notifications')
       .select('*')
       .eq('user_id', userId)
+
+    if (spaceId) {
+      query = query.eq('space_id', spaceId)
+    }
+
+    const { data, error: fetchError } = await query
       .order('created_at', { ascending: false })
       .limit(100)
 
@@ -48,22 +61,23 @@ export function useNotifications(): UseNotificationsReturn {
       setError(fetchError.message)
     } else {
       setNotifications(data || [])
-      setUnreadCount(data?.filter((n) => !n.read).length ?? 0)
+      setUnreadCount(data?.filter((n) => !n.read_at).length ?? 0)
     }
     setLoading(false)
   }, [supabase])
 
-  const markAsRead = useCallback(async (id: number) => {
+  const markAsRead = useCallback(async (id: string) => {
     try {
+      const now = new Date().toISOString()
       const { error: updateError } = await supabase
         .from('notifications')
-        .update({ read: true })
+        .update({ read_at: now })
         .eq('id', id)
 
       if (updateError) return { error: updateError.message }
 
       setNotifications((prev) =>
-        prev.map((n) => (n.id === id ? { ...n, read: true } : n))
+        prev.map((n) => (n.id === id ? { ...n, read_at: now } : n))
       )
       setUnreadCount((prev) => Math.max(0, prev - 1))
       return {}
@@ -74,17 +88,29 @@ export function useNotifications(): UseNotificationsReturn {
     }
   }, [supabase])
 
-  const markAllAsRead = useCallback(async (userId: string) => {
+  const markAllAsRead = useCallback(async (userId: string, spaceId?: string | null) => {
     try {
-      const { error: updateError } = await supabase
+      const now = new Date().toISOString()
+      let query = supabase
         .from('notifications')
-        .update({ read: true })
+        .update({ read_at: now })
         .eq('user_id', userId)
-        .eq('read', false)
+        .is('read_at', null)
+
+      if (spaceId) {
+        query = query.eq('space_id', spaceId)
+      }
+
+      const { error: updateError } = await query
 
       if (updateError) return { error: updateError.message }
 
-      setNotifications((prev) => prev.map((n) => ({ ...n, read: true })))
+      setNotifications((prev) =>
+        prev.map((n) => {
+          if (spaceId && n.space_id !== spaceId) return n
+          return { ...n, read_at: now }
+        })
+      )
       setUnreadCount(0)
       return {}
     } catch (err) {
@@ -94,7 +120,7 @@ export function useNotifications(): UseNotificationsReturn {
     }
   }, [supabase])
 
-  const deleteNotification = useCallback(async (id: number) => {
+  const deleteNotification = useCallback(async (id: string) => {
     try {
       const notification = notifications.find((n) => n.id === id)
 
@@ -106,7 +132,7 @@ export function useNotifications(): UseNotificationsReturn {
       if (deleteError) return { error: deleteError.message }
 
       setNotifications((prev) => prev.filter((n) => n.id !== id))
-      if (notification && !notification.read) {
+      if (notification && !notification.read_at) {
         setUnreadCount((prev) => Math.max(0, prev - 1))
       }
       return {}
@@ -117,12 +143,43 @@ export function useNotifications(): UseNotificationsReturn {
     }
   }, [notifications, supabase])
 
-  const getUnreadCount = useCallback(async (userId: string): Promise<number> => {
-    const { count, error: countError } = await supabase
+  const deleteNotifications = useCallback(async (ids: string[]) => {
+    try {
+      if (ids.length === 0) return {}
+
+      const { error: deleteError } = await supabase
+        .from('notifications')
+        .delete()
+        .in('id', ids)
+
+      if (deleteError) return { error: deleteError.message }
+
+      const unreadDeleted = notifications.filter(
+        (n) => ids.includes(n.id) && !n.read_at
+      ).length
+
+      setNotifications((prev) => prev.filter((n) => !ids.includes(n.id)))
+      setUnreadCount((prev) => Math.max(0, prev - unreadDeleted))
+      return {}
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Failed to delete notifications'
+      setError(message)
+      return { error: message }
+    }
+  }, [notifications, supabase])
+
+  const getUnreadCount = useCallback(async (userId: string, spaceId?: string | null): Promise<number> => {
+    let query = supabase
       .from('notifications')
       .select('*', { count: 'exact', head: true })
       .eq('user_id', userId)
-      .eq('read', false)
+      .is('read_at', null)
+
+    if (spaceId) {
+      query = query.eq('space_id', spaceId)
+    }
+
+    const { count, error: countError } = await query
 
     if (countError) {
       setError(countError.message)
@@ -141,6 +198,7 @@ export function useNotifications(): UseNotificationsReturn {
     markAsRead,
     markAllAsRead,
     deleteNotification,
+    deleteNotifications,
     getUnreadCount,
   }
 }

@@ -15,6 +15,8 @@ import {
   ArrowLeft,
   Gift,
   Calendar,
+  Link2,
+  Check,
 } from 'lucide-react'
 
 type SurpriseNote = {
@@ -34,6 +36,7 @@ export default function SurpriseNotesPage() {
   const [notes, setNotes] = useState<SurpriseNote[]>([])
   const [loading, setLoading] = useState(true)
   const [spaceId, setSpaceId] = useState<number | null>(null)
+  const [copiedNoteId, setCopiedNoteId] = useState<number | null>(null)
   const supabase = createClient()
 
   useEffect(() => {
@@ -72,6 +75,28 @@ export default function SurpriseNotesPage() {
 
   const isUnlocked = (unlockDate: string) => {
     return new Date(unlockDate) <= new Date()
+  }
+
+  const getShareUrl = (noteId: number) => {
+    if (typeof window === 'undefined') return ''
+    return `${window.location.origin}/surprise/${slug}/memory?memory_id=${noteId}`
+  }
+
+  const copyShareLink = async (noteId: number) => {
+    const url = getShareUrl(noteId)
+    if (!url) return
+    try {
+      await navigator.clipboard.writeText(url)
+    } catch {
+      const input = document.createElement('input')
+      input.value = url
+      document.body.appendChild(input)
+      input.select()
+      document.execCommand('copy')
+      document.body.removeChild(input)
+    }
+    setCopiedNoteId(noteId)
+    setTimeout(() => setCopiedNoteId(null), 2000)
   }
 
   if (authLoading || loading) {
@@ -179,12 +204,29 @@ export default function SurpriseNotesPage() {
                       </div>
                     </div>
 
-                    <button
-                      onClick={() => deleteNote(note.id)}
-                      className="p-2 rounded-full text-gray-400 hover:text-red-600 hover:bg-red-50 transition-colors"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </button>
+                    <div className="flex items-center gap-1">
+                      <button
+                        onClick={() => copyShareLink(note.id)}
+                        className={`p-2 rounded-full transition-colors ${
+                          copiedNoteId === note.id
+                            ? 'text-green-600 bg-green-50'
+                            : 'text-gray-400 hover:text-pink-600 hover:bg-pink-50'
+                        }`}
+                        title="Copy public surprise link"
+                      >
+                        {copiedNoteId === note.id ? (
+                          <Check className="h-4 w-4" />
+                        ) : (
+                          <Link2 className="h-4 w-4" />
+                        )}
+                      </button>
+                      <button
+                        onClick={() => deleteNote(note.id)}
+                        className="p-2 rounded-full text-gray-400 hover:text-red-600 hover:bg-red-50 transition-colors"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </button>
+                    </div>
                   </div>
 
                   {/* Message Content */}

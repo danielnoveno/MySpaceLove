@@ -1,74 +1,107 @@
 'use client'
 
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useMemo } from 'react'
 import { createClient } from '@/lib/supabase/client'
 
-export type GalleryCollection = {
+// Schema: media_galleries table
+// Columns: id, space_id, user_id, title, file_path, type, collection_key (UUID), collection_index, created_at, updated_at
+// Collections are virtual groups via collection_key (UUID)
+
+export type GalleryItem = {
   id: number
   space_id: number
-  title: string
+  user_id: string
+  title: string | null
+  file_path: string
+  type: string | null
+  collection_key: string | null
+  collection_index: number
   created_at: string
+  updated_at: string
 }
 
-export type GalleryPhoto = {
-  id: number
-  collection_id: number
-  url: string
-  caption: string | null
-  uploaded_by: string
+// A virtual collection is a group of items sharing collection_key
+export type GalleryCollection = {
+  collection_key: string
+  title: string | null
+  items: GalleryItem[]
   created_at: string
 }
 
 type UseGalleryReturn = {
   collections: GalleryCollection[]
-  photos: GalleryPhoto[]
+  items: GalleryItem[]
   loading: boolean
   error: string | null
-  fetchCollections: (spaceId: number) => Promise<void>
-  createCollection: (spaceId: number, title: string) => Promise<{ error?: string; collection?: GalleryCollection }>
-  deleteCollection: (id: number) => Promise<{ error?: string }>
-  fetchPhotos: (collectionId: number) => Promise<void>
-  uploadPhotos: (collectionId: number, spaceId: number, files: File[], caption?: string) => Promise<{ error?: string; photos?: GalleryPhoto[] }>
-  deletePhoto: (id: number) => Promise<{ error?: string }>
+  fetchItems: (spaceId: number) => Promise<void>
+  createCollection: (spaceId: number, title: string) => Promise<{ error?: string; collection_key?: string }>
+  deleteCollection: (collectionKey: string) => Promise<{ error?: string }>
+  uploadItems: (collectionKey: string | null, spaceId: number, files: File[], title?: string) => Promise<{ error?: string; items?: GalleryItem[] }>
+  deleteItem: (id: number) => Promise<{ error?: string }>
 }
 
 export function useGallery(): UseGalleryReturn {
-  const [collections, setCollections] = useState<GalleryCollection[]>([])
-  const [photos, setPhotos] = useState<GalleryPhoto[]>([])
+  const [items, setItems] = useState<GalleryItem[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const supabase = createClient()
+  const supabase = useMemo(() => createClient(), [])
 
-  const fetchCollections = useCallback(async (spaceId: number) => {
+  // Derive collections from items by grouping on collection_key
+  const collections: GalleryCollection[] = useMemo(() => {
+    const grouped = new Map<string, GalleryItem[]>()
+    for (const item of items) {
+      const key = item.collection_key || '__uncategorized__'
+      if (!grouped.has(key)) grouped.set(key, [])
+      grouped.get(key)!.push(item)
+    }
+    return Array.from(grouped.entries())
+      .filter(([key]) => key !== '__uncategorized__')
+      .map(([key, colItems]) => ({
+        collection_key: key,
+        title: colItems.find((i) => i.title)?.title || null,
+        items: colItems.sort((a, b) => a.collection_index - b.collection_index),
+        created_at: colItems[0]?.created_at || '',
+      }))
+      .sort((a, b) => b.created_at.localeCompare(a.created_at))
+  }, [items])
+
+  const fetchItems = useCallback(async (spaceId: number) => {
     setLoading(true)
     setError(null)
 
     const { data, error: fetchError } = await supabase
-      .from('gallery_collections')
+      .from('media_galleries')
       .select('*')
       .eq('space_id', spaceId)
-      .order('created_at', { ascending: false })
+      .order('collection_index', { ascending: true })
 
     if (fetchError) {
       setError(fetchError.message)
     } else {
-      setCollections(data || [])
+      setItems(data || [])
     }
     setLoading(false)
   }, [supabase])
 
   const createCollection = useCallback(async (spaceId: number, title: string) => {
     try {
-      const { data, error: insertError } = await supabase
-        .from('gallery_collections')
-        .insert({ space_id: spaceId, title })
-        .select()
-        .single()
+      const collectionKey = crypto.randomUUID()
+
+      // Insert a placeholder item so the collection_key exists
+      const { error: insertError } = await supabase
+        .from('media_galleries')
+        .insert({
+          space_id: spaceId,
+          title,
+          file_path: '__placeholder__',
+          type: 'collection_header',
+          collection_key: collectionKey,
+          collection_index: 0,
+        })
 
       if (insertError) return { error: insertError.message }
 
-      setCollections((prev) => [data, ...prev])
-      return { collection: data }
+      return { collection_key: collectionKey }
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Failed to create collection'
       setError(message)
@@ -76,16 +109,17 @@ export function useGallery(): UseGalleryReturn {
     }
   }, [supabase])
 
-  const deleteCollection = useCallback(async (id: number) => {
+  const deleteCollection = useCallback(async (collectionKey: string) => {
     try {
+      // Delete all items in this collection
       const { error: deleteError } = await supabase
-        .from('gallery_collections')
+        .from('media_galleries')
         .delete()
-        .eq('id', id)
+        .eq('collection_key', collectionKey)
 
       if (deleteError) return { error: deleteError.message }
 
-      setCollections((prev) => prev.filter((c) => c.id !== id))
+      setItems((prev) => prev.filter((i) => i.collection_key !== collectionKey))
       return {}
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Failed to delete collection'
@@ -94,34 +128,23 @@ export function useGallery(): UseGalleryReturn {
     }
   }, [supabase])
 
-  const fetchPhotos = useCallback(async (collectionId: number) => {
-    setLoading(true)
-    setError(null)
-
-    const { data, error: fetchError } = await supabase
-      .from('gallery_photos')
-      .select('*')
-      .eq('collection_id', collectionId)
-      .order('created_at', { ascending: false })
-
-    if (fetchError) {
-      setError(fetchError.message)
-    } else {
-      setPhotos(data || [])
-    }
-    setLoading(false)
-  }, [supabase])
-
-  const uploadPhotos = useCallback(async (collectionId: number, spaceId: number, files: File[], caption?: string) => {
+  const uploadItems = useCallback(async (collectionKey: string | null, spaceId: number, files: File[], title?: string) => {
     try {
-      const uploadedPhotos: GalleryPhoto[] = []
+      const uploadedItems: GalleryItem[] = []
+      const key = collectionKey || crypto.randomUUID()
 
-      for (const file of files) {
+      // Get current max index for this collection
+      const maxIndex = items
+        .filter((i) => i.collection_key === key)
+        .reduce((max, i) => Math.max(max, i.collection_index), -1)
+
+      for (let idx = 0; idx < files.length; idx++) {
+        const file = files[idx]
         const fileExt = file.name.split('.').pop() || 'jpg'
-        const filePath = `spaces/${spaceId}/gallery/${collectionId}/${Date.now()}-${Math.random().toString(36).substring(2, 8)}.${fileExt}`
+        const filePath = `spaces/${spaceId}/galleries/${Date.now()}-${Math.random().toString(36).substring(2, 8)}.${fileExt}`
 
         const { error: uploadError } = await supabase.storage
-          .from('public')
+          .from('galleries')
           .upload(filePath, file, { contentType: file.type })
 
         if (uploadError) {
@@ -129,70 +152,66 @@ export function useGallery(): UseGalleryReturn {
           continue
         }
 
-        const { data: urlData } = supabase.storage.from('public').getPublicUrl(filePath)
-
-        const { data: photo, error: insertError } = await supabase
-          .from('gallery_photos')
+        const { data: item, error: insertError } = await supabase
+          .from('media_galleries')
           .insert({
-            collection_id: collectionId,
-            url: urlData.publicUrl,
-            caption: caption || null,
-            uploaded_by: (await supabase.auth.getUser()).data.user?.id,
+            space_id: spaceId,
+            title: idx === 0 ? (title || null) : null,
+            file_path: filePath,
+            type: file.type,
+            collection_key: key,
+            collection_index: maxIndex + idx + 1,
           })
           .select()
           .single()
 
-        if (!insertError && photo) {
-          uploadedPhotos.push(photo)
+        if (!insertError && item) {
+          uploadedItems.push(item)
         }
       }
 
-      setPhotos((prev) => [...uploadedPhotos, ...prev])
-      return { photos: uploadedPhotos }
+      setItems((prev) => [...prev, ...uploadedItems])
+      return { items: uploadedItems }
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Upload failed'
       setError(message)
       return { error: message }
     }
-  }, [supabase])
+  }, [supabase, items])
 
-  const deletePhoto = useCallback(async (id: number) => {
+  const deleteItem = useCallback(async (id: number) => {
     try {
-      const photo = photos.find((p) => p.id === id)
+      const item = items.find((i) => i.id === id)
 
-      if (photo?.url) {
-        const path = photo.url.split('/public/')[1]
-        if (path) {
-          await supabase.storage.from('public').remove([path])
-        }
+      if (item?.file_path && item.file_path !== '__placeholder__') {
+        await supabase.storage.from('galleries').remove([item.file_path])
       }
 
       const { error: deleteError } = await supabase
-        .from('gallery_photos')
+        .from('media_galleries')
         .delete()
         .eq('id', id)
 
       if (deleteError) return { error: deleteError.message }
 
-      setPhotos((prev) => prev.filter((p) => p.id !== id))
+      setItems((prev) => prev.filter((i) => i.id !== id))
       return {}
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'Failed to delete photo'
+      const message = err instanceof Error ? err.message : 'Failed to delete item'
       setError(message)
       return { error: message }
     }
-  }, [photos, supabase])
+  }, [items, supabase])
 
   return {
     collections,
-    photos,
+    items,
     loading,
     error,
-    fetchCollections,
+    fetchItems,
     createCollection,
     deleteCollection,
-    fetchPhotos,
-    uploadPhotos,
-    deletePhoto,
+    uploadItems,
+    deleteItem,
   }
 }

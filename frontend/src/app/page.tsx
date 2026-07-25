@@ -49,7 +49,7 @@ export default function HomePage() {
             </span>
 
             {/* Title */}
-            <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold tracking-tight text-rose-900 mb-6">
+            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight text-rose-900 mb-6">
               Nurture Your Love,
               <br />
               <span className="text-pink-500">Together.</span>

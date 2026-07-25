@@ -64,6 +64,12 @@ export default function RoomPage() {
   const [timerRunning, setTimerRunning] = useState(false)
   const [spaceId, setSpaceId] = useState<string | null>(null)
 
+  // Quick action modals
+  const [showMovieModal, setShowMovieModal] = useState(false)
+  const [movieUrl, setMovieUrl] = useState('')
+  const [showNoteModal, setShowNoteModal] = useState(false)
+  const [noteText, setNoteText] = useState('')
+
   useEffect(() => {
     if (!authLoading && !user) {
       router.push('/auth/login')
@@ -233,6 +239,36 @@ export default function RoomPage() {
     [user, room, newMessage, supabase]
   )
 
+  const handleStartMovie = async () => {
+    if (!user || !room || !movieUrl.trim()) return
+    const displayName = user.user_metadata?.name || user.email?.split('@')[0]
+    await supabase.from('room_messages').insert({
+      room_id: room.id,
+      user_id: user.id,
+      display_name: displayName,
+      content: `🎬 ${displayName} started a movie: ${movieUrl.trim()}`,
+    })
+    setMovieUrl('')
+    setShowMovieModal(false)
+  }
+
+  const handlePlayMusic = () => {
+    router.push(`/spaces/${slug}/spotify`)
+  }
+
+  const handleSendNote = async () => {
+    if (!user || !room || !noteText.trim()) return
+    const displayName = user.user_metadata?.name || user.email?.split('@')[0]
+    await supabase.from('room_messages').insert({
+      room_id: room.id,
+      user_id: user.id,
+      display_name: displayName,
+      content: `📝 ${displayName} sent a note: ${noteText.trim()}`,
+    })
+    setNoteText('')
+    setShowNoteModal(false)
+  }
+
   const formatTimer = (seconds: number) => {
     const hrs = Math.floor(seconds / 3600)
     const mins = Math.floor((seconds % 3600) / 60)
@@ -260,6 +296,7 @@ export default function RoomPage() {
   }
 
   return (
+    <>
     <AuthenticatedLayout
       header={
         <div className="flex items-center justify-between">
@@ -319,19 +356,28 @@ export default function RoomPage() {
 
             {/* Quick Actions */}
             <div className="grid grid-cols-3 gap-3">
-              <button className="flex flex-col items-center gap-2 rounded-2xl bg-gradient-to-br from-pink-50 to-purple-50 border border-pink-100 p-4 hover:shadow-md transition-all">
+              <button
+                onClick={() => setShowMovieModal(true)}
+                className="flex flex-col items-center gap-2 rounded-2xl bg-gradient-to-br from-pink-50 to-purple-50 border border-pink-100 p-4 hover:shadow-md transition-all"
+              >
                 <Play className="h-6 w-6 text-pink-500" />
                 <span className="text-xs font-medium text-gray-700">
                   Start Movie
                 </span>
               </button>
-              <button className="flex flex-col items-center gap-2 rounded-2xl bg-gradient-to-br from-pink-50 to-purple-50 border border-pink-100 p-4 hover:shadow-md transition-all">
+              <button
+                onClick={handlePlayMusic}
+                className="flex flex-col items-center gap-2 rounded-2xl bg-gradient-to-br from-pink-50 to-purple-50 border border-pink-100 p-4 hover:shadow-md transition-all"
+              >
                 <Music className="h-6 w-6 text-purple-500" />
                 <span className="text-xs font-medium text-gray-700">
                   Play Music
                 </span>
               </button>
-              <button className="flex flex-col items-center gap-2 rounded-2xl bg-gradient-to-br from-pink-50 to-purple-50 border border-pink-100 p-4 hover:shadow-md transition-all">
+              <button
+                onClick={() => setShowNoteModal(true)}
+                className="flex flex-col items-center gap-2 rounded-2xl bg-gradient-to-br from-pink-50 to-purple-50 border border-pink-100 p-4 hover:shadow-md transition-all"
+              >
                 <MessageCircle className="h-6 w-6 text-pink-400" />
                 <span className="text-xs font-medium text-gray-700">
                   Send Note
@@ -538,5 +584,69 @@ export default function RoomPage() {
         </div>
       </div>
     </AuthenticatedLayout>
+
+      {/* Movie URL Modal */}
+      {showMovieModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
+          <div className="bg-white rounded-2xl shadow-xl border border-gray-200 p-6 w-full max-w-md space-y-4">
+            <h3 className="text-lg font-bold text-gray-900">🎬 Start a Movie</h3>
+            <p className="text-sm text-gray-500">Paste a link to the movie or watch party.</p>
+            <input
+              type="url"
+              value={movieUrl}
+              onChange={(e) => setMovieUrl(e.target.value)}
+              placeholder="https://..."
+              className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm text-gray-900 placeholder-gray-400 focus:border-pink-400 focus:ring-2 focus:ring-pink-100 outline-none transition-all"
+            />
+            <div className="flex gap-3">
+              <button
+                onClick={handleStartMovie}
+                disabled={!movieUrl.trim()}
+                className="inline-flex items-center gap-2 rounded-full bg-pink-500 px-5 py-2 text-sm font-semibold text-white hover:bg-pink-600 disabled:opacity-50 transition"
+              >
+                Share Movie
+              </button>
+              <button
+                onClick={() => { setShowMovieModal(false); setMovieUrl('') }}
+                className="rounded-full px-5 py-2 text-sm font-medium text-gray-600 hover:bg-gray-100 transition"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Send Note Modal */}
+      {showNoteModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
+          <div className="bg-white rounded-2xl shadow-xl border border-gray-200 p-6 w-full max-w-md space-y-4">
+            <h3 className="text-lg font-bold text-gray-900">📝 Send a Note</h3>
+            <textarea
+              value={noteText}
+              onChange={(e) => setNoteText(e.target.value)}
+              rows={3}
+              placeholder="Write something sweet..."
+              className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm text-gray-900 placeholder-gray-400 focus:border-pink-400 focus:ring-2 focus:ring-pink-100 outline-none transition-all resize-none"
+            />
+            <div className="flex gap-3">
+              <button
+                onClick={handleSendNote}
+                disabled={!noteText.trim()}
+                className="inline-flex items-center gap-2 rounded-full bg-pink-500 px-5 py-2 text-sm font-semibold text-white hover:bg-pink-600 disabled:opacity-50 transition"
+              >
+                Send Note
+              </button>
+              <button
+                onClick={() => { setShowNoteModal(false); setNoteText('') }}
+                className="rounded-full px-5 py-2 text-sm font-medium text-gray-600 hover:bg-gray-100 transition"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
   )
 }
