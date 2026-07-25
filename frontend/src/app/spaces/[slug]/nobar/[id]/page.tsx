@@ -125,7 +125,7 @@ export default function NobarSessionDetailPage() {
           table: 'nobar_participants',
           filter: `session_id=eq.${sessionId}`,
         },
-        (payload) => {
+        (payload: any) => {
           if (payload.eventType === 'INSERT') {
             setParticipants((prev) => [
               ...prev,
@@ -157,7 +157,7 @@ export default function NobarSessionDetailPage() {
           table: 'nobar_messages',
           filter: `session_id=eq.${sessionId}`,
         },
-        (payload) => {
+        (payload: any) => {
           setMessages((prev) => [...prev, payload.new as Message])
         }
       )

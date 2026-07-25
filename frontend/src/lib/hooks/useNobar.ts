@@ -222,7 +222,7 @@ export function useNobar(): UseNobarReturn {
           table: 'nobar_schedules',
           filter: `space_id=eq.${spaceId}`,
         },
-        (payload) => {
+        (payload: any) => {
           if (payload.eventType === 'INSERT') {
             const newSession = payload.new as NobarSession
             setSessions((prev) => {

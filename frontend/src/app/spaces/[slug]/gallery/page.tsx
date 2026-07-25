@@ -83,7 +83,7 @@ export default function GalleryPage() {
         }
 
         const collectionsWithPhotos = await Promise.all(
-          collectionsData.map(async (col) => {
+          collectionsData.map(async (col: any) => {
             const { data: photos } = await supabase
               .from('gallery_photos')
               .select('*')

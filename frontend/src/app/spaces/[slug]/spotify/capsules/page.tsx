@@ -90,7 +90,7 @@ export default function SpotifyCapsulesPage() {
 
     if (data) {
       const now = new Date()
-      const withUnlockStatus = data.map((c) => ({
+      const withUnlockStatus = data.map((c: any) => ({
         ...c,
         is_unlocked: new Date(c.unlock_at) <= now,
       }))

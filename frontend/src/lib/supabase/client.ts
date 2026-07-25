@@ -1,6 +1,6 @@
-import { createBrowserClient, type SupabaseClient } from '@supabase/ssr'
+import { createBrowserClient } from '@supabase/ssr'
 
-let client: SupabaseClient | null = null
+let client: any = null
 
 export function createClient() {
   if (client) return client
@@ -11,7 +11,7 @@ export function createClient() {
   if (!url || !key) {
     // During SSR/prerender when env vars aren't available, create a mock
     // This prevents crashes during static generation of pages like _not-found
-    return new Proxy({} as SupabaseClient, {
+    return new Proxy({} as any, {
       get(_target, prop) {
         if (prop === 'auth') {
           return new Proxy({} as any, {

@@ -64,7 +64,7 @@ export default function MessagesPage() {
           table: 'messages',
           filter: `space_id=eq.${spaceInfo.id}`,
         },
-        (payload) => {
+        (payload: any) => {
           const newMsg = payload.new as Message
           setMessages((prev) => [...prev, newMsg])
         }
@@ -105,20 +105,20 @@ export default function MessagesPage() {
 
     if (data) {
       // Fetch sender info for each unique sender
-      const senderIds = [...new Set(data.map((m) => m.sender_id))]
+      const senderIds = [...new Set(data.map((m: any) => m.sender_id as string))]
       const sendersMap: Record<string, { email: string; user_metadata?: { name?: string } }> = {}
 
       for (const senderId of senderIds) {
-        const { data: userData } = await supabase.auth.admin.getUserById(senderId)
+        const { data: userData } = await supabase.auth.admin.getUserById(senderId as string)
         if (userData?.user) {
-          sendersMap[senderId] = {
+          sendersMap[senderId as string] = {
             email: userData.user.email || 'Unknown',
             user_metadata: userData.user.user_metadata,
           }
         }
       }
 
-      const enrichedMessages = data.map((msg) => ({
+      const enrichedMessages = data.map((msg: any) => ({
         ...msg,
         sender: sendersMap[msg.sender_id] || { email: 'Unknown' },
       }))

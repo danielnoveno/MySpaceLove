@@ -152,7 +152,7 @@ export default function RoomPage() {
           table: 'rooms',
           filter: `id=eq.${room.id}`,
         },
-        (payload) => {
+        (payload: any) => {
           setRoom(payload.new as Room)
         }
       )
@@ -164,7 +164,7 @@ export default function RoomPage() {
           table: 'room_messages',
           filter: `room_id=eq.${room.id}`,
         },
-        (payload) => {
+        (payload: any) => {
           setMessages((prev) => [...prev, payload.new as RoomMessage])
         }
       )
@@ -176,7 +176,7 @@ export default function RoomPage() {
           table: 'room_members',
           filter: `room_id=eq.${room.id}`,
         },
-        (payload) => {
+        (payload: any) => {
           if (payload.eventType === 'INSERT') {
             setMembers((prev) => [...prev, payload.new as RoomMember])
           } else if (payload.eventType === 'DELETE') {

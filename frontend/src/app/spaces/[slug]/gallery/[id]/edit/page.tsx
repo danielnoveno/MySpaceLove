@@ -85,7 +85,7 @@ export default function EditGalleryPage() {
           .eq('collection_id', collectionId)
 
         if (photos) {
-          setExistingPhotos(photos.map((p) => ({ id: p.id, url: p.url, caption: p.caption })))
+          setExistingPhotos(photos.map((p: { id: string; url: string; caption?: string }) => ({ id: p.id, url: p.url, caption: p.caption })))
         }
 
         setLoading(false)

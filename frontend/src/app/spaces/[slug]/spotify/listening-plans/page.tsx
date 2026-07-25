@@ -100,7 +100,7 @@ export default function ListeningPlansPage() {
     }
 
     const plansWithTracks = await Promise.all(
-      plansData.map(async (plan) => {
+      plansData.map(async (plan: any) => {
         const { data: tracks } = await supabase
           .from('spotify_listening_plan_tracks')
           .select('*')
