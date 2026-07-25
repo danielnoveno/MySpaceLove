@@ -5,11 +5,13 @@ namespace App\Models;
 use App\Models\MemoryLaneConfig;
 use App\Models\NobarSchedule;
 use App\Models\SpaceInvitation;
+use App\Models\SpaceJoinRequest;
 use App\Models\SpaceSeparationRequest;
 use App\Models\Message;
 use App\Models\MessageRead;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Str;
 
 class Space extends Model
 {
@@ -20,10 +22,29 @@ class Space extends Model
         'title',
         'user_one_id',
         'user_two_id',
+        'invite_code',
         'is_public',
         'theme_id',
         'bio'
     ];
+
+    protected static function booted(): void
+    {
+        static::creating(function (Space $space): void {
+            if (empty($space->invite_code)) {
+                $space->invite_code = static::generateInviteCode();
+            }
+        });
+    }
+
+    public static function generateInviteCode(int $length = 8): string
+    {
+        do {
+            $code = strtoupper(Str::random($length));
+        } while (static::where('invite_code', $code)->exists());
+
+        return $code;
+    }
 
     public function getRouteKeyName(): string
     {
@@ -38,6 +59,16 @@ class Space extends Model
     public function pendingInvitation()
     {
         return $this->hasOne(SpaceInvitation::class)->where('status', 'pending');
+    }
+
+    public function pendingJoinRequests()
+    {
+        return $this->hasMany(SpaceInvitation::class)->where('status', 'pending')->where('source', 'join_request');
+    }
+
+    public function allJoinRequests()
+    {
+        return $this->hasMany(SpaceInvitation::class)->where('source', 'join_request');
     }
 
     public function separationRequests()

@@ -12,10 +12,26 @@ export type Space = {
   bio: string | null
   user_one_id: string
   user_two_id: string | null
+  invite_code: string
   is_public: boolean
   theme_id: number | null
   created_at: string
   updated_at: string
+}
+
+export type JoinRequest = {
+  id: number
+  space_id: number
+  invitee_id: string
+  invitee_email: string
+  status: string
+  source: string
+  created_at: string
+  invitee?: {
+    id: string
+    name: string
+    email: string
+  }
 }
 
 export type SpaceWithUsers = Space & {
@@ -53,13 +69,17 @@ type UseSpacesReturn = {
   error: string | null
   createSpace: (title: string, bio?: string) => Promise<{ error?: string; space?: Space }>
   deleteSpace: (slug: string) => Promise<{ error?: string }>
-  joinSpace: (partnerCode: string) => Promise<{ error?: string; space?: Space }>
+  joinSpace: (inviteCode: string) => Promise<{ error?: string; message?: string }>
   invitePartner: (slug: string, partnerName: string, partnerEmail: string) => Promise<{ error?: string }>
   cancelInvitation: (slug: string, invitationId: number) => Promise<{ error?: string }>
   requestSeparation: (slug: string, confirmationPhrase: string, reason?: string) => Promise<{ error?: string }>
   respondSeparation: (slug: string, decision: 'approve' | 'reject', confirmationPhrase: string, reason?: string) => Promise<{ error?: string }>
   cancelSeparation: (slug: string) => Promise<{ error?: string }>
   fetchSpaces: () => Promise<void>
+  joinRequests: JoinRequest[]
+  fetchJoinRequests: (spaceId: number) => Promise<void>
+  approveJoinRequest: (spaceId: number, invitationId: number) => Promise<{ error?: string; space?: Space }>
+  rejectJoinRequest: (spaceId: number, invitationId: number) => Promise<{ error?: string }>
 }
 
 export function useSpaces(): UseSpacesReturn {
@@ -67,6 +87,7 @@ export function useSpaces(): UseSpacesReturn {
   const [spaces, setSpaces] = useState<Space[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [joinRequests, setJoinRequests] = useState<JoinRequest[]>([])
   const supabase = useMemo(() => createClient(), [])
 
   const fetchSpaces = useCallback(async () => {
@@ -148,56 +169,211 @@ export function useSpaces(): UseSpacesReturn {
     return {}
   }, [supabase, fetchSpaces])
 
-  const joinSpace = useCallback(async (partnerCode: string) => {
+  const joinSpace = useCallback(async (inviteCode: string) => {
     if (!user) return { error: 'Not authenticated' }
 
-    const code = partnerCode.trim().toUpperCase()
+    const code = inviteCode.trim().toUpperCase()
 
-    // Schema uses 'users' table, NOT 'profiles'
-    const { data: owner, error: ownerError } = await supabase
-      .from('users')
-      .select('id')
-      .eq('partner_code', code)
-      .single()
-
-    if (ownerError || !owner) {
-      return { error: 'Partner code not found. Make sure the code is correct.' }
-    }
-
-    if (owner.id === user.id) {
-      return { error: 'Cannot join using your own code.' }
-    }
-
+    // Find space by invite_code
     const { data: space, error: spaceError } = await supabase
       .from('spaces')
       .select('*')
-      .eq('user_one_id', owner.id)
+      .eq('invite_code', code)
       .single()
 
     if (spaceError || !space) {
-      return { error: 'Partner does not have an active space.' }
+      return { error: 'Kode undangan tidak ditemukan. Pastikan kode yang dimasukkan sudah benar.' }
     }
 
-    if (space.user_two_id && space.user_two_id !== user.id) {
-      return { error: 'This space already has a partner.' }
+    if (space.user_one_id === user.id) {
+      return { error: 'Tidak dapat bergabung menggunakan kode Space milik sendiri.' }
     }
 
     if (space.user_two_id === user.id) {
-      return { error: 'You are already in this space.', space }
+      return { error: 'Kamu sudah tergabung di Space tersebut.' }
     }
 
-    const { error: updateError } = await supabase
+    if (space.user_two_id && space.user_two_id !== user.id) {
+      return { error: 'Space tersebut sudah memiliki pasangan.' }
+    }
+
+    // Check if there's already a pending request from this user
+    const { data: existingRequest } = await supabase
+      .from('space_invitations')
+      .select('id')
+      .eq('space_id', space.id)
+      .eq('invitee_id', user.id)
+      .eq('status', 'pending')
+      .eq('source', 'join_request')
+      .single()
+
+    if (existingRequest) {
+      return { error: 'Permintaan bergabung sudah dikirim. Menunggu konfirmasi pemilik Space.' }
+    }
+
+    // Create pending join request
+    const { error: insertError } = await supabase
+      .from('space_invitations')
+      .insert({
+        space_id: space.id,
+        inviter_id: space.user_one_id,
+        invitee_id: user.id,
+        invitee_email: user.email,
+        token: crypto.randomUUID(),
+        status: 'pending',
+        source: 'join_request',
+      })
+
+    if (insertError) {
+      return { error: insertError.message }
+    }
+
+    return { message: 'Permintaan bergabung berhasil dikirim. Menunggu konfirmasi pemilik Space.' }
+  }, [user, supabase])
+
+  const fetchJoinRequests = useCallback(async (spaceId: number) => {
+    if (!user) return
+
+    const { data, error } = await supabase
+      .from('space_invitations')
+      .select(`
+        id,
+        space_id,
+        invitee_id,
+        invitee_email,
+        status,
+        source,
+        created_at,
+        invitee:users!space_invitations_invitee_id_fkey (id, name, email)
+      `)
+      .eq('space_id', spaceId)
+      .eq('status', 'pending')
+      .eq('source', 'join_request')
+      .order('created_at', { ascending: false })
+
+    if (!error && data) {
+      setJoinRequests(data as JoinRequest[])
+    }
+  }, [user, supabase])
+
+  const approveJoinRequest = useCallback(async (spaceId: number, invitationId: number) => {
+    if (!user) return { error: 'Not authenticated' }
+
+    // Get the space
+    const { data: space, error: spaceError } = await supabase
       .from('spaces')
-      .update({ user_two_id: user.id })
-      .eq('id', space.id)
+      .select('*')
+      .eq('id', spaceId)
+      .single()
 
-    if (updateError) {
-      return { error: updateError.message }
+    if (spaceError || !space) {
+      return { error: 'Space not found.' }
     }
+
+    if (space.user_one_id !== user.id) {
+      return { error: 'Only space owner can approve join requests.' }
+    }
+
+    if (space.user_two_id) {
+      return { error: 'Space already has a partner.' }
+    }
+
+    // Get the invitation
+    const { data: invitation, error: invError } = await supabase
+      .from('space_invitations')
+      .select('*')
+      .eq('id', invitationId)
+      .eq('space_id', spaceId)
+      .eq('status', 'pending')
+      .eq('source', 'join_request')
+      .single()
+
+    if (invError || !invitation) {
+      return { error: 'Join request not found or already processed.' }
+    }
+
+    // Check if requester already has a space
+    const { data: requesterSpaces } = await supabase
+      .from('spaces')
+      .select('id')
+      .or(`user_one_id.eq.${invitation.invitee_id},user_two_id.eq.${invitation.invitee_id}`)
+      .limit(1)
+
+    if (requesterSpaces && requesterSpaces.length > 0) {
+      return { error: 'User already has a space.' }
+    }
+
+    // Get requester info
+    const { data: requester } = await supabase
+      .from('users')
+      .select('name')
+      .eq('id', invitation.invitee_id)
+      .single()
+
+    // Accept the invitation
+    await supabase
+      .from('space_invitations')
+      .update({
+        status: 'accepted',
+        accepted_at: new Date().toISOString(),
+      })
+      .eq('id', invitationId)
+
+    // Connect partner to space
+    const newTitle = requester?.name
+      ? `${space.title.split(' & ')[0]} & ${requester.name}`
+      : space.title
+
+    await supabase
+      .from('spaces')
+      .update({
+        user_two_id: invitation.invitee_id,
+        title: newTitle,
+      })
+      .eq('id', spaceId)
 
     await fetchSpaces()
-    return { space }
-  }, [user, supabase, fetchSpaces])
+    await fetchJoinRequests(spaceId)
+
+    return {
+      space: {
+        ...space,
+        user_two_id: invitation.invitee_id,
+        title: newTitle,
+      }
+    }
+  }, [user, supabase, fetchSpaces, fetchJoinRequests])
+
+  const rejectJoinRequest = useCallback(async (spaceId: number, invitationId: number) => {
+    if (!user) return { error: 'Not authenticated' }
+
+    // Get the space
+    const { data: space } = await supabase
+      .from('spaces')
+      .select('user_one_id')
+      .eq('id', spaceId)
+      .single()
+
+    if (!space || space.user_one_id !== user.id) {
+      return { error: 'Only space owner can reject join requests.' }
+    }
+
+    // Update invitation status
+    const { error } = await supabase
+      .from('space_invitations')
+      .update({ status: 'declined' })
+      .eq('id', invitationId)
+      .eq('space_id', spaceId)
+      .eq('status', 'pending')
+      .eq('source', 'join_request')
+
+    if (error) {
+      return { error: error.message }
+    }
+
+    await fetchJoinRequests(spaceId)
+    return {}
+  }, [user, supabase, fetchJoinRequests])
 
   const invitePartner = useCallback(async (slug: string, partnerName: string, partnerEmail: string) => {
     if (!user) return { error: 'Not authenticated' }
@@ -221,6 +397,7 @@ export function useSpaces(): UseSpacesReturn {
         invitee_email: partnerEmail,
         token,
         status: 'pending',
+        source: 'email',
       })
 
     if (insertError) {
@@ -380,5 +557,9 @@ export function useSpaces(): UseSpacesReturn {
     respondSeparation,
     cancelSeparation,
     fetchSpaces,
+    joinRequests,
+    fetchJoinRequests,
+    approveJoinRequest,
+    rejectJoinRequest,
   }
 }

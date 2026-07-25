@@ -17,8 +17,12 @@ class SpaceInvitation extends Model
         'invitee_email',
         'token',
         'status',
+        'source',
         'accepted_at',
     ];
+
+    const SOURCE_EMAIL = 'email';
+    const SOURCE_JOIN_REQUEST = 'join_request';
 
     protected $casts = [
         'accepted_at' => 'datetime',

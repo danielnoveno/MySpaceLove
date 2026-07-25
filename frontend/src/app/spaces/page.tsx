@@ -6,7 +6,7 @@ import Link from 'next/link'
 import AuthenticatedLayout from '@/layouts/AuthenticatedLayout'
 import { useAuth } from '@/contexts/AuthContext'
 import { useSpaces } from '@/lib/hooks/useSpaces'
-import { Heart, Plus, Users, AlertTriangle, Loader2, Trash2, Mail, X } from 'lucide-react'
+import { Heart, Plus, Users, AlertTriangle, Loader2, Trash2, Mail, X, Copy, Check, UserPlus, UserCheck } from 'lucide-react'
 
 const SEPARATION_CONFIRMATION_PHRASE = 'KITA SUDAH SIAP'
 
@@ -23,6 +23,10 @@ export default function SpacesIndex() {
     requestSeparation,
     respondSeparation,
     cancelSeparation,
+    joinRequests,
+    fetchJoinRequests,
+    approveJoinRequest,
+    rejectJoinRequest,
   } = useSpaces()
 
   const [title, setTitle] = useState('')
@@ -52,11 +56,27 @@ export default function SpacesIndex() {
   const [respondReason, setRespondReason] = useState('')
   const [responding, setResponding] = useState(false)
 
+  const [copiedCode, setCopiedCode] = useState<string | null>(null)
+  const [activeJoinRequestSpaceId, setActiveJoinRequestSpaceId] = useState<number | null>(null)
+  const [approvingId, setApprovingId] = useState<number | null>(null)
+  const [rejectingId, setRejectingId] = useState<number | null>(null)
+
   useEffect(() => {
     if (!authLoading && !user) {
       router.push('/auth/login')
     }
   }, [user, authLoading, router])
+
+  // Fetch join requests for spaces owned by user
+  useEffect(() => {
+    if (spaces.length > 0 && user) {
+      spaces.forEach((space) => {
+        if (space.user_one_id === user.id && !space.user_two_id) {
+          fetchJoinRequests(space.id)
+        }
+      })
+    }
+  }, [spaces, user, fetchJoinRequests])
 
   const handleCreateSpace = useCallback(async (e: React.FormEvent) => {
     e.preventDefault()
@@ -92,7 +112,7 @@ export default function SpacesIndex() {
 
     const code = joinCode.trim()
     if (!code) {
-      setJoinCodeError('Partner code is required.')
+      setJoinCodeError('Kode undangan wajib diisi.')
       return
     }
 
@@ -105,14 +125,28 @@ export default function SpacesIndex() {
       return
     }
 
-    setJoinAlert({ type: 'success', message: 'Successfully joined your partner\'s space!' })
+    setJoinAlert({ type: 'success', message: result.message || 'Permintaan bergabung berhasil dikirim! Menunggu konfirmasi pemilik Space.' })
     setJoinCode('')
     setJoining(false)
+  }, [joinCode, joining, joinSpace])
 
-    if (result.space) {
-      setTimeout(() => router.push(`/spaces/${result.space!.slug}`), 200)
+  const handleCopyCode = useCallback(async (code: string) => {
+    try {
+      await navigator.clipboard.writeText(code)
+      setCopiedCode(code)
+      setTimeout(() => setCopiedCode(null), 2000)
+    } catch {
+      // Fallback
+      const textArea = document.createElement('textarea')
+      textArea.value = code
+      document.body.appendChild(textArea)
+      textArea.select()
+      document.execCommand('copy')
+      document.body.removeChild(textArea)
+      setCopiedCode(code)
+      setTimeout(() => setCopiedCode(null), 2000)
     }
-  }, [joinCode, joining, joinSpace, router])
+  }, [])
 
   const handleInviteSubmit = useCallback(async (spaceSlug: string) => {
     if (inviteLoading) return
@@ -142,6 +176,30 @@ export default function SpacesIndex() {
     }
     setInviteLoading(false)
   }, [inviteName, inviteEmail, inviteLoading, invitePartner])
+
+  const handleApproveJoinRequest = useCallback(async (spaceId: number, invitationId: number) => {
+    setApprovingId(invitationId)
+    const result = await approveJoinRequest(spaceId, invitationId)
+    if (result.error) {
+      setJoinAlert({ type: 'error', message: result.error })
+    } else {
+      setJoinAlert({ type: 'success', message: 'Permintaan bergabung berhasil disetujui!' })
+      fetchJoinRequests(spaceId)
+    }
+    setApprovingId(null)
+  }, [approveJoinRequest, fetchJoinRequests])
+
+  const handleRejectJoinRequest = useCallback(async (spaceId: number, invitationId: number) => {
+    setRejectingId(invitationId)
+    const result = await rejectJoinRequest(spaceId, invitationId)
+    if (result.error) {
+      setJoinAlert({ type: 'error', message: result.error })
+    } else {
+      setJoinAlert({ type: 'success', message: 'Permintaan bergabung ditolak.' })
+      fetchJoinRequests(spaceId)
+    }
+    setRejectingId(null)
+  }, [rejectJoinRequest, fetchJoinRequests])
 
   const handleRequestSeparation = useCallback(async (spaceSlug: string) => {
     if (processingSeparation) return
@@ -310,7 +368,7 @@ export default function SpacesIndex() {
           </div>
         )}
 
-        {/* Join Space with Partner Code */}
+        {/* Join Space with Invite Code */}
         {!hasSpaces && (
           <div className="bg-white/80 backdrop-blur rounded-3xl border border-pink-100 shadow-sm p-8">
             <div className="flex items-center gap-3 mb-6">
@@ -318,19 +376,19 @@ export default function SpacesIndex() {
                 <Users className="h-6 w-6" />
               </div>
               <div>
-                <h2 className="text-xl font-semibold text-gray-900">Join Partner&apos;s Space</h2>
-                <p className="text-sm text-gray-600">Enter your partner&apos;s code to join their space</p>
+                <h2 className="text-xl font-semibold text-gray-900">Join Space</h2>
+                <p className="text-sm text-gray-600">Enter the space invite code to request joining</p>
               </div>
             </div>
 
             <form onSubmit={handleJoinSpace} className="space-y-4">
               <div>
-                <label htmlFor="partner_code" className="block text-sm font-medium text-gray-700 mb-1">
-                  Partner Code
+                <label htmlFor="invite_code" className="block text-sm font-medium text-gray-700 mb-1">
+                  Space Invite Code
                 </label>
                 <input
                   type="text"
-                  id="partner_code"
+                  id="invite_code"
                   value={joinCode}
                   onChange={(e) => setJoinCode(e.target.value.toUpperCase())}
                   className="w-full rounded-2xl border border-gray-300 px-4 py-3 text-gray-800 uppercase tracking-widest text-center text-lg font-mono transition focus:border-pink-500 focus:ring-2 focus:ring-pink-200"
@@ -357,10 +415,10 @@ export default function SpacesIndex() {
                 {joining ? (
                   <span className="inline-flex items-center gap-2">
                     <Loader2 className="h-4 w-4 animate-spin" />
-                    Connecting...
+                    Mengirim Permintaan...
                   </span>
                 ) : (
-                  'Join Space'
+                  'Request to Join'
                 )}
               </button>
             </form>
@@ -372,14 +430,17 @@ export default function SpacesIndex() {
           <div className="space-y-6">
             <div className="bg-white/80 backdrop-blur rounded-3xl border border-pink-100 shadow-sm p-6">
               <p className="text-sm text-gray-600">
-                Each account can only have one Space. Manage your Space, invite your partner, or end the Space relationship from this page.
+                Each account can only have one Space. Share your invite code with your partner so they can request to join.
               </p>
             </div>
 
             {spaces.map((space) => {
               const hasPartner = !!space.user_two_id
+              const isOwner = space.user_one_id === user?.id
               const isInviteOpen = activeInviteSpaceId === space.id
               const isSeparationOpen = activeSeparationSpaceId === space.id
+              const isJoinRequestOpen = activeJoinRequestSpaceId === space.id
+              const spaceJoinRequests = joinRequests.filter((r) => r.space_id === space.id)
 
               return (
                 <div key={space.id} className="bg-white/80 backdrop-blur rounded-3xl border border-pink-100 shadow-sm p-6 space-y-4">
@@ -387,7 +448,7 @@ export default function SpacesIndex() {
                     <div>
                       <h3 className="text-lg font-semibold text-gray-900">{space.title}</h3>
                       <p className="text-sm text-gray-500">
-                        {hasPartner ? 'Partner connected. Enjoy all features together.' : 'No partner yet. You can invite a partner anytime.'}
+                        {hasPartner ? 'Partner connected. Enjoy all features together.' : 'No partner yet. Share your invite code.'}
                       </p>
                     </div>
                     <Link
@@ -398,8 +459,100 @@ export default function SpacesIndex() {
                     </Link>
                   </div>
 
-                  {/* Invite Partner Section */}
-                  {!hasPartner && (
+                  {/* Invite Code Section */}
+                  {!hasPartner && isOwner && (
+                    <div className="rounded-2xl border border-purple-100 bg-purple-50/60 p-4">
+                      <div className="flex items-center justify-between mb-2">
+                        <p className="text-sm font-medium text-purple-700">Your Space Invite Code</p>
+                        <button
+                          onClick={() => handleCopyCode(space.invite_code)}
+                          className="inline-flex items-center gap-1 text-xs font-medium text-purple-600 hover:text-purple-800 transition-colors"
+                        >
+                          {copiedCode === space.invite_code ? (
+                            <>
+                              <Check className="h-3 w-3" />
+                              Copied!
+                            </>
+                          ) : (
+                            <>
+                              <Copy className="h-3 w-3" />
+                              Copy
+                            </>
+                          )}
+                        </button>
+                      </div>
+                      <div className="flex items-center justify-center">
+                        <code className="text-2xl font-mono font-bold text-purple-800 tracking-widest">
+                          {space.invite_code}
+                        </code>
+                      </div>
+                      <p className="text-xs text-purple-600 text-center mt-2">
+                        Share this code with your partner so they can request to join this Space.
+                      </p>
+                    </div>
+                  )}
+
+                  {/* Join Requests Section */}
+                  {!hasPartner && isOwner && spaceJoinRequests.length > 0 && (
+                    <div className="space-y-3">
+                      <button
+                        type="button"
+                        onClick={() => setActiveJoinRequestSpaceId(isJoinRequestOpen ? null : space.id)}
+                        className="inline-flex items-center gap-2 rounded-full border border-orange-200 bg-orange-50 px-4 py-2 text-sm font-semibold text-orange-600 transition hover:bg-orange-100"
+                      >
+                        <UserPlus className="h-4 w-4" />
+                        {isJoinRequestOpen ? 'Hide Requests' : `Join Requests (${spaceJoinRequests.length})`}
+                      </button>
+
+                      {isJoinRequestOpen && (
+                        <div className="space-y-3">
+                          {joinAlert && (
+                            <div className={`rounded-2xl px-4 py-3 text-sm ${joinAlert.type === 'success' ? 'bg-green-50 text-green-700 border border-green-200' : 'bg-red-50 text-red-700 border border-red-200'}`}>
+                              {joinAlert.message}
+                            </div>
+                          )}
+
+                          {spaceJoinRequests.map((request) => (
+                            <div
+                              key={request.id}
+                              className="flex items-center justify-between rounded-2xl border border-orange-200 bg-white p-4"
+                            >
+                              <div className="flex items-center gap-3">
+                                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-orange-100 text-orange-500">
+                                  <UserPlus className="h-5 w-5" />
+                                </div>
+                                <div>
+                                  <p className="text-sm font-medium text-gray-900">
+                                    {request.invitee?.name || request.invitee_email}
+                                  </p>
+                                  <p className="text-xs text-gray-500">{request.invitee_email}</p>
+                                </div>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <button
+                                  onClick={() => handleRejectJoinRequest(space.id, request.id)}
+                                  disabled={rejectingId === request.id}
+                                  className="rounded-full border border-gray-300 px-3 py-1.5 text-xs font-medium text-gray-700 transition hover:bg-gray-50 disabled:opacity-60"
+                                >
+                                  {rejectingId === request.id ? '...' : 'Tolak'}
+                                </button>
+                                <button
+                                  onClick={() => handleApproveJoinRequest(space.id, request.id)}
+                                  disabled={approvingId === request.id}
+                                  className="rounded-full bg-green-500 px-3 py-1.5 text-xs font-medium text-white transition hover:bg-green-600 disabled:opacity-60"
+                                >
+                                  {approvingId === request.id ? '...' : 'Terima'}
+                                </button>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Invite Partner Section (email) */}
+                  {!hasPartner && isOwner && (
                     <div className="space-y-3">
                       {inviteAlert && (
                         <div className={`rounded-2xl px-4 py-3 text-sm ${inviteAlert.type === 'success' ? 'bg-green-50 text-green-700 border border-green-200' : 'bg-red-50 text-red-700 border border-red-200'}`}>
@@ -417,7 +570,7 @@ export default function SpacesIndex() {
                         className="inline-flex items-center gap-2 rounded-full border border-pink-200 px-4 py-2 text-sm font-semibold text-pink-600 transition hover:bg-pink-50"
                       >
                         <Mail className="h-4 w-4" />
-                        {isInviteOpen ? 'Close Form' : 'Invite Partner'}
+                        {isInviteOpen ? 'Close Form' : 'Invite via Email'}
                       </button>
 
                       {isInviteOpen && (

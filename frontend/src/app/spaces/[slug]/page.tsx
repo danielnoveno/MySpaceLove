@@ -95,7 +95,7 @@ export default function SpaceDashboardPage() {
     { label: 'Games', description: 'Play together', href: `/spaces/${slug}/games`, icon: Gamepad2, color: 'bg-orange-100 text-orange-500' },
     { label: 'Documents', description: 'Shared files', href: `/spaces/${slug}/docs`, icon: FileText, color: 'bg-indigo-100 text-indigo-500' },
     { label: 'Wishlist', description: 'Dream list', href: `/spaces/${slug}/wishlist`, icon: Star, color: 'bg-yellow-100 text-yellow-500' },
-    { label: 'Location', description: 'Share location', href: `/spaces/${slug}/location`, icon: MapPin, color: 'bg-red-100 text-red-500' },
+    { label: 'Location', description: 'Share location', href: `/spaces/${slug}/locations`, icon: MapPin, color: 'bg-red-100 text-red-500' },
   ]
 
   return (

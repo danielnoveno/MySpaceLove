@@ -73,6 +73,7 @@ CREATE TABLE IF NOT EXISTS public.spaces (
     id BIGSERIAL PRIMARY KEY,
     slug VARCHAR(255) NOT NULL UNIQUE,
     title VARCHAR(255) NOT NULL,
+    invite_code VARCHAR(16) NOT NULL UNIQUE DEFAULT UPPER(SUBSTRING(MD5(RANDOM()::TEXT) FROM 1 FOR 8)),
     user_one_id UUID NOT NULL REFERENCES public.users(id) ON DELETE CASCADE,
     user_two_id UUID REFERENCES public.users(id) ON DELETE SET NULL,
     is_public BOOLEAN NOT NULL DEFAULT FALSE,
@@ -85,6 +86,7 @@ CREATE TABLE IF NOT EXISTS public.spaces (
 CREATE INDEX IF NOT EXISTS idx_spaces_slug ON public.spaces(slug);
 CREATE INDEX IF NOT EXISTS idx_spaces_user_one_id ON public.spaces(user_one_id);
 CREATE INDEX IF NOT EXISTS idx_spaces_user_two_id ON public.spaces(user_two_id);
+CREATE INDEX IF NOT EXISTS idx_spaces_invite_code ON public.spaces(invite_code);
 
 -- =====================================================
 -- 4. DAILY MESSAGES
@@ -394,11 +396,15 @@ CREATE TABLE IF NOT EXISTS public.space_invitations (
     invitee_email VARCHAR(255) NOT NULL,
     token VARCHAR(255) NOT NULL UNIQUE,
     status VARCHAR(20) NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'accepted', 'declined', 'cancelled')),
+    source VARCHAR(20) NOT NULL DEFAULT 'email' CHECK (source IN ('email', 'join_request')),
     accepted_at TIMESTAMPTZ,
     cancelled_at TIMESTAMPTZ,
     created_at TIMESTAMPTZ DEFAULT NOW(),
     updated_at TIMESTAMPTZ DEFAULT NOW()
 );
+
+CREATE INDEX IF NOT EXISTS idx_space_invitations_source ON public.space_invitations(source);
+CREATE INDEX IF NOT EXISTS idx_space_invitations_space_status ON public.space_invitations(space_id, status, source);
 
 -- =====================================================
 -- 23. SPACE SEPARATION REQUESTS
@@ -706,6 +712,7 @@ CREATE POLICY "Users can view partner" ON users FOR SELECT USING (
 -- SPACES policies
 CREATE POLICY "View own spaces" ON spaces FOR SELECT USING (user_one_id = auth.uid() OR user_two_id = auth.uid());
 CREATE POLICY "View public spaces" ON spaces FOR SELECT USING (is_public = TRUE);
+CREATE POLICY "Lookup space by invite code" ON spaces FOR SELECT USING (TRUE);
 CREATE POLICY "Create spaces" ON spaces FOR INSERT WITH CHECK (user_one_id = auth.uid());
 CREATE POLICY "Update own spaces" ON spaces FOR UPDATE USING (user_one_id = auth.uid() OR user_two_id = auth.uid());
 
@@ -790,8 +797,28 @@ CREATE POLICY "Manage locations" ON shared_locations FOR ALL USING (user_id = au
 -- INVITATIONS
 CREATE POLICY "View sent invitations" ON space_invitations FOR SELECT USING (inviter_id = auth.uid());
 CREATE POLICY "View received invitations" ON space_invitations FOR SELECT USING (invitee_id = auth.uid());
-CREATE POLICY "Create invitations" ON space_invitations FOR INSERT WITH CHECK (inviter_id = auth.uid() AND is_user_in_space(space_id));
-CREATE POLICY "Update invitation status" ON space_invitations FOR UPDATE USING (invitee_id = auth.uid());
+CREATE POLICY "Create invitations" ON space_invitations FOR INSERT WITH CHECK (
+    inviter_id = auth.uid() 
+    AND (
+        -- Email invitations: user must be in the space
+        (source = 'email' AND is_user_in_space(space_id))
+        OR
+        -- Join requests: user is the invitee requesting to join
+        (source = 'join_request' AND invitee_id = auth.uid())
+    )
+);
+CREATE POLICY "Update invitation status" ON space_invitations FOR UPDATE USING (
+    -- Space owner can approve/reject join requests
+    (source = 'join_request' AND EXISTS (
+        SELECT 1 FROM spaces WHERE spaces.id = space_invitations.space_id AND spaces.user_one_id = auth.uid()
+    ))
+    OR
+    -- Inviter can cancel email invitations
+    (inviter_id = auth.uid())
+    OR
+    -- Invitee can update their own invitation status
+    (invitee_id = auth.uid())
+);
 
 -- SEPARATION REQUESTS
 CREATE POLICY "View separation requests" ON space_separation_requests FOR SELECT USING (initiator_id = auth.uid() OR partner_id = auth.uid());
