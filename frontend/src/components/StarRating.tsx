@@ -68,7 +68,7 @@ export default function StarRating({
           >
             <Star
               size={starSize}
-              className="text-gray-200"
+              className="text-warm-200"
               fill="currentColor"
               strokeWidth={0}
             />
@@ -76,7 +76,7 @@ export default function StarRating({
             {fillState === 'full' && (
               <Star
                 size={starSize}
-                className="absolute inset-0 text-pink-500"
+                className="absolute inset-0 text-brand-500"
                 fill="currentColor"
                 strokeWidth={0}
               />
@@ -86,7 +86,7 @@ export default function StarRating({
               <div className="absolute inset-0 overflow-hidden" style={{ width: '50%' }}>
                 <Star
                   size={starSize}
-                  className="text-pink-500"
+                  className="text-brand-500"
                   fill="currentColor"
                   strokeWidth={0}
                 />

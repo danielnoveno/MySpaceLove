@@ -5,7 +5,8 @@ import { useParams } from 'next/navigation'
 import AuthenticatedLayout from '@/layouts/AuthenticatedLayout'
 import { useAuth } from '@/contexts/AuthContext'
 import { createClient } from '@/lib/supabase/client'
-import { Send, ArrowLeft } from 'lucide-react'
+import { FadeIn } from '@/components/motion'
+import { Send, ArrowLeft, MessageCircle } from 'lucide-react'
 import Link from 'next/link'
 import LoadingSpinner from '@/components/LoadingSpinner'
 
@@ -158,7 +159,7 @@ export default function MessagesPage() {
     return (
       <AuthenticatedLayout>
         <div className="flex items-center justify-center min-h-[60vh]">
-          <LoadingSpinner size="lg" text="Loading messages..." />
+          <LoadingSpinner size="lg" text="Memuat pesan..." />
         </div>
       </AuthenticatedLayout>
     )
@@ -167,18 +168,23 @@ export default function MessagesPage() {
   return (
     <AuthenticatedLayout
       header={
-        <div className="flex items-center gap-3">
-          <Link
-            href={`/spaces/${slug}`}
-            className="p-2 rounded-full hover:bg-pink-50 text-gray-600 hover:text-pink-600 transition-colors"
-          >
-            <ArrowLeft className="h-5 w-5" />
-          </Link>
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900">Messages</h1>
-            <p className="text-gray-600">Chat with your partner</p>
+        <FadeIn>
+          <div className="flex items-center gap-3">
+            <Link
+              href={`/spaces/${slug}`}
+              className="p-2 rounded-xl hover:bg-warm-50 text-warm-500 hover:text-warm-700 transition-colors"
+            >
+              <ArrowLeft className="h-5 w-5" />
+            </Link>
+            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-brand-100">
+              <MessageCircle className="h-6 w-6 text-brand-500" />
+            </div>
+            <div>
+              <h1 className="text-2xl font-bold text-warm-900">Pesan</h1>
+              <p className="text-warm-500">Chat dengan pasangan</p>
+            </div>
           </div>
-        </div>
+        </FadeIn>
       }
     >
       <div className="flex flex-col min-h-[300px] h-[calc(100dvh-16rem)]">
@@ -186,7 +192,10 @@ export default function MessagesPage() {
         <div className="flex-1 overflow-y-auto space-y-4 pb-4">
           {messages.length === 0 && (
             <div className="text-center py-12">
-              <p className="text-gray-500">No messages yet. Start the conversation!</p>
+              <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-brand-50 text-brand-400 mb-4">
+                <MessageCircle className="h-8 w-8" />
+              </div>
+              <p className="text-warm-500 font-medium">Belum ada pesan. Mulai percakapan!</p>
             </div>
           )}
           {messages.map((msg) => {
@@ -199,19 +208,19 @@ export default function MessagesPage() {
                 <div
                   className={`max-w-[75%] rounded-2xl px-4 py-3 ${
                     isMine
-                      ? 'bg-gradient-to-br from-pink-500 to-purple-500 text-white'
-                      : 'bg-white/80 backdrop-blur border border-white/70 text-gray-900 shadow-sm'
+                      ? 'bg-brand-500 text-white'
+                      : 'bg-white border border-warm-100 text-warm-900 shadow-sm'
                   }`}
                 >
                   {!isMine && (
-                    <p className="text-xs font-medium text-pink-500 mb-1">
+                    <p className="text-xs font-medium text-brand-500 mb-1">
                       {getSenderName(msg)}
                     </p>
                   )}
                   <p className="text-sm whitespace-pre-wrap break-words">{msg.content}</p>
                   <p
                     className={`text-[10px] mt-1 ${
-                      isMine ? 'text-pink-100' : 'text-gray-400'
+                      isMine ? 'text-brand-100' : 'text-warm-400'
                     }`}
                   >
                     {new Date(msg.created_at).toLocaleTimeString([], {
@@ -227,20 +236,20 @@ export default function MessagesPage() {
         </div>
 
         {/* Message Input */}
-        <div className="border-t border-pink-100 bg-white/80 backdrop-blur p-4">
+        <div className="border-t border-warm-100 bg-white p-4">
           <form onSubmit={handleSend} className="flex items-center gap-3">
             <input
               type="text"
               value={newMessage}
               onChange={(e) => setNewMessage(e.target.value)}
-              placeholder="Type a message..."
-              className="flex-1 rounded-full bg-pink-50 border border-pink-100 px-4 py-3 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-pink-300 focus:border-transparent"
+              placeholder="Ketik pesan..."
+              className="flex-1 rounded-full bg-warm-50 border border-warm-200 px-4 py-3 text-sm text-warm-900 placeholder-warm-400 focus:outline-none focus:ring-2 focus:ring-brand-300 focus:border-transparent transition-colors"
               disabled={sending}
             />
             <button
               type="submit"
               disabled={!newMessage.trim() || sending}
-              className="flex items-center justify-center h-12 w-12 rounded-full bg-gradient-to-br from-pink-500 to-purple-500 text-white shadow-sm transition-all hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
+              className="flex items-center justify-center h-12 w-12 rounded-full bg-brand-500 text-white shadow-sm transition-all hover:bg-brand-600 hover:shadow-md hover:shadow-brand-500/25 disabled:opacity-50 disabled:cursor-not-allowed active:scale-[0.95]"
             >
               <Send className="h-5 w-5" />
             </button>

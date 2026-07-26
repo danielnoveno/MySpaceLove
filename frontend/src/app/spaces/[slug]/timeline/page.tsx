@@ -7,7 +7,8 @@ import AuthenticatedLayout from '@/layouts/AuthenticatedLayout'
 import { useAuth } from '@/contexts/AuthContext'
 import { createClient } from '@/lib/supabase/client'
 import { useTimeline, TimelineItem } from '@/lib/hooks/useTimeline'
-import { Calendar, Edit, Heart, Images, Loader2, Plus, Trash2, X } from 'lucide-react'
+import { FadeIn, StaggerContainer, StaggerItem } from '@/components/motion'
+import { Calendar, Edit, Heart, Images, Loader2, Plus, Trash2, X, Clock } from 'lucide-react'
 
 type MediaOption = {
   path: string
@@ -85,7 +86,7 @@ export default function TimelineIndexPage() {
     setThumbnailPending(timelineUuid)
     const result = await setThumbnail(timelineUuid, path)
     if (result.error) {
-      console.error('Failed to update thumbnail', result.error)
+      console.error('Gagal update thumbnail', result.error)
     }
     setThumbnailPending(null)
   }, [setThumbnail])
@@ -124,7 +125,7 @@ export default function TimelineIndexPage() {
     return (
       <AuthenticatedLayout>
         <div className="flex items-center justify-center min-h-[60vh]">
-          <Loader2 className="h-12 w-12 text-pink-500 animate-spin" />
+          <Loader2 className="h-12 w-12 text-brand-500 animate-spin" />
         </div>
       </AuthenticatedLayout>
     )
@@ -133,194 +134,201 @@ export default function TimelineIndexPage() {
   return (
     <AuthenticatedLayout
       header={
-        <div className="flex flex-col gap-1">
-          <p className="text-xs uppercase tracking-[0.4em] text-pink-400">Moment collection</p>
-          <h2 className="text-3xl font-semibold text-pink-900">Love Timeline – {spaceTitle}</h2>
-        </div>
+        <FadeIn>
+          <div className="flex items-center gap-3">
+            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-brand-100">
+              <Clock className="h-6 w-6 text-brand-500" />
+            </div>
+            <div>
+              <h1 className="text-2xl font-bold text-warm-900">Timeline</h1>
+              <p className="text-warm-500">{spaceTitle}</p>
+            </div>
+          </div>
+        </FadeIn>
       }
     >
       <div className="relative mx-auto max-w-6xl space-y-10 px-6 pb-16">
         {/* Header Section */}
-        <section className="rounded-[28px] border border-pink-100/80 bg-white/90 p-8 shadow-sm backdrop-blur">
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-            <div>
-              <p className="text-xs uppercase tracking-[0.4em] text-pink-400">Story gallery</p>
-              <h3 className="text-2xl font-semibold text-pink-900">Arrange your beautiful moments</h3>
-              <p className="text-sm text-pink-700/80">
-                Choose the photo that best represents each story as the cover.
-              </p>
+        <FadeIn delay={0.1}>
+          <section className="rounded-3xl border border-warm-100 bg-white p-8 shadow-sm">
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <p className="text-xs uppercase tracking-[0.4em] text-brand-400 font-semibold">Galeri cerita</p>
+                <h3 className="text-2xl font-semibold text-warm-900">Atur momen indah Anda</h3>
+                <p className="text-sm text-warm-500">
+                  Pilih foto yang paling mewakili setiap cerita sebagai sampul.
+                </p>
+              </div>
+              <Link
+                href={`/spaces/${slug}/timeline/create`}
+                className="inline-flex items-center gap-2 rounded-full bg-brand-500 px-6 py-2.5 text-sm font-semibold text-white shadow-md transition-all hover:bg-brand-600 hover:shadow-lg hover:shadow-brand-500/25 active:scale-[0.98]"
+              >
+                <Plus className="h-4 w-4" />
+                Tambah Momen
+              </Link>
             </div>
-            <Link
-              href={`/spaces/${slug}/timeline/create`}
-              className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-pink-500 to-rose-500 px-6 py-2 text-sm font-semibold text-white shadow-md transition hover:shadow-lg"
-            >
-              <Plus className="h-4 w-4" />
-              Add Moment
-            </Link>
-          </div>
-        </section>
+          </section>
+        </FadeIn>
 
         {/* Empty State */}
         {itemsWithFallback.length === 0 ? (
-          <div className="rounded-[28px] border border-dashed border-pink-200 bg-white/85 py-16 text-center shadow-inner">
-            <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-pink-100 text-pink-400 mb-4">
-              <Images className="h-10 w-10" />
+          <FadeIn delay={0.2}>
+            <div className="rounded-3xl border-2 border-dashed border-brand-200 bg-brand-50/50 py-16 text-center">
+              <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-brand-100 text-brand-400 mb-4">
+                <Images className="h-10 w-10" />
+              </div>
+              <p className="text-lg font-semibold text-warm-900">Belum ada kenangan tersimpan.</p>
+              <p className="mt-2 text-sm text-warm-500">
+                Mulai tambahkan cerita pertama Anda hari ini.
+              </p>
+              <Link
+                href={`/spaces/${slug}/timeline/create`}
+                className="mt-6 inline-flex items-center gap-2 rounded-full bg-brand-500 px-6 py-3 font-semibold text-white transition-all hover:bg-brand-600 hover:shadow-lg hover:shadow-brand-500/25 active:scale-[0.98]"
+              >
+                <Plus className="h-5 w-5" />
+                Tambah Momen Pertama
+              </Link>
             </div>
-            <p className="text-lg font-semibold text-pink-800">No memories saved yet.</p>
-            <p className="mt-2 text-sm text-pink-600">
-              Start adding your first story today.
-            </p>
-            <Link
-              href={`/spaces/${slug}/timeline/create`}
-              className="mt-6 inline-flex items-center gap-2 rounded-full bg-pink-500 px-6 py-3 font-semibold text-white transition hover:bg-pink-600"
-            >
-              <Plus className="h-5 w-5" />
-              Add First Moment
-            </Link>
-          </div>
+          </FadeIn>
         ) : (
-          <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
+          <StaggerContainer className="grid grid-cols-1 gap-8 md:grid-cols-2">
             {itemsWithFallback.map((item) => {
               const media = item.media as MediaOption[]
 
               return (
-                <article
-                  key={item.uuid}
-                  className="group relative overflow-hidden rounded-[26px] border border-pink-100/80 bg-white/85 shadow-sm transition duration-300 hover:-translate-y-1 hover:shadow-xl"
-                >
-                  <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-pink-50/70 via-transparent to-white" />
-                  <div className="pointer-events-none absolute -left-6 top-8 h-24 w-24 rounded-full bg-pink-200/20 blur-3xl" />
-                  <div className="relative grid gap-6 px-8 pb-10 pt-10">
-                    {/* Cover Image */}
-                    <div className="relative mx-auto w-full max-w-sm">
-                      <div className="absolute inset-2 rounded-[24px] border border-pink-100/70 bg-white shadow-md transition group-hover:shadow-lg" />
-                      <div className="relative overflow-hidden rounded-[24px] border border-pink-100/80 bg-white shadow-lg transition group-hover:shadow-2xl">
-                        {item.coverUrl ? (
-                          <img
-                            src={item.coverUrl}
-                            alt={item.title}
-                            className="h-64 w-full object-cover"
-                            onClick={() => setSelectedItem(item)}
-                          />
-                        ) : (
-                          <div className="flex h-64 w-full flex-col items-center justify-center gap-3 bg-pink-50 text-pink-400">
-                            <Images className="h-10 w-10" />
-                            <span className="text-sm font-medium">No photos yet</span>
+                <StaggerItem key={item.uuid}>
+                  <article className="group relative overflow-hidden rounded-3xl border border-warm-100 bg-white shadow-sm transition duration-300 hover:-translate-y-1 hover:shadow-xl hover:shadow-warm-900/5">
+                    <div className="relative grid gap-6 px-8 pb-10 pt-10">
+                      {/* Cover Image */}
+                      <div className="relative mx-auto w-full max-w-sm">
+                        <div className="relative overflow-hidden rounded-2xl border border-warm-100 bg-white shadow-lg transition group-hover:shadow-2xl">
+                          {item.coverUrl ? (
+                            <img
+                              src={item.coverUrl}
+                              alt={item.title}
+                              className="h-64 w-full object-cover"
+                              onClick={() => setSelectedItem(item)}
+                            />
+                          ) : (
+                            <div className="flex h-64 w-full flex-col items-center justify-center gap-3 bg-brand-50 text-brand-400">
+                              <Images className="h-10 w-10" />
+                              <span className="text-sm font-medium">Belum ada foto</span>
+                            </div>
+                          )}
+                          <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/60 via-black/0 to-transparent px-4 py-3 text-white">
+                            <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.32em] text-white/70">
+                              <Calendar className="h-3 w-3 text-white/80" />
+                              {formatDate(item.date)}
+                            </div>
+                            <h4 className="mt-1 text-lg font-semibold">{item.title}</h4>
                           </div>
-                        )}
-                        <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/60 via-black/0 to-transparent px-4 py-3 text-white">
-                          <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.32em] text-white/70">
-                            <Calendar className="h-3 w-3 text-white/80" />
-                            {formatDate(item.date)}
-                          </div>
-                          <h4 className="mt-1 text-lg font-semibold">{item.title}</h4>
                         </div>
                       </div>
-                    </div>
 
-                    {/* Description & Thumbnail Selector */}
-                    <div className="rounded-[20px] border border-pink-100/80 bg-pink-50/60 p-5">
-                      <p className="line-clamp-3 text-sm text-pink-800/90">
-                        {item.description ?? 'No story written yet.'}
-                      </p>
+                      {/* Description & Thumbnail Selector */}
+                      <div className="rounded-2xl border border-warm-100 bg-warm-50 p-5">
+                        <p className="line-clamp-3 text-sm text-warm-700">
+                          {item.description ?? 'Belum ada cerita ditulis.'}
+                        </p>
 
-                      {media.length > 0 && (
-                        <div className="mt-5 space-y-3">
-                          <p className="text-xs font-semibold uppercase tracking-[0.32em] text-pink-400">
-                            Choose Cover Photo
-                          </p>
-                          <div className="flex flex-wrap gap-3">
-                            {media.map((option) => {
-                              const isActive = option.path === item.coverPath
-                              const isDisabled = thumbnailPending === item.uuid
-                              return (
-                                <button
-                                  key={option.path}
-                                  type="button"
-                                  disabled={isDisabled}
-                                  onClick={() => handleThumbnailChange(item.uuid, option.path)}
-                                  className={`relative h-16 w-16 overflow-hidden rounded-xl border bg-white shadow transition focus:outline-none focus:ring-2 focus:ring-pink-400 ${
-                                    isActive
-                                      ? 'border-pink-500 ring-2 ring-pink-300'
-                                      : 'border-transparent hover:-translate-y-1'
-                                  } ${isDisabled ? 'cursor-not-allowed opacity-60' : ''}`}
-                                  aria-label="Select thumbnail"
-                                >
-                                  <img
-                                    src={option.url}
-                                    alt="thumbnail option"
-                                    className="h-full w-full object-cover"
-                                  />
-                                  {isActive && (
-                                    <span className="absolute bottom-1 left-1 rounded-full bg-pink-500 px-2 text-[10px] font-semibold uppercase tracking-[0.18em] text-white">
-                                      active
-                                    </span>
-                                  )}
-                                </button>
-                              )
-                            })}
-                            {media.length > 1 && item.coverPath && (
-                              <button
-                                type="button"
-                                disabled={thumbnailPending === item.uuid}
-                                onClick={() => handleThumbnailChange(item.uuid, null)}
-                                className="inline-flex items-center justify-center rounded-xl border border-pink-200 bg-white px-3 text-xs font-semibold uppercase tracking-[0.24em] text-pink-500 transition hover:bg-pink-100 disabled:opacity-60"
-                              >
-                                Reset
-                              </button>
-                            )}
-                            {thumbnailPending === item.uuid && (
-                              <div className="inline-flex items-center gap-2 rounded-xl border border-pink-200 bg-white px-3 py-2 text-xs font-medium text-pink-500">
-                                <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                                Saving...
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                      )}
-
-                      {/* Actions */}
-                      <div className="mt-6 flex flex-wrap items-center justify-between gap-3 text-sm font-medium text-pink-700">
-                        <div className="flex flex-wrap items-center gap-3">
-                          <Link
-                            href={`/spaces/${slug}/timeline/${item.uuid}/edit`}
-                            className="inline-flex items-center gap-2 rounded-full border border-pink-200 px-4 py-1 transition hover:bg-pink-500 hover:text-white"
-                          >
-                            <Edit className="h-4 w-4" />
-                            Edit
-                          </Link>
-                          <button
-                            type="button"
-                            onClick={() => confirmDelete(item)}
-                            className="inline-flex items-center gap-2 rounded-full border border-rose-200 px-4 py-1 text-rose-500 transition hover:bg-rose-500 hover:text-white"
-                          >
-                            <Trash2 className="h-4 w-4" />
-                            Delete
-                          </button>
-                        </div>
                         {media.length > 0 && (
-                          <button
-                            onClick={() => setSelectedItem(item)}
-                            className="inline-flex items-center gap-2 rounded-full border border-pink-200 px-4 py-1 transition hover:bg-pink-500 hover:text-white"
-                          >
-                            <Heart className="h-4 w-4" />
-                            Detail
-                          </button>
+                          <div className="mt-5 space-y-3">
+                            <p className="text-xs font-semibold uppercase tracking-[0.32em] text-warm-400">
+                              Pilih Foto Sampul
+                            </p>
+                            <div className="flex flex-wrap gap-3">
+                              {media.map((option) => {
+                                const isActive = option.path === item.coverPath
+                                const isDisabled = thumbnailPending === item.uuid
+                                return (
+                                  <button
+                                    key={option.path}
+                                    type="button"
+                                    disabled={isDisabled}
+                                    onClick={() => handleThumbnailChange(item.uuid, option.path)}
+                                    className={`relative h-16 w-16 overflow-hidden rounded-xl border bg-white shadow-sm transition focus:outline-none focus:ring-2 focus:ring-brand-400 ${
+                                      isActive
+                                        ? 'border-brand-500 ring-2 ring-brand-200'
+                                        : 'border-warm-100 hover:-translate-y-1'
+                                    } ${isDisabled ? 'cursor-not-allowed opacity-60' : ''}`}
+                                    aria-label="Pilih thumbnail"
+                                  >
+                                    <img
+                                      src={option.url}
+                                      alt="opsi thumbnail"
+                                      className="h-full w-full object-cover"
+                                    />
+                                    {isActive && (
+                                      <span className="absolute bottom-1 left-1 rounded-full bg-brand-500 px-2 text-[10px] font-semibold uppercase tracking-[0.18em] text-white">
+                                        aktif
+                                      </span>
+                                    )}
+                                  </button>
+                                )
+                              })}
+                              {media.length > 1 && item.coverPath && (
+                                <button
+                                  type="button"
+                                  disabled={thumbnailPending === item.uuid}
+                                  onClick={() => handleThumbnailChange(item.uuid, null)}
+                                  className="inline-flex items-center justify-center rounded-xl border border-warm-200 bg-white px-3 text-xs font-semibold uppercase tracking-[0.24em] text-brand-500 transition hover:bg-brand-50 disabled:opacity-60"
+                                >
+                                  Reset
+                                </button>
+                              )}
+                              {thumbnailPending === item.uuid && (
+                                <div className="inline-flex items-center gap-2 rounded-xl border border-warm-200 bg-white px-3 py-2 text-xs font-medium text-brand-500">
+                                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                                  Menyimpan...
+                                </div>
+                              )}
+                            </div>
+                          </div>
                         )}
+
+                        {/* Actions */}
+                        <div className="mt-6 flex flex-wrap items-center justify-between gap-3 text-sm font-medium text-warm-600">
+                          <div className="flex flex-wrap items-center gap-3">
+                            <Link
+                              href={`/spaces/${slug}/timeline/${item.uuid}/edit`}
+                              className="inline-flex items-center gap-2 rounded-full border border-warm-200 px-4 py-1.5 transition-all hover:bg-brand-500 hover:text-white hover:border-brand-500"
+                            >
+                              <Edit className="h-4 w-4" />
+                              Edit
+                            </Link>
+                            <button
+                              type="button"
+                              onClick={() => confirmDelete(item)}
+                              className="inline-flex items-center gap-2 rounded-full border border-warm-200 px-4 py-1.5 text-coral-500 transition-all hover:bg-coral-500 hover:text-white hover:border-coral-500"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                              Hapus
+                            </button>
+                          </div>
+                          {media.length > 0 && (
+                            <button
+                              onClick={() => setSelectedItem(item)}
+                              className="inline-flex items-center gap-2 rounded-full border border-warm-200 px-4 py-1.5 transition-all hover:bg-brand-500 hover:text-white hover:border-brand-500"
+                            >
+                              <Heart className="h-4 w-4" />
+                              Detail
+                            </button>
+                          )}
+                        </div>
                       </div>
                     </div>
-                  </div>
-                </article>
+                  </article>
+                </StaggerItem>
               )
             })}
-          </div>
+          </StaggerContainer>
         )}
       </div>
 
       {/* Detail Modal */}
       {selectedItem && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-warm-900/50 backdrop-blur-sm p-4"
           onClick={() => setSelectedItem(null)}
         >
           <div
@@ -330,20 +338,20 @@ export default function TimelineIndexPage() {
             <button
               type="button"
               onClick={() => setSelectedItem(null)}
-              className="absolute right-4 top-4 rounded-full bg-black/50 p-1 text-white transition hover:bg-black"
+              className="absolute right-4 top-4 rounded-full bg-warm-100 p-2 text-warm-500 transition-colors hover:bg-warm-200 hover:text-warm-700"
             >
               <X className="h-4 w-4" />
             </button>
 
             <div className="flex flex-col gap-8 md:flex-row">
               <div className="flex-1 space-y-4">
-                <h3 className="text-2xl font-semibold text-pink-900">{selectedItem.title}</h3>
-                <p className="flex items-center gap-2 text-sm uppercase tracking-[0.32em] text-pink-400">
+                <h3 className="text-2xl font-semibold text-warm-900">{selectedItem.title}</h3>
+                <p className="flex items-center gap-2 text-sm uppercase tracking-[0.32em] text-brand-400 font-medium">
                   <Calendar className="h-4 w-4" />
                   {formatDate(selectedItem.date)}
                 </p>
-                <p className="whitespace-pre-line text-sm leading-relaxed text-pink-800/90">
-                  {selectedItem.description ?? 'No story written yet.'}
+                <p className="whitespace-pre-line text-sm leading-relaxed text-warm-700">
+                  {selectedItem.description ?? 'Belum ada cerita ditulis.'}
                 </p>
               </div>
               <div className="flex-1">
@@ -355,7 +363,7 @@ export default function TimelineIndexPage() {
                         key={`${selectedItem.uuid}-${index}`}
                         type="button"
                         onClick={() => setPreviewImage(url)}
-                        className="overflow-hidden rounded-2xl border border-pink-100 shadow-sm transition hover:-translate-y-1 hover:shadow-lg"
+                        className="overflow-hidden rounded-2xl border border-warm-100 shadow-sm transition-all hover:-translate-y-1 hover:shadow-lg"
                       >
                         <img
                           src={url}
@@ -375,12 +383,12 @@ export default function TimelineIndexPage() {
       {/* Image Preview Modal */}
       {previewImage && (
         <div
-          className="fixed inset-0 z-[70] flex items-center justify-center bg-black/80 p-4"
+          className="fixed inset-0 z-[70] flex items-center justify-center bg-warm-900/80 backdrop-blur-sm p-4"
           onClick={() => setPreviewImage(null)}
         >
           <img
             src={previewImage}
-            alt="preview"
+            alt="pratinjau"
             className="max-h-[90vh] max-w-[90vw] rounded-3xl object-contain shadow-2xl"
           />
         </div>
@@ -389,34 +397,34 @@ export default function TimelineIndexPage() {
       {/* Delete Confirmation Modal */}
       {pendingDelete && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-warm-900/50 backdrop-blur-sm p-4"
           onClick={() => !deleting && setPendingDelete(null)}
         >
           <div
             className="w-full max-w-md rounded-3xl bg-white p-6 shadow-2xl"
             onClick={(e) => e.stopPropagation()}
           >
-            <h3 className="text-lg font-semibold text-gray-900">
-              Delete &quot;{pendingDelete.title}&quot;?
+            <h3 className="text-lg font-semibold text-warm-900">
+              Hapus &quot;{pendingDelete.title}&quot;?
             </h3>
-            <p className="mt-2 text-sm text-gray-600">
-              This moment will be permanently deleted and cannot be recovered.
+            <p className="mt-2 text-sm text-warm-500">
+              Momen ini akan dihapus secara permanen dan tidak dapat dikembalikan.
             </p>
             <div className="mt-6 flex gap-3">
               <button
                 type="button"
                 onClick={() => !deleting && setPendingDelete(null)}
-                className="flex-1 rounded-xl border border-gray-300 px-4 py-2.5 text-sm font-medium text-gray-700 transition hover:bg-gray-50"
+                className="flex-1 rounded-xl border border-warm-200 px-4 py-2.5 text-sm font-medium text-warm-700 transition-colors hover:bg-warm-50"
               >
-                Cancel
+                Batal
               </button>
               <button
                 type="button"
                 onClick={performDelete}
                 disabled={deleting}
-                className="flex-1 rounded-xl bg-red-500 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-red-600 disabled:opacity-60"
+                className="flex-1 rounded-xl bg-coral-500 px-4 py-2.5 text-sm font-semibold text-white transition-all hover:bg-coral-600 disabled:opacity-60"
               >
-                {deleting ? 'Deleting...' : 'Yes, delete'}
+                {deleting ? 'Menghapus...' : 'Ya, hapus'}
               </button>
             </div>
           </div>

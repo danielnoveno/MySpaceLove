@@ -6,6 +6,7 @@ import Link from 'next/link'
 import AuthenticatedLayout from '@/layouts/AuthenticatedLayout'
 import { useAuth } from '@/contexts/AuthContext'
 import { createClient } from '@/lib/supabase/client'
+import { FadeIn, StaggerContainer, StaggerItem } from '@/components/motion'
 import {
   Calendar,
   Clock,
@@ -14,6 +15,7 @@ import {
   Edit3,
   ArrowLeft,
   PartyPopper,
+  Timer,
 } from 'lucide-react'
 
 type Countdown = {
@@ -64,13 +66,13 @@ function CountdownTimer({ eventDate }: { eventDate: string }) {
   if (!time) return null
 
   return (
-    <div className="mt-2 flex items-center gap-1.5 text-sm font-mono">
-      <Clock className="h-3.5 w-3.5 text-pink-400" />
-      <span className="text-pink-600 font-semibold">
-        {time.days > 0 && <>{time.days}d </>}
-        {time.hours > 0 && <>{time.hours}h </>}
-        {time.minutes > 0 && <>{time.minutes}m </>}
-        <span className={time.days === 0 && time.hours === 0 ? 'text-orange-500' : ''}>
+    <div className="mt-2 flex items-center gap-2 text-sm font-mono">
+      <Clock className="h-3.5 w-3.5 text-brand-400" />
+      <span className="text-brand-600 font-semibold">
+        {time.days > 0 && <>{time.days}h </>}
+        {time.hours > 0 && <>{time.hours}m </>}
+        {time.minutes > 0 && <>{time.minutes}d </>}
+        <span className={time.days === 0 && time.hours === 0 ? 'text-coral-500' : ''}>
           {time.seconds}s
         </span>
       </span>
@@ -117,6 +119,7 @@ export default function CountdownsPage() {
   }
 
   const deleteCountdown = async (id: number) => {
+    if (!confirm('Hapus countdown ini?')) return
     await supabase.from('countdowns').delete().eq('id', id)
     setCountdowns((prev) => prev.filter((c) => c.id !== id))
   }
@@ -132,7 +135,7 @@ export default function CountdownsPage() {
     return (
       <AuthenticatedLayout>
         <div className="flex items-center justify-center min-h-[60vh]">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-pink-500" />
+          <div className="w-12 h-12 border-4 border-brand-200 border-t-brand-500 rounded-full animate-spin" />
         </div>
       </AuthenticatedLayout>
     )
@@ -141,137 +144,143 @@ export default function CountdownsPage() {
   return (
     <AuthenticatedLayout
       header={
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <Link
-              href={`/spaces/${slug}`}
-              className="p-2 rounded-full hover:bg-pink-50 text-gray-600 hover:text-pink-600 transition-colors"
-            >
-              <ArrowLeft className="h-5 w-5" />
-            </Link>
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900">Countdowns</h1>
-              <p className="text-gray-600">Special dates you look forward to</p>
+        <FadeIn>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <Link
+                href={`/spaces/${slug}`}
+                className="p-2 rounded-xl hover:bg-warm-50 text-warm-500 hover:text-warm-700 transition-colors"
+              >
+                <ArrowLeft className="h-5 w-5" />
+              </Link>
+              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-brand-100">
+                <Timer className="h-6 w-6 text-brand-500" />
+              </div>
+              <div>
+                <h1 className="text-2xl font-bold text-warm-900">Countdown</h1>
+                <p className="text-warm-500">Tanggal spesial yang dinantikan</p>
+              </div>
             </div>
+            <Link
+              href={`/spaces/${slug}/countdowns/create`}
+              className="flex items-center gap-2 rounded-full bg-brand-500 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition-all hover:bg-brand-600 hover:shadow-md hover:shadow-brand-500/25 active:scale-[0.98]"
+            >
+              <Plus className="h-4 w-4" />
+              Baru
+            </Link>
           </div>
-          <Link
-            href={`/spaces/${slug}/countdowns/create`}
-            className="flex items-center gap-2 rounded-full bg-gradient-to-r from-pink-500 to-purple-500 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:shadow-md"
-          >
-            <Plus className="h-4 w-4" />
-            New
-          </Link>
-        </div>
+        </FadeIn>
       }
     >
       <div className="max-w-2xl mx-auto">
         {countdowns.length === 0 ? (
-          <div className="text-center py-16">
-            <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-pink-100 text-pink-400 mb-4">
-              <Calendar className="h-10 w-10" />
+          <FadeIn delay={0.1}>
+            <div className="text-center py-16">
+              <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-brand-50 text-brand-400 mb-4">
+                <Calendar className="h-10 w-10" />
+              </div>
+              <h2 className="text-xl font-semibold text-warm-900 mb-2">Belum ada countdown</h2>
+              <p className="text-warm-500 mb-6">
+                Buat countdown pertama Anda ke tanggal spesial!
+              </p>
+              <Link
+                href={`/spaces/${slug}/countdowns/create`}
+                className="inline-flex items-center gap-2 rounded-full bg-brand-500 px-6 py-3 text-sm font-semibold text-white transition-all hover:bg-brand-600 hover:shadow-lg hover:shadow-brand-500/25 active:scale-[0.98]"
+              >
+                <Plus className="h-5 w-5" />
+                Buat Countdown
+              </Link>
             </div>
-            <h2 className="text-xl font-semibold text-gray-900 mb-2">No countdowns yet</h2>
-            <p className="text-gray-500 mb-6">
-              Create your first countdown to a special date!
-            </p>
-            <Link
-              href={`/spaces/${slug}/countdowns/create`}
-              className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-pink-500 to-purple-500 px-6 py-3 text-sm font-semibold text-white shadow-sm transition hover:shadow-md"
-            >
-              <Plus className="h-5 w-5" />
-              Create Countdown
-            </Link>
-          </div>
+          </FadeIn>
         ) : (
-          <div className="space-y-4">
+          <StaggerContainer className="space-y-4">
             {countdowns.map((countdown) => {
               const days = getDaysRemaining(countdown.event_date)
               const isPast = days < 0
               const isToday = days === 0
 
               return (
-                <div
-                  key={countdown.id}
-                  className="rounded-3xl bg-white/80 backdrop-blur p-6 shadow-sm border border-white/70 transition-all hover:shadow-md"
-                >
-                  <div className="flex items-start justify-between">
-                    <div className="flex items-start gap-4">
-                      <div
-                        className={`flex h-14 w-14 items-center justify-center rounded-2xl ${
-                          isPast
-                            ? 'bg-gray-100 text-gray-400'
-                            : isToday
-                            ? 'bg-green-100 text-green-600'
-                            : 'bg-gradient-to-br from-pink-400 to-purple-500 text-white'
-                        }`}
-                      >
-                        {isToday ? (
-                          <PartyPopper className="h-7 w-7" />
-                        ) : (
-                          <Calendar className="h-7 w-7" />
-                        )}
-                      </div>
-                      <div>
-                        <h3 className="text-lg font-semibold text-gray-900">
-                          {countdown.name}
-                        </h3>
-                        <div className="flex items-center gap-2 mt-1">
-                          <Clock className="h-4 w-4 text-gray-400" />
-                          <span className="text-sm text-gray-500">
-                            {new Date(countdown.event_date).toLocaleDateString('en-US', {
-                              weekday: 'long',
-                              year: 'numeric',
-                              month: 'long',
-                              day: 'numeric',
-                            })}
-                          </span>
+                <StaggerItem key={countdown.id}>
+                  <div className="rounded-3xl bg-white border border-warm-100 p-6 transition-all hover:shadow-lg hover:shadow-warm-900/5">
+                    <div className="flex items-start justify-between">
+                      <div className="flex items-start gap-4">
+                        <div
+                          className={`flex h-14 w-14 items-center justify-center rounded-2xl ${
+                            isPast
+                              ? 'bg-warm-100 text-warm-400'
+                              : isToday
+                              ? 'bg-green-100 text-green-600'
+                              : 'bg-brand-500 text-white'
+                          }`}
+                        >
+                          {isToday ? (
+                            <PartyPopper className="h-7 w-7" />
+                          ) : (
+                            <Calendar className="h-7 w-7" />
+                          )}
                         </div>
-                        {countdown.description && (
-                          <p className="text-sm text-gray-600 mt-2">{countdown.description}</p>
-                        )}
+                        <div>
+                          <h3 className="text-lg font-semibold text-warm-900">
+                            {countdown.name}
+                          </h3>
+                          <div className="flex items-center gap-2 mt-1">
+                            <Clock className="h-4 w-4 text-warm-400" />
+                            <span className="text-sm text-warm-500">
+                              {new Date(countdown.event_date).toLocaleDateString('id-ID', {
+                                weekday: 'long',
+                                year: 'numeric',
+                                month: 'long',
+                                day: 'numeric',
+                              })}
+                            </span>
+                          </div>
+                          {countdown.description && (
+                            <p className="text-sm text-warm-500 mt-2">{countdown.description}</p>
+                          )}
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-2">
+                        <Link
+                          href={`/spaces/${slug}/countdowns/${countdown.id}/edit`}
+                          className="p-2 rounded-full text-warm-400 hover:text-brand-600 hover:bg-brand-50 transition-colors"
+                        >
+                          <Edit3 className="h-4 w-4" />
+                        </Link>
+                        <button
+                          onClick={() => deleteCountdown(countdown.id)}
+                          className="p-2 rounded-full text-warm-400 hover:text-coral-600 hover:bg-coral-50 transition-colors"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </button>
                       </div>
                     </div>
 
-                    <div className="flex items-center gap-2">
-                      <Link
-                        href={`/spaces/${slug}/countdowns/${countdown.id}/edit`}
-                        className="p-2 rounded-full text-gray-400 hover:text-pink-600 hover:bg-pink-50 transition-colors"
-                      >
-                        <Edit3 className="h-4 w-4" />
-                      </Link>
-                      <button
-                        onClick={() => deleteCountdown(countdown.id)}
-                        className="p-2 rounded-full text-gray-400 hover:text-red-600 hover:bg-red-50 transition-colors"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </button>
+                    {/* Days Remaining Badge */}
+                    <div className="mt-4">
+                      {isPast ? (
+                        <span className="inline-flex items-center rounded-full bg-warm-100 px-3 py-1 text-sm font-medium text-warm-500">
+                          Lewat
+                        </span>
+                      ) : isToday ? (
+                        <span className="inline-flex items-center rounded-full bg-green-100 px-3 py-1 text-sm font-medium text-green-700">
+                          Hari ini!
+                        </span>
+                      ) : (
+                        <>
+                          <span className="inline-flex items-center rounded-full bg-brand-50 px-3 py-1 text-sm font-medium text-brand-600">
+                            {days} hari lagi
+                          </span>
+                          {/* Live countdown timer */}
+                          <CountdownTimer eventDate={countdown.event_date} />
+                        </>
+                      )}
                     </div>
                   </div>
-
-                  {/* Days Remaining Badge */}
-                  <div className="mt-4">
-                    {isPast ? (
-                      <span className="inline-flex items-center rounded-full bg-gray-100 px-3 py-1 text-sm font-medium text-gray-500">
-                        Passed
-                      </span>
-                    ) : isToday ? (
-                      <span className="inline-flex items-center rounded-full bg-green-100 px-3 py-1 text-sm font-medium text-green-700">
-                        🎉 Today!
-                      </span>
-                    ) : (
-                      <>
-                        <span className="inline-flex items-center rounded-full bg-pink-100 px-3 py-1 text-sm font-medium text-pink-700">
-                          {days} day{days !== 1 ? 's' : ''} remaining
-                        </span>
-                        {/* Live countdown timer */}
-                        <CountdownTimer eventDate={countdown.event_date} />
-                      </>
-                    )}
-                  </div>
-                </div>
+                </StaggerItem>
               )
             })}
-          </div>
+          </StaggerContainer>
         )}
       </div>
     </AuthenticatedLayout>

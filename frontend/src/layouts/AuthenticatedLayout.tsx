@@ -1,13 +1,15 @@
 'use client'
 
-import { ReactNode, useState, useEffect } from 'react'
+import { ReactNode, useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import ApplicationLogo from '@/components/ApplicationLogo'
 import { useAuth } from '@/contexts/AuthContext'
+import { FadeIn, MagneticButton } from '@/components/motion'
 import {
   Bell, LogOut, User, Home, Clock, MessageCircle, Image, Music, Gamepad2, Settings,
   BookOpen, Timer, CalendarHeart, StickyNote, Star, FileText, BookImage, MapPin, Tv, Video, Menu,
+  X, ChevronDown, Heart
 } from 'lucide-react'
 
 type AuthenticatedLayoutProps = {
@@ -20,7 +22,10 @@ export default function AuthenticatedLayout({ children, header }: AuthenticatedL
   const pathname = usePathname()
   const router = useRouter()
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+  const [desktopSidebarOpen, setDesktopSidebarOpen] = useState(true)
   const [notificationCount, setNotificationCount] = useState(0)
+  const [userMenuOpen, setUserMenuOpen] = useState(false)
+  const userMenuRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     const fetchNotifications = async () => {
@@ -35,6 +40,17 @@ export default function AuthenticatedLayout({ children, header }: AuthenticatedL
       }
     }
     fetchNotifications()
+  }, [])
+
+  // Close user menu on outside click
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (userMenuRef.current && !userMenuRef.current.contains(event.target as Node)) {
+        setUserMenuOpen(false)
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [])
 
   const handleSignOut = async () => {
@@ -69,170 +85,227 @@ export default function AuthenticatedLayout({ children, header }: AuthenticatedL
   ]
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-pink-50 via-white to-purple-50">
-      {/* Navigation */}
-      <nav aria-label="Main navigation" className="sticky top-0 z-50 bg-white/80 backdrop-blur-lg border-b border-pink-100 shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between h-16">
-            {/* Logo */}
-            <div className="flex items-center">
-              <Link href="/" className="flex items-center gap-2">
-                <ApplicationLogo className="h-8 w-8 fill-current text-pink-500" />
-                <span className="font-bold text-pink-600 hidden sm:block">MySpaceLove</span>
+    <div className="min-h-screen bg-brand-50 flex">
+      {/* Desktop Sidebar */}
+      <aside
+        className={`hidden lg:flex flex-col fixed inset-y-0 left-0 z-40 bg-white border-r border-warm-100 transition-all duration-300 ${
+          desktopSidebarOpen ? 'w-64' : 'w-20'
+        }`}
+      >
+        {/* Logo */}
+        <div className="flex items-center justify-between px-4 h-16 border-b border-warm-100">
+          <Link href="/" className="flex items-center gap-3">
+            <ApplicationLogo className="h-8 w-8 text-brand-500 shrink-0" />
+            {desktopSidebarOpen && (
+              <span className="font-bold text-warm-800">MySpaceLove</span>
+            )}
+          </Link>
+          <button
+            onClick={() => setDesktopSidebarOpen(!desktopSidebarOpen)}
+            className="p-2 text-warm-400 hover:text-warm-600 hover:bg-warm-50 rounded-xl transition-colors"
+            aria-label={desktopSidebarOpen ? 'Tutup sidebar' : 'Buka sidebar'}
+          >
+            <ChevronDown className={`h-4 w-4 transition-transform ${desktopSidebarOpen ? 'rotate-90' : ''}`} />
+          </button>
+        </div>
+
+        {/* Navigation */}
+        <nav className="flex-1 overflow-y-auto py-4 px-3 space-y-1" aria-label="Main navigation">
+          {navItems.map((item) => {
+            const Icon = item.icon
+            const isActive = pathname === item.href || pathname.startsWith(item.href + '/')
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all group ${
+                  isActive
+                    ? 'bg-brand-50 text-brand-600'
+                    : 'text-warm-600 hover:bg-warm-50 hover:text-warm-800'
+                }`}
+                title={!desktopSidebarOpen ? item.label : undefined}
+              >
+                <Icon className={`h-5 w-5 shrink-0 transition-colors ${
+                  isActive ? 'text-brand-500' : 'text-warm-400 group-hover:text-warm-600'
+                }`} />
+                {desktopSidebarOpen && <span>{item.label}</span>}
               </Link>
+            )
+          })}
+        </nav>
+
+        {/* User section */}
+        <div className="border-t border-warm-100 p-3">
+          <div className="relative" ref={userMenuRef}>
+            <button
+              onClick={() => setUserMenuOpen(!userMenuOpen)}
+              className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-warm-600 hover:bg-warm-50 hover:text-warm-800 transition-colors"
+              aria-label="Menu pengguna"
+              aria-expanded={userMenuOpen}
+            >
+              <div className="h-8 w-8 rounded-full bg-brand-100 flex items-center justify-center shrink-0">
+                <User className="h-4 w-4 text-brand-600" />
+              </div>
+              {desktopSidebarOpen && (
+                <>
+                  <span className="flex-1 text-left truncate">{user?.email?.split('@')[0]}</span>
+                  <ChevronDown className={`h-4 w-4 transition-transform ${userMenuOpen ? 'rotate-180' : ''}`} />
+                </>
+              )}
+            </button>
+
+            {/* User Dropdown */}
+            {userMenuOpen && (
+              <div className="absolute bottom-full left-0 w-full mb-2 bg-white rounded-xl shadow-xl border border-warm-100 py-1 z-50">
+                <Link
+                  href="/profile"
+                  className="flex items-center gap-3 px-4 py-2.5 text-sm text-warm-700 hover:bg-warm-50 hover:text-warm-900 transition-colors"
+                  onClick={() => setUserMenuOpen(false)}
+                >
+                  <User className="h-4 w-4" />
+                  Profile
+                </Link>
+                <Link
+                  href="/settings"
+                  className="flex items-center gap-3 px-4 py-2.5 text-sm text-warm-700 hover:bg-warm-50 hover:text-warm-900 transition-colors"
+                  onClick={() => setUserMenuOpen(false)}
+                >
+                  <Settings className="h-4 w-4" />
+                  Pengaturan
+                </Link>
+                <hr className="my-1 border-warm-100" />
+                <button
+                  onClick={() => {
+                    setUserMenuOpen(false)
+                    handleSignOut()
+                  }}
+                  className="flex items-center gap-3 w-full px-4 py-2.5 text-sm text-coral-600 hover:bg-coral-50 transition-colors"
+                >
+                  <LogOut className="h-4 w-4" />
+                  Keluar
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      </aside>
+
+      {/* Main Content Area */}
+      <div className={`flex-1 flex flex-col min-h-screen transition-all duration-300 ${
+        desktopSidebarOpen ? 'lg:ml-64' : 'lg:ml-20'
+      }`}>
+        {/* Top Navigation Bar */}
+        <header className="sticky top-0 z-30 bg-white/80 backdrop-blur-lg border-b border-warm-100" role="banner">
+          <div className="flex items-center justify-between h-16 px-4 sm:px-6 lg:px-8">
+            {/* Mobile Logo */}
+            <div className="flex items-center gap-2 lg:hidden">
+              <ApplicationLogo className="h-8 w-8 text-brand-500" />
+              <span className="font-bold text-warm-800">MySpaceLove</span>
             </div>
 
-            {/* Desktop Navigation */}
-            <div className="hidden md:flex items-center gap-1">
-              {navItems.map((item) => {
-                const Icon = item.icon
-                const isActive = pathname === item.href || pathname.startsWith(item.href + '/')
-                return (
-                  <Link
-                    key={item.href}
-                    href={item.href}
-                    className={`flex items-center gap-2 px-3 py-2 rounded-full text-sm font-medium transition-all ${
-                      isActive
-                        ? 'bg-pink-100 text-pink-700'
-                        : 'text-gray-600 hover:bg-pink-50 hover:text-pink-600'
-                    }`}
-                  >
-                    <Icon className="h-4 w-4" />
-                    {item.label}
-                  </Link>
-                )
-              })}
-            </div>
+            {/* Spacer for desktop */}
+            <div className="hidden lg:block" />
 
-            {/* Right side - Profile & Notifications */}
+            {/* Right side */}
             <div className="flex items-center gap-2">
               <Link
                 href="/notifications"
-                className="relative p-2 text-gray-600 hover:text-pink-600 hover:bg-pink-50 rounded-full transition-colors"
-                aria-label={`Notifications${notificationCount > 0 ? `, ${notificationCount} unread` : ''}`}
+                className="relative p-2.5 text-warm-500 hover:text-warm-700 hover:bg-warm-50 rounded-xl transition-colors"
+                aria-label={`Notifikasi${notificationCount > 0 ? `, ${notificationCount} belum dibaca` : ''}`}
               >
                 <Bell className="h-5 w-5" />
                 {notificationCount > 0 && (
-                  <span className="absolute -top-0.5 -right-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-pink-500 px-1 text-[10px] font-bold text-white">
+                  <span className="absolute top-1.5 right-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-coral-500 px-1 text-[10px] font-bold text-white">
                     {notificationCount > 99 ? '99+' : notificationCount}
                   </span>
                 )}
               </Link>
 
-              <div className="relative group">
-                <button className="flex items-center gap-2 p-2 text-gray-600 hover:text-pink-600 hover:bg-pink-50 rounded-full transition-colors" aria-label="User menu" aria-haspopup="true">
-                  <User className="h-5 w-5" />
-                  <span className="hidden sm:block text-sm font-medium">{user?.email?.split('@')[0]}</span>
-                </button>
-
-                {/* Dropdown */}
-                <div className="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-xl ring-1 ring-black ring-opacity-5 py-1 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all">
-                  <Link
-                    href="/profile"
-                    className="block px-4 py-2 text-sm text-gray-700 hover:bg-pink-50 hover:text-pink-600 transition-colors"
-                  >
-                    Profile
-                  </Link>
-                  <button
-                    onClick={handleSignOut}
-                    className="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors"
-                  >
-                    Log Out
-                  </button>
-                </div>
-              </div>
-
               {/* Mobile menu button */}
               <button
                 onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-                className="md:hidden p-2 text-gray-600 hover:text-pink-600 hover:bg-pink-50 rounded-full transition-colors"
-                aria-label={mobileMenuOpen ? 'Close navigation menu' : 'Open navigation menu'}
+                className="lg:hidden p-2.5 text-warm-500 hover:text-warm-700 hover:bg-warm-50 rounded-xl transition-colors"
+                aria-label={mobileMenuOpen ? 'Tutup menu' : 'Buka menu'}
                 aria-expanded={mobileMenuOpen}
-                aria-controls="mobile-nav"
               >
-                <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  {mobileMenuOpen ? (
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                  ) : (
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-                  )}
-                </svg>
+                {mobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
               </button>
             </div>
           </div>
-        </div>
 
-        {/* Mobile Navigation */}
-        {mobileMenuOpen && (
-          <div id="mobile-nav" className="md:hidden border-t border-pink-100 bg-white/95 backdrop-blur">
-            <div className="px-2 pt-2 pb-3 space-y-1">
-              {navItems.map((item) => {
-                const Icon = item.icon
-                const isActive = pathname === item.href || pathname.startsWith(item.href + '/')
-                return (
-                  <Link
-                    key={item.href}
-                    href={item.href}
-                    onClick={() => setMobileMenuOpen(false)}
-                    className={`flex items-center gap-3 px-3 py-2 rounded-lg text-base font-medium transition-colors ${
-                      isActive
-                        ? 'bg-pink-100 text-pink-700'
-                        : 'text-gray-600 hover:bg-pink-50 hover:text-pink-600'
-                    }`}
-                  >
-                    <Icon className="h-5 w-5" />
-                    {item.label}
-                  </Link>
-                )
-              })}
+          {/* Mobile Navigation */}
+          {mobileMenuOpen && (
+            <div id="mobile-nav" className="lg:hidden border-t border-warm-100 bg-white/95 backdrop-blur">
+              <div className="px-4 pt-4 pb-6 space-y-1 max-h-[70vh] overflow-y-auto">
+                {navItems.map((item) => {
+                  const Icon = item.icon
+                  const isActive = pathname === item.href || pathname.startsWith(item.href + '/')
+                  return (
+                    <Link
+                      key={item.href}
+                      href={item.href}
+                      onClick={() => setMobileMenuOpen(false)}
+                      className={`flex items-center gap-3 px-4 py-3 rounded-xl text-base font-medium transition-colors ${
+                        isActive
+                          ? 'bg-brand-50 text-brand-600'
+                          : 'text-warm-600 hover:bg-warm-50 hover:text-warm-800'
+                      }`}
+                    >
+                      <Icon className={`h-5 w-5 ${isActive ? 'text-brand-500' : 'text-warm-400'}`} />
+                      {item.label}
+                    </Link>
+                  )
+                })}
+              </div>
+            </div>
+          )}
+        </header>
+
+        {/* Header Slot */}
+        {header && (
+          <div className="bg-white border-b border-warm-100">
+            <div className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
+              {header}
             </div>
           </div>
         )}
-      </nav>
 
-      {/* Header */}
-      {header && (
-        <header role="banner" className="bg-white/60 backdrop-blur-md shadow-sm">
-          <div className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
-            {header}
-          </div>
-        </header>
-      )}
+        {/* Main Content */}
+        <main id="main-content" className="flex-1 max-w-7xl mx-auto w-full py-8 px-4 sm:px-6 lg:px-8 min-h-[calc(100vh-4rem)] pb-24 lg:pb-8">
+          {children}
+        </main>
 
-      {/* Main Content */}
-      <main id="main-content" className="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8 min-h-[calc(100vh-12rem)] pb-20 md:pb-0">
-        {children}
-      </main>
-
-      {/* Footer */}
-      <footer className="border-t border-pink-100 bg-white/80 backdrop-blur py-4 text-center text-sm text-gray-600">
-        <span className="font-medium text-pink-500">MySpaceLove</span> ©{' '}
-        {new Date().getFullYear()} • Made with ❤️
-      </footer>
+        {/* Footer */}
+        <footer className="border-t border-warm-100 bg-white/80 py-4 text-center text-sm text-warm-500">
+          <span className="font-medium text-brand-500">MySpaceLove</span> ©{' '}
+          {new Date().getFullYear()} • Dibuat dengan{' '}
+          <Heart className="inline h-3.5 w-3.5 text-coral-500 fill-coral-500" />
+        </footer>
+      </div>
 
       {/* Mobile Bottom Navigation */}
       {spaceSlug && (
-        <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-pink-100 safe-area-inset-bottom">
-          <div className="flex items-center justify-around h-16">
-            <Link href={`/spaces/${spaceSlug}`} className={`flex flex-col items-center gap-1 px-3 py-2 ${pathname === `/spaces/${spaceSlug}` ? 'text-pink-600' : 'text-gray-500'}`}>
+        <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-lg border-t border-warm-100 safe-area-inset-bottom" aria-label="Bottom navigation">
+          <div className="flex items-center justify-around h-16 px-2">
+            <Link href={`/spaces/${spaceSlug}`} className={`flex flex-col items-center gap-1 px-3 py-2 rounded-xl transition-colors ${pathname === `/spaces/${spaceSlug}` ? 'text-brand-600' : 'text-warm-500'}`}>
               <Home className="h-5 w-5" />
-              <span className="text-xs font-medium">Home</span>
+              <span className="text-[10px] font-medium">Home</span>
             </Link>
-            <Link href={`/spaces/${spaceSlug}/timeline`} className={`flex flex-col items-center gap-1 px-3 py-2 ${pathname.startsWith(`/spaces/${spaceSlug}/timeline`) ? 'text-pink-600' : 'text-gray-500'}`}>
+            <Link href={`/spaces/${spaceSlug}/timeline`} className={`flex flex-col items-center gap-1 px-3 py-2 rounded-xl transition-colors ${pathname.startsWith(`/spaces/${spaceSlug}/timeline`) ? 'text-brand-600' : 'text-warm-500'}`}>
               <Clock className="h-5 w-5" />
-              <span className="text-xs font-medium">Timeline</span>
+              <span className="text-[10px] font-medium">Timeline</span>
             </Link>
-            <Link href={`/spaces/${spaceSlug}/messages`} className={`flex flex-col items-center gap-1 px-3 py-2 ${pathname.startsWith(`/spaces/${spaceSlug}/messages`) ? 'text-pink-600' : 'text-gray-500'}`}>
+            <Link href={`/spaces/${spaceSlug}/messages`} className={`flex flex-col items-center gap-1 px-3 py-2 rounded-xl transition-colors ${pathname.startsWith(`/spaces/${spaceSlug}/messages`) ? 'text-brand-600' : 'text-warm-500'}`}>
               <MessageCircle className="h-5 w-5" />
-              <span className="text-xs font-medium">Chat</span>
+              <span className="text-[10px] font-medium">Chat</span>
             </Link>
-            <Link href={`/spaces/${spaceSlug}/spotify`} className={`flex flex-col items-center gap-1 px-3 py-2 ${pathname.startsWith(`/spaces/${spaceSlug}/spotify`) ? 'text-pink-600' : 'text-gray-500'}`}>
+            <Link href={`/spaces/${spaceSlug}/spotify`} className={`flex flex-col items-center gap-1 px-3 py-2 rounded-xl transition-colors ${pathname.startsWith(`/spaces/${spaceSlug}/spotify`) ? 'text-brand-600' : 'text-warm-500'}`}>
               <Music className="h-5 w-5" />
-              <span className="text-xs font-medium">Music</span>
+              <span className="text-[10px] font-medium">Music</span>
             </Link>
-            <button onClick={() => setMobileMenuOpen(!mobileMenuOpen)} className="flex flex-col items-center gap-1 px-3 py-2 text-gray-500">
+            <button onClick={() => setMobileMenuOpen(!mobileMenuOpen)} className="flex flex-col items-center gap-1 px-3 py-2 text-warm-500">
               <Menu className="h-5 w-5" />
-              <span className="text-xs font-medium">More</span>
+              <span className="text-[10px] font-medium">More</span>
             </button>
           </div>
         </nav>

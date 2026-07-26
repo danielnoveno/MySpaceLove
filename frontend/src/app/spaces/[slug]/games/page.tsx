@@ -6,13 +6,15 @@ import Link from 'next/link'
 import AuthenticatedLayout from '@/layouts/AuthenticatedLayout'
 import { useAuth } from '@/contexts/AuthContext'
 import { createClient } from '@/lib/supabase/client'
-import { Gamepad2, Trophy, Play, ArrowLeft } from 'lucide-react'
+import { FadeIn, StaggerContainer, StaggerItem } from '@/components/motion'
+import { Gamepad2, Trophy, Play, ArrowLeft, Zap, Target, Brain, Hash, Grid3X3, Puzzle } from 'lucide-react'
 
 type Game = {
   slug: string
   name: string
   description: string
-  icon: string
+  icon: React.ReactNode
+  color: string
 }
 
 type Score = {
@@ -27,38 +29,44 @@ const GAMES: Game[] = [
   {
     slug: 'tetris',
     name: 'Tetris',
-    description: 'Classic block-stacking puzzle game',
-    icon: '🧱',
+    description: 'Susun balok klasik yang seru',
+    icon: <Grid3X3 className="h-6 w-6" />,
+    color: 'bg-brand-50 text-brand-500',
   },
   {
     slug: 'snake',
     name: 'Snake',
-    description: 'Guide the snake to eat food and grow',
-    icon: '🐍',
+    description: 'Ular lapar yang harus kamu kendalikan',
+    icon: <Zap className="h-6 w-6" />,
+    color: 'bg-coral-50 text-coral-500',
   },
   {
     slug: 'memory',
     name: 'Memory Match',
-    description: 'Find matching pairs of cards',
-    icon: '🧠',
+    description: 'Temukan pasangan kartu yang cocok',
+    icon: <Brain className="h-6 w-6" />,
+    color: 'bg-warm-100 text-warm-600',
   },
   {
     slug: 'tic-tac-toe',
     name: 'Tic Tac Toe',
-    description: 'Classic X and O strategy game',
-    icon: '⭕',
+    description: 'Permainan strategi X dan O',
+    icon: <Target className="h-6 w-6" />,
+    color: 'bg-brand-50 text-brand-400',
   },
   {
     slug: '2048',
     name: '2048',
-    description: 'Slide tiles to reach 2048',
-    icon: '🔢',
+    description: 'Geser angka untuk mencapai 2048',
+    icon: <Hash className="h-6 w-6" />,
+    color: 'bg-coral-50 text-coral-400',
   },
   {
     slug: 'sudoku',
     name: 'Sudoku',
-    description: 'Fill the grid with numbers 1-9',
-    icon: '📊',
+    description: 'Isi grid dengan angka 1-9',
+    icon: <Puzzle className="h-6 w-6" />,
+    color: 'bg-warm-100 text-warm-500',
   },
 ]
 
@@ -97,7 +105,7 @@ export default function GamesPage() {
     return (
       <AuthenticatedLayout>
         <div className="flex items-center justify-center min-h-[60vh]">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-pink-500" />
+          <div className="w-12 h-12 border-4 border-brand-200 border-t-brand-500 rounded-full animate-spin" />
         </div>
       </AuthenticatedLayout>
     )
@@ -106,75 +114,78 @@ export default function GamesPage() {
   return (
     <AuthenticatedLayout
       header={
-        <div className="flex items-center gap-3">
-          <Link
-            href={`/spaces/${slug}`}
-            className="p-2 rounded-full hover:bg-pink-50 text-gray-600 hover:text-pink-600 transition-colors"
-          >
-            <ArrowLeft className="h-5 w-5" />
-          </Link>
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900">Games</h1>
-            <p className="text-gray-600">Play fun games together</p>
+        <FadeIn>
+          <div className="flex items-center gap-3">
+            <Link
+              href={`/spaces/${slug}`}
+              className="p-2 rounded-xl hover:bg-warm-50 text-warm-500 hover:text-warm-700 transition-colors"
+            >
+              <ArrowLeft className="h-5 w-5" />
+            </Link>
+            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-brand-100">
+              <Gamepad2 className="h-6 w-6 text-brand-500" />
+            </div>
+            <div>
+              <h1 className="text-2xl font-bold text-warm-900">Permainan</h1>
+              <p className="text-warm-500">Main seru bersama pasangan</p>
+            </div>
           </div>
-        </div>
+        </FadeIn>
       }
     >
-      {/* Games Grid */}
-      <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+      <StaggerContainer className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
         {GAMES.map((game) => {
           const topScores = getTopScores(game.slug)
           return (
-            <div
-              key={game.slug}
-              className="group rounded-3xl bg-white/80 backdrop-blur p-6 shadow-sm border border-white/70 transition-all hover:shadow-lg hover:-translate-y-1"
-            >
-              <div className="flex items-start justify-between">
-                <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-pink-100 to-purple-100 text-3xl">
-                  {game.icon}
+            <StaggerItem key={game.slug}>
+              <div className="group rounded-3xl bg-white border border-warm-100 p-6 transition-all hover:shadow-xl hover:shadow-warm-900/5 hover:-translate-y-1">
+                <div className="flex items-start justify-between">
+                  <div className={`flex h-14 w-14 items-center justify-center rounded-2xl ${game.color} transition-transform group-hover:scale-110`}>
+                    {game.icon}
+                  </div>
+                  <Link
+                    href={`/spaces/${slug}/games/${game.slug}`}
+                    className="flex items-center gap-1.5 rounded-full bg-brand-500 px-4 py-2 text-sm font-semibold text-white shadow-sm transition-all hover:bg-brand-600 hover:shadow-md hover:shadow-brand-500/25 active:scale-[0.98]"
+                  >
+                    <Play className="h-4 w-4" />
+                    Main
+                  </Link>
                 </div>
-                <Link
-                  href={`/spaces/${slug}/games/${game.slug}`}
-                  className="flex items-center gap-1 rounded-full bg-gradient-to-br from-pink-500 to-purple-500 px-4 py-2 text-sm font-medium text-white shadow-sm transition-all hover:shadow-md"
-                >
-                  <Play className="h-4 w-4" />
-                  Play
-                </Link>
+
+                <h3 className="mt-4 text-lg font-semibold text-warm-900 group-hover:text-brand-600 transition-colors">
+                  {game.name}
+                </h3>
+                <p className="mt-1 text-sm text-warm-500">{game.description}</p>
+
+                {/* Leaderboard */}
+                {topScores.length > 0 && (
+                  <div className="mt-4 border-t border-warm-100 pt-4">
+                    <div className="flex items-center gap-2 mb-2">
+                      <Trophy className="h-4 w-4 text-coral-400" />
+                      <span className="text-xs font-medium text-warm-400 uppercase tracking-wide">
+                        Skor Tertinggi
+                      </span>
+                    </div>
+                    <div className="space-y-1">
+                      {topScores.map((score, idx) => (
+                        <div
+                          key={score.id}
+                          className="flex items-center justify-between text-sm"
+                        >
+                          <span className="text-warm-600">
+                            {idx + 1}. {score.user_id === user?.id ? 'Anda' : 'Pasangan'}
+                          </span>
+                          <span className="font-medium text-brand-500">{score.score}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
-
-              <h3 className="mt-4 text-lg font-semibold text-gray-900 group-hover:text-pink-600 transition-colors">
-                {game.name}
-              </h3>
-              <p className="mt-1 text-sm text-gray-600">{game.description}</p>
-
-              {/* Leaderboard */}
-              {topScores.length > 0 && (
-                <div className="mt-4 border-t border-pink-50 pt-4">
-                  <div className="flex items-center gap-2 mb-2">
-                    <Trophy className="h-4 w-4 text-yellow-500" />
-                    <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">
-                      Top Scores
-                    </span>
-                  </div>
-                  <div className="space-y-1">
-                    {topScores.map((score, idx) => (
-                      <div
-                        key={score.id}
-                        className="flex items-center justify-between text-sm"
-                      >
-                        <span className="text-gray-600">
-                          {idx + 1}. {score.user_id === user?.id ? 'You' : 'Partner'}
-                        </span>
-                        <span className="font-medium text-pink-600">{score.score}</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
+            </StaggerItem>
           )
         })}
-      </div>
+      </StaggerContainer>
     </AuthenticatedLayout>
   )
 }

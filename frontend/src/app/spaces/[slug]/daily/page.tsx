@@ -6,12 +6,14 @@ import Link from 'next/link'
 import AuthenticatedLayout from '@/layouts/AuthenticatedLayout'
 import { useAuth } from '@/contexts/AuthContext'
 import { createClient } from '@/lib/supabase/client'
+import { FadeIn, StaggerContainer, StaggerItem } from '@/components/motion'
 import {
   Heart,
   RefreshCw,
   ArrowLeft,
   Sparkles,
   Calendar,
+  CalendarHeart,
 } from 'lucide-react'
 
 type DailyMessage = {
@@ -23,26 +25,26 @@ type DailyMessage = {
 }
 
 const LOVE_MESSAGES = [
-  "You are the best thing that's ever happened to me.",
-  "Every moment with you feels like a beautiful dream.",
-  "I fall in love with you more every single day.",
-  "Your smile is my favorite sight in the world.",
-  "I'm so grateful to have you in my life.",
-  "You make my heart skip a beat, every time.",
-  "Life is better with you by my side.",
-  "You are my sun, my moon, and all my stars.",
-  "I love you more than words can express.",
-  "You are my person, today and always.",
-  "Being with you is my favorite adventure.",
-  "Your love is the greatest gift I've ever received.",
-  "I cherish every memory we create together.",
-  "You make ordinary moments extraordinary.",
-  "My heart is yours, now and forever.",
-  "I love the way you love me.",
-  "You are my happy place.",
-  "Together is my favorite place to be.",
-  "You are the reason I believe in love.",
-  "I would choose you again and again.",
+  "Kamu adalah hal terbaik yang pernah terjadi dalam hidupku.",
+  "Setiap momen bersamamu terasa seperti mimpi indah.",
+  "Aku jatuh cinta padamu lebih banyak setiap hari.",
+  "Senyummu adalah pemandangan favoritku di dunia.",
+  "Aku sangat bersyukur memilikimu dalam hidupku.",
+  "Kamu membuat hatiku berdebar, setiap waktu.",
+  "Hidup lebih indah denganmu di sisiku.",
+  "Kamu adalah matahari, bulanku, dan semua bintangku.",
+  "Aku mencintaimu lebih dari kata-kata bisa ungkapkan.",
+  "Kamu adalah orangku, hari ini dan selamanya.",
+  "Bersamamu adalah petualangan favoritku.",
+  "Cintamu adalah hadiah terbesar yang pernah kuterima.",
+  "Aku menghargai setiap kenangan yang kita ciptakan bersama.",
+  "Kamu membuat momen biasa menjadi luar biasa.",
+  "Hatiku milikmu, sekarang dan selamanya.",
+  "Aku suka cara kamu mencintaiku.",
+  "Kamu adalah tempat bahagiaku.",
+  "Bersama adalah tempat favoritku.",
+  "Kamu adalah alasan aku percaya pada cinta.",
+  "Aku akan memilihmu lagi dan lagi.",
 ]
 
 export default function DailyPage() {
@@ -133,7 +135,7 @@ export default function DailyPage() {
     return (
       <AuthenticatedLayout>
         <div className="flex items-center justify-center min-h-[60vh]">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-pink-500" />
+          <div className="w-12 h-12 border-4 border-brand-200 border-t-brand-500 rounded-full animate-spin" />
         </div>
       </AuthenticatedLayout>
     )
@@ -142,97 +144,105 @@ export default function DailyPage() {
   return (
     <AuthenticatedLayout
       header={
-        <div className="flex items-center gap-3">
-          <Link
-            href={`/spaces/${slug}`}
-            className="p-2 rounded-full hover:bg-pink-50 text-gray-600 hover:text-pink-600 transition-colors"
-          >
-            <ArrowLeft className="h-5 w-5" />
-          </Link>
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900">Daily Love Messages</h1>
-            <p className="text-gray-600">A daily dose of love and appreciation</p>
+        <FadeIn>
+          <div className="flex items-center gap-3">
+            <Link
+              href={`/spaces/${slug}`}
+              className="p-2 rounded-xl hover:bg-warm-50 text-warm-500 hover:text-warm-700 transition-colors"
+            >
+              <ArrowLeft className="h-5 w-5" />
+            </Link>
+            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-brand-100">
+              <CalendarHeart className="h-6 w-6 text-brand-500" />
+            </div>
+            <div>
+              <h1 className="text-2xl font-bold text-warm-900">Catatan Harian Cinta</h1>
+              <p className="text-warm-500">Dosis harian cinta dan apresiasi</p>
+            </div>
           </div>
-        </div>
+        </FadeIn>
       }
     >
       <div className="max-w-2xl mx-auto space-y-8">
         {/* Today's Message */}
-        <div className="rounded-3xl bg-gradient-to-br from-pink-500 to-purple-600 p-8 text-white shadow-lg">
-          <div className="flex items-center gap-2 mb-4">
-            <Sparkles className="h-5 w-5 text-pink-200" />
-            <span className="text-sm font-medium text-pink-200">
-              {new Date().toLocaleDateString('en-US', {
-                weekday: 'long',
-                month: 'long',
-                day: 'numeric',
-              })}
-            </span>
+        <FadeIn delay={0.1}>
+          <div className="rounded-3xl bg-gradient-to-br from-brand-500 to-coral-500 p-8 text-white shadow-lg shadow-brand-500/25">
+            <div className="flex items-center gap-2 mb-4">
+              <Sparkles className="h-5 w-5 text-white/70" />
+              <span className="text-sm font-medium text-white/80">
+                {new Date().toLocaleDateString('id-ID', {
+                  weekday: 'long',
+                  month: 'long',
+                  day: 'numeric',
+                })}
+              </span>
+            </div>
+
+            {todayMessage ? (
+              <div>
+                <p className="text-xl font-medium leading-relaxed whitespace-pre-wrap">
+                  &ldquo;{todayMessage.message}&rdquo;
+                </p>
+                <p className="mt-4 text-sm text-white/70">
+                  — {todayMessage.author_id === user?.id ? 'Anda' : 'Pasangan Anda'}
+                </p>
+              </div>
+            ) : (
+              <div className="text-center py-4">
+                <Heart className="h-12 w-12 text-white/50 mx-auto mb-3" />
+                <p className="text-lg text-white/90">Belum ada pesan untuk hari ini</p>
+                <p className="text-sm text-white/70 mt-1">
+                  Buat pesan cinta untuk mencerahkan hari pasangan Anda!
+                </p>
+              </div>
+            )}
+
+            <button
+              onClick={generateMessage}
+              disabled={generating}
+              className="mt-6 flex items-center gap-2 rounded-full bg-white/20 backdrop-blur px-6 py-3 text-sm font-semibold text-white transition-all hover:bg-white/30 disabled:opacity-50 active:scale-[0.98]"
+            >
+              <RefreshCw className={`h-4 w-4 ${generating ? 'animate-spin' : ''}`} />
+              {generating ? 'Membuat...' : todayMessage ? 'Buat Pesan Baru' : 'Buat Pesan'}
+            </button>
           </div>
-
-          {todayMessage ? (
-            <div>
-              <p className="text-xl font-medium leading-relaxed whitespace-pre-wrap">
-                &ldquo;{todayMessage.message}&rdquo;
-              </p>
-              <p className="mt-4 text-sm text-pink-200">
-                — {todayMessage.author_id === user?.id ? 'You' : 'Your partner'}
-              </p>
-            </div>
-          ) : (
-            <div className="text-center py-4">
-              <Heart className="h-12 w-12 text-pink-200 mx-auto mb-3" />
-              <p className="text-lg text-pink-100">No message for today yet</p>
-              <p className="text-sm text-pink-200 mt-1">
-                Generate a love message to brighten your partner&apos;s day!
-              </p>
-            </div>
-          )}
-
-          <button
-            onClick={generateMessage}
-            disabled={generating}
-            className="mt-6 flex items-center gap-2 rounded-full bg-white/20 backdrop-blur px-6 py-3 text-sm font-semibold text-white transition hover:bg-white/30 disabled:opacity-50"
-          >
-            <RefreshCw className={`h-4 w-4 ${generating ? 'animate-spin' : ''}`} />
-            {generating ? 'Generating...' : todayMessage ? 'Generate New Message' : 'Generate Message'}
-          </button>
-        </div>
+        </FadeIn>
 
         {/* History */}
-        <div>
-          <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
-            <Calendar className="h-5 w-5 text-pink-500" />
-            Past Messages
-          </h2>
+        <FadeIn delay={0.2}>
+          <div>
+            <h2 className="text-lg font-semibold text-warm-900 mb-4 flex items-center gap-2">
+              <Calendar className="h-5 w-5 text-brand-500" />
+              Pesan Sebelumnya
+            </h2>
 
-          {history.length === 0 ? (
-            <p className="text-gray-500 text-center py-8">No messages yet</p>
-          ) : (
-            <div className="space-y-3">
-              {history.map((msg) => (
-                <div
-                  key={msg.id}
-                  className="rounded-2xl bg-white/80 backdrop-blur p-4 shadow-sm border border-white/70"
-                >
-                  <p className="text-gray-700 whitespace-pre-wrap">{msg.message}</p>
-                  <div className="flex items-center justify-between mt-3">
-                    <span className="text-xs text-gray-400">
-                      {new Date(msg.created_at).toLocaleDateString('en-US', {
-                        month: 'short',
-                        day: 'numeric',
-                        year: 'numeric',
-                      })}
-                    </span>
-                    <span className="text-xs text-pink-500">
-                      {msg.author_id === user?.id ? 'From you' : 'From partner'}
-                    </span>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
+            {history.length === 0 ? (
+              <p className="text-warm-500 text-center py-8">Belum ada pesan</p>
+            ) : (
+              <StaggerContainer className="space-y-3">
+                {history.map((msg) => (
+                  <StaggerItem key={msg.id}>
+                    <div className="rounded-2xl bg-white border border-warm-100 p-4 shadow-sm">
+                      <p className="text-warm-700 whitespace-pre-wrap">{msg.message}</p>
+                      <div className="flex items-center justify-between mt-3">
+                        <span className="text-xs text-warm-400">
+                          {new Date(msg.created_at).toLocaleDateString('id-ID', {
+                            day: 'numeric',
+                            month: 'long',
+                            year: 'numeric',
+                          })}
+                        </span>
+                        <span className="text-xs text-brand-500">
+                          {msg.author_id === user?.id ? 'Dari Anda' : 'Dari Pasangan'}
+                        </span>
+                      </div>
+                    </div>
+                  </StaggerItem>
+                ))}
+              </StaggerContainer>
+            )}
+          </div>
+        </FadeIn>
       </div>
     </AuthenticatedLayout>
   )

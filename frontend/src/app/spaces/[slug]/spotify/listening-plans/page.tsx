@@ -157,7 +157,7 @@ export default function ListeningPlansPage() {
     return (
       <AuthenticatedLayout>
         <div className="flex items-center justify-center min-h-[60vh]">
-          <Loader2 className="h-12 w-12 text-pink-500 animate-spin" />
+          <Loader2 className="h-12 w-12 text-brand-500 animate-spin" />
         </div>
       </AuthenticatedLayout>
     )
@@ -168,13 +168,13 @@ export default function ListeningPlansPage() {
       header={
         <div className="flex items-center justify-between">
           <div>
-            <p className="text-xs uppercase tracking-[0.4em] text-pink-400">Spotify</p>
-            <h1 className="text-2xl font-bold text-gray-900">Listening Plans</h1>
-            <p className="text-gray-600 text-sm">Curated playlists to enjoy together</p>
+            <p className="text-xs uppercase tracking-[0.4em] text-brand-400">Spotify</p>
+            <h1 className="text-2xl font-bold text-warm-900">Listening Plans</h1>
+            <p className="text-warm-600 text-sm">Curated playlists to enjoy together</p>
           </div>
           <Link
             href={`/spaces/${slug}/spotify/listening-plans/create`}
-            className="inline-flex items-center gap-2 rounded-full bg-pink-500 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-pink-600"
+            className="inline-flex items-center gap-2 rounded-full bg-brand-500 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-brand-600"
           >
             <Plus className="h-4 w-4" />
             New Plan
@@ -187,13 +187,13 @@ export default function ListeningPlansPage() {
           <div className="mx-auto flex h-24 w-24 items-center justify-center rounded-full bg-blue-100 text-blue-500 mb-6">
             <Headphones className="h-12 w-12" />
           </div>
-          <h2 className="text-2xl font-semibold text-gray-900 mb-2">No listening plans yet</h2>
-          <p className="text-gray-600 mb-6">
+          <h2 className="text-2xl font-semibold text-warm-900 mb-2">No listening plans yet</h2>
+          <p className="text-warm-600 mb-6">
             Create your first listening plan to curate music for you and your partner.
           </p>
           <Link
             href={`/spaces/${slug}/spotify/listening-plans/create`}
-            className="inline-flex items-center gap-2 rounded-full bg-pink-500 px-6 py-3 font-semibold text-white shadow-sm transition hover:bg-pink-600"
+            className="inline-flex items-center gap-2 rounded-full bg-brand-500 px-6 py-3 font-semibold text-white shadow-sm transition hover:bg-brand-600"
           >
             <Plus className="h-5 w-5" />
             Create Plan
@@ -204,7 +204,7 @@ export default function ListeningPlansPage() {
           {plans.map((plan) => (
             <div
               key={plan.id}
-              className="group rounded-3xl bg-white/80 backdrop-blur shadow-sm border border-white/70 overflow-hidden transition-all hover:shadow-lg"
+              className="group rounded-3xl bg-white border border-warm-100 shadow-xl shadow-warm-900/5 overflow-hidden transition-all hover:shadow-lg"
             >
               {/* Plan Header */}
               <div className="flex items-center justify-between p-6 pb-4">
@@ -213,11 +213,11 @@ export default function ListeningPlansPage() {
                     <ListMusic className="h-6 w-6" />
                   </div>
                   <div>
-                    <h3 className="text-lg font-semibold text-gray-900">{plan.title}</h3>
+                    <h3 className="text-lg font-semibold text-warm-900">{plan.title}</h3>
                     {plan.description && (
-                      <p className="text-sm text-gray-600 line-clamp-1">{plan.description}</p>
+                      <p className="text-sm text-warm-600 line-clamp-1">{plan.description}</p>
                     )}
-                    <p className="text-xs text-gray-400 mt-0.5">
+                    <p className="text-xs text-warm-400 mt-0.5">
                       {plan.tracks.length} track{plan.tracks.length !== 1 ? 's' : ''}
                     </p>
                   </div>
@@ -226,14 +226,14 @@ export default function ListeningPlansPage() {
                 <div className="flex items-center gap-2">
                   <Link
                     href={`/spaces/${slug}/spotify/listening-plans/create?edit=${plan.id}`}
-                    className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-full transition-colors"
+                    className="p-2 text-warm-400 hover:text-blue-600 hover:bg-blue-50 rounded-full transition-colors"
                   >
                     <Edit className="h-4 w-4" />
                   </Link>
                   <button
                     onClick={() => deletePlan(plan)}
                     disabled={deleting === plan.id}
-                    className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-full transition-colors"
+                    className="p-2 text-warm-400 hover:text-coral-600 hover:bg-coral-50 rounded-full transition-colors"
                   >
                     {deleting === plan.id ? (
                       <Loader2 className="h-4 w-4 animate-spin" />
@@ -247,13 +247,13 @@ export default function ListeningPlansPage() {
               {/* Track List */}
               {plan.tracks.length > 0 ? (
                 <div className="px-6 pb-6">
-                  <div className="rounded-2xl border border-gray-100 divide-y divide-gray-50">
+                  <div className="rounded-2xl border border-warm-100 divide-y divide-warm-50">
                     {plan.tracks.map((track, idx) => (
                       <div
                         key={track.id}
-                        className="flex items-center gap-3 py-3 px-4 hover:bg-pink-50/50 transition-colors"
+                        className="flex items-center gap-3 py-3 px-4 hover:bg-brand-50/50 transition-colors"
                       >
-                        <span className="text-xs text-gray-400 w-5 text-center shrink-0">
+                        <span className="text-xs text-warm-400 w-5 text-center shrink-0">
                           {idx + 1}
                         </span>
 
@@ -264,21 +264,21 @@ export default function ListeningPlansPage() {
                             className="h-10 w-10 rounded-lg object-cover shrink-0"
                           />
                         ) : (
-                          <div className="h-10 w-10 rounded-lg bg-pink-100 flex items-center justify-center shrink-0">
-                            <Music className="h-5 w-5 text-pink-300" />
+                          <div className="h-10 w-10 rounded-lg bg-brand-100 flex items-center justify-center shrink-0">
+                            <Music className="h-5 w-5 text-brand-300" />
                           </div>
                         )}
 
                         <div className="min-w-0 flex-1">
-                          <p className="text-sm font-medium text-gray-900 truncate">{track.track_name}</p>
-                          <p className="text-xs text-gray-500 truncate">{track.track_artist}</p>
+                          <p className="text-sm font-medium text-warm-900 truncate">{track.track_name}</p>
+                          <p className="text-xs text-warm-500 truncate">{track.track_artist}</p>
                         </div>
 
                         <div className="flex items-center gap-2 shrink-0">
                           {track.preview_url && (
                             <button
                               onClick={() => playPreview(track)}
-                              className="p-1.5 text-pink-500 hover:bg-pink-50 rounded-full transition-colors"
+                              className="p-1.5 text-brand-500 hover:bg-brand-50 rounded-full transition-colors"
                             >
                               {playingId === track.id ? (
                                 <Pause className="h-4 w-4" />
@@ -291,7 +291,7 @@ export default function ListeningPlansPage() {
                             href={track.track_url}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="p-1.5 text-gray-400 hover:text-pink-500 hover:bg-pink-50 rounded-full transition-colors"
+                            className="p-1.5 text-warm-400 hover:text-brand-500 hover:bg-brand-50 rounded-full transition-colors"
                           >
                             <ExternalLink className="h-4 w-4" />
                           </a>
@@ -302,7 +302,7 @@ export default function ListeningPlansPage() {
                 </div>
               ) : (
                 <div className="px-6 pb-6">
-                  <p className="text-sm text-gray-500 text-center py-4">No tracks added yet</p>
+                  <p className="text-sm text-warm-500 text-center py-4">No tracks added yet</p>
                 </div>
               )}
             </div>

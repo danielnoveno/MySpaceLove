@@ -6,18 +6,19 @@ import Link from 'next/link'
 import AuthenticatedLayout from '@/layouts/AuthenticatedLayout'
 import { useAuth } from '@/contexts/AuthContext'
 import { createClient } from '@/lib/supabase/client'
-import { ArrowLeft, RotateCcw, Trophy } from 'lucide-react'
+import { FadeIn } from '@/components/motion'
+import { ArrowLeft, RotateCcw, Trophy, Grid3X3, Zap, Brain, Target, Hash, Puzzle } from 'lucide-react'
 import Tetris from '@/components/games/Tetris'
 import Game2048 from '@/components/games/Game2048'
 import Sudoku from '@/components/games/Sudoku'
 
-const GAMES_CONFIG: Record<string, { name: string; icon: string }> = {
-  tetris: { name: 'Tetris', icon: '🧱' },
-  snake: { name: 'Snake', icon: '🐍' },
-  memory: { name: 'Memory Match', icon: '🧠' },
-  'tic-tac-toe': { name: 'Tic Tac Toe', icon: '⭕' },
-  2048: { name: '2048', icon: '🔢' },
-  sudoku: { name: 'Sudoku', icon: '📊' },
+const GAMES_CONFIG: Record<string, { name: string; icon: React.ReactNode; color: string }> = {
+  tetris: { name: 'Tetris', icon: <Grid3X3 className="h-6 w-6" />, color: 'bg-brand-50 text-brand-500' },
+  snake: { name: 'Snake', icon: <Zap className="h-6 w-6" />, color: 'bg-coral-50 text-coral-500' },
+  memory: { name: 'Memory Match', icon: <Brain className="h-6 w-6" />, color: 'bg-warm-100 text-warm-600' },
+  'tic-tac-toe': { name: 'Tic Tac Toe', icon: <Target className="h-6 w-6" />, color: 'bg-brand-50 text-brand-400' },
+  '2048': { name: '2048', icon: <Hash className="h-6 w-6" />, color: 'bg-coral-50 text-coral-400' },
+  sudoku: { name: 'Sudoku', icon: <Puzzle className="h-6 w-6" />, color: 'bg-warm-100 text-warm-500' },
 }
 
 // Snake Game Component
@@ -99,13 +100,13 @@ function SnakeGame({ onScore }: { onScore: (score: number) => void }) {
   return (
     <div className="flex flex-col items-center gap-4">
       <div className="flex items-center gap-4">
-        <span className="text-lg font-bold text-pink-600">Score: {score}</span>
-        <button onClick={reset} className="flex items-center gap-1 text-sm text-gray-600 hover:text-pink-600">
+        <span className="text-lg font-bold text-brand-600">Skor: {score}</span>
+        <button onClick={reset} className="flex items-center gap-1 text-sm text-warm-500 hover:text-brand-600 transition-colors">
           <RotateCcw className="h-4 w-4" /> Reset
         </button>
       </div>
       <div
-        className="grid gap-0 bg-gray-100 rounded-xl p-2"
+        className="grid gap-0 bg-warm-50 rounded-2xl p-2 border border-warm-100"
         style={{ gridTemplateColumns: `repeat(${BOARD_SIZE}, 1fr)` }}
       >
         {Array.from({ length: BOARD_SIZE * BOARD_SIZE }).map((_, idx) => {
@@ -119,11 +120,11 @@ function SnakeGame({ onScore }: { onScore: (score: number) => void }) {
               key={idx}
               className={`w-4 h-4 ${
                 isHead
-                  ? 'bg-pink-500 rounded-sm'
+                  ? 'bg-brand-500 rounded-sm'
                   : isSnake
-                  ? 'bg-pink-400 rounded-sm'
+                  ? 'bg-brand-400 rounded-sm'
                   : isFood
-                  ? 'bg-red-500 rounded-full'
+                  ? 'bg-coral-500 rounded-full'
                   : 'bg-white'
               }`}
             />
@@ -132,11 +133,11 @@ function SnakeGame({ onScore }: { onScore: (score: number) => void }) {
       </div>
       {gameOver && (
         <div className="text-center">
-          <p className="text-lg font-bold text-red-500">Game Over!</p>
-          <p className="text-gray-600">Final Score: {score}</p>
+          <p className="text-lg font-bold text-coral-500">Game Over!</p>
+          <p className="text-warm-500">Skor Akhir: {score}</p>
         </div>
       )}
-      <p className="text-xs text-gray-400">Use arrow keys to move</p>
+      <p className="text-xs text-warm-400">Gunakan tombol panah untuk bergerak</p>
     </div>
   )
 }
@@ -182,10 +183,10 @@ function TicTacToeGame({ onScore }: { onScore: (score: number) => void }) {
   return (
     <div className="flex flex-col items-center gap-4">
       <div className="flex items-center gap-4">
-        <span className="text-lg font-bold text-pink-600">
-          {winner ? `${winner} wins!` : isDraw ? "It's a draw!" : `${isXNext ? 'X' : 'O'}'s turn`}
+        <span className="text-lg font-bold text-brand-600">
+          {winner ? `${winner} menang!` : isDraw ? 'Seri!' : `Giliran ${isXNext ? 'X' : 'O'}`}
         </span>
-        <button onClick={reset} className="flex items-center gap-1 text-sm text-gray-600 hover:text-pink-600">
+        <button onClick={reset} className="flex items-center gap-1 text-sm text-warm-500 hover:text-brand-600 transition-colors">
           <RotateCcw className="h-4 w-4" /> Reset
         </button>
       </div>
@@ -194,13 +195,13 @@ function TicTacToeGame({ onScore }: { onScore: (score: number) => void }) {
           <button
             key={idx}
             onClick={() => handleClick(idx)}
-            className={`w-20 h-20 rounded-xl text-3xl font-bold transition-all ${
+            className={`w-20 h-20 rounded-2xl text-3xl font-bold transition-all ${
               cell === 'X'
-                ? 'bg-pink-500 text-white'
+                ? 'bg-brand-500 text-white'
                 : cell === 'O'
-                ? 'bg-purple-500 text-white'
-                : 'bg-white/80 hover:bg-pink-50 text-gray-900'
-            } border border-pink-100`}
+                ? 'bg-coral-500 text-white'
+                : 'bg-white hover:bg-brand-50 text-warm-900'
+            } border border-warm-100`}
           >
             {cell}
           </button>
@@ -270,8 +271,8 @@ function MemoryGame({ onScore }: { onScore: (score: number) => void }) {
   return (
     <div className="flex flex-col items-center gap-4">
       <div className="flex items-center gap-4">
-        <span className="text-lg font-bold text-pink-600">Moves: {moves}</span>
-        <button onClick={reset} className="flex items-center gap-1 text-sm text-gray-600 hover:text-pink-600">
+        <span className="text-lg font-bold text-brand-600">Langkah: {moves}</span>
+        <button onClick={reset} className="flex items-center gap-1 text-sm text-warm-500 hover:text-brand-600 transition-colors">
           <RotateCcw className="h-4 w-4" /> Reset
         </button>
       </div>
@@ -280,10 +281,10 @@ function MemoryGame({ onScore }: { onScore: (score: number) => void }) {
           <button
             key={card.id}
             onClick={() => handleFlip(card.id)}
-            className={`w-16 h-16 rounded-xl text-2xl transition-all ${
+            className={`w-16 h-16 rounded-2xl text-2xl transition-all ${
               card.flipped || card.matched
-                ? 'bg-pink-100 scale-105'
-                : 'bg-gradient-to-br from-pink-400 to-purple-500 hover:scale-105'
+                ? 'bg-brand-50 scale-105'
+                : 'bg-gradient-to-br from-brand-400 to-coral-500 hover:scale-105'
             } flex items-center justify-center`}
           >
             {card.flipped || card.matched ? card.symbol : '❓'}
@@ -302,14 +303,14 @@ function GenericGame({ gameSlug }: { gameSlug: string }) {
 
   return (
     <div className="flex flex-col items-center gap-4">
-      <p className="text-lg font-bold text-pink-600">Score: {score}</p>
+      <p className="text-lg font-bold text-brand-600">Skor: {score}</p>
       <button
         onClick={incrementScore}
-        className="px-6 py-3 bg-gradient-to-br from-pink-500 to-purple-500 text-white rounded-full font-medium hover:shadow-lg transition-all"
+        className="px-6 py-3 bg-brand-500 text-white rounded-full font-semibold hover:bg-brand-600 transition-all hover:shadow-lg hover:shadow-brand-500/25 active:scale-[0.98]"
       >
-        Click to Score!
+        Klik untuk Skor!
       </button>
-      <p className="text-sm text-gray-500">Full {gameSlug} game coming soon!</p>
+      <p className="text-sm text-warm-500">Permainan {gameSlug} segera hadir!</p>
     </div>
   )
 }
@@ -322,7 +323,7 @@ export default function GamePlayPage() {
   const [bestScore, setBestScore] = useState(0)
   const supabase = createClient()
 
-  const gameConfig = GAMES_CONFIG[gameSlug] || { name: gameSlug, icon: '🎮' }
+  const gameConfig = GAMES_CONFIG[gameSlug] || { name: gameSlug, icon: <div className="h-6 w-6" />, color: 'bg-warm-100 text-warm-500' }
 
   const handleScore = useCallback(
     async (score: number) => {
@@ -360,25 +361,27 @@ export default function GamePlayPage() {
   return (
     <AuthenticatedLayout
       header={
-        <div className="flex items-center gap-3">
-          <Link
-            href={`/spaces/${slug}/games`}
-            className="p-2 rounded-full hover:bg-pink-50 text-gray-600 hover:text-pink-600 transition-colors"
-          >
-            <ArrowLeft className="h-5 w-5" />
-          </Link>
+        <FadeIn>
           <div className="flex items-center gap-3">
-            <span className="text-2xl">{gameConfig.icon}</span>
+            <Link
+              href={`/spaces/${slug}/games`}
+              className="p-2 rounded-xl hover:bg-warm-50 text-warm-500 hover:text-warm-700 transition-colors"
+            >
+              <ArrowLeft className="h-5 w-5" />
+            </Link>
+            <div className={`flex h-12 w-12 items-center justify-center rounded-2xl ${gameConfig.color}`}>
+              {gameConfig.icon}
+            </div>
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">{gameConfig.name}</h1>
+              <h1 className="text-2xl font-bold text-warm-900">{gameConfig.name}</h1>
               {bestScore > 0 && (
-                <div className="flex items-center gap-1 text-sm text-pink-600">
-                  <Trophy className="h-3 w-3" /> Best: {bestScore}
+                <div className="flex items-center gap-1 text-sm text-brand-500 font-medium">
+                  <Trophy className="h-3 w-3" /> Terbaik: {bestScore}
                 </div>
               )}
             </div>
           </div>
-        </div>
+        </FadeIn>
       }
     >
       <div className="flex justify-center py-8">{renderGame()}</div>

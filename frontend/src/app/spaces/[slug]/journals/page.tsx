@@ -6,6 +6,7 @@ import Link from 'next/link'
 import AuthenticatedLayout from '@/layouts/AuthenticatedLayout'
 import { useAuth } from '@/contexts/AuthContext'
 import { createClient } from '@/lib/supabase/client'
+import { FadeIn, StaggerContainer, StaggerItem } from '@/components/motion'
 import {
   Plus,
   BookHeart,
@@ -31,11 +32,11 @@ type JournalEntry = {
 }
 
 const moodConfig: Record<string, { label: string; icon: React.ElementType; color: string; bg: string }> = {
-  happy: { label: 'Happy', icon: Smile, color: 'text-yellow-600', bg: 'bg-yellow-50' },
-  sad: { label: 'Sad', icon: Frown, color: 'text-blue-600', bg: 'bg-blue-50' },
-  miss: { label: 'Miss You', icon: Heart, color: 'text-pink-600', bg: 'bg-pink-50' },
-  excited: { label: 'Excited', icon: Zap, color: 'text-orange-600', bg: 'bg-orange-50' },
-  grateful: { label: 'Grateful', icon: Star, color: 'text-purple-600', bg: 'bg-purple-50' },
+  happy: { label: 'Bahagia', icon: Smile, color: 'text-yellow-600', bg: 'bg-yellow-50' },
+  sad: { label: 'Sedih', icon: Frown, color: 'text-blue-600', bg: 'bg-blue-50' },
+  miss: { label: 'Rindu', icon: Heart, color: 'text-brand-600', bg: 'bg-brand-50' },
+  excited: { label: 'Semangat', icon: Zap, color: 'text-coral-600', bg: 'bg-coral-50' },
+  grateful: { label: 'Bersyukur', icon: Star, color: 'text-purple-600', bg: 'bg-purple-50' },
 }
 
 export default function JournalsPage() {
@@ -82,7 +83,7 @@ export default function JournalsPage() {
   }, [user, authLoading, router, slug, supabase])
 
   const deleteJournal = useCallback(async (id: string) => {
-    if (!confirm('Delete this journal entry?')) return
+    if (!confirm('Hapus entri jurnal ini?')) return
 
     setDeleting(id)
     await supabase.from('journals').delete().eq('id', id)
@@ -94,7 +95,7 @@ export default function JournalsPage() {
     return (
       <AuthenticatedLayout>
         <div className="flex items-center justify-center min-h-[60vh]">
-          <Loader2 className="h-12 w-12 text-pink-500 animate-spin" />
+          <Loader2 className="h-12 w-12 text-brand-500 animate-spin" />
         </div>
       </AuthenticatedLayout>
     )
@@ -103,97 +104,105 @@ export default function JournalsPage() {
   return (
     <AuthenticatedLayout
       header={
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900">Love Journals</h1>
-            <p className="text-gray-600">Write about how you feel</p>
+        <FadeIn>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-brand-100">
+                <BookHeart className="h-6 w-6 text-brand-500" />
+              </div>
+              <div>
+                <h1 className="text-2xl font-bold text-warm-900">Jurnal Cinta</h1>
+                <p className="text-warm-500">Tulis tentang perasaan Anda</p>
+              </div>
+            </div>
+            <Link
+              href={`/spaces/${slug}/journals/create`}
+              className="inline-flex items-center gap-2 rounded-full bg-brand-500 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition-all hover:bg-brand-600 hover:shadow-md hover:shadow-brand-500/25 active:scale-[0.98]"
+            >
+              <Plus className="h-4 w-4" />
+              Entri Baru
+            </Link>
           </div>
-          <Link
-            href={`/spaces/${slug}/journals/create`}
-            className="inline-flex items-center gap-2 rounded-full bg-pink-500 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-pink-600"
-          >
-            <Plus className="h-4 w-4" />
-            New Entry
-          </Link>
-        </div>
+        </FadeIn>
       }
     >
       {journals.length === 0 ? (
-        <div className="text-center py-20">
-          <div className="mx-auto flex h-24 w-24 items-center justify-center rounded-full bg-pink-100 text-pink-500 mb-6">
-            <BookHeart className="h-12 w-12" />
+        <FadeIn delay={0.1}>
+          <div className="text-center py-20">
+            <div className="mx-auto flex h-24 w-24 items-center justify-center rounded-full bg-brand-50 text-brand-400 mb-6">
+              <BookHeart className="h-12 w-12" />
+            </div>
+            <h2 className="text-2xl font-semibold text-warm-900 mb-2">Belum ada entri jurnal</h2>
+            <p className="text-warm-500 mb-6">
+              Mulai menulis kisah cinta Anda, satu entri pada satu waktu.
+            </p>
+            <Link
+              href={`/spaces/${slug}/journals/create`}
+              className="inline-flex items-center gap-2 rounded-full bg-brand-500 px-6 py-3 font-semibold text-white transition-all hover:bg-brand-600 hover:shadow-lg hover:shadow-brand-500/25 active:scale-[0.98]"
+            >
+              <Plus className="h-5 w-5" />
+              Tulis Entri Pertama Anda
+            </Link>
           </div>
-          <h2 className="text-2xl font-semibold text-gray-900 mb-2">No journal entries yet</h2>
-          <p className="text-gray-600 mb-6">
-            Start writing your love story, one entry at a time.
-          </p>
-          <Link
-            href={`/spaces/${slug}/journals/create`}
-            className="inline-flex items-center gap-2 rounded-full bg-pink-500 px-6 py-3 font-semibold text-white shadow-sm transition hover:bg-pink-600"
-          >
-            <Plus className="h-5 w-5" />
-            Write Your First Entry
-          </Link>
-        </div>
+        </FadeIn>
       ) : (
-        <div className="space-y-4">
+        <StaggerContainer className="space-y-4">
           {journals.map((journal) => {
             const mood = moodConfig[journal.mood] || moodConfig.happy
             const MoodIcon = mood.icon
 
             return (
-              <div
-                key={journal.id}
-                className="group rounded-3xl bg-white/80 backdrop-blur shadow-sm border border-white/70 p-6 transition-all hover:shadow-md"
-              >
-                <div className="flex items-start justify-between gap-4">
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-3 mb-2">
-                      <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium ${mood.bg} ${mood.color}`}>
-                        <MoodIcon className="h-3.5 w-3.5" />
-                        {mood.label}
-                      </span>
-                      <span className="flex items-center gap-1 text-xs text-gray-400">
-                        <Calendar className="h-3 w-3" />
-                        {new Date(journal.created_at).toLocaleDateString('en-US', {
-                          month: 'short',
-                          day: 'numeric',
-                          year: 'numeric',
-                        })}
-                      </span>
+              <StaggerItem key={journal.id}>
+                <div className="group rounded-3xl bg-white border border-warm-100 p-6 transition-all hover:shadow-lg hover:shadow-warm-900/5">
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-3 mb-2">
+                        <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium ${mood.bg} ${mood.color}`}>
+                          <MoodIcon className="h-3.5 w-3.5" />
+                          {mood.label}
+                        </span>
+                        <span className="flex items-center gap-1 text-xs text-warm-400">
+                          <Calendar className="h-3 w-3" />
+                          {new Date(journal.created_at).toLocaleDateString('id-ID', {
+                            day: 'numeric',
+                            month: 'long',
+                            year: 'numeric',
+                          })}
+                        </span>
+                      </div>
+                      <h3 className="text-lg font-semibold text-warm-900 mb-1 truncate">
+                        {journal.title}
+                      </h3>
+                      <p className="text-warm-500 text-sm line-clamp-3">
+                        {journal.content}
+                      </p>
                     </div>
-                    <h3 className="text-lg font-semibold text-gray-900 mb-1 truncate">
-                      {journal.title}
-                    </h3>
-                    <p className="text-gray-600 text-sm line-clamp-3">
-                      {journal.content}
-                    </p>
-                  </div>
 
-                  <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
-                    <Link
-                      href={`/spaces/${slug}/journals/${journal.id}/edit`}
-                      className="p-2 text-gray-400 hover:text-pink-600 hover:bg-pink-50 rounded-full transition-colors"
-                    >
-                      <Edit3 className="h-4 w-4" />
-                    </Link>
-                    <button
-                      onClick={() => deleteJournal(journal.id)}
-                      disabled={deleting === journal.id}
-                      className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-full transition-colors"
-                    >
-                      {deleting === journal.id ? (
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                      ) : (
-                        <Trash2 className="h-4 w-4" />
-                      )}
-                    </button>
+                    <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
+                      <Link
+                        href={`/spaces/${slug}/journals/${journal.id}/edit`}
+                        className="p-2 text-warm-400 hover:text-brand-600 hover:bg-brand-50 rounded-full transition-colors"
+                      >
+                        <Edit3 className="h-4 w-4" />
+                      </Link>
+                      <button
+                        onClick={() => deleteJournal(journal.id)}
+                        disabled={deleting === journal.id}
+                        className="p-2 text-warm-400 hover:text-coral-600 hover:bg-coral-50 rounded-full transition-colors"
+                      >
+                        {deleting === journal.id ? (
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : (
+                          <Trash2 className="h-4 w-4" />
+                        )}
+                      </button>
+                    </div>
                   </div>
                 </div>
-              </div>
+              </StaggerItem>
             )
           })}
-        </div>
+        </StaggerContainer>
       )}
     </AuthenticatedLayout>
   )

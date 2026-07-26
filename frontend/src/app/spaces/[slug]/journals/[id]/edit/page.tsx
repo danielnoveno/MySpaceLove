@@ -118,7 +118,7 @@ export default function EditJournalPage() {
     return (
       <AuthenticatedLayout>
         <div className="flex items-center justify-center min-h-[60vh]">
-          <Loader2 className="h-12 w-12 text-pink-500 animate-spin" />
+          <Loader2 className="h-12 w-12 text-brand-500 animate-spin" />
         </div>
       </AuthenticatedLayout>
     )
@@ -130,13 +130,13 @@ export default function EditJournalPage() {
         <div className="flex items-center gap-4">
           <Link
             href={`/spaces/${slug}/journals`}
-            className="p-2 text-gray-400 hover:text-pink-600 hover:bg-pink-50 rounded-full transition-colors"
+            className="p-2 text-warm-400 hover:text-brand-600 hover:bg-brand-50 rounded-full transition-colors"
           >
             <ArrowLeft className="h-5 w-5" />
           </Link>
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">Edit Journal Entry</h1>
-            <p className="text-gray-600">Update your thoughts</p>
+            <h1 className="text-2xl font-bold text-warm-900">Edit Journal Entry</h1>
+            <p className="text-warm-600">Update your thoughts</p>
           </div>
         </div>
       }
@@ -144,14 +144,14 @@ export default function EditJournalPage() {
       <div className="max-w-2xl mx-auto">
         <form onSubmit={handleSubmit} className="space-y-6">
           {error && (
-            <div className="rounded-2xl bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-700">
+            <div className="rounded-2xl bg-coral-50 border border-coral-200 px-4 py-3 text-sm text-coral-700">
               {error}
             </div>
           )}
 
           {/* Mood Selector */}
-          <div className="rounded-3xl bg-white/80 backdrop-blur shadow-sm border border-white/70 p-6">
-            <label className="block text-sm font-medium text-gray-700 mb-3">
+          <div className="rounded-3xl bg-white border-warm-100 shadow-xl shadow-warm-900/5 p-6">
+            <label className="block text-sm font-medium text-warm-700 mb-3">
               How are you feeling?
             </label>
             <div className="flex flex-wrap gap-3">
@@ -176,8 +176,8 @@ export default function EditJournalPage() {
           </div>
 
           {/* Title */}
-          <div className="rounded-3xl bg-white/80 backdrop-blur shadow-sm border border-white/70 p-6">
-            <label htmlFor="title" className="block text-sm font-medium text-gray-700 mb-2">
+          <div className="rounded-3xl bg-white border-warm-100 shadow-xl shadow-warm-900/5 p-6">
+            <label htmlFor="title" className="block text-sm font-medium text-warm-700 mb-2">
               Title
             </label>
             <input
@@ -186,13 +186,13 @@ export default function EditJournalPage() {
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               placeholder="Give your thoughts a title..."
-              className="w-full rounded-xl border border-gray-200 px-4 py-3 text-gray-900 placeholder-gray-400 focus:border-pink-400 focus:ring-2 focus:ring-pink-100 outline-none transition-all"
+              className="w-full rounded-2xl border border-warm-200 px-4 py-3 text-warm-900 placeholder-warm-400 focus:border-brand-400 focus:ring-2 focus:ring-brand-100 outline-none transition-all"
             />
           </div>
 
           {/* Content */}
-          <div className="rounded-3xl bg-white/80 backdrop-blur shadow-sm border border-white/70 p-6">
-            <label htmlFor="content" className="block text-sm font-medium text-gray-700 mb-2">
+          <div className="rounded-3xl bg-white border-warm-100 shadow-xl shadow-warm-900/5 p-6">
+            <label htmlFor="content" className="block text-sm font-medium text-warm-700 mb-2">
               Your Thoughts
             </label>
             <textarea
@@ -201,7 +201,7 @@ export default function EditJournalPage() {
               onChange={(e) => setContent(e.target.value)}
               rows={8}
               placeholder="Write from the heart..."
-              className="w-full rounded-xl border border-gray-200 px-4 py-3 text-gray-900 placeholder-gray-400 focus:border-pink-400 focus:ring-2 focus:ring-pink-100 outline-none transition-all resize-none"
+              className="w-full rounded-2xl border border-warm-200 px-4 py-3 text-warm-900 placeholder-warm-400 focus:border-brand-400 focus:ring-2 focus:ring-brand-100 outline-none transition-all resize-none"
             />
           </div>
 
@@ -209,14 +209,14 @@ export default function EditJournalPage() {
           <div className="flex items-center justify-end gap-3">
             <Link
               href={`/spaces/${slug}/journals`}
-              className="rounded-xl px-6 py-3 text-sm font-medium text-gray-700 hover:bg-gray-100 transition-colors"
+              className="rounded-2xl px-6 py-3 text-sm font-medium text-warm-700 hover:bg-warm-100 transition-colors"
             >
               Cancel
             </Link>
             <button
               type="submit"
               disabled={saving}
-              className="inline-flex items-center gap-2 rounded-xl bg-pink-500 px-6 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-pink-600 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="inline-flex items-center gap-2 rounded-2xl bg-brand-500 px-6 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-brand-600 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {saving ? (
                 <>

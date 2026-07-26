@@ -6,6 +6,7 @@ import Link from 'next/link'
 import AuthenticatedLayout from '@/layouts/AuthenticatedLayout'
 import { useAuth } from '@/contexts/AuthContext'
 import { createClient } from '@/lib/supabase/client'
+import { FadeIn, StaggerContainer, StaggerItem } from '@/components/motion'
 import {
   Plus,
   Gift,
@@ -16,6 +17,7 @@ import {
   MapPin,
   Loader2,
   FileText,
+  Star,
 } from 'lucide-react'
 
 type WishlistItem = {
@@ -91,7 +93,7 @@ export default function WishlistPage() {
   }, [supabase])
 
   const deleteItem = useCallback(async (id: string) => {
-    if (!confirm('Delete this wishlist item?')) return
+    if (!confirm('Hapus item wishlist ini?')) return
 
     setDeleting(id)
     await supabase.from('wishlist_items').delete().eq('id', id)
@@ -106,7 +108,7 @@ export default function WishlistPage() {
     return (
       <AuthenticatedLayout>
         <div className="flex items-center justify-center min-h-[60vh]">
-          <Loader2 className="h-12 w-12 text-pink-500 animate-spin" />
+          <Loader2 className="h-12 w-12 text-brand-500 animate-spin" />
         </div>
       </AuthenticatedLayout>
     )
@@ -115,174 +117,185 @@ export default function WishlistPage() {
   return (
     <AuthenticatedLayout
       header={
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900">Wishlist</h1>
-            <p className="text-gray-600">Things we want to do and get together</p>
+        <FadeIn>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-brand-100">
+                <Star className="h-6 w-6 text-brand-500" />
+              </div>
+              <div>
+                <h1 className="text-2xl font-bold text-warm-900">Wishlist</h1>
+                <p className="text-warm-500">Hal-hal yang ingin kita lakukan dan dapatkan bersama</p>
+              </div>
+            </div>
+            <Link
+              href={`/spaces/${slug}/wishlist/create`}
+              className="inline-flex items-center gap-2 rounded-full bg-brand-500 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition-all hover:bg-brand-600 hover:shadow-md hover:shadow-brand-500/25 active:scale-[0.98]"
+            >
+              <Plus className="h-4 w-4" />
+              Tambah Item
+            </Link>
           </div>
-          <Link
-            href={`/spaces/${slug}/wishlist/create`}
-            className="inline-flex items-center gap-2 rounded-full bg-pink-500 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-pink-600"
-          >
-            <Plus className="h-4 w-4" />
-            Add Item
-          </Link>
-        </div>
+        </FadeIn>
       }
     >
       {items.length === 0 ? (
-        <div className="text-center py-20">
-          <div className="mx-auto flex h-24 w-24 items-center justify-center rounded-full bg-pink-100 text-pink-500 mb-6">
-            <Gift className="h-12 w-12" />
+        <FadeIn delay={0.1}>
+          <div className="text-center py-20">
+            <div className="mx-auto flex h-24 w-24 items-center justify-center rounded-full bg-brand-50 text-brand-400 mb-6">
+              <Gift className="h-12 w-12" />
+            </div>
+            <h2 className="text-2xl font-semibold text-warm-900 mb-2">Wishlist Anda kosong</h2>
+            <p className="text-warm-500 mb-6">
+              Tambahkan hal-hal yang ingin Anda lakukan atau dapatkan bersama.
+            </p>
+            <Link
+              href={`/spaces/${slug}/wishlist/create`}
+              className="inline-flex items-center gap-2 rounded-full bg-brand-500 px-6 py-3 font-semibold text-white transition-all hover:bg-brand-600 hover:shadow-lg hover:shadow-brand-500/25 active:scale-[0.98]"
+            >
+              <Plus className="h-5 w-5" />
+              Tambah Item Pertama
+            </Link>
           </div>
-          <h2 className="text-2xl font-semibold text-gray-900 mb-2">Your wishlist is empty</h2>
-          <p className="text-gray-600 mb-6">
-            Add things you&apos;d like to do or get together.
-          </p>
-          <Link
-            href={`/spaces/${slug}/wishlist/create`}
-            className="inline-flex items-center gap-2 rounded-full bg-pink-500 px-6 py-3 font-semibold text-white shadow-sm transition hover:bg-pink-600"
-          >
-            <Plus className="h-5 w-5" />
-            Add First Item
-          </Link>
-        </div>
+        </FadeIn>
       ) : (
         <div className="space-y-8">
           {/* Pending Items */}
           {pendingItems.length > 0 && (
-            <div>
-              <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">
-                To Do ({pendingItems.length})
-              </h2>
-              <div className="space-y-3">
-                {pendingItems.map((item) => (
-                  <div
-                    key={item.id}
-                    className="group rounded-3xl bg-white/80 backdrop-blur shadow-sm border border-white/70 p-5 transition-all hover:shadow-md"
-                  >
-                    <div className="flex items-start gap-4">
-                      <button
-                        onClick={() => toggleStatus(item)}
-                        disabled={toggling === item.id}
-                        className="mt-1 shrink-0"
-                      >
-                        {toggling === item.id ? (
-                          <Loader2 className="h-5 w-5 text-gray-300 animate-spin" />
-                        ) : (
-                          <Circle className="h-5 w-5 text-gray-300 hover:text-pink-500 transition-colors" />
-                        )}
-                      </button>
+            <FadeIn delay={0.1}>
+              <div>
+                <h2 className="text-sm font-semibold text-warm-400 uppercase tracking-wide mb-3">
+                  Belum Selesai ({pendingItems.length})
+                </h2>
+                <StaggerContainer className="space-y-3">
+                  {pendingItems.map((item) => (
+                    <StaggerItem key={item.id}>
+                      <div className="group rounded-3xl bg-white border border-warm-100 p-5 transition-all hover:shadow-lg hover:shadow-warm-900/5">
+                        <div className="flex items-start gap-4">
+                          <button
+                            onClick={() => toggleStatus(item)}
+                            disabled={toggling === item.id}
+                            className="mt-1 shrink-0"
+                          >
+                            {toggling === item.id ? (
+                              <Loader2 className="h-5 w-5 text-warm-300 animate-spin" />
+                            ) : (
+                              <Circle className="h-5 w-5 text-warm-300 hover:text-brand-500 transition-colors" />
+                            )}
+                          </button>
 
-                      <div className="flex-1 min-w-0">
-                        <h3 className="font-semibold text-gray-900">{item.title}</h3>
-                        {item.description && (
-                          <p className="mt-1 text-sm text-gray-600 line-clamp-2">{item.description}</p>
-                        )}
-                        {item.location && (
-                          <div className="mt-2 inline-flex items-center gap-1 text-xs text-gray-500 bg-gray-50 rounded-full px-2.5 py-1">
-                            <MapPin className="h-3 w-3" />
-                            {item.location}
+                          <div className="flex-1 min-w-0">
+                            <h3 className="font-semibold text-warm-900">{item.title}</h3>
+                            {item.description && (
+                              <p className="mt-1 text-sm text-warm-500 line-clamp-2">{item.description}</p>
+                            )}
+                            {item.location && (
+                              <div className="mt-2 inline-flex items-center gap-1 text-xs text-warm-500 bg-warm-50 rounded-full px-2.5 py-1">
+                                <MapPin className="h-3 w-3" />
+                                {item.location}
+                              </div>
+                            )}
+                            {item.notes && (
+                              <div className="mt-2 inline-flex items-center gap-1 text-xs text-warm-500 bg-warm-50 rounded-full px-2.5 py-1 ml-1">
+                                <FileText className="h-3 w-3" />
+                                Ada catatan
+                              </div>
+                            )}
                           </div>
-                        )}
-                        {item.notes && (
-                          <div className="mt-2 inline-flex items-center gap-1 text-xs text-gray-500 bg-gray-50 rounded-full px-2.5 py-1 ml-1">
-                            <FileText className="h-3 w-3" />
-                            Has notes
-                          </div>
-                        )}
-                      </div>
 
-                      <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
-                        <Link
-                          href={`/spaces/${slug}/wishlist/${item.id}/edit`}
-                          className="p-2 text-gray-400 hover:text-pink-600 hover:bg-pink-50 rounded-full transition-colors"
-                        >
-                          <Edit3 className="h-4 w-4" />
-                        </Link>
-                        <button
-                          onClick={() => deleteItem(item.id)}
-                          disabled={deleting === item.id}
-                          className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-full transition-colors"
-                        >
-                          {deleting === item.id ? (
-                            <Loader2 className="h-4 w-4 animate-spin" />
-                          ) : (
-                            <Trash2 className="h-4 w-4" />
-                          )}
-                        </button>
+                          <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
+                            <Link
+                              href={`/spaces/${slug}/wishlist/${item.id}/edit`}
+                              className="p-2 text-warm-400 hover:text-brand-600 hover:bg-brand-50 rounded-full transition-colors"
+                            >
+                              <Edit3 className="h-4 w-4" />
+                            </Link>
+                            <button
+                              onClick={() => deleteItem(item.id)}
+                              disabled={deleting === item.id}
+                              className="p-2 text-warm-400 hover:text-coral-600 hover:bg-coral-50 rounded-full transition-colors"
+                            >
+                              {deleting === item.id ? (
+                                <Loader2 className="h-4 w-4 animate-spin" />
+                              ) : (
+                                <Trash2 className="h-4 w-4" />
+                              )}
+                            </button>
+                          </div>
+                        </div>
                       </div>
-                    </div>
-                  </div>
-                ))}
+                    </StaggerItem>
+                  ))}
+                </StaggerContainer>
               </div>
-            </div>
+            </FadeIn>
           )}
 
           {/* Done Items */}
           {doneItems.length > 0 && (
-            <div>
-              <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">
-                Completed ({doneItems.length})
-              </h2>
-              <div className="space-y-3">
-                {doneItems.map((item) => (
-                  <div
-                    key={item.id}
-                    className="group rounded-3xl bg-white/50 backdrop-blur shadow-sm border border-white/50 p-5 transition-all hover:shadow-md opacity-70"
-                  >
-                    <div className="flex items-start gap-4">
-                      <button
-                        onClick={() => toggleStatus(item)}
-                        disabled={toggling === item.id}
-                        className="mt-1 shrink-0"
-                      >
-                        {toggling === item.id ? (
-                          <Loader2 className="h-5 w-5 text-pink-300 animate-spin" />
-                        ) : (
-                          <Check className="h-5 w-5 text-pink-500" />
-                        )}
-                      </button>
+            <FadeIn delay={0.2}>
+              <div>
+                <h2 className="text-sm font-semibold text-warm-400 uppercase tracking-wide mb-3">
+                  Selesai ({doneItems.length})
+                </h2>
+                <StaggerContainer className="space-y-3">
+                  {doneItems.map((item) => (
+                    <StaggerItem key={item.id}>
+                      <div className="group rounded-3xl bg-warm-50 border border-warm-100 p-5 transition-all hover:shadow-md opacity-70">
+                        <div className="flex items-start gap-4">
+                          <button
+                            onClick={() => toggleStatus(item)}
+                            disabled={toggling === item.id}
+                            className="mt-1 shrink-0"
+                          >
+                            {toggling === item.id ? (
+                              <Loader2 className="h-5 w-5 text-brand-300 animate-spin" />
+                            ) : (
+                              <Check className="h-5 w-5 text-brand-500" />
+                            )}
+                          </button>
 
-                      <div className="flex-1 min-w-0">
-                        <h3 className="font-semibold text-gray-900 line-through decoration-gray-400">
-                          {item.title}
-                        </h3>
-                        {item.description && (
-                          <p className="mt-1 text-sm text-gray-500 line-clamp-2">{item.description}</p>
-                        )}
-                        {item.location && (
-                          <div className="mt-2 inline-flex items-center gap-1 text-xs text-gray-400 bg-gray-50 rounded-full px-2.5 py-1">
-                            <MapPin className="h-3 w-3" />
-                            {item.location}
+                          <div className="flex-1 min-w-0">
+                            <h3 className="font-semibold text-warm-900 line-through decoration-warm-400">
+                              {item.title}
+                            </h3>
+                            {item.description && (
+                              <p className="mt-1 text-sm text-warm-500 line-clamp-2">{item.description}</p>
+                            )}
+                            {item.location && (
+                              <div className="mt-2 inline-flex items-center gap-1 text-xs text-warm-400 bg-warm-100 rounded-full px-2.5 py-1">
+                                <MapPin className="h-3 w-3" />
+                                {item.location}
+                              </div>
+                            )}
                           </div>
-                        )}
-                      </div>
 
-                      <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
-                        <Link
-                          href={`/spaces/${slug}/wishlist/${item.id}/edit`}
-                          className="p-2 text-gray-400 hover:text-pink-600 hover:bg-pink-50 rounded-full transition-colors"
-                        >
-                          <Edit3 className="h-4 w-4" />
-                        </Link>
-                        <button
-                          onClick={() => deleteItem(item.id)}
-                          disabled={deleting === item.id}
-                          className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-full transition-colors"
-                        >
-                          {deleting === item.id ? (
-                            <Loader2 className="h-4 w-4 animate-spin" />
-                          ) : (
-                            <Trash2 className="h-4 w-4" />
-                          )}
-                        </button>
+                          <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
+                            <Link
+                              href={`/spaces/${slug}/wishlist/${item.id}/edit`}
+                              className="p-2 text-warm-400 hover:text-brand-600 hover:bg-brand-50 rounded-full transition-colors"
+                            >
+                              <Edit3 className="h-4 w-4" />
+                            </Link>
+                            <button
+                              onClick={() => deleteItem(item.id)}
+                              disabled={deleting === item.id}
+                              className="p-2 text-warm-400 hover:text-coral-600 hover:bg-coral-50 rounded-full transition-colors"
+                            >
+                              {deleting === item.id ? (
+                                <Loader2 className="h-4 w-4 animate-spin" />
+                              ) : (
+                                <Trash2 className="h-4 w-4" />
+                              )}
+                            </button>
+                          </div>
+                        </div>
                       </div>
-                    </div>
-                  </div>
-                ))}
+                    </StaggerItem>
+                  ))}
+                </StaggerContainer>
               </div>
-            </div>
+            </FadeIn>
           )}
         </div>
       )}

@@ -213,7 +213,7 @@ export default function CreateListeningPlanPage() {
     return (
       <AuthenticatedLayout>
         <div className="flex items-center justify-center min-h-[60vh]">
-          <Loader2 className="h-12 w-12 text-pink-500 animate-spin" />
+          <Loader2 className="h-12 w-12 text-brand-500 animate-spin" />
         </div>
       </AuthenticatedLayout>
     )
@@ -225,13 +225,13 @@ export default function CreateListeningPlanPage() {
         <div className="flex items-center gap-4">
           <Link
             href={`/spaces/${slug}/spotify/listening-plans`}
-            className="p-2 text-gray-400 hover:text-pink-600 hover:bg-pink-50 rounded-full transition-colors"
+            className="p-2 text-warm-400 hover:text-brand-600 hover:bg-brand-50 rounded-full transition-colors"
           >
             <ArrowLeft className="h-5 w-5" />
           </Link>
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">Create Listening Plan</h1>
-            <p className="text-gray-600 text-sm">Curate a playlist for you and your partner</p>
+            <h1 className="text-2xl font-bold text-warm-900">Create Listening Plan</h1>
+            <p className="text-warm-600 text-sm">Curate a playlist for you and your partner</p>
           </div>
         </div>
       }
@@ -239,16 +239,16 @@ export default function CreateListeningPlanPage() {
       <div className="max-w-2xl mx-auto">
         <form onSubmit={handleSubmit} className="space-y-6">
           {error && (
-            <div className="rounded-2xl bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-700 flex items-center gap-2">
+            <div className="rounded-2xl bg-coral-50 border border-coral-200 px-4 py-3 text-sm text-coral-700 flex items-center gap-2">
               <AlertCircle className="h-4 w-4 shrink-0" />
               {error}
             </div>
           )}
 
           {/* Plan Details */}
-          <div className="rounded-3xl bg-white/80 backdrop-blur shadow-sm border border-white/70 p-6 space-y-4">
+          <div className="rounded-3xl bg-white border border-warm-100 shadow-xl shadow-warm-900/5 p-6 space-y-4">
             <div>
-              <label htmlFor="title" className="block text-sm font-medium text-gray-700 mb-2">
+              <label htmlFor="title" className="block text-sm font-medium text-warm-700 mb-2">
                 Plan Title
               </label>
               <input
@@ -257,12 +257,12 @@ export default function CreateListeningPlanPage() {
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
                 placeholder="e.g. Date Night Vibes, Road Trip Mix..."
-                className="w-full rounded-xl border border-gray-200 px-4 py-3 text-gray-900 placeholder-gray-400 focus:border-pink-400 focus:ring-2 focus:ring-pink-100 outline-none transition-all"
+                className="w-full rounded-2xl border border-warm-200 px-4 py-3 text-warm-900 placeholder-warm-400 focus:border-brand-400 focus:ring-2 focus:ring-brand-100 outline-none transition-all"
                 required
               />
             </div>
             <div>
-              <label htmlFor="description" className="block text-sm font-medium text-gray-700 mb-2">
+              <label htmlFor="description" className="block text-sm font-medium text-warm-700 mb-2">
                 Description (optional)
               </label>
               <textarea
@@ -271,16 +271,16 @@ export default function CreateListeningPlanPage() {
                 onChange={(e) => setDescription(e.target.value)}
                 placeholder="What's this playlist about?"
                 rows={2}
-                className="w-full rounded-xl border border-gray-200 px-4 py-3 text-gray-900 placeholder-gray-400 focus:border-pink-400 focus:ring-2 focus:ring-pink-100 outline-none transition-all resize-none"
+                className="w-full rounded-2xl border border-warm-200 px-4 py-3 text-warm-900 placeholder-warm-400 focus:border-brand-400 focus:ring-2 focus:ring-brand-100 outline-none transition-all resize-none"
               />
             </div>
           </div>
 
           {/* Add Track */}
-          <div className="rounded-3xl bg-white/80 backdrop-blur shadow-sm border border-white/70 p-6">
-            <label htmlFor="trackUrl" className="block text-sm font-medium text-gray-700 mb-2">
+          <div className="rounded-3xl bg-white border border-warm-100 shadow-xl shadow-warm-900/5 p-6">
+            <label htmlFor="trackUrl" className="block text-sm font-medium text-warm-700 mb-2">
               <span className="flex items-center gap-2">
-                <LinkIcon className="h-4 w-4 text-pink-500" />
+                <LinkIcon className="h-4 w-4 text-brand-500" />
                 Add Spotify Track
               </span>
             </label>
@@ -298,13 +298,13 @@ export default function CreateListeningPlanPage() {
                   }
                 }}
                 placeholder="https://open.spotify.com/track/..."
-                className="flex-1 rounded-xl border border-gray-200 px-4 py-3 text-gray-900 placeholder-gray-400 focus:border-pink-400 focus:ring-2 focus:ring-pink-100 outline-none transition-all"
+                className="flex-1 rounded-2xl border border-warm-200 px-4 py-3 text-warm-900 placeholder-warm-400 focus:border-brand-400 focus:ring-2 focus:ring-brand-100 outline-none transition-all"
               />
               <button
                 type="button"
                 onClick={addTrack}
                 disabled={fetchingTrack || !trackUrl.trim()}
-                className="inline-flex items-center gap-2 rounded-xl bg-pink-500 px-4 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-pink-600 disabled:opacity-50 disabled:cursor-not-allowed shrink-0"
+                className="inline-flex items-center gap-2 rounded-xl bg-brand-500 px-4 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-brand-600 disabled:opacity-50 disabled:cursor-not-allowed shrink-0"
               >
                 {fetchingTrack ? (
                   <Loader2 className="h-4 w-4 animate-spin" />
@@ -316,7 +316,7 @@ export default function CreateListeningPlanPage() {
             </div>
 
             {trackError && (
-              <p className="mt-2 text-xs text-red-500 flex items-center gap-1">
+              <p className="mt-2 text-xs text-coral-500 flex items-center gap-1">
                 <AlertCircle className="h-3 w-3" />
                 {trackError}
               </p>
@@ -325,10 +325,10 @@ export default function CreateListeningPlanPage() {
 
           {/* Track List */}
           {tracks.length > 0 && (
-            <div className="rounded-3xl bg-white/80 backdrop-blur shadow-sm border border-white/70 p-6">
+            <div className="rounded-3xl bg-white border border-warm-100 shadow-xl shadow-warm-900/5 p-6">
               <div className="flex items-center gap-2 mb-4">
-                <ListPlus className="h-4 w-4 text-pink-500" />
-                <h3 className="text-sm font-medium text-gray-700">
+                <ListPlus className="h-4 w-4 text-brand-500" />
+                <h3 className="text-sm font-medium text-warm-700">
                   Track List ({tracks.length} track{tracks.length !== 1 ? 's' : ''})
                 </h3>
               </div>
@@ -337,10 +337,10 @@ export default function CreateListeningPlanPage() {
                 {tracks.map((track, idx) => (
                   <div
                     key={idx}
-                    className="flex items-center gap-3 rounded-xl bg-pink-50/50 p-3 group"
+                    className="flex items-center gap-3 rounded-xl bg-brand-50/50 p-3 group"
                   >
-                    <GripVertical className="h-4 w-4 text-gray-300 shrink-0" />
-                    <span className="text-xs text-gray-400 w-5 text-center shrink-0">{idx + 1}</span>
+                    <GripVertical className="h-4 w-4 text-warm-300 shrink-0" />
+                    <span className="text-xs text-warm-400 w-5 text-center shrink-0">{idx + 1}</span>
 
                     {track.track_image ? (
                       <img
@@ -349,14 +349,14 @@ export default function CreateListeningPlanPage() {
                         className="h-10 w-10 rounded-lg object-cover shrink-0"
                       />
                     ) : (
-                      <div className="h-10 w-10 rounded-lg bg-pink-100 flex items-center justify-center shrink-0">
-                        <Music className="h-5 w-5 text-pink-300" />
+                      <div className="h-10 w-10 rounded-lg bg-brand-100 flex items-center justify-center shrink-0">
+                        <Music className="h-5 w-5 text-brand-300" />
                       </div>
                     )}
 
                     <div className="min-w-0 flex-1">
-                      <p className="text-sm font-medium text-gray-900 truncate">{track.track_name}</p>
-                      <p className="text-xs text-gray-500 truncate">{track.track_artist}</p>
+                      <p className="text-sm font-medium text-warm-900 truncate">{track.track_name}</p>
+                      <p className="text-xs text-warm-500 truncate">{track.track_artist}</p>
                     </div>
 
                     <div className="flex items-center gap-1 shrink-0">
@@ -364,7 +364,7 @@ export default function CreateListeningPlanPage() {
                         <button
                           type="button"
                           onClick={() => togglePlay(track, idx)}
-                          className="p-1.5 text-pink-500 hover:bg-pink-100 rounded-full transition-colors"
+                          className="p-1.5 text-brand-500 hover:bg-brand-100 rounded-full transition-colors"
                         >
                           {playingIdx === idx ? (
                             <Pause className="h-4 w-4" />
@@ -376,7 +376,7 @@ export default function CreateListeningPlanPage() {
                       <button
                         type="button"
                         onClick={() => removeTrack(idx)}
-                        className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-full transition-colors opacity-0 group-hover:opacity-100"
+                        className="p-1.5 text-warm-400 hover:text-coral-500 hover:bg-coral-50 rounded-full transition-colors opacity-0 group-hover:opacity-100"
                       >
                         <X className="h-4 w-4" />
                       </button>
@@ -391,14 +391,14 @@ export default function CreateListeningPlanPage() {
           <div className="flex items-center justify-end gap-3">
             <Link
               href={`/spaces/${slug}/spotify/listening-plans`}
-              className="rounded-xl px-6 py-3 text-sm font-medium text-gray-700 hover:bg-gray-100 transition-colors"
+              className="rounded-xl px-6 py-3 text-sm font-medium text-warm-700 hover:bg-warm-100 transition-colors"
             >
               Cancel
             </Link>
             <button
               type="submit"
               disabled={submitting || !title.trim() || tracks.length === 0}
-              className="inline-flex items-center gap-2 rounded-xl bg-pink-500 px-6 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-pink-600 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="inline-flex items-center gap-2 rounded-xl bg-brand-500 px-6 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-brand-600 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {submitting ? (
                 <>

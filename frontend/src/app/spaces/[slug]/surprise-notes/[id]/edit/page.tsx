@@ -99,7 +99,7 @@ export default function EditSurpriseNotePage() {
     return (
       <AuthenticatedLayout>
         <div className="flex items-center justify-center min-h-[60vh]">
-          <Loader2 className="h-12 w-12 text-pink-500 animate-spin" />
+          <Loader2 className="h-12 w-12 text-brand-500 animate-spin" />
         </div>
       </AuthenticatedLayout>
     )
@@ -111,37 +111,37 @@ export default function EditSurpriseNotePage() {
         <div className="flex items-center gap-3">
           <Link
             href={`/spaces/${slug}/surprise-notes`}
-            className="p-2 rounded-full hover:bg-pink-50 text-gray-600 hover:text-pink-600 transition-colors"
+            className="p-2 rounded-full hover:bg-brand-50 text-warm-600 hover:text-brand-600 transition-colors"
           >
             <ArrowLeft className="h-5 w-5" />
           </Link>
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">Edit Surprise Note</h1>
-            <p className="text-gray-600">Update your surprise message</p>
+            <h1 className="text-2xl font-bold text-warm-900">Edit Surprise Note</h1>
+            <p className="text-warm-600">Update your surprise message</p>
           </div>
         </div>
       }
     >
       <div className="max-w-lg mx-auto">
-        <div className="rounded-3xl bg-white/80 backdrop-blur p-6 shadow-sm border border-white/70">
+        <div className="rounded-3xl bg-white border border-warm-100 shadow-xl shadow-warm-900/5 p-6">
           {/* Preview */}
-          <div className="mb-6 rounded-2xl bg-gradient-to-br from-pink-50 to-purple-50 p-4 text-center border border-pink-100">
-            <Gift className="h-8 w-8 text-pink-400 mx-auto mb-2" />
-            <p className="text-sm text-gray-500">
+          <div className="mb-6 rounded-2xl bg-gradient-to-br from-brand-50 to-purple-50 p-4 text-center border border-brand-100">
+            <Gift className="h-8 w-8 text-brand-400 mx-auto mb-2" />
+            <p className="text-sm text-warm-500">
               Your note will be locked until the unlock date. Your partner won&apos;t be able to read it
               until then!
             </p>
           </div>
 
           {error && (
-            <div className="mb-4 rounded-xl bg-red-50 text-red-700 border border-red-100 px-4 py-3 text-sm">
+            <div className="mb-4 rounded-xl bg-coral-50 text-coral-700 border border-coral-100 px-4 py-3 text-sm">
               {error}
             </div>
           )}
 
           <form onSubmit={handleSubmit} className="space-y-5">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-warm-700 mb-1">
                 Title *
               </label>
               <input
@@ -149,13 +149,13 @@ export default function EditSurpriseNotePage() {
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
                 required
-                className="w-full rounded-xl border border-pink-100 bg-pink-50/50 px-4 py-3 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-pink-300 focus:border-transparent"
+                className="w-full rounded-2xl border border-brand-100 bg-brand-50/50 px-4 py-3 text-sm text-warm-900 placeholder-warm-400 focus:outline-none focus:ring-2 focus:ring-brand-300 focus:border-transparent"
                 placeholder="e.g., Open on our anniversary!"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-warm-700 mb-1">
                 Message *
               </label>
               <textarea
@@ -163,26 +163,26 @@ export default function EditSurpriseNotePage() {
                 onChange={(e) => setMessage(e.target.value)}
                 required
                 rows={6}
-                className="w-full rounded-xl border border-pink-100 bg-pink-50/50 px-4 py-3 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-pink-300 focus:border-transparent resize-none"
+                className="w-full rounded-2xl border border-brand-100 bg-brand-50/50 px-4 py-3 text-sm text-warm-900 placeholder-warm-400 focus:outline-none focus:ring-2 focus:ring-brand-300 focus:border-transparent resize-none"
                 placeholder="Write your surprise message here..."
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-warm-700 mb-1">
                 Unlock Date *
               </label>
               <div className="relative">
-                <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
+                <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-warm-400" />
                 <input
                   type="datetime-local"
                   value={unlockDate}
                   onChange={(e) => setUnlockDate(e.target.value)}
                   required
-                  className="w-full rounded-xl border border-pink-100 bg-pink-50/50 pl-10 pr-4 py-3 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-pink-300 focus:border-transparent"
+                  className="w-full rounded-2xl border border-brand-100 bg-brand-50/50 pl-10 pr-4 py-3 text-sm text-warm-900 focus:outline-none focus:ring-2 focus:ring-brand-300 focus:border-transparent"
                 />
               </div>
-              <p className="text-xs text-gray-400 mt-1">
+              <p className="text-xs text-warm-400 mt-1">
                 The note will be hidden until this date and time
               </p>
             </div>
@@ -190,14 +190,14 @@ export default function EditSurpriseNotePage() {
             <div className="flex items-center justify-end gap-3 pt-2">
               <Link
                 href={`/spaces/${slug}/surprise-notes`}
-                className="rounded-xl px-6 py-3 text-sm font-medium text-gray-700 hover:bg-gray-100 transition-colors"
+                className="rounded-xl px-6 py-3 text-sm font-medium text-warm-700 hover:bg-warm-100 transition-colors"
               >
                 Cancel
               </Link>
               <button
                 type="submit"
                 disabled={saving || !title.trim() || !message.trim() || !unlockDate}
-                className="w-full flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-pink-500 to-purple-500 px-4 py-3 text-sm font-semibold text-white shadow-sm transition hover:shadow-md disabled:opacity-50"
+                className="w-full flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-brand-500 to-purple-500 px-4 py-3 text-sm font-semibold text-white shadow-sm transition hover:shadow-md disabled:opacity-50"
               >
                 {saving ? (
                   <>

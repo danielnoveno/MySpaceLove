@@ -6,17 +6,18 @@ import Link from 'next/link'
 import AuthenticatedLayout from '@/layouts/AuthenticatedLayout'
 import { useAuth } from '@/contexts/AuthContext'
 import { createClient } from '@/lib/supabase/client'
+import { FadeIn, StaggerContainer, StaggerItem } from '@/components/motion'
 import {
   Lock,
   Unlock,
   Plus,
   Trash2,
-  Edit3,
   ArrowLeft,
   Gift,
   Calendar,
   Link2,
   Check,
+  StickyNote,
 } from 'lucide-react'
 
 type SurpriseNote = {
@@ -69,6 +70,7 @@ export default function SurpriseNotesPage() {
   }
 
   const deleteNote = async (id: number) => {
+    if (!confirm('Hapus catatan kejutan ini?')) return
     await supabase.from('surprise_notes').delete().eq('id', id)
     setNotes((prev) => prev.filter((n) => n.id !== id))
   }
@@ -103,7 +105,7 @@ export default function SurpriseNotesPage() {
     return (
       <AuthenticatedLayout>
         <div className="flex items-center justify-center min-h-[60vh]">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-pink-500" />
+          <div className="w-12 h-12 border-4 border-brand-200 border-t-brand-500 rounded-full animate-spin" />
         </div>
       </AuthenticatedLayout>
     )
@@ -112,143 +114,151 @@ export default function SurpriseNotesPage() {
   return (
     <AuthenticatedLayout
       header={
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <Link
-              href={`/spaces/${slug}`}
-              className="p-2 rounded-full hover:bg-pink-50 text-gray-600 hover:text-pink-600 transition-colors"
-            >
-              <ArrowLeft className="h-5 w-5" />
-            </Link>
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900">Surprise Notes</h1>
-              <p className="text-gray-600">Time-locked love notes for each other</p>
+        <FadeIn>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <Link
+                href={`/spaces/${slug}`}
+                className="p-2 rounded-xl hover:bg-warm-50 text-warm-500 hover:text-warm-700 transition-colors"
+              >
+                <ArrowLeft className="h-5 w-5" />
+              </Link>
+              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-brand-100">
+                <StickyNote className="h-6 w-6 text-brand-500" />
+              </div>
+              <div>
+                <h1 className="text-2xl font-bold text-warm-900">Catatan Kejutan</h1>
+                <p className="text-warm-500">Catatan cinta terkunci waktu untuk satu sama lain</p>
+              </div>
             </div>
+            <Link
+              href={`/spaces/${slug}/surprise-notes/create`}
+              className="flex items-center gap-2 rounded-full bg-brand-500 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition-all hover:bg-brand-600 hover:shadow-md hover:shadow-brand-500/25 active:scale-[0.98]"
+            >
+              <Plus className="h-4 w-4" />
+              Baru
+            </Link>
           </div>
-          <Link
-            href={`/spaces/${slug}/surprise-notes/create`}
-            className="flex items-center gap-2 rounded-full bg-gradient-to-r from-pink-500 to-purple-500 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:shadow-md"
-          >
-            <Plus className="h-4 w-4" />
-            New
-          </Link>
-        </div>
+        </FadeIn>
       }
     >
       <div className="max-w-2xl mx-auto">
         {notes.length === 0 ? (
-          <div className="text-center py-16">
-            <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-pink-100 text-pink-400 mb-4">
-              <Gift className="h-10 w-10" />
+          <FadeIn delay={0.1}>
+            <div className="text-center py-16">
+              <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-brand-50 text-brand-400 mb-4">
+                <Gift className="h-10 w-10" />
+              </div>
+              <h2 className="text-xl font-semibold text-warm-900 mb-2">Belum ada catatan kejutan</h2>
+              <p className="text-warm-500 mb-6">
+                Buat catatan terkunci waktu untuk pasangan Anda temukan nanti!
+              </p>
+              <Link
+                href={`/spaces/${slug}/surprise-notes/create`}
+                className="inline-flex items-center gap-2 rounded-full bg-brand-500 px-6 py-3 text-sm font-semibold text-white transition-all hover:bg-brand-600 hover:shadow-lg hover:shadow-brand-500/25 active:scale-[0.98]"
+              >
+                <Plus className="h-5 w-5" />
+                Buat Catatan Kejutan
+              </Link>
             </div>
-            <h2 className="text-xl font-semibold text-gray-900 mb-2">No surprise notes yet</h2>
-            <p className="text-gray-500 mb-6">
-              Create a time-locked note for your partner to discover later!
-            </p>
-            <Link
-              href={`/spaces/${slug}/surprise-notes/create`}
-              className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-pink-500 to-purple-500 px-6 py-3 text-sm font-semibold text-white shadow-sm transition hover:shadow-md"
-            >
-              <Plus className="h-5 w-5" />
-              Create Surprise Note
-            </Link>
-          </div>
+          </FadeIn>
         ) : (
-          <div className="space-y-4">
+          <StaggerContainer className="space-y-4">
             {notes.map((note) => {
               const unlocked = isUnlocked(note.unlock_date)
               const isSender = note.sender_id === user?.id
 
               return (
-                <div
-                  key={note.id}
-                  className={`rounded-3xl p-6 shadow-sm border transition-all ${
-                    unlocked
-                      ? 'bg-white/80 backdrop-blur border-white/70 hover:shadow-md'
-                      : 'bg-gradient-to-br from-pink-50 to-purple-50 border-pink-100'
-                  }`}
-                >
-                  <div className="flex items-start justify-between">
-                    <div className="flex items-start gap-4">
-                      <div
-                        className={`flex h-12 w-12 items-center justify-center rounded-2xl ${
-                          unlocked
-                            ? 'bg-green-100 text-green-600'
-                            : 'bg-pink-100 text-pink-500'
-                        }`}
-                      >
-                        {unlocked ? (
-                          <Unlock className="h-6 w-6" />
-                        ) : (
-                          <Lock className="h-6 w-6" />
-                        )}
-                      </div>
-                      <div className="flex-1">
-                        <h3 className="text-lg font-semibold text-gray-900">{note.title}</h3>
-                        <div className="flex items-center gap-2 mt-1">
-                          <Calendar className="h-4 w-4 text-gray-400" />
-                          <span className="text-sm text-gray-500">
-                            {unlocked ? 'Unlocked' : 'Unlocks'} on{' '}
-                            {new Date(note.unlock_date).toLocaleDateString('en-US', {
-                              month: 'long',
-                              day: 'numeric',
-                              year: 'numeric',
-                            })}
-                          </span>
+                <StaggerItem key={note.id}>
+                  <div
+                    className={`rounded-3xl p-6 shadow-sm border transition-all ${
+                      unlocked
+                        ? 'bg-white border-warm-100 hover:shadow-lg hover:shadow-warm-900/5'
+                        : 'bg-gradient-to-br from-brand-50 to-coral-50 border-brand-100'
+                    }`}
+                  >
+                    <div className="flex items-start justify-between">
+                      <div className="flex items-start gap-4">
+                        <div
+                          className={`flex h-12 w-12 items-center justify-center rounded-2xl ${
+                            unlocked
+                              ? 'bg-green-100 text-green-600'
+                              : 'bg-brand-100 text-brand-500'
+                          }`}
+                        >
+                          {unlocked ? (
+                            <Unlock className="h-6 w-6" />
+                          ) : (
+                            <Lock className="h-6 w-6" />
+                          )}
                         </div>
-                        {isSender && (
-                          <span className="inline-block mt-1 text-xs text-pink-500 bg-pink-50 rounded-full px-2 py-0.5">
-                            From you
-                          </span>
-                        )}
+                        <div className="flex-1">
+                          <h3 className="text-lg font-semibold text-warm-900">{note.title}</h3>
+                          <div className="flex items-center gap-2 mt-1">
+                            <Calendar className="h-4 w-4 text-warm-400" />
+                            <span className="text-sm text-warm-500">
+                              {unlocked ? 'Dibuka' : 'Membuka'} pada{' '}
+                              {new Date(note.unlock_date).toLocaleDateString('id-ID', {
+                                day: 'numeric',
+                                month: 'long',
+                                year: 'numeric',
+                              })}
+                            </span>
+                          </div>
+                          {isSender && (
+                            <span className="inline-block mt-1 text-xs text-brand-500 bg-brand-50 rounded-full px-2 py-0.5">
+                              Dari Anda
+                            </span>
+                          )}
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-1">
+                        <button
+                          onClick={() => copyShareLink(note.id)}
+                          className={`p-2 rounded-full transition-colors ${
+                            copiedNoteId === note.id
+                              ? 'text-green-600 bg-green-50'
+                              : 'text-warm-400 hover:text-brand-600 hover:bg-brand-50'
+                          }`}
+                          title="Salin tautan kejutan publik"
+                        >
+                          {copiedNoteId === note.id ? (
+                            <Check className="h-4 w-4" />
+                          ) : (
+                            <Link2 className="h-4 w-4" />
+                          )}
+                        </button>
+                        <button
+                          onClick={() => deleteNote(note.id)}
+                          className="p-2 rounded-full text-warm-400 hover:text-coral-600 hover:bg-coral-50 transition-colors"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </button>
                       </div>
                     </div>
 
-                    <div className="flex items-center gap-1">
-                      <button
-                        onClick={() => copyShareLink(note.id)}
-                        className={`p-2 rounded-full transition-colors ${
-                          copiedNoteId === note.id
-                            ? 'text-green-600 bg-green-50'
-                            : 'text-gray-400 hover:text-pink-600 hover:bg-pink-50'
-                        }`}
-                        title="Copy public surprise link"
-                      >
-                        {copiedNoteId === note.id ? (
-                          <Check className="h-4 w-4" />
-                        ) : (
-                          <Link2 className="h-4 w-4" />
-                        )}
-                      </button>
-                      <button
-                        onClick={() => deleteNote(note.id)}
-                        className="p-2 rounded-full text-gray-400 hover:text-red-600 hover:bg-red-50 transition-colors"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </button>
-                    </div>
+                    {/* Message Content */}
+                    {unlocked ? (
+                      <div className="mt-4 pl-16">
+                        <p className="text-warm-700 whitespace-pre-wrap">{note.message}</p>
+                      </div>
+                    ) : (
+                      <div className="mt-4 pl-16">
+                        <div className="rounded-xl bg-white/60 p-4 text-center border border-warm-100">
+                          <Lock className="h-6 w-6 text-brand-300 mx-auto mb-2" />
+                          <p className="text-sm text-warm-400 italic">
+                            Catatan ini masih terkunci. Kembali pada{' '}
+                            {new Date(note.unlock_date).toLocaleDateString('id-ID')} untuk membacanya!
+                          </p>
+                        </div>
+                      </div>
+                    )}
                   </div>
-
-                  {/* Message Content */}
-                  {unlocked ? (
-                    <div className="mt-4 pl-16">
-                      <p className="text-gray-700 whitespace-pre-wrap">{note.message}</p>
-                    </div>
-                  ) : (
-                    <div className="mt-4 pl-16">
-                      <div className="rounded-xl bg-white/60 p-4 text-center">
-                        <Lock className="h-6 w-6 text-pink-300 mx-auto mb-2" />
-                        <p className="text-sm text-gray-400 italic">
-                          This note is still locked. Come back on{' '}
-                          {new Date(note.unlock_date).toLocaleDateString()} to read it!
-                        </p>
-                      </div>
-                    </div>
-                  )}
-                </div>
+                </StaggerItem>
               )
             })}
-          </div>
+          </StaggerContainer>
         )}
       </div>
     </AuthenticatedLayout>

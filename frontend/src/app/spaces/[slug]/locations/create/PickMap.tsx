@@ -45,10 +45,10 @@ export default function PickMap({ onPick }: PickMapProps) {
 
   return (
     <div>
-      <p className="text-xs text-gray-500 mb-2">
+      <p className="text-xs text-warm-500 mb-2">
         Click anywhere on the map to place a pin, then confirm.
       </p>
-      <div className="rounded-2xl overflow-hidden border border-gray-200">
+      <div className="rounded-2xl overflow-hidden border border-warm-200">
         <MapContainer
           center={[-6.2088, 106.8456]}
           zoom={11}
@@ -64,13 +64,13 @@ export default function PickMap({ onPick }: PickMapProps) {
       </div>
       {pickedPos && (
         <div className="flex items-center justify-between mt-2">
-          <span className="text-xs text-gray-500">
+          <span className="text-xs text-warm-500">
             Pinned: {pickedPos[0].toFixed(6)}, {pickedPos[1].toFixed(6)}
           </span>
           <button
             type="button"
             onClick={handleConfirm}
-            className="inline-flex items-center gap-1.5 rounded-lg bg-pink-500 px-3 py-1.5 text-xs font-semibold text-white hover:bg-pink-600 transition-colors"
+            className="inline-flex items-center gap-1.5 rounded-lg bg-brand-500 px-3 py-1.5 text-xs font-semibold text-white hover:bg-brand-600 transition-colors"
           >
             Confirm Pin
           </button>

@@ -6,11 +6,12 @@ import Link from 'next/link'
 import AuthenticatedLayout from '@/layouts/AuthenticatedLayout'
 import { useAuth } from '@/contexts/AuthContext'
 import { createClient } from '@/lib/supabase/client'
+import { FadeIn, StaggerContainer, StaggerItem } from '@/components/motion'
 import {
   Plus,
   Heart,
   Trash2,
-  Edit,
+  Edit3,
   Calendar,
   Loader2,
   Image as ImageIcon,
@@ -37,13 +38,13 @@ type Memory = {
 }
 
 const CATEGORY_CONFIG: Record<string, { label: string; color: string; bg: string; icon: typeof Heart }> = {
-  'first-date': { label: 'First Date', color: 'text-pink-600', bg: 'bg-pink-100', icon: Heart },
-  anniversary: { label: 'Anniversary', color: 'text-red-600', bg: 'bg-red-100', icon: Star },
-  trip: { label: 'Trip', color: 'text-blue-600', bg: 'bg-blue-100', icon: Plane },
-  milestone: { label: 'Milestone', color: 'text-yellow-600', bg: 'bg-yellow-100', icon: Award },
-  gift: { label: 'Gift', color: 'text-purple-600', bg: 'bg-purple-100', icon: Gift },
-  adventure: { label: 'Adventure', color: 'text-green-600', bg: 'bg-green-100', icon: MapPin },
-  other: { label: 'Other', color: 'text-gray-600', bg: 'bg-gray-100', icon: Heart },
+  'first-date': { label: 'Kencan Pertama', color: 'text-brand-600', bg: 'bg-brand-50', icon: Heart },
+  anniversary: { label: 'Anniversary', color: 'text-coral-600', bg: 'bg-coral-50', icon: Star },
+  trip: { label: 'Perjalanan', color: 'text-blue-600', bg: 'bg-blue-50', icon: Plane },
+  milestone: { label: 'Pencapaian', color: 'text-amber-600', bg: 'bg-amber-50', icon: Award },
+  gift: { label: 'Hadiah', color: 'text-purple-600', bg: 'bg-purple-50', icon: Gift },
+  adventure: { label: 'Petualangan', color: 'text-green-600', bg: 'bg-green-50', icon: MapPin },
+  other: { label: 'Lainnya', color: 'text-warm-600', bg: 'bg-warm-50', icon: Heart },
 }
 
 export default function MemoryLanePage() {
@@ -94,7 +95,7 @@ export default function MemoryLanePage() {
   }
 
   const deleteMemory = useCallback(async (memory: Memory) => {
-    if (!confirm(`Delete "${memory.title}"?`)) return
+    if (!confirm(`Hapus "${memory.title}"?`)) return
 
     setDeleting(memory.id)
 
@@ -123,7 +124,7 @@ export default function MemoryLanePage() {
     return (
       <AuthenticatedLayout>
         <div className="flex items-center justify-center min-h-[60vh]">
-          <Loader2 className="h-12 w-12 text-pink-500 animate-spin" />
+          <Loader2 className="h-12 w-12 text-brand-500 animate-spin" />
         </div>
       </AuthenticatedLayout>
     )
@@ -132,163 +133,172 @@ export default function MemoryLanePage() {
   return (
     <AuthenticatedLayout
       header={
-        <div className="flex items-center justify-between">
-          <div>
-            <p className="text-xs uppercase tracking-[0.4em] text-pink-400">Memory Lane</p>
-            <h1 className="text-2xl font-bold text-gray-900">Your Memories</h1>
-            <p className="text-gray-600 text-sm">A curated collection of meaningful moments</p>
+        <FadeIn>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-brand-100">
+                <Heart className="h-6 w-6 text-brand-500" />
+              </div>
+              <div>
+                <h1 className="text-2xl font-bold text-warm-900">Memory Lane</h1>
+                <p className="text-warm-500">Koleksi momen-momen berharga bersama</p>
+              </div>
+            </div>
+            <Link
+              href={`/spaces/${slug}/memory-lane/create`}
+              className="inline-flex items-center gap-2 rounded-full bg-brand-500 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition-all hover:bg-brand-600 hover:shadow-md hover:shadow-brand-500/25 active:scale-[0.98]"
+            >
+              <Plus className="h-4 w-4" />
+              Tambah Memori
+            </Link>
           </div>
-          <Link
-            href={`/spaces/${slug}/memory-lane/create`}
-            className="inline-flex items-center gap-2 rounded-full bg-pink-500 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-pink-600"
-          >
-            <Plus className="h-4 w-4" />
-            New Memory
-          </Link>
-        </div>
+        </FadeIn>
       }
     >
       <div className="max-w-6xl mx-auto space-y-8">
         {/* Category Filter */}
-        <div className="flex items-center gap-2 overflow-x-auto pb-2">
-          <Filter className="h-4 w-4 text-gray-400 shrink-0" />
-          <button
-            onClick={() => setSelectedCategory(null)}
-            className={`shrink-0 rounded-full px-4 py-1.5 text-sm font-medium transition-colors ${
-              selectedCategory === null
-                ? 'bg-pink-500 text-white'
-                : 'bg-white/80 text-gray-600 hover:bg-pink-50 border border-pink-100'
-            }`}
-          >
-            All ({memories.length})
-          </button>
-          {categories.map((cat) => {
-            const config = getCategoryConfig(cat)
-            const count = memories.filter((m) => m.category === cat).length
-            if (count === 0) return null
-            const Icon = config.icon
-            return (
-              <button
-                key={cat}
-                onClick={() => setSelectedCategory(cat === selectedCategory ? null : cat)}
-                className={`shrink-0 inline-flex items-center gap-1.5 rounded-full px-4 py-1.5 text-sm font-medium transition-colors ${
-                  selectedCategory === cat
-                    ? 'bg-pink-500 text-white'
-                    : `bg-white/80 ${config.color} hover:bg-pink-50 border border-pink-100`
-                }`}
-              >
-                <Icon className="h-3.5 w-3.5" />
-                {config.label} ({count})
-              </button>
-            )
-          })}
-        </div>
+        <FadeIn delay={0.1}>
+          <div className="flex items-center gap-2 overflow-x-auto pb-2">
+            <Filter className="h-4 w-4 text-warm-400 shrink-0" />
+            <button
+              onClick={() => setSelectedCategory(null)}
+              className={`shrink-0 rounded-full px-4 py-1.5 text-sm font-medium transition-colors ${
+                selectedCategory === null
+                  ? 'bg-brand-500 text-white'
+                  : 'bg-white text-warm-600 hover:bg-brand-50 border border-warm-100'
+              }`}
+            >
+              Semua ({memories.length})
+            </button>
+            {categories.map((cat) => {
+              const config = getCategoryConfig(cat)
+              const count = memories.filter((m) => m.category === cat).length
+              if (count === 0) return null
+              const Icon = config.icon
+              return (
+                <button
+                  key={cat}
+                  onClick={() => setSelectedCategory(cat === selectedCategory ? null : cat)}
+                  className={`shrink-0 inline-flex items-center gap-1.5 rounded-full px-4 py-1.5 text-sm font-medium transition-colors ${
+                    selectedCategory === cat
+                      ? 'bg-brand-500 text-white'
+                      : `${config.bg} ${config.color} hover:opacity-80`
+                  }`}
+                >
+                  <Icon className="h-3.5 w-3.5" />
+                  {config.label} ({count})
+                </button>
+              )
+            })}
+          </div>
+        </FadeIn>
 
         {/* Empty State */}
         {filteredMemories.length === 0 ? (
-          <div className="text-center py-20">
-            <div className="mx-auto flex h-24 w-24 items-center justify-center rounded-full bg-pink-100 text-pink-500 mb-6">
-              <Heart className="h-12 w-12" />
+          <FadeIn delay={0.15}>
+            <div className="text-center py-20">
+              <div className="mx-auto flex h-24 w-24 items-center justify-center rounded-full bg-brand-50 text-brand-400 mb-6">
+                <Heart className="h-12 w-12" />
+              </div>
+              <h2 className="text-2xl font-semibold text-warm-900 mb-2">
+                {selectedCategory ? 'Tidak ada memori dalam kategori ini' : 'Belum ada memori'}
+              </h2>
+              <p className="text-warm-500 mb-6">
+                Mulai abadikan momen-momen berharga bersama.
+              </p>
+              <Link
+                href={`/spaces/${slug}/memory-lane/create`}
+                className="inline-flex items-center gap-2 rounded-full bg-brand-500 px-6 py-3 font-semibold text-white shadow-sm transition-all hover:bg-brand-600 hover:shadow-lg hover:shadow-brand-500/25 active:scale-[0.98]"
+              >
+                <Plus className="h-5 w-5" />
+                Tambah Memori Pertama
+              </Link>
             </div>
-            <h2 className="text-2xl font-semibold text-gray-900 mb-2">
-              {selectedCategory ? 'No memories in this category' : 'No memories yet'}
-            </h2>
-            <p className="text-gray-600 mb-6">
-              Start capturing your meaningful moments together.
-            </p>
-            <Link
-              href={`/spaces/${slug}/memory-lane/create`}
-              className="inline-flex items-center gap-2 rounded-full bg-pink-500 px-6 py-3 font-semibold text-white shadow-sm transition hover:bg-pink-600"
-            >
-              <Plus className="h-5 w-5" />
-              Add First Memory
-            </Link>
-          </div>
+          </FadeIn>
         ) : (
-          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+          <StaggerContainer className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
             {filteredMemories.map((memory) => {
               const catConfig = getCategoryConfig(memory.category)
               const CatIcon = catConfig.icon
 
               return (
-                <div
-                  key={memory.id}
-                  className="group relative rounded-3xl bg-white/80 backdrop-blur shadow-sm border border-white/70 overflow-hidden transition-all hover:shadow-lg hover:-translate-y-1"
-                >
-                  {/* Image */}
-                  <div className="relative h-48 bg-gradient-to-br from-pink-100 to-purple-100">
-                    {memory.image_url ? (
-                      <img
-                        src={memory.image_url}
-                        alt={memory.title}
-                        className="w-full h-full object-cover cursor-pointer"
-                        onClick={() => setPreviewImage(memory.image_url)}
-                      />
-                    ) : (
-                      <div className="flex items-center justify-center h-full">
-                        <ImageIcon className="h-16 w-16 text-pink-200" />
+                <StaggerItem key={memory.id}>
+                  <div className="group relative rounded-3xl bg-white border border-warm-100 overflow-hidden transition-all hover:shadow-xl hover:shadow-warm-900/5 hover:-translate-y-1">
+                    {/* Image */}
+                    <div className="relative h-48 bg-gradient-to-br from-brand-50 to-coral-50">
+                      {memory.image_url ? (
+                        <img
+                          src={memory.image_url}
+                          alt={memory.title}
+                          className="w-full h-full object-cover cursor-pointer"
+                          onClick={() => setPreviewImage(memory.image_url)}
+                        />
+                      ) : (
+                        <div className="flex items-center justify-center h-full">
+                          <ImageIcon className="h-16 w-16 text-brand-200" />
+                        </div>
+                      )}
+
+                      {/* Category Badge */}
+                      <div className={`absolute top-3 left-3 inline-flex items-center gap-1 ${catConfig.bg} ${catConfig.color} text-xs font-semibold px-2.5 py-1 rounded-full`}>
+                        <CatIcon className="h-3 w-3" />
+                        {catConfig.label}
                       </div>
-                    )}
 
-                    {/* Category Badge */}
-                    <div className={`absolute top-3 left-3 inline-flex items-center gap-1 ${catConfig.bg} ${catConfig.color} text-xs font-semibold px-2.5 py-1 rounded-full backdrop-blur-sm`}>
-                      <CatIcon className="h-3 w-3" />
-                      {catConfig.label}
+                      {/* Actions */}
+                      <div className="absolute top-3 right-3 flex gap-1.5">
+                        <Link
+                          href={`/spaces/${slug}/memory-lane/${memory.id}/edit`}
+                          className="bg-brand-500/90 text-white p-1.5 rounded-full opacity-0 group-hover:opacity-100 transition-opacity hover:bg-brand-600"
+                        >
+                          <Edit3 className="h-4 w-4" />
+                        </Link>
+                        <button
+                          onClick={() => deleteMemory(memory)}
+                          disabled={deleting === memory.id}
+                          className="bg-coral-500/90 text-white p-1.5 rounded-full opacity-0 group-hover:opacity-100 transition-opacity hover:bg-coral-600"
+                        >
+                          {deleting === memory.id ? (
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                          ) : (
+                            <Trash2 className="h-4 w-4" />
+                          )}
+                        </button>
+                      </div>
                     </div>
 
-                    {/* Actions */}
-                    <div className="absolute top-3 right-3 flex gap-1.5">
-                      <Link
-                        href={`/spaces/${slug}/memory-lane/${memory.id}/edit`}
-                        className="bg-blue-500/80 backdrop-blur-sm text-white p-1.5 rounded-full opacity-0 group-hover:opacity-100 transition-opacity hover:bg-blue-600"
-                      >
-                        <Edit className="h-4 w-4" />
-                      </Link>
-                      <button
-                        onClick={() => deleteMemory(memory)}
-                        disabled={deleting === memory.id}
-                        className="bg-red-500/80 backdrop-blur-sm text-white p-1.5 rounded-full opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-600"
-                      >
-                        {deleting === memory.id ? (
-                          <Loader2 className="h-4 w-4 animate-spin" />
-                        ) : (
-                          <Trash2 className="h-4 w-4" />
-                        )}
-                      </button>
-                    </div>
-                  </div>
+                    {/* Content */}
+                    <div className="p-5">
+                      <h3 className="text-lg font-semibold text-warm-900 group-hover:text-brand-600 transition-colors">
+                        {memory.title}
+                      </h3>
 
-                  {/* Content */}
-                  <div className="p-5">
-                    <h3 className="text-lg font-semibold text-gray-900 group-hover:text-pink-600 transition-colors">
-                      {memory.title}
-                    </h3>
+                      {memory.description && (
+                        <p className="mt-1 text-sm text-warm-500 line-clamp-2">
+                          {memory.description}
+                        </p>
+                      )}
 
-                    {memory.description && (
-                      <p className="mt-1 text-sm text-gray-600 line-clamp-2">
-                        {memory.description}
-                      </p>
-                    )}
+                      {memory.notes && (
+                        <p className="mt-2 text-xs text-warm-400 line-clamp-2 italic">
+                          {memory.notes}
+                        </p>
+                      )}
 
-                    {memory.notes && (
-                      <p className="mt-2 text-xs text-gray-500 line-clamp-2 italic">
-                        {memory.notes}
-                      </p>
-                    )}
-
-                    <div className="mt-3 flex items-center gap-1 text-xs text-gray-400">
-                      <Calendar className="h-3 w-3" />
-                      {new Date(memory.date).toLocaleDateString('en-US', {
-                        day: 'numeric',
-                        month: 'long',
-                        year: 'numeric',
-                      })}
+                      <div className="mt-3 flex items-center gap-1 text-xs text-warm-400">
+                        <Calendar className="h-3 w-3" />
+                        {new Date(memory.date).toLocaleDateString('id-ID', {
+                          day: 'numeric',
+                          month: 'long',
+                          year: 'numeric',
+                        })}
+                      </div>
                     </div>
                   </div>
-                </div>
+                </StaggerItem>
               )
             })}
-          </div>
+          </StaggerContainer>
         )}
       </div>
 
@@ -306,7 +316,7 @@ export default function MemoryLanePage() {
           </button>
           <img
             src={previewImage}
-            alt="Memory preview"
+            alt="Preview memori"
             className="max-h-[90vh] max-w-[90vw] rounded-3xl object-contain shadow-2xl"
           />
         </div>

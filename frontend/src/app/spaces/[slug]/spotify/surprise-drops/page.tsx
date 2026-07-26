@@ -150,7 +150,7 @@ export default function SurpriseDropsPage() {
     return (
       <AuthenticatedLayout>
         <div className="flex items-center justify-center min-h-[60vh]">
-          <Loader2 className="h-12 w-12 text-pink-500 animate-spin" />
+          <Loader2 className="h-12 w-12 text-brand-500 animate-spin" />
         </div>
       </AuthenticatedLayout>
     )
@@ -161,13 +161,13 @@ export default function SurpriseDropsPage() {
       header={
         <div className="flex items-center justify-between">
           <div>
-            <p className="text-xs uppercase tracking-[0.4em] text-pink-400">Spotify</p>
-            <h1 className="text-2xl font-bold text-gray-900">Surprise Drops</h1>
-            <p className="text-gray-600 text-sm">Send unexpected music to your partner</p>
+            <p className="text-xs uppercase tracking-[0.4em] text-brand-400">Spotify</p>
+            <h1 className="text-2xl font-bold text-warm-900">Surprise Drops</h1>
+            <p className="text-warm-600 text-sm">Send unexpected music to your partner</p>
           </div>
           <Link
             href={`/spaces/${slug}/spotify/surprise-drops/create`}
-            className="inline-flex items-center gap-2 rounded-full bg-pink-500 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-pink-600"
+            className="inline-flex items-center gap-2 rounded-full bg-brand-500 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-brand-600"
           >
             <Plus className="h-4 w-4" />
             New Drop
@@ -180,13 +180,13 @@ export default function SurpriseDropsPage() {
           <div className="mx-auto flex h-24 w-24 items-center justify-center rounded-full bg-yellow-100 text-yellow-500 mb-6">
             <Sparkles className="h-12 w-12" />
           </div>
-          <h2 className="text-2xl font-semibold text-gray-900 mb-2">No surprise drops yet</h2>
-          <p className="text-gray-600 mb-6">
+          <h2 className="text-2xl font-semibold text-warm-900 mb-2">No surprise drops yet</h2>
+          <p className="text-warm-600 mb-6">
             Create a surprise music drop to brighten your partner&apos;s day.
           </p>
           <Link
             href={`/spaces/${slug}/spotify/surprise-drops/create`}
-            className="inline-flex items-center gap-2 rounded-full bg-pink-500 px-6 py-3 font-semibold text-white shadow-sm transition hover:bg-pink-600"
+            className="inline-flex items-center gap-2 rounded-full bg-brand-500 px-6 py-3 font-semibold text-white shadow-sm transition hover:bg-brand-600"
           >
             <Plus className="h-5 w-5" />
             Create Drop
@@ -197,7 +197,7 @@ export default function SurpriseDropsPage() {
           {drops.map((drop) => (
             <div
               key={drop.id}
-              className="group relative rounded-3xl bg-white/80 backdrop-blur shadow-sm border border-white/70 overflow-hidden transition-all hover:shadow-lg hover:-translate-y-1"
+              className="group relative rounded-3xl bg-white border border-warm-100 shadow-xl shadow-warm-900/5 overflow-hidden transition-all hover:shadow-lg hover:-translate-y-1"
             >
               {/* Track Image */}
               <div className="relative h-44 bg-gradient-to-br from-yellow-100 to-orange-100">
@@ -233,7 +233,7 @@ export default function SurpriseDropsPage() {
                 {drop.preview_url && (
                   <button
                     onClick={() => playPreview(drop)}
-                    className="absolute bottom-3 right-3 flex h-10 w-10 items-center justify-center rounded-full bg-white/90 text-pink-600 shadow-md hover:bg-white hover:scale-110 transition-all"
+                    className="absolute bottom-3 right-3 flex h-10 w-10 items-center justify-center rounded-full bg-white/90 text-brand-600 shadow-md hover:bg-white hover:scale-110 transition-all"
                   >
                     {playingId === drop.id ? (
                       <Pause className="h-5 w-5" />
@@ -264,7 +264,7 @@ export default function SurpriseDropsPage() {
                   <button
                     onClick={() => deleteDrop(drop)}
                     disabled={deleting === drop.id}
-                    className="bg-red-500/80 backdrop-blur-sm text-white p-1.5 rounded-full opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-600"
+                    className="bg-coral-500/80 backdrop-blur-sm text-white p-1.5 rounded-full opacity-0 group-hover:opacity-100 transition-opacity hover:bg-coral-600"
                   >
                     {deleting === drop.id ? (
                       <Loader2 className="h-4 w-4 animate-spin" />
@@ -277,20 +277,20 @@ export default function SurpriseDropsPage() {
 
               {/* Card Content */}
               <div className="p-4">
-                <h3 className="font-semibold text-gray-900 group-hover:text-pink-600 transition-colors truncate">
+                <h3 className="font-semibold text-warm-900 group-hover:text-brand-600 transition-colors truncate">
                   {drop.track_name}
                 </h3>
-                <p className="text-sm text-gray-600 truncate">
+                <p className="text-sm text-warm-600 truncate">
                   {drop.track_artist} — {drop.track_album}
                 </p>
 
                 {drop.message && (
-                  <p className="mt-2 text-xs text-gray-500 line-clamp-2 italic">
+                  <p className="mt-2 text-xs text-warm-500 line-clamp-2 italic">
                     &quot;{drop.message}&quot;
                   </p>
                 )}
 
-                <div className="mt-3 flex items-center justify-between text-xs text-gray-400">
+                <div className="mt-3 flex items-center justify-between text-xs text-warm-400">
                   <div className="flex items-center gap-1">
                     <Calendar className="h-3 w-3" />
                     {drop.is_sent
@@ -303,7 +303,7 @@ export default function SurpriseDropsPage() {
                     href={drop.track_url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="flex items-center gap-1 text-pink-500 hover:text-pink-600"
+                    className="flex items-center gap-1 text-brand-500 hover:text-brand-600"
                   >
                     <ExternalLink className="h-3 w-3" />
                   </a>

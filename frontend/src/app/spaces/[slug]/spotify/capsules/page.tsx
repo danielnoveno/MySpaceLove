@@ -139,7 +139,7 @@ export default function SpotifyCapsulesPage() {
     return (
       <AuthenticatedLayout>
         <div className="flex items-center justify-center min-h-[60vh]">
-          <Loader2 className="h-12 w-12 text-pink-500 animate-spin" />
+          <Loader2 className="h-12 w-12 text-brand-500 animate-spin" />
         </div>
       </AuthenticatedLayout>
     )
@@ -150,13 +150,13 @@ export default function SpotifyCapsulesPage() {
       header={
         <div className="flex items-center justify-between">
           <div>
-            <p className="text-xs uppercase tracking-[0.4em] text-pink-400">Spotify</p>
-            <h1 className="text-2xl font-bold text-gray-900">Music Capsules</h1>
-            <p className="text-gray-600 text-sm">Time-locked songs for special moments</p>
+            <p className="text-xs uppercase tracking-[0.4em] text-brand-400">Spotify</p>
+            <h1 className="text-2xl font-bold text-warm-900">Music Capsules</h1>
+            <p className="text-warm-600 text-sm">Time-locked songs for special moments</p>
           </div>
           <Link
             href={`/spaces/${slug}/spotify/capsules/create`}
-            className="inline-flex items-center gap-2 rounded-full bg-pink-500 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-pink-600"
+            className="inline-flex items-center gap-2 rounded-full bg-brand-500 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-brand-600"
           >
             <Plus className="h-4 w-4" />
             New Capsule
@@ -166,16 +166,16 @@ export default function SpotifyCapsulesPage() {
     >
       {capsules.length === 0 ? (
         <div className="text-center py-20">
-          <div className="mx-auto flex h-24 w-24 items-center justify-center rounded-full bg-pink-100 text-pink-500 mb-6">
+          <div className="mx-auto flex h-24 w-24 items-center justify-center rounded-full bg-brand-100 text-brand-500 mb-6">
             <Music className="h-12 w-12" />
           </div>
-          <h2 className="text-2xl font-semibold text-gray-900 mb-2">No capsules yet</h2>
-          <p className="text-gray-600 mb-6">
+          <h2 className="text-2xl font-semibold text-warm-900 mb-2">No capsules yet</h2>
+          <p className="text-warm-600 mb-6">
             Create your first music capsule to lock a song until a special date.
           </p>
           <Link
             href={`/spaces/${slug}/spotify/capsules/create`}
-            className="inline-flex items-center gap-2 rounded-full bg-pink-500 px-6 py-3 font-semibold text-white shadow-sm transition hover:bg-pink-600"
+            className="inline-flex items-center gap-2 rounded-full bg-brand-500 px-6 py-3 font-semibold text-white shadow-sm transition hover:bg-brand-600"
           >
             <Plus className="h-5 w-5" />
             Create Capsule
@@ -186,12 +186,12 @@ export default function SpotifyCapsulesPage() {
           {capsules.map((capsule) => (
             <div
               key={capsule.id}
-              className={`group relative rounded-3xl bg-white/80 backdrop-blur shadow-sm border overflow-hidden transition-all hover:shadow-lg hover:-translate-y-1 ${
-                capsule.is_unlocked ? 'border-green-100' : 'border-white/70'
+              className={`group relative rounded-3xl bg-white border-warm-100 shadow-xl shadow-warm-900/5 overflow-hidden transition-all hover:shadow-lg hover:-translate-y-1 ${
+                capsule.is_unlocked ? 'border-green-100' : ''
               }`}
             >
               {/* Track Image */}
-              <div className="relative h-44 bg-gradient-to-br from-pink-100 to-purple-100">
+              <div className="relative h-44 bg-gradient-to-br from-brand-100 to-purple-100">
                 {capsule.track_image ? (
                   <img
                     src={capsule.track_image}
@@ -200,7 +200,7 @@ export default function SpotifyCapsulesPage() {
                   />
                 ) : (
                   <div className="flex items-center justify-center h-full">
-                    <Music className="h-16 w-16 text-pink-300" />
+                    <Music className="h-16 w-16 text-brand-300" />
                   </div>
                 )}
 
@@ -229,7 +229,7 @@ export default function SpotifyCapsulesPage() {
                 {capsule.is_unlocked && capsule.preview_url && (
                   <button
                     onClick={() => playPreview(capsule)}
-                    className="absolute bottom-3 right-3 flex h-10 w-10 items-center justify-center rounded-full bg-white/90 text-pink-600 shadow-md hover:bg-white hover:scale-110 transition-all"
+                    className="absolute bottom-3 right-3 flex h-10 w-10 items-center justify-center rounded-full bg-white/90 text-brand-600 shadow-md hover:bg-white hover:scale-110 transition-all"
                   >
                     {playingId === capsule.id ? (
                       <Pause className="h-5 w-5" />
@@ -243,7 +243,7 @@ export default function SpotifyCapsulesPage() {
                 <button
                   onClick={() => deleteCapsule(capsule)}
                   disabled={deleting === capsule.id}
-                  className="absolute top-3 right-3 bg-red-500/80 backdrop-blur-sm text-white p-1.5 rounded-full opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-600"
+                  className="absolute top-3 right-3 bg-coral-500/80 backdrop-blur-sm text-white p-1.5 rounded-full opacity-0 group-hover:opacity-100 transition-opacity hover:bg-coral-600"
                 >
                   {deleting === capsule.id ? (
                     <Loader2 className="h-4 w-4 animate-spin" />
@@ -255,20 +255,20 @@ export default function SpotifyCapsulesPage() {
 
               {/* Card Content */}
               <div className="p-4">
-                <h3 className="font-semibold text-gray-900 group-hover:text-pink-600 transition-colors truncate">
+                <h3 className="font-semibold text-warm-900 group-hover:text-brand-600 transition-colors truncate">
                   {capsule.title}
                 </h3>
-                <p className="text-sm text-gray-600 truncate mt-0.5">
+                <p className="text-sm text-warm-600 truncate mt-0.5">
                   {capsule.track_name} — {capsule.track_artist}
                 </p>
 
                 {capsule.message && (
-                  <p className="mt-2 text-xs text-gray-500 line-clamp-2 italic">
+                  <p className="mt-2 text-xs text-warm-500 line-clamp-2 italic">
                     &quot;{capsule.message}&quot;
                   </p>
                 )}
 
-                <div className="mt-3 flex items-center justify-between text-xs text-gray-400">
+                <div className="mt-3 flex items-center justify-between text-xs text-warm-400">
                   <div className="flex items-center gap-1">
                     <Calendar className="h-3 w-3" />
                     {capsule.is_unlocked ? 'Opened' : 'Opens'} {new Date(capsule.unlock_at).toLocaleDateString()}
@@ -277,7 +277,7 @@ export default function SpotifyCapsulesPage() {
                     href={capsule.track_url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="flex items-center gap-1 text-pink-500 hover:text-pink-600"
+                    className="flex items-center gap-1 text-brand-500 hover:text-brand-600"
                   >
                     <ExternalLink className="h-3 w-3" />
                   </a>
