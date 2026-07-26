@@ -1,6 +1,7 @@
 'use client'
 
 import { motion, useReducedMotion } from 'motion/react'
+import Link from 'next/link'
 import { ReactNode, useState } from 'react'
 
 type MagneticButtonProps = {
@@ -35,9 +36,15 @@ export default function MagneticButton({
 
   const reset = () => setPosition({ x: 0, y: 0 })
 
+  const isInternal = href && href.startsWith('/')
+
   if (reduce) {
     if (as === 'a' && href) {
-      return (
+      return isInternal ? (
+        <Link href={href} className={className}>
+          {children}
+        </Link>
+      ) : (
         <a href={href} className={className}>
           {children}
         </a>
@@ -59,9 +66,15 @@ export default function MagneticButton({
       className="inline-block"
     >
       {as === 'a' && href ? (
-        <a href={href} className={className}>
-          {children}
-        </a>
+        isInternal ? (
+          <Link href={href} className={className}>
+            {children}
+          </Link>
+        ) : (
+          <a href={href} className={className}>
+            {children}
+          </a>
+        )
       ) : (
         <button onClick={onClick} className={className}>
           {children}
