@@ -166,7 +166,7 @@ export default function AuthenticatedLayout({ children, header }: AuthenticatedL
                   Profile
                 </Link>
                 <Link
-                  href="/profile"
+                  href="/settings"
                   className="flex items-center gap-3 px-4 py-2.5 text-sm text-warm-700 hover:bg-warm-50 hover:text-warm-900 transition-colors"
                   onClick={() => setUserMenuOpen(false)}
                 >
