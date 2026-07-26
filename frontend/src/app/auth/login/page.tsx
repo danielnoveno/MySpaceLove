@@ -50,16 +50,16 @@ export default function LoginPage() {
     >
       <div className="space-y-6">
         <div className="space-y-2 text-center">
-          <h1 className="text-2xl font-bold text-warm-900">
+          <h1 className="text-2xl font-bold text-warm-900 tracking-tight">
             Selamat datang kembali
           </h1>
-          <p className="text-sm text-warm-500">
+          <p className="text-sm text-warm-500 leading-relaxed">
             Masuk untuk melanjutkan perjalanan Anda bersama.
           </p>
         </div>
 
         {error && (
-          <div id="login-error" role="alert" className="rounded-xl border border-coral-200 bg-coral-50 px-4 py-3 text-sm text-coral-600">
+          <div id="login-error" role="alert" className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600">
             {error}
           </div>
         )}
@@ -68,7 +68,7 @@ export default function LoginPage() {
         <div className="space-y-4">
           <button
             onClick={handleGoogleSignIn}
-            className="flex w-full items-center justify-center gap-3 rounded-full border border-warm-200 bg-white px-4 py-3 text-sm font-semibold text-warm-700 transition-all hover:border-warm-300 hover:shadow-md active:scale-[0.98]"
+            className="flex w-full items-center justify-center gap-3 rounded-2xl border border-warm-200 bg-white px-4 py-3.5 text-sm font-medium text-warm-700 transition-all hover:border-warm-300 hover:bg-warm-50 hover:shadow-sm active:scale-[0.98]"
           >
             <svg className="h-5 w-5" viewBox="0 0 24 24">
               <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4" />
@@ -81,7 +81,7 @@ export default function LoginPage() {
 
           <div className="relative flex items-center justify-center">
             <span className="h-px w-full bg-warm-100" aria-hidden="true" />
-            <span className="absolute bg-white px-4 text-xs font-semibold uppercase tracking-widest text-warm-400">
+            <span className="absolute bg-white px-4 text-xs font-medium uppercase tracking-widest text-warm-400">
               atau
             </span>
           </div>
@@ -94,13 +94,13 @@ export default function LoginPage() {
               Email
             </label>
             <div className="relative">
-              <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 h-5 w-5 text-warm-400" />
+              <Mail className="absolute left-4 top-1/2 -translate-y-1/2 h-[18px] w-[18px] text-warm-400" />
               <input
                 id="email"
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="w-full rounded-xl border border-warm-200 bg-warm-50 pl-11 pr-4 py-3 text-sm text-warm-900 transition-colors placeholder:text-warm-400 focus:border-brand-400 focus:bg-white focus:ring-2 focus:ring-brand-100"
+                className="w-full rounded-2xl border border-warm-200 bg-warm-50/50 pl-11 pr-4 py-3 text-sm text-warm-900 transition-all placeholder:text-warm-400 focus:border-brand-300 focus:bg-white focus:ring-2 focus:ring-brand-100/50"
                 placeholder="email@anda.com"
                 autoComplete="username"
                 required
@@ -114,13 +114,13 @@ export default function LoginPage() {
               Password
             </label>
             <div className="relative">
-              <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 h-5 w-5 text-warm-400" />
+              <Lock className="absolute left-4 top-1/2 -translate-y-1/2 h-[18px] w-[18px] text-warm-400" />
               <input
                 id="password"
                 type={showPassword ? 'text' : 'password'}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full rounded-xl border border-warm-200 bg-warm-50 pl-11 pr-12 py-3 text-sm text-warm-900 transition-colors placeholder:text-warm-400 focus:border-brand-400 focus:bg-white focus:ring-2 focus:ring-brand-100"
+                className="w-full rounded-2xl border border-warm-200 bg-warm-50/50 pl-11 pr-12 py-3 text-sm text-warm-900 transition-all placeholder:text-warm-400 focus:border-brand-300 focus:bg-white focus:ring-2 focus:ring-brand-100/50"
                 placeholder="Masukkan password"
                 autoComplete="current-password"
                 required
@@ -128,10 +128,10 @@ export default function LoginPage() {
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3.5 top-1/2 -translate-y-1/2 text-warm-400 hover:text-warm-600 transition-colors"
+                className="absolute right-4 top-1/2 -translate-y-1/2 text-warm-400 hover:text-warm-600 transition-colors"
                 aria-label={showPassword ? 'Sembunyikan password' : 'Tampilkan password'}
               >
-                {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                {showPassword ? <EyeOff className="h-[18px] w-[18px]" /> : <Eye className="h-[18px] w-[18px]" />}
               </button>
             </div>
           </div>
@@ -142,7 +142,7 @@ export default function LoginPage() {
                 type="checkbox"
                 checked={remember}
                 onChange={(e) => setRemember(e.target.checked)}
-                className="rounded border-warm-300 text-brand-500 focus:ring-brand-400"
+                className="rounded-lg border-warm-300 text-brand-500 focus:ring-brand-400"
               />
               <span>Ingat saya</span>
             </label>
@@ -158,7 +158,7 @@ export default function LoginPage() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full justify-center rounded-full bg-brand-500 px-4 py-3 text-sm font-semibold text-white transition-all hover:bg-brand-600 hover:shadow-lg hover:shadow-brand-500/25 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2 disabled:opacity-50 active:scale-[0.98]"
+            className="w-full justify-center rounded-2xl bg-gradient-to-r from-brand-500 to-brand-600 px-4 py-3.5 text-sm font-semibold text-white transition-all hover:from-brand-600 hover:to-brand-700 hover:shadow-lg hover:shadow-brand-500/20 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2 disabled:opacity-50 active:scale-[0.98]"
           >
             {loading ? (
               <span className="flex items-center gap-2">
