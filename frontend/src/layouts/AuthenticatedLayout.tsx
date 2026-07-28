@@ -5,7 +5,6 @@ import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import ApplicationLogo from '@/components/ApplicationLogo'
 import { useAuth } from '@/contexts/AuthContext'
-import { FadeIn, MagneticButton } from '@/components/motion'
 import {
   Bell, LogOut, User, Home, Clock, MessageCircle, Image, Music, Gamepad2, Settings,
   BookOpen, Timer, CalendarHeart, StickyNote, Star, FileText, BookImage, MapPin, Tv, Video, Menu,

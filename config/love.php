@@ -6,4 +6,3 @@ return [
         'auto_generate_time' => env('DAILY_MESSAGE_AUTO_TIME', '05:00'),
     ],
 ];
-

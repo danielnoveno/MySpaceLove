@@ -1,12 +1,12 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import AuthenticatedLayout from '@/layouts/AuthenticatedLayout'
 import { useAuth } from '@/contexts/AuthContext'
 import { createClient } from '@/lib/supabase/client'
-import { ArrowLeft, Bell, Mail, Moon, Sun, Globe, Shield, LogOut } from 'lucide-react'
+import { ArrowLeft, Bell, Mail, Globe, Shield, LogOut } from 'lucide-react'
 import LoadingSpinner from '@/components/LoadingSpinner'
 
 type UserSettings = {
@@ -33,12 +33,7 @@ export default function SettingsPage() {
   const [showSignOutConfirm, setShowSignOutConfirm] = useState(false)
   const supabase = createClient()
 
-  useEffect(() => {
-    if (!authLoading && !user) { router.push('/auth/login'); return }
-    if (user) fetchSettings()
-  }, [user, authLoading])
-
-  const fetchSettings = async () => {
+  const fetchSettings = useCallback(async () => {
     if (!user) return
     const { data } = await supabase
       .from('users')
@@ -50,7 +45,15 @@ export default function SettingsPage() {
       setSettings({ ...defaultSettings, ...data.settings })
     }
     setLoading(false)
-  }
+  }, [supabase, user])
+
+  useEffect(() => {
+    if (!authLoading && !user) { router.push('/auth/login'); return }
+    if (user) {
+      const timeout = setTimeout(fetchSettings, 0)
+      return () => clearTimeout(timeout)
+    }
+  }, [user, authLoading, router, fetchSettings])
 
   const handleSave = async () => {
     if (!user) return

@@ -4,13 +4,14 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Mail\JoinRequestAcceptedMail;
-use App\Mail\JoinRequestRejectedMail;
 use App\Mail\JoinRequestReceivedMail;
+use App\Mail\JoinRequestRejectedMail;
 use App\Mail\PartnerConnectedMail;
 use App\Mail\SeparationCancelledMail;
 use App\Mail\SeparationRequestedMail;
 use App\Mail\SeparationRespondedMail;
 use App\Mail\SpaceInvitationMail;
+use App\Models\Notification;
 use App\Models\Space;
 use App\Models\SpaceInvitation;
 use App\Models\SpaceSeparationRequest;
@@ -30,6 +31,7 @@ class SpaceApiController extends Controller
         $userId = Auth::id();
         // spaces where user is either user_one or user_two
         $spaces = Space::where('user_one_id', $userId)->orWhere('user_two_id', $userId)->get();
+
         return response()->json($spaces);
     }
 
@@ -37,9 +39,9 @@ class SpaceApiController extends Controller
     {
         $data = $r->validate([
             'title' => 'required|string|max:255',
-            'slug'  => 'nullable|string|max:255|unique:spaces,slug',
-            'bio'   => 'nullable|string',
-            'invite_email' => 'nullable|email'
+            'slug' => 'nullable|string|max:255|unique:spaces,slug',
+            'bio' => 'nullable|string',
+            'invite_email' => 'nullable|email',
         ]);
 
         $user = $r->user();
@@ -57,12 +59,12 @@ class SpaceApiController extends Controller
             ], 422);
         }
 
-        $slug = $data['slug'] ?? Str::slug($data['title'] . '-' . uniqid());
+        $slug = $data['slug'] ?? Str::slug($data['title'].'-'.uniqid());
         $space = Space::create([
             'title' => $data['title'],
-            'slug'  => $slug,
+            'slug' => $slug,
             'user_one_id' => Auth::id(),
-            'bio' => $data['bio'] ?? null
+            'bio' => $data['bio'] ?? null,
         ]);
 
         // invite flow could be added: send email with token
@@ -73,6 +75,7 @@ class SpaceApiController extends Controller
     public function show(Space $space)
     {
         $this->authorizeSpace($space);
+
         return response()->json($space);
     }
 
@@ -82,12 +85,13 @@ class SpaceApiController extends Controller
 
         $data = $r->validate([
             'title' => 'nullable|string|max:255',
-            'bio'   => 'nullable|string',
+            'bio' => 'nullable|string',
             'is_public' => 'nullable|boolean',
-            'theme_id'  => 'nullable|exists:themes,id',
+            'theme_id' => 'nullable|exists:themes,id',
         ]);
 
         $space->update($data);
+
         return response()->json($space);
     }
 
@@ -95,6 +99,7 @@ class SpaceApiController extends Controller
     {
         $this->authorizeSpace($space);
         $space->delete();
+
         return response()->json(['message' => 'deleted']);
     }
 
@@ -102,7 +107,7 @@ class SpaceApiController extends Controller
     {
         $user = $request->user();
 
-        if (!Schema::hasTable('space_invitations')) {
+        if (! Schema::hasTable('space_invitations')) {
             return response()->json([
                 'message' => 'Fitur undangan belum siap. Jalankan migrasi untuk mengaktifkannya.',
             ], 503);
@@ -155,7 +160,7 @@ class SpaceApiController extends Controller
         $partner = User::where('email', $data['partner_email'])->first();
         $temporaryPassword = null;
 
-        if (!$partner) {
+        if (! $partner) {
             $temporaryPassword = Str::random(12);
             $partner = User::create([
                 'name' => $data['partner_name'],
@@ -169,14 +174,14 @@ class SpaceApiController extends Controller
         } else {
             $partnerNeedsSave = false;
 
-            if (!$partner->username) {
+            if (! $partner->username) {
                 $partner->username = User::generateUniqueUsername(
                     Str::before($partner->email, '@')
                 );
                 $partnerNeedsSave = true;
             }
 
-            if (!$partner->partner_code) {
+            if (! $partner->partner_code) {
                 $partner->partner_code = User::generatePartnerCode();
                 $partnerNeedsSave = true;
             }
@@ -290,7 +295,7 @@ class SpaceApiController extends Controller
     {
         $user = $request->user();
 
-        if (!Schema::hasTable('space_invitations')) {
+        if (! Schema::hasTable('space_invitations')) {
             return response()->json([
                 'message' => 'Fitur undangan belum siap. Jalankan migrasi untuk mengaktifkannya.',
             ], 503);
@@ -315,7 +320,7 @@ class SpaceApiController extends Controller
             })
             ->first();
 
-        if (!$invitation) {
+        if (! $invitation) {
             return response()->json([
                 'message' => 'Tidak ada undangan yang menunggu konfirmasi untuk akun ini.',
             ], 404);
@@ -366,7 +371,7 @@ class SpaceApiController extends Controller
     {
         $this->authorizeSpace($space);
 
-        if (!Schema::hasTable('space_invitations')) {
+        if (! Schema::hasTable('space_invitations')) {
             return response()->json([
                 'message' => 'Fitur undangan belum siap. Jalankan migrasi untuk mengaktifkannya.',
             ], 503);
@@ -438,7 +443,7 @@ class SpaceApiController extends Controller
 
         $space = Space::where('invite_code', $inviteCode)->first();
 
-        if (!$space) {
+        if (! $space) {
             return response()->json([
                 'message' => 'Kode undangan tidak ditemukan. Pastikan kode yang dimasukkan sudah benar.',
             ], 422);
@@ -479,7 +484,7 @@ class SpaceApiController extends Controller
             ], 422);
         }
 
-        if (!Schema::hasTable('space_invitations')) {
+        if (! Schema::hasTable('space_invitations')) {
             return response()->json([
                 'message' => 'Fitur permintaan bergabung belum siap.',
             ], 503);
@@ -505,8 +510,8 @@ class SpaceApiController extends Controller
         );
 
         // Create in-app notification for space owner
-        if (class_exists(\App\Models\Notification::class)) {
-            \App\Models\Notification::create([
+        if (class_exists(Notification::class)) {
+            Notification::create([
                 'user_id' => $space->user_one_id,
                 'type' => 'join_request',
                 'notifiable_type' => User::class,
@@ -559,7 +564,7 @@ class SpaceApiController extends Controller
             ->where('source', SpaceInvitation::SOURCE_JOIN_REQUEST)
             ->first();
 
-        if (!$invitation) {
+        if (! $invitation) {
             return response()->json([
                 'message' => 'Permintaan bergabung tidak ditemukan atau sudah diproses.',
             ], 404);
@@ -567,7 +572,7 @@ class SpaceApiController extends Controller
 
         $requester = User::find($invitation->invitee_id);
 
-        if (!$requester) {
+        if (! $requester) {
             return response()->json([
                 'message' => 'Pengguna yang meminta bergabung tidak ditemukan.',
             ], 404);
@@ -608,8 +613,8 @@ class SpaceApiController extends Controller
         );
 
         // Create in-app notification for requester
-        if (class_exists(\App\Models\Notification::class)) {
-            \App\Models\Notification::create([
+        if (class_exists(Notification::class)) {
+            Notification::create([
                 'user_id' => $requester->id,
                 'type' => 'join_request_accepted',
                 'notifiable_type' => User::class,
@@ -653,7 +658,7 @@ class SpaceApiController extends Controller
             ->where('source', SpaceInvitation::SOURCE_JOIN_REQUEST)
             ->first();
 
-        if (!$invitation) {
+        if (! $invitation) {
             return response()->json([
                 'message' => 'Permintaan bergabung tidak ditemukan atau sudah diproses.',
             ], 404);
@@ -674,8 +679,8 @@ class SpaceApiController extends Controller
             );
 
             // Create in-app notification for requester
-            if (class_exists(\App\Models\Notification::class)) {
-                \App\Models\Notification::create([
+            if (class_exists(Notification::class)) {
+                Notification::create([
                     'user_id' => $requester->id,
                     'type' => 'join_request_rejected',
                     'notifiable_type' => User::class,
@@ -699,7 +704,7 @@ class SpaceApiController extends Controller
     {
         $this->authorizeSpace($space);
 
-        if (!Schema::hasTable('space_separation_requests')) {
+        if (! Schema::hasTable('space_separation_requests')) {
             return response()->json([
                 'message' => 'Fitur pembubaran space belum tersedia. Pastikan migrasi sudah dijalankan.',
             ], 503);
@@ -719,7 +724,7 @@ class SpaceApiController extends Controller
 
         if (trim(Str::upper($data['confirmation_phrase'])) !== Str::upper(SpaceSeparationRequest::CONFIRMATION_PHRASE)) {
             return response()->json([
-                'message' => 'Frasa konfirmasi tidak sesuai. Ketik persis "' . SpaceSeparationRequest::CONFIRMATION_PHRASE . '".',
+                'message' => 'Frasa konfirmasi tidak sesuai. Ketik persis "'.SpaceSeparationRequest::CONFIRMATION_PHRASE.'".',
             ], 422);
         }
 
@@ -749,7 +754,7 @@ class SpaceApiController extends Controller
             $space->delete();
 
             return response()->json([
-                'message' => 'Space "' . $spaceTitle . '" berhasil dihapus. Kamu bisa membuat Space baru kapan saja.',
+                'message' => 'Space "'.$spaceTitle.'" berhasil dihapus. Kamu bisa membuat Space baru kapan saja.',
                 'redirect' => route('spaces.index', absolute: false),
             ]);
         }
@@ -773,7 +778,7 @@ class SpaceApiController extends Controller
         }
 
         return response()->json([
-            'message' => 'Permintaan pembubaran telah dikirim. Menunggu persetujuan ' . ($partnerName ?? 'pasanganmu') . '.',
+            'message' => 'Permintaan pembubaran telah dikirim. Menunggu persetujuan '.($partnerName ?? 'pasanganmu').'.',
             'separation_request' => [
                 'id' => $separationRequest->id,
                 'status' => $separationRequest->status,
@@ -786,7 +791,7 @@ class SpaceApiController extends Controller
     {
         $this->authorizeSpace($space);
 
-        if (!Schema::hasTable('space_separation_requests')) {
+        if (! Schema::hasTable('space_separation_requests')) {
             return response()->json([
                 'message' => 'Fitur pembubaran space belum tersedia. Pastikan migrasi sudah dijalankan.',
             ], 503);
@@ -826,7 +831,7 @@ class SpaceApiController extends Controller
 
         if (trim(Str::upper($data['confirmation_phrase'])) !== Str::upper(SpaceSeparationRequest::CONFIRMATION_PHRASE)) {
             return response()->json([
-                'message' => 'Frasa konfirmasi tidak sesuai. Ketik persis "' . SpaceSeparationRequest::CONFIRMATION_PHRASE . '".',
+                'message' => 'Frasa konfirmasi tidak sesuai. Ketik persis "'.SpaceSeparationRequest::CONFIRMATION_PHRASE.'".',
             ], 422);
         }
 
@@ -880,7 +885,7 @@ class SpaceApiController extends Controller
         $space->delete();
 
         return response()->json([
-            'message' => 'Kalian resmi mengakhiri Space "' . $spaceTitle . '". Semoga keputusan ini terbaik untuk kalian berdua.',
+            'message' => 'Kalian resmi mengakhiri Space "'.$spaceTitle.'". Semoga keputusan ini terbaik untuk kalian berdua.',
             'redirect' => route('spaces.index', absolute: false),
         ]);
     }
@@ -889,7 +894,7 @@ class SpaceApiController extends Controller
     {
         $this->authorizeSpace($space);
 
-        if (!Schema::hasTable('space_separation_requests')) {
+        if (! Schema::hasTable('space_separation_requests')) {
             return response()->json([
                 'message' => 'Fitur pembubaran space belum tersedia. Pastikan migrasi sudah dijalankan.',
             ], 503);
@@ -932,7 +937,7 @@ class SpaceApiController extends Controller
 
     private function sendMailSilently(?User $recipient, Mailable $mailable): void
     {
-        if (!$recipient || !filter_var($recipient->email, FILTER_VALIDATE_EMAIL)) {
+        if (! $recipient || ! filter_var($recipient->email, FILTER_VALIDATE_EMAIL)) {
             return;
         }
 
@@ -945,7 +950,7 @@ class SpaceApiController extends Controller
 
     private function authorizeSpace(Space $space)
     {
-        if (!$space->hasMember(Auth::id())) {
+        if (! $space->hasMember(Auth::id())) {
             abort(403);
         }
     }

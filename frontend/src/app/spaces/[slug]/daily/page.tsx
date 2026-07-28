@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { useParams } from 'next/navigation'
 import Link from 'next/link'
 import AuthenticatedLayout from '@/layouts/AuthenticatedLayout'
@@ -58,12 +58,7 @@ export default function DailyPage() {
   const [spaceId, setSpaceId] = useState<number | null>(null)
   const supabase = createClient()
 
-  useEffect(() => {
-    if (!authLoading && !user) return
-    if (user) fetchMessages()
-  }, [user, authLoading])
-
-  const fetchMessages = async () => {
+  const fetchMessages = useCallback(async () => {
     const { data: space } = await supabase
       .from('spaces')
       .select('id')
@@ -105,7 +100,15 @@ export default function DailyPage() {
 
     if (historyData) setHistory(historyData)
     setLoading(false)
-  }
+  }, [slug, supabase])
+
+  useEffect(() => {
+    if (!authLoading && !user) return
+    if (user) {
+      const timeout = setTimeout(fetchMessages, 0)
+      return () => clearTimeout(timeout)
+    }
+  }, [user, authLoading, fetchMessages])
 
   const generateMessage = async () => {
     if (!spaceId || !user || generating) return
@@ -124,7 +127,7 @@ export default function DailyPage() {
       .select()
       .single()
 
-    if (data) {
+    if (!error && data) {
       setTodayMessage(data)
       setHistory((prev) => [data, ...prev])
     }

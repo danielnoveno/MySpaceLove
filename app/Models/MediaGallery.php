@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Model;
 class MediaGallery extends Model
 {
     use HasFactory;
+
     protected $fillable = [
         'space_id',
         'user_id',
@@ -27,6 +28,7 @@ class MediaGallery extends Model
     {
         return $this->belongsTo(Space::class);
     }
+
     public function user()
     {
         return $this->belongsTo(User::class);

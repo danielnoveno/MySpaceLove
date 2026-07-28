@@ -61,7 +61,7 @@ export function useNotifications(): UseNotificationsReturn {
       setError(fetchError.message)
     } else {
       setNotifications(data || [])
-      setUnreadCount(data?.filter((n: any) => !n.read_at).length ?? 0)
+      setUnreadCount(data?.filter((notification) => !notification.read_at).length ?? 0)
     }
     setLoading(false)
   }, [supabase])

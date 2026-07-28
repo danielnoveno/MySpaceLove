@@ -19,8 +19,7 @@ class NobarScheduleReminderMail extends Mailable
         public NobarSchedule $schedule,
         public ?User $creator,
         public User $recipient,
-    ) {
-    }
+    ) {}
 
     public function build(): self
     {

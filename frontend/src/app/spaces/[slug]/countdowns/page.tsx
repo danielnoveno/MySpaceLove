@@ -51,14 +51,13 @@ function getCountdownTimeRemaining(eventDate: string): TimeRemaining | null {
 }
 
 function CountdownTimer({ eventDate }: { eventDate: string }) {
-  const [time, setTime] = useState<TimeRemaining | null>(null)
+  const [time, setTime] = useState<TimeRemaining | null>(() => getCountdownTimeRemaining(eventDate))
 
   const updateTimer = useCallback(() => {
     setTime(getCountdownTimeRemaining(eventDate))
   }, [eventDate])
 
   useEffect(() => {
-    updateTimer()
     const interval = setInterval(updateTimer, 1000)
     return () => clearInterval(interval)
   }, [updateTimer])
@@ -86,15 +85,9 @@ export default function CountdownsPage() {
   const { user, loading: authLoading } = useAuth()
   const [countdowns, setCountdowns] = useState<Countdown[]>([])
   const [loading, setLoading] = useState(true)
-  const [spaceId, setSpaceId] = useState<number | null>(null)
   const supabase = createClient()
 
-  useEffect(() => {
-    if (!authLoading && !user) return
-    if (user) fetchCountdowns()
-  }, [user, authLoading])
-
-  const fetchCountdowns = async () => {
+  const fetchCountdowns = useCallback(async () => {
     const { data: space } = await supabase
       .from('spaces')
       .select('id')
@@ -106,8 +99,6 @@ export default function CountdownsPage() {
       return
     }
 
-    setSpaceId(space.id)
-
     const { data } = await supabase
       .from('countdowns')
       .select('*')
@@ -116,7 +107,15 @@ export default function CountdownsPage() {
 
     if (data) setCountdowns(data)
     setLoading(false)
-  }
+  }, [slug, supabase])
+
+  useEffect(() => {
+    if (!authLoading && !user) return
+    if (user) {
+      const timeout = setTimeout(fetchCountdowns, 0)
+      return () => clearTimeout(timeout)
+    }
+  }, [user, authLoading, fetchCountdowns])
 
   const deleteCountdown = async (id: number) => {
     if (!confirm('Hapus countdown ini?')) return

@@ -83,7 +83,7 @@ export default function NobarPage() {
         setSessions(sessionsData || [])
 
         if (sessionsData && sessionsData.length > 0) {
-          const sessionIds = sessionsData.map((s: any) => s.id)
+          const sessionIds = sessionsData.map((session) => session.id)
           const { data: participantsData } = await supabase
             .from('nobar_participants')
             .select('*')
@@ -105,7 +105,7 @@ export default function NobarPage() {
       .on(
         'postgres_changes',
         { event: '*', schema: 'public', table: 'nobar_participants' },
-        (payload: any) => {
+        (payload) => {
           if (payload.eventType === 'INSERT') {
             setParticipants((prev) => [...prev, payload.new as Participant])
           } else if (payload.eventType === 'DELETE') {

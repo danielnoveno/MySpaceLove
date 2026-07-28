@@ -23,7 +23,7 @@ class JoinRequestRejectedMail extends Mailable
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: "Permintaan Bergabung Ditolak",
+            subject: 'Permintaan Bergabung Ditolak',
         );
     }
 

@@ -4,6 +4,7 @@ import { useEffect, useState, useRef } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import AuthenticatedLayout from '@/layouts/AuthenticatedLayout'
+import AppImage from '@/components/AppImage'
 import { useAuth } from '@/contexts/AuthContext'
 import { createClient } from '@/lib/supabase/client'
 import { ArrowLeft, Upload, X, Loader2, Check, Trash2 } from 'lucide-react'
@@ -25,7 +26,6 @@ export default function EditGalleryPage() {
   const [newFiles, setNewFiles] = useState<FilePreview[]>([])
   const [saving, setSaving] = useState(false)
   const [loading, setLoading] = useState(true)
-  const [uploading, setUploading] = useState(false)
   const [uploadProgress, setUploadProgress] = useState(0)
   const [error, setError] = useState('')
 
@@ -40,7 +40,7 @@ export default function EditGalleryPage() {
         if (!collection) { router.push(`/spaces/${slug}/gallery`); return }
         setTitle(collection.title)
         const { data: photos } = await supabase.from('gallery_photos').select('*').eq('collection_id', collectionId)
-        if (photos) setExistingPhotos(photos.map((p: { id: string; url: string; caption?: string }) => ({ id: p.id, url: p.url, caption: p.caption })))
+        if (photos) setExistingPhotos(photos.map((p: { id: string; url: string; caption?: string }) => ({ id: p.id, url: p.url, caption: p.caption ?? null })))
         setLoading(false)
       })()
     }
@@ -82,7 +82,7 @@ export default function EditGalleryPage() {
         }
       }
       newFiles.forEach((f) => URL.revokeObjectURL(f.preview)); router.push(`/spaces/${slug}/gallery`)
-    } catch (err: unknown) { setError(err instanceof Error ? err.message : 'Failed to update. Please try again.'); setSaving(false); setUploading(false) }
+    } catch (err: unknown) { setError(err instanceof Error ? err.message : 'Failed to update. Please try again.'); setSaving(false) }
   }
 
   if (authLoading || loading) {
@@ -110,7 +110,7 @@ export default function EditGalleryPage() {
               <div className="grid grid-cols-3 gap-3">
                 {existingPhotos.map((photo) => (
                   <div key={photo.id} className="relative group rounded-2xl overflow-hidden aspect-square">
-                    <img src={photo.url} alt={photo.caption || 'Photo'} className="w-full h-full object-cover" />
+                    <AppImage src={photo.url} alt={photo.caption || 'Photo'} className="w-full h-full object-cover" />
                     <button type="button" onClick={() => markExistingPhotoDeleted(photo.id)}
                       className="absolute top-1.5 right-1.5 bg-coral-500/80 backdrop-blur-sm text-white p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity">
                       <Trash2 className="h-3.5 w-3.5" />
@@ -133,7 +133,7 @@ export default function EditGalleryPage() {
               <div className="mt-4 grid grid-cols-3 gap-3">
                 {newFiles.map((fp, idx) => (
                   <div key={idx} className="relative group rounded-2xl overflow-hidden aspect-square">
-                    <img src={fp.preview} alt={`Preview ${idx + 1}`} className="w-full h-full object-cover" />
+                    <AppImage src={fp.preview} alt={`Preview ${idx + 1}`} className="w-full h-full object-cover" />
                     <button type="button" onClick={() => removeNewFile(idx)}
                       className="absolute top-1.5 right-1.5 bg-coral-500/80 backdrop-blur-sm text-white p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity">
                       <X className="h-3.5 w-3.5" />

@@ -16,9 +16,10 @@ class CountdownController extends Controller
     {
         $data = $request->validate([
             'title' => 'required|string',
-            'event_date' => 'required|date'
+            'event_date' => 'required|date',
         ]);
         $data['user_id'] = auth()->id();
+
         return Countdown::create($data);
     }
 
@@ -27,9 +28,10 @@ class CountdownController extends Controller
         abort_if($countdown->user_id !== auth()->id(), 403);
         $data = $request->validate([
             'title' => 'required|string',
-            'event_date' => 'required|date'
+            'event_date' => 'required|date',
         ]);
         $countdown->update($data);
+
         return $countdown;
     }
 
@@ -37,6 +39,7 @@ class CountdownController extends Controller
     {
         abort_if($countdown->user_id !== auth()->id(), 403);
         $countdown->delete();
+
         return response()->noContent();
     }
 }

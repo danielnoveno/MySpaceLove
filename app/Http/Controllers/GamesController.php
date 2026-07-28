@@ -35,6 +35,7 @@ class GamesController extends Controller
 
         $games = $games->sortBy(function (Game $game) use ($priority) {
             $index = array_search($game->slug, $priority, true);
+
             return $index === false ? 999 : $index;
         })->values();
 
@@ -47,8 +48,8 @@ class GamesController extends Controller
                 'supports_multiplayer' => $game->supports_multiplayer,
             ])->values()->all(),
             'spaceSlug' => $space?->slug,
-            'spaceGoalsRoute' => route('space.goals.index') . ($space?->slug ? '?space=' . $space->slug : ''),
-            'spaceGoalsStoreRoute' => route('space.goals.store') . ($space?->slug ? '?space=' . $space->slug : ''),
+            'spaceGoalsRoute' => route('space.goals.index').($space?->slug ? '?space='.$space->slug : ''),
+            'spaceGoalsStoreRoute' => route('space.goals.store').($space?->slug ? '?space='.$space->slug : ''),
         ]);
     }
 
@@ -61,7 +62,7 @@ class GamesController extends Controller
 
         $space = $this->resolveSpace($request);
 
-        if (!$space) {
+        if (! $space) {
             return redirect()->route('spaces.index');
         }
 
@@ -77,10 +78,10 @@ class GamesController extends Controller
                 'description' => $game->description,
                 'supports_multiplayer' => $game->supports_multiplayer,
             ],
-            'scoreRoute' => route('games.score', ['slug' => $game->slug]) . '?space=' . $spaceSlug,
-            'leaderboardRoute' => route('games.leaderboard', ['slug' => $game->slug]) . '?space=' . $spaceSlug,
-            'sessionRoute' => route('games.sessions.show', ['slug' => $game->slug, 'sessionId' => 'SESSION']) . '?space=' . $spaceSlug,
-            'sessionMoveRoute' => route('games.sessions.move', ['slug' => $game->slug, 'sessionId' => 'SESSION']) . '?space=' . $spaceSlug,
+            'scoreRoute' => route('games.score', ['slug' => $game->slug]).'?space='.$spaceSlug,
+            'leaderboardRoute' => route('games.leaderboard', ['slug' => $game->slug]).'?space='.$spaceSlug,
+            'sessionRoute' => route('games.sessions.show', ['slug' => $game->slug, 'sessionId' => 'SESSION']).'?space='.$spaceSlug,
+            'sessionMoveRoute' => route('games.sessions.move', ['slug' => $game->slug, 'sessionId' => 'SESSION']).'?space='.$spaceSlug,
         ]);
     }
 
@@ -89,7 +90,7 @@ class GamesController extends Controller
         $user = $request->user();
         $space = $this->resolveSpace($request);
 
-        if (!$user || !$space || !$space->hasMember($user->id)) {
+        if (! $user || ! $space || ! $space->hasMember($user->id)) {
             abort(403);
         }
 
@@ -149,7 +150,7 @@ class GamesController extends Controller
     {
         $user = $request->user();
 
-        if (!$user) {
+        if (! $user) {
             return null;
         }
 
@@ -164,7 +165,7 @@ class GamesController extends Controller
         if ($spaceSlug) {
             $space = Space::where('slug', $spaceSlug)->first();
 
-            if (!$space || !$space->hasMember($user->id)) {
+            if (! $space || ! $space->hasMember($user->id)) {
                 abort(403);
             }
 

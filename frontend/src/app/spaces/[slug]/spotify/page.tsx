@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import AuthenticatedLayout from '@/layouts/AuthenticatedLayout'
+import AppImage from '@/components/AppImage'
 import { useAuth } from '@/contexts/AuthContext'
 import { createClient } from '@/lib/supabase/client'
 import { FadeIn, StaggerContainer, StaggerItem } from '@/components/motion'
@@ -53,17 +54,33 @@ export default function SpotifyDashboardPage() {
   const [dropCount, setDropCount] = useState(0)
   const [planCount, setPlanCount] = useState(0)
 
-  useEffect(() => {
-    if (!authLoading && !user) {
-      router.push('/auth/login')
-      return
-    }
-    if (user && slug) {
-      fetchTokens()
-    }
-  }, [user, authLoading, slug, router])
+  const fetchCounts = useCallback(async (spaceId: string) => {
+    const [capsules, drops, plans] = await Promise.all([
+      supabase.from('spotify_capsules').select('id', { count: 'exact', head: true }).eq('space_id', spaceId),
+      supabase.from('spotify_surprise_drops').select('id', { count: 'exact', head: true }).eq('space_id', spaceId),
+      supabase.from('spotify_listening_plans').select('id', { count: 'exact', head: true }).eq('space_id', spaceId),
+    ])
 
-  const fetchTokens = async () => {
+    setCapsuleCount(capsules.count ?? 0)
+    setDropCount(drops.count ?? 0)
+    setPlanCount(plans.count ?? 0)
+  }, [supabase])
+
+  const fetchNowPlaying = useCallback(async () => {
+    setNowPlayingLoading(true)
+    try {
+      const res = await fetch('/api/spotify/now-playing')
+      if (res.ok) {
+        const data = await res.json()
+        setNowPlaying(data)
+      }
+    } catch {
+      // Silently fail
+    }
+    setNowPlayingLoading(false)
+  }, [])
+
+  const fetchTokens = useCallback(async () => {
     setLoading(true)
 
     const { data: space } = await supabase
@@ -86,38 +103,22 @@ export default function SpotifyDashboardPage() {
     setTokens(data)
 
     if (data) {
-      fetchCounts(space.id)
-      fetchNowPlaying()
+      await Promise.all([fetchCounts(space.id), fetchNowPlaying()])
     }
 
     setLoading(false)
-  }
+  }, [fetchCounts, fetchNowPlaying, slug, supabase, user])
 
-  const fetchCounts = async (spaceId: string) => {
-    const [capsules, drops, plans] = await Promise.all([
-      supabase.from('spotify_capsules').select('id', { count: 'exact', head: true }).eq('space_id', spaceId),
-      supabase.from('spotify_surprise_drops').select('id', { count: 'exact', head: true }).eq('space_id', spaceId),
-      supabase.from('spotify_listening_plans').select('id', { count: 'exact', head: true }).eq('space_id', spaceId),
-    ])
-
-    setCapsuleCount(capsules.count ?? 0)
-    setDropCount(drops.count ?? 0)
-    setPlanCount(plans.count ?? 0)
-  }
-
-  const fetchNowPlaying = async () => {
-    setNowPlayingLoading(true)
-    try {
-      const res = await fetch('/api/spotify/now-playing')
-      if (res.ok) {
-        const data = await res.json()
-        setNowPlaying(data)
-      }
-    } catch {
-      // Silently fail
+  useEffect(() => {
+    if (!authLoading && !user) {
+      router.push('/auth/login')
+      return
     }
-    setNowPlayingLoading(false)
-  }
+    if (user && slug) {
+      const timeout = setTimeout(fetchTokens, 0)
+      return () => clearTimeout(timeout)
+    }
+  }, [user, authLoading, slug, router, fetchTokens])
 
   const connectSpotify = useCallback(async () => {
     setConnecting(true)
@@ -236,7 +237,7 @@ export default function SpotifyDashboardPage() {
               ) : nowPlaying ? (
                 <div className="flex items-center gap-5">
                   <div className="relative">
-                    <img
+                    <AppImage
                       src={nowPlaying.image_url}
                       alt={nowPlaying.album}
                       className="h-20 w-20 rounded-2xl object-cover shadow-md"

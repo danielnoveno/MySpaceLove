@@ -1,13 +1,13 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import AuthenticatedLayout from '@/layouts/AuthenticatedLayout'
 import { useAuth } from '@/contexts/AuthContext'
 import { createClient } from '@/lib/supabase/client'
 import { FadeIn, StaggerContainer, StaggerItem } from '@/components/motion'
-import { Plus, Clock, Heart, Image, MessageCircle, Gamepad2, Sparkles } from 'lucide-react'
+import { Plus, Clock, Heart, Image as ImageIcon, MessageCircle, Gamepad2, Sparkles } from 'lucide-react'
 import LoadingSpinner from '@/components/LoadingSpinner'
 import EmptyState from '@/components/EmptyState'
 
@@ -26,19 +26,8 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true)
   const supabase = createClient()
 
-  useEffect(() => {
-    if (!authLoading && !user) {
-      router.push('/auth/login')
-      return
-    }
-
-    if (user) {
-      fetchSpaces()
-    }
-  }, [user, authLoading, router])
-
-  const fetchSpaces = async () => {
-    const { data, error } = await supabase
+  const fetchSpaces = useCallback(async () => {
+    const { data } = await supabase
       .from('spaces')
       .select('*')
       .or(`user_one_id.eq.${user?.id},user_two_id.eq.${user?.id}`)
@@ -48,7 +37,19 @@ export default function DashboardPage() {
       setSpaces(data)
     }
     setLoading(false)
-  }
+  }, [supabase, user])
+
+  useEffect(() => {
+    if (!authLoading && !user) {
+      router.push('/auth/login')
+      return
+    }
+
+    if (user) {
+      const timeout = setTimeout(fetchSpaces, 0)
+      return () => clearTimeout(timeout)
+    }
+  }, [user, authLoading, router, fetchSpaces])
 
   if (authLoading || loading) {
     return (
@@ -124,7 +125,7 @@ export default function DashboardPage() {
                         Timeline
                       </span>
                       <span className="inline-flex items-center gap-1 rounded-full bg-coral-50 px-3 py-1 text-xs font-medium text-coral-600">
-                        <Image className="h-3 w-3" />
+                        <ImageIcon className="h-3 w-3" />
                         Galeri
                       </span>
                       <span className="inline-flex items-center gap-1 rounded-full bg-warm-100 px-3 py-1 text-xs font-medium text-warm-600">
@@ -163,7 +164,7 @@ export default function DashboardPage() {
                   className="group flex items-center gap-4 rounded-2xl bg-white border border-warm-100 p-5 transition-all hover:shadow-lg hover:shadow-warm-900/5 hover:-translate-y-0.5"
                 >
                   <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-coral-50 text-coral-500 transition-colors group-hover:bg-coral-500 group-hover:text-white">
-                    <Image className="h-6 w-6" />
+                    <ImageIcon className="h-6 w-6" />
                   </div>
                   <div>
                     <p className="font-semibold text-warm-900 group-hover:text-coral-600 transition-colors">Galeri</p>

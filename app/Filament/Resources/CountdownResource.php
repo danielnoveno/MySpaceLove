@@ -4,22 +4,23 @@ namespace App\Filament\Resources;
 
 use App\Filament\Resources\CountdownResource\Pages;
 use App\Models\Countdown;
-use Filament\Forms;
-use Filament\Tables;
-use Filament\Resources\Resource;
-use Filament\Forms\Form;
-use Filament\Tables\Table;
 use Filament\Forms\Components\DatePicker;
-use Filament\Forms\Components\TextInput;
-use Filament\Forms\Components\BelongsToSelect;
 use Filament\Forms\Components\Select;
+use Filament\Forms\Components\TextInput;
+use Filament\Forms\Form;
+use Filament\Resources\Resource;
+use Filament\Tables;
 use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Table;
 
 class CountdownResource extends Resource
 {
     protected static ?string $model = Countdown::class;
+
     protected static ?string $navigationIcon = 'heroicon-o-clock';
+
     protected static ?string $navigationLabel = 'Countdowns';
+
     protected static ?string $navigationGroup = 'Content';
 
     public static function form(Form $form): Form

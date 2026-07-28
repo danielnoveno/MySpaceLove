@@ -13,6 +13,7 @@
 .env.local
 .phpunit.result.cache
 .phpunit.result.cache.bak
+.phpunit.cache/
 *.log
 *.bak
 *.unused

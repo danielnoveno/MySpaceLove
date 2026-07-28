@@ -3,22 +3,21 @@
 namespace App\Filament\Resources;
 
 use App\Filament\Resources\SpotifySurpriseDropResource\Pages;
-use App\Filament\Resources\SpotifySurpriseDropResource\RelationManagers;
 use App\Models\SpotifySurpriseDrop;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
-use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\SoftDeletingScope;
 
 class SpotifySurpriseDropResource extends Resource
 {
     protected static ?string $model = SpotifySurpriseDrop::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-gift';
+
     protected static ?string $navigationLabel = 'Surprise Song Drops';
+
     protected static ?string $navigationGroup = 'Content';
 
     public static function form(Form $form): Form

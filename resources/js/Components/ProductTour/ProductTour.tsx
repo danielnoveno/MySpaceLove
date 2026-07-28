@@ -271,8 +271,13 @@ export default function ProductTour({
             steps: dashboardSteps.filter(step => {
                 // Filter out steps where element doesn't exist
                 if (!step.element) return true; // Keep center steps
-                const element = document.querySelector(step.element);
-                return element !== null;
+                if (typeof step.element === 'string') {
+                    return document.querySelector(step.element) !== null;
+                }
+                if (typeof step.element === 'function') {
+                    return step.element() !== null;
+                }
+                return step.element.isConnected;
             }),
             onDestroyStarted: () => {
                 // Allow users to close the tour anytime without confirmation
@@ -325,9 +330,14 @@ export default function ProductTour({
                 e.preventDefault();
                 e.stopPropagation();
                 driverObj.moveNext();
-            } else if (e.key === 'ArrowLeft' || (e.key === 'Escape' && driverObj.getActiveIndex && driverObj.getActiveIndex() > 0)) {
+            } else {
+                const activeIndex = driverObj.getActiveIndex?.() ?? 0;
+                if (e.key !== 'ArrowLeft' && (e.key !== 'Escape' || activeIndex <= 0)) {
+                    return;
+                }
+
                 // Use ArrowLeft for previous, or ESC if not on first step
-                if (e.key === 'ArrowLeft' || driverObj.getActiveIndex() > 0) {
+                if (e.key === 'ArrowLeft' || activeIndex > 0) {
                     e.preventDefault();
                     e.stopPropagation();
                     driverObj.movePrevious();

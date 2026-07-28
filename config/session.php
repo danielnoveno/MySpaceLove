@@ -13,7 +13,7 @@ if ($sessionDomain === null && $parsedHost) {
     $isLocalhost = $parsedHost === 'localhost';
 
     if (! $isIpAddress && ! $isLocalhost) {
-        $sessionDomain = '.' . ltrim($parsedHost, '.');
+        $sessionDomain = '.'.ltrim($parsedHost, '.');
     }
 }
 

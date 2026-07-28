@@ -14,6 +14,7 @@ use RuntimeException;
 class SpotifyService
 {
     protected ?SpotifyToken $token = null;
+
     protected string $apiBase = 'https://api.spotify.com/v1';
 
     public function storeToken(User $user, Space $space, array $payload): SpotifyToken
@@ -57,13 +58,13 @@ class SpotifyService
             ->latest('updated_at')
             ->first();
 
-        if (!$token && $fallbackToAny) {
+        if (! $token && $fallbackToAny) {
             $token = SpotifyToken::where('space_id', $space->id)
                 ->latest('updated_at')
                 ->first();
         }
 
-        if (!$token) {
+        if (! $token) {
             throw new RuntimeException('Spotify belum tersambung untuk ruang ini.');
         }
 
@@ -84,7 +85,7 @@ class SpotifyService
 
     public function ensureValidToken(): void
     {
-        if (!$this->token) {
+        if (! $this->token) {
             throw new RuntimeException('Token Spotify tidak ditemukan.');
         }
 
@@ -98,7 +99,7 @@ class SpotifyService
 
     public function refreshAccessToken(): void
     {
-        if (!$this->token) {
+        if (! $this->token) {
             throw new RuntimeException('Token Spotify tidak ditemukan.');
         }
 
@@ -122,7 +123,7 @@ class SpotifyService
 
     protected function http(): PendingRequest
     {
-        if (!$this->token) {
+        if (! $this->token) {
             throw new RuntimeException('Token Spotify tidak ditemukan.');
         }
 
@@ -133,7 +134,7 @@ class SpotifyService
 
     public function token(): SpotifyToken
     {
-        if (!$this->token) {
+        if (! $this->token) {
             throw new RuntimeException('Token Spotify tidak ditemukan.');
         }
 
@@ -142,7 +143,7 @@ class SpotifyService
 
     public function setSharedPlaylist(?string $playlistId): void
     {
-        if (!$this->token) {
+        if (! $this->token) {
             throw new RuntimeException('Token Spotify tidak ditemukan.');
         }
 

@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState, useRef } from 'react'
+import { useCallback, useEffect, useState, useRef } from 'react'
 import { useParams } from 'next/navigation'
 import AuthenticatedLayout from '@/layouts/AuthenticatedLayout'
 import { useAuth } from '@/contexts/AuthContext'
@@ -15,10 +15,6 @@ type Message = {
   content: string
   sender_id: string
   created_at: string
-  sender?: {
-    email: string
-    user_metadata?: { name?: string }
-  }
 }
 
 type SpaceInfo = {
@@ -43,45 +39,7 @@ export default function MessagesPage() {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }
 
-  useEffect(() => {
-    if (!authLoading && !user) return
-    if (user) {
-      fetchSpaceInfo()
-    }
-  }, [user, authLoading])
-
-  useEffect(() => {
-    if (!spaceInfo) return
-
-    fetchMessages()
-
-    const channel = supabase
-      .channel(`space-${spaceInfo.id}-messages`)
-      .on(
-        'postgres_changes',
-        {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'messages',
-          filter: `space_id=eq.${spaceInfo.id}`,
-        },
-        (payload: any) => {
-          const newMsg = payload.new as Message
-          setMessages((prev) => [...prev, newMsg])
-        }
-      )
-      .subscribe()
-
-    return () => {
-      supabase.removeChannel(channel)
-    }
-  }, [spaceInfo])
-
-  useEffect(() => {
-    scrollToBottom()
-  }, [messages])
-
-  const fetchSpaceInfo = async () => {
+  const fetchSpaceInfo = useCallback(async () => {
     const { data } = await supabase
       .from('spaces')
       .select('id, user_one_id, user_two_id')
@@ -93,41 +51,60 @@ export default function MessagesPage() {
     } else {
       setLoading(false)
     }
-  }
+  }, [slug, supabase])
 
-  const fetchMessages = async () => {
+  const fetchMessages = useCallback(async () => {
     if (!spaceInfo) return
 
-    const { data, error } = await supabase
+    const { data } = await supabase
       .from('messages')
       .select('*')
       .eq('space_id', spaceInfo.id)
       .order('created_at', { ascending: true })
 
-    if (data) {
-      // Fetch sender info for each unique sender
-      const senderIds = [...new Set(data.map((m: any) => m.sender_id as string))]
-      const sendersMap: Record<string, { email: string; user_metadata?: { name?: string } }> = {}
-
-      for (const senderId of senderIds) {
-        const { data: userData } = await supabase.auth.admin.getUserById(senderId as string)
-        if (userData?.user) {
-          sendersMap[senderId as string] = {
-            email: userData.user.email || 'Unknown',
-            user_metadata: userData.user.user_metadata,
-          }
-        }
-      }
-
-      const enrichedMessages = data.map((msg: any) => ({
-        ...msg,
-        sender: sendersMap[msg.sender_id] || { email: 'Unknown' },
-      }))
-
-      setMessages(enrichedMessages)
-    }
+    if (data) setMessages(data)
     setLoading(false)
-  }
+  }, [spaceInfo, supabase])
+
+  useEffect(() => {
+    if (!authLoading && !user) return
+    if (user) {
+      const timeout = setTimeout(fetchSpaceInfo, 0)
+      return () => clearTimeout(timeout)
+    }
+  }, [user, authLoading, fetchSpaceInfo])
+
+  useEffect(() => {
+    if (!spaceInfo) return
+
+    const timeout = setTimeout(fetchMessages, 0)
+
+    const channel = supabase
+      .channel(`space-${spaceInfo.id}-messages`)
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'messages',
+          filter: `space_id=eq.${spaceInfo.id}`,
+        },
+        (payload) => {
+          const newMsg = payload.new as Message
+          setMessages((prev) => [...prev, newMsg])
+        }
+      )
+      .subscribe()
+
+    return () => {
+      clearTimeout(timeout)
+      supabase.removeChannel(channel)
+    }
+  }, [spaceInfo, fetchMessages, supabase])
+
+  useEffect(() => {
+    scrollToBottom()
+  }, [messages])
 
   const handleSend = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -150,9 +127,7 @@ export default function MessagesPage() {
   }
 
   const getSenderName = (msg: Message) => {
-    if (msg.sender?.user_metadata?.name) return msg.sender.user_metadata.name
-    if (msg.sender?.email) return msg.sender.email.split('@')[0]
-    return 'Unknown'
+    return msg.sender_id === user?.id ? 'You' : 'Partner'
   }
 
   if (authLoading || loading) {

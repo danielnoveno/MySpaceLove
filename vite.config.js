@@ -39,7 +39,11 @@ export default defineConfig({
         chunkSizeWarningLimit: 600,
         // Enable CSS code splitting
         cssCodeSplit: true,
-        rollupOptions: {
+        rolldownOptions: {
+            checks: {
+                // Plugin timing diagnostics are informational and noisy in CI.
+                pluginTimings: false,
+            },
             output: {
                 // Manual chunk splitting for better caching and lazy loading
                 manualChunks: (id) => {
@@ -47,6 +51,14 @@ export default defineConfig({
                         // Inertia.js
                         if (id.includes('/@inertiajs/')) {
                             return 'inertia';
+                        }
+
+                        if (
+                            id.includes('/react/') ||
+                            id.includes('/react-dom/') ||
+                            id.includes('/scheduler/')
+                        ) {
+                            return 'react-core';
                         }
                         
                         // UI libraries (lazy loaded)
@@ -56,11 +68,20 @@ export default defineConfig({
                         
                         // Heavy feature chunks (lazy loaded)
 
-                        if (id.includes('/react-pdf/')) {
+                        if (id.includes('/react-pdf/') || id.includes('/pdfjs-dist/')) {
                             return 'pdf';
                         }
-                        if (id.includes('/react-spring/') || id.includes('/react-use-gesture/')) {
+                        if (id.includes('/@react-spring/') || id.includes('/react-use-gesture/')) {
                             return 'animation';
+                        }
+                        if (id.includes('/leaflet/') || id.includes('/react-leaflet/')) {
+                            return 'maps';
+                        }
+                        if (id.includes('/axios/')) {
+                            return 'networking';
+                        }
+                        if (id.includes('/ziggy-js/')) {
+                            return 'routing';
                         }
                         if (id.includes('/@jitsi/')) {
                             return 'video';
@@ -147,7 +168,7 @@ export default defineConfig({
             '@inertiajs/react',
             '@headlessui/react',
             'lucide-react',
-            'react-spring',
+            '@react-spring/web',
             'react-use-gesture',
             'framer-motion',
             'gsap',
@@ -161,10 +182,6 @@ export default defineConfig({
         ],
         // Force re-optimization to clear any cached issues
         force: true,
-        esbuildOptions: {
-            // Ensure React is treated as external in optimized deps
-            mainFields: ['module', 'main'],
-        },
     },
     server: {
         host: '0.0.0.0',

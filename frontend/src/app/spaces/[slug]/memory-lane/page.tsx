@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import AuthenticatedLayout from '@/layouts/AuthenticatedLayout'
+import AppImage from '@/components/AppImage'
 import { useAuth } from '@/contexts/AuthContext'
 import { createClient } from '@/lib/supabase/client'
 import { FadeIn, StaggerContainer, StaggerItem } from '@/components/motion'
@@ -60,17 +61,7 @@ export default function MemoryLanePage() {
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null)
   const [previewImage, setPreviewImage] = useState<string | null>(null)
 
-  useEffect(() => {
-    if (!authLoading && !user) {
-      router.push('/auth/login')
-      return
-    }
-    if (user && slug) {
-      fetchMemories()
-    }
-  }, [user, authLoading, slug, router])
-
-  const fetchMemories = async () => {
+  const fetchMemories = useCallback(async () => {
     setLoading(true)
 
     const { data: space } = await supabase
@@ -92,7 +83,18 @@ export default function MemoryLanePage() {
 
     setMemories(data || [])
     setLoading(false)
-  }
+  }, [slug, supabase])
+
+  useEffect(() => {
+    if (!authLoading && !user) {
+      router.push('/auth/login')
+      return
+    }
+    if (user && slug) {
+      const timeout = setTimeout(fetchMemories, 0)
+      return () => clearTimeout(timeout)
+    }
+  }, [user, authLoading, slug, router, fetchMemories])
 
   const deleteMemory = useCallback(async (memory: Memory) => {
     if (!confirm(`Hapus "${memory.title}"?`)) return
@@ -227,7 +229,7 @@ export default function MemoryLanePage() {
                     {/* Image */}
                     <div className="relative h-48 bg-gradient-to-br from-brand-50 to-coral-50">
                       {memory.image_url ? (
-                        <img
+                        <AppImage
                           src={memory.image_url}
                           alt={memory.title}
                           className="w-full h-full object-cover cursor-pointer"
@@ -314,7 +316,7 @@ export default function MemoryLanePage() {
           >
             <X className="h-6 w-6" />
           </button>
-          <img
+          <AppImage
             src={previewImage}
             alt="Preview memori"
             className="max-h-[90vh] max-w-[90vw] rounded-3xl object-contain shadow-2xl"

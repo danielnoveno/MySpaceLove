@@ -20,6 +20,7 @@ class TimelineController extends Controller
             'tag' => 'nullable|string',
         ]);
         $data['user_id'] = auth()->id();
+
         return Timeline::create($data);
     }
 
@@ -32,6 +33,7 @@ class TimelineController extends Controller
             'tag' => 'nullable|string',
         ]);
         $timeline->update($data);
+
         return $timeline;
     }
 
@@ -39,6 +41,7 @@ class TimelineController extends Controller
     {
         abort_if($timeline->user_id !== auth()->id(), 403);
         $timeline->delete();
+
         return response()->noContent();
     }
 }

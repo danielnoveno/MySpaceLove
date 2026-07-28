@@ -14,7 +14,7 @@ class GameSessionController extends Controller
         $user = $request->user();
         $space = $this->resolveSpace($request);
 
-        if (!$user || !$space || !$space->hasMember($user->id)) {
+        if (! $user || ! $space || ! $space->hasMember($user->id)) {
             abort(403);
         }
 
@@ -29,7 +29,7 @@ class GameSessionController extends Controller
             ->where('session_id', $sessionId)
             ->first();
 
-        if (!$session) {
+        if (! $session) {
             $session = GameSession::create([
                 'game_id' => $game->id,
                 'space_id' => $space->id,
@@ -51,7 +51,7 @@ class GameSessionController extends Controller
         $user = $request->user();
         $space = $this->resolveSpace($request);
 
-        if (!$user || !$space || !$space->hasMember($user->id)) {
+        if (! $user || ! $space || ! $space->hasMember($user->id)) {
             abort(403);
         }
 
@@ -136,6 +136,7 @@ class GameSessionController extends Controller
                 } else {
                     $session->current_turn_user_id = $state['current_turn_user_id'];
                 }
+
                 return $state;
             }
         }
@@ -147,7 +148,7 @@ class GameSessionController extends Controller
     {
         $action = $payload['action'] ?? '';
 
-        if (!isset($state['players'])) {
+        if (! isset($state['players'])) {
             return $state;
         }
 
@@ -289,7 +290,7 @@ class GameSessionController extends Controller
     {
         $user = $request->user();
 
-        if (!$user) {
+        if (! $user) {
             return null;
         }
 
@@ -304,7 +305,7 @@ class GameSessionController extends Controller
         if ($spaceSlug) {
             $space = Space::where('slug', $spaceSlug)->first();
 
-            if (!$space || !$space->hasMember($user->id)) {
+            if (! $space || ! $space->hasMember($user->id)) {
                 abort(403);
             }
 

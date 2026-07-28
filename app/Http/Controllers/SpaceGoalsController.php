@@ -13,7 +13,7 @@ class SpaceGoalsController extends Controller
         $space = $this->resolveSpace($request);
         $user = $request->user();
 
-        if (!$user || !$space || !$space->hasMember($user->id)) {
+        if (! $user || ! $space || ! $space->hasMember($user->id)) {
             abort(403);
         }
 
@@ -44,7 +44,7 @@ class SpaceGoalsController extends Controller
         $space = $this->resolveSpace($request);
         $user = $request->user();
 
-        if (!$user || !$space || !$space->hasMember($user->id)) {
+        if (! $user || ! $space || ! $space->hasMember($user->id)) {
             abort(403);
         }
 
@@ -74,7 +74,7 @@ class SpaceGoalsController extends Controller
         $space = $this->resolveSpace($request);
         $user = $request->user();
 
-        if (!$user || !$space || $goal->space_id !== $space->id || !$space->hasMember($user->id)) {
+        if (! $user || ! $space || $goal->space_id !== $space->id || ! $space->hasMember($user->id)) {
             abort(403);
         }
 
@@ -103,7 +103,7 @@ class SpaceGoalsController extends Controller
         $space = $this->resolveSpace($request);
         $user = $request->user();
 
-        if (!$user || !$space || $goal->space_id !== $space->id || !$space->hasMember($user->id)) {
+        if (! $user || ! $space || $goal->space_id !== $space->id || ! $space->hasMember($user->id)) {
             abort(403);
         }
 
@@ -121,7 +121,7 @@ class SpaceGoalsController extends Controller
     {
         $user = $request->user();
 
-        if (!$user) {
+        if (! $user) {
             return null;
         }
 
@@ -136,7 +136,7 @@ class SpaceGoalsController extends Controller
         if ($spaceSlug) {
             $space = Space::where('slug', $spaceSlug)->first();
 
-            if (!$space || !$space->hasMember($user->id)) {
+            if (! $space || ! $space->hasMember($user->id)) {
                 abort(403);
             }
 

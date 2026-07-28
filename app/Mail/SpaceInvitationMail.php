@@ -6,10 +6,9 @@ use App\Models\Space;
 use App\Models\SpaceInvitation;
 use App\Models\User;
 use Illuminate\Bus\Queueable;
+use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Mail\Mailable;
 use Illuminate\Queue\SerializesModels;
-
-use Illuminate\Contracts\Queue\ShouldQueue;
 
 class SpaceInvitationMail extends Mailable implements ShouldQueue
 {
@@ -23,12 +22,11 @@ class SpaceInvitationMail extends Mailable implements ShouldQueue
         public ?string $temporaryPassword = null,
         public array $invitationHistory = [],
         public string $currentStatusLabel = 'Menunggu konfirmasi',
-    ) {
-    }
+    ) {}
 
     public function build(): self
     {
-        return $this->subject('Undangan bergabung ke Space "' . $this->space->title . '"')
+        return $this->subject('Undangan bergabung ke Space "'.$this->space->title.'"')
             ->view('emails.space_invitation')
             ->with([
                 'space' => $this->space,

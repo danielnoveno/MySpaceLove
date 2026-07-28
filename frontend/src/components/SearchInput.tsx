@@ -9,7 +9,10 @@ export default function SearchInput({ value, onChange, placeholder = 'Search...'
   const [localValue, setLocalValue] = useState(value);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  useEffect(() => { setLocalValue(value) }, [value]);
+  useEffect(() => {
+    const timeout = setTimeout(() => setLocalValue(value), 0);
+    return () => clearTimeout(timeout);
+  }, [value]);
 
   const debouncedOnChange = useCallback((newValue: string) => {
     if (timerRef.current) clearTimeout(timerRef.current);

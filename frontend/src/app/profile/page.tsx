@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState, useRef } from 'react'
+import { useCallback, useEffect, useState, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import AuthenticatedLayout from '@/layouts/AuthenticatedLayout'
 import { useAuth } from '@/contexts/AuthContext'
@@ -8,6 +8,7 @@ import { createClient } from '@/lib/supabase/client'
 import { User, Mail, Lock, Upload, Trash2, Copy, Check, ArrowLeft } from 'lucide-react'
 import Link from 'next/link'
 import LoadingSpinner from '@/components/LoadingSpinner'
+import AppImage from '@/components/AppImage'
 
 export default function ProfilePage() {
   const { user, loading: authLoading } = useAuth()
@@ -27,12 +28,7 @@ export default function ProfilePage() {
   const fileInputRef = useRef<HTMLInputElement>(null)
   const supabase = createClient()
 
-  useEffect(() => {
-    if (!authLoading && !user) { router.push('/auth/login'); return }
-    if (user) fetchProfile()
-  }, [user, authLoading])
-
-  const fetchProfile = async () => {
+  const fetchProfile = useCallback(async () => {
     if (!user) return
     setEmail(user.email || '')
     setName(user.user_metadata?.name || '')
@@ -40,7 +36,15 @@ export default function ProfilePage() {
     if (profileData?.partner_code) { setPartnerCode(profileData.partner_code) }
     else { setPartnerCode(user.id.slice(0, 8).toUpperCase()) }
     setLoading(false)
-  }
+  }, [supabase, user])
+
+  useEffect(() => {
+    if (!authLoading && !user) { router.push('/auth/login'); return }
+    if (user) {
+      const timeout = setTimeout(fetchProfile, 0)
+      return () => clearTimeout(timeout)
+    }
+  }, [user, authLoading, router, fetchProfile])
 
   const handleUpdateProfile = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -117,7 +121,7 @@ export default function ProfilePage() {
           <div className="flex items-center gap-6">
             <div className="relative">
               <div className="h-24 w-24 rounded-full bg-gradient-to-br from-brand-400 to-purple-500 flex items-center justify-center text-white text-3xl font-bold overflow-hidden">
-                {avatarUrl ? <img src={avatarUrl} alt="Avatar" className="h-full w-full object-cover" /> : name?.charAt(0).toUpperCase() || user?.email?.charAt(0).toUpperCase()}
+                {avatarUrl ? <AppImage src={avatarUrl} alt="Avatar" className="h-full w-full object-cover" /> : name?.charAt(0).toUpperCase() || user?.email?.charAt(0).toUpperCase()}
               </div>
             </div>
             <div>

@@ -6,14 +6,14 @@ import Link from 'next/link'
 import AuthenticatedLayout from '@/layouts/AuthenticatedLayout'
 import { useAuth } from '@/contexts/AuthContext'
 import { useSpaces } from '@/lib/hooks/useSpaces'
-import { Heart, Plus, Users, AlertTriangle, Loader2, Trash2, Mail, X, Copy, Check, UserPlus, UserCheck } from 'lucide-react'
+import { Heart, Users, AlertTriangle, Loader2, Mail, Copy, Check, UserPlus } from 'lucide-react'
 
 const SEPARATION_CONFIRMATION_PHRASE = 'KITA SUDAH SIAP'
 
 export default function SpacesIndex() {
   const { user, loading: authLoading } = useAuth()
   const router = useRouter()
-  const { spaces, loading, createSpace, joinSpace, invitePartner, cancelInvitation, requestSeparation, respondSeparation, cancelSeparation, joinRequests, fetchJoinRequests, approveJoinRequest, rejectJoinRequest } = useSpaces()
+  const { spaces, loading, createSpace, joinSpace, invitePartner, requestSeparation, cancelSeparation, joinRequests, fetchJoinRequests, approveJoinRequest, rejectJoinRequest } = useSpaces()
 
   const [title, setTitle] = useState('')
   const [bio, setBio] = useState('')
@@ -34,9 +34,6 @@ export default function SpacesIndex() {
   const [separationReason, setSeparationReason] = useState('')
   const [processingSeparation, setProcessingSeparation] = useState(false)
   const [separationAlert, setSeparationAlert] = useState<{ type: 'success' | 'error'; message: string } | null>(null)
-  const [respondPhrase, setRespondPhrase] = useState('')
-  const [respondReason, setRespondReason] = useState('')
-  const [responding, setResponding] = useState(false)
   const [copiedCode, setCopiedCode] = useState<string | null>(null)
   const [activeJoinRequestSpaceId, setActiveJoinRequestSpaceId] = useState<number | null>(null)
   const [approvingId, setApprovingId] = useState<number | null>(null)
@@ -98,18 +95,7 @@ export default function SpacesIndex() {
     setProcessingSeparation(false)
   }, [separationPhrase, separationReason, processingSeparation, requestSeparation])
 
-  const handleRespondSeparation = useCallback(async (spaceSlug: string, decision: 'approve' | 'reject') => {
-    if (responding) return; setSeparationAlert(null)
-    if (!respondPhrase.trim()) { setSeparationAlert({ type: 'error', message: 'Please type the confirmation phrase.' }); return }
-    if (respondPhrase.trim().toUpperCase() !== SEPARATION_CONFIRMATION_PHRASE.toUpperCase()) { setSeparationAlert({ type: 'error', message: `Confirmation phrase must be exactly "${SEPARATION_CONFIRMATION_PHRASE}".` }); return }
-    setResponding(true); const result = await respondSeparation(spaceSlug, decision, respondPhrase.trim(), respondReason.trim() || undefined)
-    if (result.error) { setSeparationAlert({ type: 'error', message: result.error }) } else { setSeparationAlert({ type: 'success', message: decision === 'approve' ? 'Space ended successfully.' : 'Separation request rejected.' }); setRespondPhrase(''); setRespondReason('') }
-    setResponding(false)
-  }, [respondPhrase, respondReason, responding, respondSeparation])
-
   const handleCancelSeparation = useCallback(async (spaceSlug: string) => { const result = await cancelSeparation(spaceSlug); if (result.error) setSeparationAlert({ type: 'error', message: result.error }); else setSeparationAlert({ type: 'success', message: 'Separation request cancelled.' }) }, [cancelSeparation])
-
-  const handleCancelInvitation = useCallback(async (spaceSlug: string, invitationId: number) => { if (!window.confirm('Cancel this invitation?')) return; const result = await cancelInvitation(spaceSlug, invitationId); if (result.error) setInviteAlert({ type: 'error', message: result.error }); else setInviteAlert({ type: 'success', message: 'Invitation cancelled.' }) }, [cancelInvitation])
 
   if (authLoading || loading) {
     return <AuthenticatedLayout><div className="flex items-center justify-center min-h-[60vh]"><Loader2 className="h-12 w-12 text-brand-500 animate-spin" /></div></AuthenticatedLayout>

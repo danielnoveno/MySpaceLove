@@ -114,11 +114,13 @@ export default function Game2048({ onScore }: { onScore: (score: number) => void
   const wonRef = useRef(won)
   const keepPlayingRef = useRef(keepPlaying)
 
-  gridRef.current = grid
-  scoreRef.current = score
-  gameOverRef.current = gameOver
-  wonRef.current = won
-  keepPlayingRef.current = keepPlaying
+  useEffect(() => {
+    gridRef.current = grid
+    scoreRef.current = score
+    gameOverRef.current = gameOver
+    wonRef.current = won
+    keepPlayingRef.current = keepPlaying
+  }, [gameOver, grid, keepPlaying, score, won])
 
   const move = useCallback(
     (direction: 'left' | 'right' | 'up' | 'down') => {

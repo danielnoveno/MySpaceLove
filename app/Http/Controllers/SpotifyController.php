@@ -47,7 +47,7 @@ class SpotifyController extends Controller
             ->values();
 
         foreach ($tokens as $tokenUserId => $token) {
-            if (!$connections->contains(fn ($connection) => $connection['user_id'] === $tokenUserId)) {
+            if (! $connections->contains(fn ($connection) => $connection['user_id'] === $tokenUserId)) {
                 $connections->push([
                     'user_id' => $tokenUserId,
                     'name' => optional($token->user)->name ?? optional($token->user)->email ?? 'Member',
@@ -72,7 +72,7 @@ class SpotifyController extends Controller
             $message = $exception->getMessage();
         }
 
-        if (!$activeService) {
+        if (! $activeService) {
             $fallbackToken = $tokens->first();
             if ($fallbackToken) {
                 try {
@@ -88,22 +88,22 @@ class SpotifyController extends Controller
             $playlistId = $request->query('playlist_id') ?: $activeService->token()->shared_playlist_id;
 
             $playlist = $this->buildPlaylistSummary($activeService, $playlistId);
-            if (!empty($playlist['playlist_id']) && $playlist['playlist_id'] !== $activeService->token()->shared_playlist_id) {
+            if (! empty($playlist['playlist_id']) && $playlist['playlist_id'] !== $activeService->token()->shared_playlist_id) {
                 $activeService->setSharedPlaylist($playlist['playlist_id']);
             }
         }
 
         $moodSources = $connections
             ->filter(fn (array $connection) => $connection['connected'] && $connection['user_id'] !== null)
-            ->map(function (array $connection) use ($tokens, $user) {
+            ->map(function (array $connection) use ($tokens) {
                 $token = $tokens->get($connection['user_id']);
-                if (!$token) {
+                if (! $token) {
                     return null;
                 }
 
                 $label = $connection['is_current_user']
                     ? 'Mood Kamu'
-                    : ('Mood ' . ($connection['name'] ?? 'Pasangan'));
+                    : ('Mood '.($connection['name'] ?? 'Pasangan'));
 
                 return [
                     'token' => $token,
@@ -264,7 +264,7 @@ class SpotifyController extends Controller
             $spotifyService->startPlayback($data['track_id'], $data['position_ms'] ?? null);
         } catch (Throwable $exception) {
             return response()->json([
-                'message' => 'Gagal menghubungkan playback: ' . $exception->getMessage(),
+                'message' => 'Gagal menghubungkan playback: '.$exception->getMessage(),
             ], 422);
         }
 
@@ -280,15 +280,15 @@ class SpotifyController extends Controller
         if ($preferredPlaylistId) {
             try {
                 $playlistInfo = $spotifyService->getPlaylist($preferredPlaylistId);
-            } catch (\Throwable $exception) {
+            } catch (Throwable $exception) {
                 $playlistInfo = null;
             }
         }
 
-        if (!$playlistInfo) {
+        if (! $playlistInfo) {
             try {
                 $playlists = $spotifyService->getUserPlaylists(10);
-            } catch (\Throwable $exception) {
+            } catch (Throwable $exception) {
                 return [
                     'playlist_id' => null,
                     'name' => 'Belum ada playlist',
@@ -301,7 +301,7 @@ class SpotifyController extends Controller
             }
 
             $firstPlaylist = $playlists[0] ?? null;
-            if (!$firstPlaylist) {
+            if (! $firstPlaylist) {
                 return [
                     'playlist_id' => null,
                     'name' => 'Belum ada playlist',
@@ -315,7 +315,7 @@ class SpotifyController extends Controller
 
             try {
                 $playlistInfo = $spotifyService->getPlaylist($firstPlaylist['id']);
-            } catch (\Throwable $exception) {
+            } catch (Throwable $exception) {
                 return [
                     'playlist_id' => null,
                     'name' => 'Belum ada playlist',
@@ -330,7 +330,7 @@ class SpotifyController extends Controller
 
         try {
             $playlistTracks = $spotifyService->getPlaylistTracks($playlistInfo['id'], 50);
-        } catch (\Throwable $exception) {
+        } catch (Throwable $exception) {
             $playlistTracks = [];
         }
 
@@ -347,7 +347,7 @@ class SpotifyController extends Controller
                     'external_url' => Arr::get($track, 'external_urls.spotify'),
                 ];
             })
-            ->filter(fn (array $track) => !empty($track['id']))
+            ->filter(fn (array $track) => ! empty($track['id']))
             ->values();
 
         try {
@@ -357,7 +357,7 @@ class SpotifyController extends Controller
         }
 
         $averageEnergy = $tracks->count() > 0
-            ? round($tracks->map(fn ($track) => Arr::get($features, $track['id'] . '.energy', 0))->average() ?? 0, 2)
+            ? round($tracks->map(fn ($track) => Arr::get($features, $track['id'].'.energy', 0))->average() ?? 0, 2)
             : 0;
 
         $newThisWeek = $tracks->filter(function (array $track) {
@@ -368,7 +368,7 @@ class SpotifyController extends Controller
             return Carbon::parse($track['added_at'])->greaterThanOrEqualTo(Carbon::now()->subDays(7));
         })->count();
 
-        $lastAdded = $tracks->filter(fn (array $track) => !empty($track['added_at']))
+        $lastAdded = $tracks->filter(fn (array $track) => ! empty($track['added_at']))
             ->sortByDesc('added_at')
             ->first();
 
@@ -402,7 +402,7 @@ class SpotifyController extends Controller
                 if ($snapshot !== null) {
                     $snapshots[] = $snapshot;
                 }
-            } catch (\Throwable $exception) {
+            } catch (Throwable $exception) {
                 continue;
             }
         }
@@ -414,25 +414,25 @@ class SpotifyController extends Controller
     {
         try {
             $recentlyPlayed = $spotifyService->getRecentlyPlayed(3);
-        } catch (\Throwable $exception) {
+        } catch (Throwable $exception) {
             return null;
         }
 
         $item = Arr::first($recentlyPlayed);
-        if (!$item) {
+        if (! $item) {
             return null;
         }
 
         $track = Arr::get($item, 'track', []);
         $trackId = Arr::get($track, 'id');
 
-        if (!$trackId) {
+        if (! $trackId) {
             return null;
         }
 
         try {
             $features = $spotifyService->getAudioFeatures([$trackId]);
-        } catch (\Throwable $exception) {
+        } catch (Throwable $exception) {
             $features = [];
         }
 
@@ -456,7 +456,7 @@ class SpotifyController extends Controller
     {
         try {
             $state = $spotifyService->getPlaybackState();
-        } catch (\Throwable $exception) {
+        } catch (Throwable $exception) {
             $state = [];
         }
         if (empty($state)) {
@@ -475,7 +475,7 @@ class SpotifyController extends Controller
             'track' => Arr::get($track, 'name', 'Unknown'),
             'artists' => implode(', ', Arr::pluck(Arr::get($track, 'artists', []), 'name')),
             'host' => Arr::get($state, 'device.name', 'Device'),
-            'started_at' => $elapsedMinutes > 0 ? $elapsedMinutes . ' menit lalu' : 'Baru saja',
+            'started_at' => $elapsedMinutes > 0 ? $elapsedMinutes.' menit lalu' : 'Baru saja',
             'listeners' => 1,
             'joinable' => (bool) Arr::get($state, 'is_playing', false),
             'track_id' => Arr::get($track, 'id'),

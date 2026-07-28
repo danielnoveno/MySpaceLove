@@ -8,18 +8,20 @@ use Illuminate\Database\Eloquent\Model;
 class LoveJournal extends Model
 {
     use HasFactory;
+
     protected $fillable = [
         'space_id',
         'user_id',
         'title',
         'content',
-        'mood'
+        'mood',
     ];
 
     public function space()
     {
         return $this->belongsTo(Space::class);
     }
+
     public function user()
     {
         return $this->belongsTo(User::class);

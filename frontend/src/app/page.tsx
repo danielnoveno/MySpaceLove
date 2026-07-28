@@ -6,7 +6,7 @@ import Link from 'next/link'
 import ApplicationLogo from '@/components/ApplicationLogo'
 import { FadeIn, StaggerContainer, StaggerItem, MagneticButton } from '@/components/motion'
 import {
-  Heart, ArrowRight, Sparkle, CalendarHeart, Image, MessageCircle,
+  Heart, ArrowRight, Sparkle, CalendarHeart, Image as ImageIcon, MessageCircle,
   Music, Gamepad2, Star, Clock, BookOpen, MapPin
 } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
@@ -131,7 +131,7 @@ export default function HomePage() {
                     <div className="grid grid-cols-3 gap-3 mb-6">
                       {[
                         { icon: Clock, label: 'Timeline', color: 'bg-brand-50 text-brand-500' },
-                        { icon: Image, label: 'Galeri', color: 'bg-purple-50 text-purple-500' },
+                        { icon: ImageIcon, label: 'Galeri', color: 'bg-purple-50 text-purple-500' },
                         { icon: MessageCircle, label: 'Pesan', color: 'bg-blue-50 text-blue-500' },
                         { icon: Music, label: 'Musik', color: 'bg-green-50 text-green-500' },
                         { icon: Star, label: 'Wishlist', color: 'bg-amber-50 text-amber-500' },
@@ -222,7 +222,7 @@ export default function HomePage() {
             <StaggerItem className="group">
               <div className="h-full p-6 rounded-3xl bg-white border border-warm-100 hover:border-brand-200 transition-all hover:shadow-lg hover:shadow-brand-500/5 hover:-translate-y-1">
                 <div className="w-12 h-12 rounded-2xl bg-purple-50 text-purple-500 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
-                  <Image className="w-6 h-6" />
+                  <ImageIcon className="w-6 h-6" />
                 </div>
                 <h3 className="text-lg font-bold text-warm-900 mb-2">Galeri Foto</h3>
                 <p className="text-warm-600 text-sm leading-relaxed">

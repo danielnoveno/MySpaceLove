@@ -4,6 +4,7 @@ import { useEffect, useState, useRef, useCallback } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import Link from 'next/link'
 import AuthenticatedLayout from '@/layouts/AuthenticatedLayout'
+import AppImage from '@/components/AppImage'
 import { useAuth } from '@/contexts/AuthContext'
 import { createClient } from '@/lib/supabase/client'
 import { useTimeline, TimelineItem } from '@/lib/hooks/useTimeline'
@@ -56,22 +57,7 @@ export default function EditTimelinePage() {
   const createdPreviewUrls = useRef<string[]>([])
   const fileInputRef = useRef<HTMLInputElement>(null)
 
-  useEffect(() => {
-    if (!authLoading && !user) {
-      router.push('/auth/login')
-      return
-    }
-
-    if (user && slug && uuid) {
-      loadData()
-    }
-
-    return () => {
-      createdPreviewUrls.current.forEach((url) => URL.revokeObjectURL(url))
-    }
-  }, [user, authLoading, slug, uuid, router])
-
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     const { data: space } = await supabase
       .from('spaces')
       .select('id, title')
@@ -111,7 +97,22 @@ export default function EditTimelinePage() {
 
     setMediaItems(existingMedia)
     setPageLoading(false)
-  }
+  }, [router, slug, supabase, uuid])
+
+  useEffect(() => {
+    let timeout: ReturnType<typeof setTimeout> | undefined
+
+    if (!authLoading && !user) {
+      router.push('/auth/login')
+    } else if (user && slug && uuid) {
+      timeout = setTimeout(loadData, 0)
+    }
+
+    return () => {
+      if (timeout) clearTimeout(timeout)
+      createdPreviewUrls.current.forEach((url) => URL.revokeObjectURL(url))
+    }
+  }, [user, authLoading, slug, uuid, router, loadData])
 
   const handleFileChange = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || [])
@@ -297,8 +298,9 @@ export default function EditTimelinePage() {
                 <div className="flex gap-4 overflow-x-auto pb-2">
                   {mediaItems.map((item, index) => (
                     <div key={item.kind === 'existing' ? item.path : item.id} className="group relative flex-shrink-0">
-                      <img
+                      <AppImage
                         src={item.url}
+                        alt={item.kind === 'existing' ? `Timeline media ${index + 1}` : item.file.name}
                         className="h-32 w-40 cursor-pointer rounded-xl object-cover shadow"
                         onClick={() => setModalImage(item.url)}
                       />
@@ -378,7 +380,7 @@ export default function EditTimelinePage() {
             className="fixed inset-0 bg-black/70 flex items-center justify-center z-50"
             onClick={() => setModalImage(null)}
           >
-            <img
+            <AppImage
               src={modalImage}
               alt="Preview"
               className="max-h-[90vh] max-w-[90vw] object-contain rounded-lg"

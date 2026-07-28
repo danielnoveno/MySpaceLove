@@ -1,4 +1,4 @@
-import { ImgHTMLAttributes } from 'react';
+import { Children, ImgHTMLAttributes, ReactNode } from 'react';
 import { cn, getInitials } from '@/utils/helpers';
 
 // ============================================
@@ -110,7 +110,7 @@ export default function Avatar({
 // ============================================
 
 interface AvatarGroupProps {
-    children: React.ReactNode;
+    children: ReactNode;
     max?: number;
     size?: 'xs' | 'sm' | 'md' | 'lg' | 'xl' | '2xl';
     className?: string;
@@ -122,7 +122,7 @@ export function AvatarGroup({
     size = 'md',
     className = '',
 }: AvatarGroupProps) {
-    const childrenArray = React.Children.toArray(children);
+    const childrenArray = Children.toArray(children);
     const visibleChildren = childrenArray.slice(0, max);
     const remainingCount = childrenArray.length - max;
 

@@ -1,5 +1,6 @@
 <?php
 
+use App\Models\Space;
 use Illuminate\Support\Facades\Broadcast;
 
 Broadcast::channel('App.Models.User.{id}', function ($user, $id) {
@@ -7,8 +8,8 @@ Broadcast::channel('App.Models.User.{id}', function ($user, $id) {
 });
 
 Broadcast::channel('spaces.{spaceId}.chat', function ($user, $spaceId) {
-    $space = \App\Models\Space::find($spaceId);
-    if (!$space) {
+    $space = Space::find($spaceId);
+    if (! $space) {
         return false;
     }
 
@@ -16,8 +17,8 @@ Broadcast::channel('spaces.{spaceId}.chat', function ($user, $spaceId) {
 });
 
 Broadcast::channel('spaces.{spaceId}.nobar', function ($user, $spaceId) {
-    $space = \App\Models\Space::find($spaceId);
-    if (!$space) {
+    $space = Space::find($spaceId);
+    if (! $space) {
         return false;
     }
 

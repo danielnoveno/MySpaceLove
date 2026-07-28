@@ -4,6 +4,7 @@ import { useEffect, useState, useRef, useCallback } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import Link from 'next/link'
 import AuthenticatedLayout from '@/layouts/AuthenticatedLayout'
+import AppImage from '@/components/AppImage'
 import { useAuth } from '@/contexts/AuthContext'
 import { createClient } from '@/lib/supabase/client'
 import { useTimeline } from '@/lib/hooks/useTimeline'
@@ -35,22 +36,7 @@ export default function CreateTimelinePage() {
   const createdPreviewUrls = useRef<string[]>([])
   const fileInputRef = useRef<HTMLInputElement>(null)
 
-  useEffect(() => {
-    if (!authLoading && !user) {
-      router.push('/auth/login')
-      return
-    }
-
-    if (user && slug) {
-      fetchSpace()
-    }
-
-    return () => {
-      createdPreviewUrls.current.forEach((url) => URL.revokeObjectURL(url))
-    }
-  }, [user, authLoading, slug, router])
-
-  const fetchSpace = async () => {
+  const fetchSpace = useCallback(async () => {
     const { data, error } = await supabase
       .from('spaces')
       .select('id, title')
@@ -64,7 +50,22 @@ export default function CreateTimelinePage() {
 
     setSpaceTitle(data.title)
     setSpaceId(data.id)
-  }
+  }, [router, slug, supabase])
+
+  useEffect(() => {
+    let timeout: ReturnType<typeof setTimeout> | undefined
+
+    if (!authLoading && !user) {
+      router.push('/auth/login')
+    } else if (user && slug) {
+      timeout = setTimeout(fetchSpace, 0)
+    }
+
+    return () => {
+      if (timeout) clearTimeout(timeout)
+      createdPreviewUrls.current.forEach((url) => URL.revokeObjectURL(url))
+    }
+  }, [user, authLoading, slug, router, fetchSpace])
 
   const handleFileChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFiles = Array.from(e.target.files || [])
@@ -277,7 +278,7 @@ export default function CreateTimelinePage() {
                         key={`${url}-${index}`}
                         className="group relative overflow-hidden rounded-2xl border border-brand-100 shadow-sm"
                       >
-                        <img
+                        <AppImage
                           src={url}
                           alt={`preview-${index}`}
                           className="h-48 w-full object-cover transition duration-300 group-hover:scale-105"

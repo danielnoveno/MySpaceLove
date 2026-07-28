@@ -12,7 +12,9 @@ class ChatSent implements ShouldBroadcast
     use Dispatchable, SerializesModels;
 
     public $user;
+
     public $message;
+
     public $roomId;
 
     public function __construct($roomId, $user, $message)
@@ -24,6 +26,6 @@ class ChatSent implements ShouldBroadcast
 
     public function broadcastOn()
     {
-        return new Channel('room.' . $this->roomId);
+        return new Channel('room.'.$this->roomId);
     }
 }

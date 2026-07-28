@@ -4,9 +4,9 @@ import { Gift } from "lucide-react";
 import SecretCodeGate from "@/Components/Surprise/SecretCodeGate";
 import LoveCursorCanvas from "@/Components/LoveCursorCanvas";
 import JigsawPuzzleGate from "@/Components/Surprise/JigsawPuzzleGate";
-import LuckyBoxGacha, { type Reward } from "@/Components/Surprise/LuckyBoxGacha";
+import LuckyBoxGacha from "@/Components/Surprise/LuckyBoxGacha";
 import FlipBookViewer, { type FlipBookPage } from "@/Components/Surprise/FlipBookViewer";
-import type { MemoryLaneContent } from "@/types/memoryLane";
+import type { MemoryLaneContent, Reward } from "@/types/memoryLane";
 
 type SpaceInfo = {
     id: number;

@@ -4,21 +4,23 @@ namespace App\Filament\Resources;
 
 use App\Filament\Resources\ThemeResource\Pages;
 use App\Models\Theme;
-use Filament\Forms;
-use Filament\Tables;
-use Filament\Resources\Resource;
-use Filament\Forms\Form;
-use Filament\Tables\Table;
-use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Textarea;
+use Filament\Forms\Components\TextInput;
+use Filament\Forms\Form;
+use Filament\Resources\Resource;
+use Filament\Tables;
 use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Table;
 
 class ThemeResource extends Resource
 {
     protected static ?string $model = Theme::class;
+
     protected static ?string $navigationIcon = 'heroicon-o-paint-brush';
+
     protected static ?string $navigationLabel = 'Themes';
+
     protected static ?string $navigationGroup = 'Settings';
 
     public static function form(Form $form): Form

@@ -4,7 +4,6 @@ namespace App\Notifications;
 
 use App\Models\Space;
 use Illuminate\Bus\Queueable;
-use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 
@@ -36,9 +35,9 @@ class SpaceCreated extends Notification
     public function toMail(object $notifiable): MailMessage
     {
         return (new MailMessage)
-                    ->line('The introduction to the notification.')
-                    ->action('Notification Action', url('/'))
-                    ->line('Thank you for using our application!');
+            ->line('The introduction to the notification.')
+            ->action('Notification Action', url('/'))
+            ->line('Thank you for using our application!');
     }
 
     /**
@@ -51,7 +50,7 @@ class SpaceCreated extends Notification
         return [
             'space_id' => $this->space->id,
             'title' => $this->space->title,
-            'message' => 'Space ' . $this->space->title . ' has been created.',
+            'message' => 'Space '.$this->space->title.' has been created.',
         ];
     }
 }

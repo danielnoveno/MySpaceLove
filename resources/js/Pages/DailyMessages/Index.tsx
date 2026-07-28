@@ -1,6 +1,6 @@
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout";
 import { Head, Link, router } from "@inertiajs/react";
-import { useSprings, animated } from "react-spring";
+import { useSprings, animated } from "@react-spring/web";
 import { useDrag } from "react-use-gesture";
 import { useEffect, useRef, useState } from "react";
 import Modal from "@/Components/Modal";
@@ -35,11 +35,12 @@ const ExpandableText = ({
     return (
         <div>
             <p
-                className={`mt-2 text-gray-700 text-justify ${
+                className={`mt-2 whitespace-pre-wrap text-justify text-gray-700 ${
                     isExpanded ? "" : "max-h-24 overflow-hidden"
                 }`}
-                dangerouslySetInnerHTML={{ __html: displayText }}
-            ></p>
+            >
+                {displayText}
+            </p>
             {isTruncated && (
                 <button
                     onClick={() => setIsExpanded(!isExpanded)}

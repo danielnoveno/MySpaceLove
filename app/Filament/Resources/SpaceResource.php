@@ -4,25 +4,27 @@ namespace App\Filament\Resources;
 
 use App\Filament\Resources\SpaceResource\Pages;
 use App\Models\Space;
-use Filament\Forms;
-use Filament\Tables;
-use Filament\Resources\Resource;
-use Filament\Forms\Form;
-use Filament\Tables\Table;
-use Filament\Forms\Components\TextInput;
-use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\Select;
+use Filament\Forms\Components\Textarea;
+use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
+use Filament\Forms\Form;
+use Filament\Resources\Resource;
+use Filament\Tables;
 use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Table;
 
 class SpaceResource extends Resource
 {
     protected static ?string $model = Space::class;
+
     protected static ?string $navigationIcon = 'heroicon-o-map';
+
     protected static ?string $navigationLabel = 'Spaces';
+
     protected static ?string $navigationGroup = 'LoveSpace';
 
-    public static function form(\Filament\Forms\Form $form): \Filament\Forms\Form
+    public static function form(Form $form): Form
     {
         return $form->schema([
             TextInput::make('title')->required()->maxLength(255),
@@ -43,7 +45,7 @@ class SpaceResource extends Resource
             TextColumn::make('slug')->sortable(),
             TextColumn::make('userOne.name')->label('Owner 1')->sortable(),
             TextColumn::make('userTwo.name')->label('Owner 2')->sortable(),
-            TextColumn::make('is_public')->label('Public')->formatStateUsing(fn($state) => $state ? 'Yes' : 'No'),
+            TextColumn::make('is_public')->label('Public')->formatStateUsing(fn ($state) => $state ? 'Yes' : 'No'),
             TextColumn::make('created_at')->since()->label('Created'),
         ])->filters([
             //

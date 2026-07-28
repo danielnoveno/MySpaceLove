@@ -3,8 +3,8 @@
 namespace App\Console\Commands;
 
 use Illuminate\Console\Command;
-use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Storage;
 
 class SecurityAudit extends Command
@@ -58,16 +58,17 @@ class SecurityAudit extends Command
         // Display results
         if (empty($issues)) {
             $this->info('✅ No security issues found!');
+
             return self::SUCCESS;
         }
 
-        $this->error('⚠️  Found ' . count($issues) . ' security issue(s):');
+        $this->error('⚠️  Found '.count($issues).' security issue(s):');
         $this->newLine();
 
         foreach ($issues as $index => $issue) {
-            $this->warn(($index + 1) . '. ' . $issue['message']);
+            $this->warn(($index + 1).'. '.$issue['message']);
             if (isset($issue['fix'])) {
-                $this->line('   Fix: ' . $issue['fix']);
+                $this->line('   Fix: '.$issue['fix']);
             }
             $this->newLine();
         }
@@ -106,7 +107,7 @@ class SecurityAudit extends Command
         }
 
         // Check HTTPS enforcement
-        if (config('app.env') === 'production' && !config('security.force_https')) {
+        if (config('app.env') === 'production' && ! config('security.force_https')) {
             $issues[] = [
                 'message' => 'HTTPS is not enforced in production',
                 'severity' => 'high',
@@ -115,7 +116,7 @@ class SecurityAudit extends Command
         }
 
         // Check session security
-        if (!config('session.secure') && config('app.env') === 'production') {
+        if (! config('session.secure') && config('app.env') === 'production') {
             $issues[] = [
                 'message' => 'Secure cookies are not enabled',
                 'severity' => 'high',
@@ -139,7 +140,7 @@ class SecurityAudit extends Command
             $perms = substr(sprintf('%o', fileperms($envPath)), -4);
             if ($perms !== '0644' && $perms !== '0600') {
                 $issues[] = [
-                    'message' => '.env file has insecure permissions: ' . $perms,
+                    'message' => '.env file has insecure permissions: '.$perms,
                     'severity' => 'high',
                     'fix' => 'Run: chmod 644 .env',
                 ];
@@ -148,7 +149,7 @@ class SecurityAudit extends Command
 
         // Check storage directory
         $storagePath = storage_path();
-        if (!is_writable($storagePath)) {
+        if (! is_writable($storagePath)) {
             $issues[] = [
                 'message' => 'Storage directory is not writable',
                 'severity' => 'medium',
@@ -167,7 +168,7 @@ class SecurityAudit extends Command
         $issues = [];
 
         // Check if composer.lock exists
-        if (!File::exists(base_path('composer.lock'))) {
+        if (! File::exists(base_path('composer.lock'))) {
             $issues[] = [
                 'message' => 'composer.lock not found',
                 'severity' => 'medium',
@@ -206,7 +207,7 @@ class SecurityAudit extends Command
             $dbUser = config('database.connections.mysql.username');
             if (in_array($dbUser, ['root', 'admin', 'user'])) {
                 $issues[] = [
-                    'message' => 'Using common database username: ' . $dbUser,
+                    'message' => 'Using common database username: '.$dbUser,
                     'severity' => 'medium',
                     'fix' => 'Use a unique database username',
                 ];
@@ -231,7 +232,7 @@ class SecurityAudit extends Command
         $issues = [];
 
         // Check if storage is properly linked
-        if (!File::exists(public_path('storage'))) {
+        if (! File::exists(public_path('storage'))) {
             $issues[] = [
                 'message' => 'Storage link not created',
                 'severity' => 'low',
@@ -244,9 +245,9 @@ class SecurityAudit extends Command
         foreach ($sensitiveFiles as $file) {
             if (File::exists(public_path($file))) {
                 $issues[] = [
-                    'message' => 'Sensitive file found in public directory: ' . $file,
+                    'message' => 'Sensitive file found in public directory: '.$file,
                     'severity' => 'critical',
-                    'fix' => 'Remove ' . $file . ' from public directory',
+                    'fix' => 'Remove '.$file.' from public directory',
                 ];
             }
         }
@@ -262,7 +263,7 @@ class SecurityAudit extends Command
         $issues = [];
 
         // Check if SecurityHeaders middleware exists
-        if (!File::exists(app_path('Http/Middleware/SecurityHeaders.php'))) {
+        if (! File::exists(app_path('Http/Middleware/SecurityHeaders.php'))) {
             $issues[] = [
                 'message' => 'SecurityHeaders middleware not found',
                 'severity' => 'high',
@@ -280,12 +281,13 @@ class SecurityAudit extends Command
     {
         foreach ($issues as $issue) {
             if ($issue['severity'] === 'critical') {
-                $this->warn('⚠️  Skipping critical issue (manual fix required): ' . $issue['message']);
+                $this->warn('⚠️  Skipping critical issue (manual fix required): '.$issue['message']);
+
                 continue;
             }
 
             // Add automatic fixes here based on issue type
-            $this->line('✓ Fixed: ' . $issue['message']);
+            $this->line('✓ Fixed: '.$issue['message']);
         }
     }
 }

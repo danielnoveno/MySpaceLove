@@ -4,9 +4,10 @@ import { useEffect, useState, useCallback } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import AuthenticatedLayout from '@/layouts/AuthenticatedLayout'
+import AppImage from '@/components/AppImage'
 import { useAuth } from '@/contexts/AuthContext'
 import { createClient } from '@/lib/supabase/client'
-import { FadeIn, StaggerContainer, StaggerItem } from '@/components/motion'
+import { FadeIn } from '@/components/motion'
 import {
   Loader2,
   Play,
@@ -63,7 +64,6 @@ export default function RoomPage() {
   const [sendingMessage, setSendingMessage] = useState(false)
   const [timer, setTimer] = useState(0)
   const [timerRunning, setTimerRunning] = useState(false)
-  const [spaceId, setSpaceId] = useState<string | null>(null)
 
   const [showMovieModal, setShowMovieModal] = useState(false)
   const [movieUrl, setMovieUrl] = useState('')
@@ -90,7 +90,6 @@ export default function RoomPage() {
           return
         }
 
-        setSpaceId(space.id)
 
         let { data: roomData } = await supabase
           .from('rooms')
@@ -146,17 +145,17 @@ export default function RoomPage() {
       .on(
         'postgres_changes',
         { event: 'UPDATE', schema: 'public', table: 'rooms', filter: `id=eq.${room.id}` },
-        (payload: any) => { setRoom(payload.new as Room) }
+        (payload) => { setRoom(payload.new as Room) }
       )
       .on(
         'postgres_changes',
         { event: 'INSERT', schema: 'public', table: 'room_messages', filter: `room_id=eq.${room.id}` },
-        (payload: any) => { setMessages((prev) => [...prev, payload.new as RoomMessage]) }
+        (payload) => { setMessages((prev) => [...prev, payload.new as RoomMessage]) }
       )
       .on(
         'postgres_changes',
         { event: '*', schema: 'public', table: 'room_members', filter: `room_id=eq.${room.id}` },
-        (payload: any) => {
+        (payload) => {
           if (payload.eventType === 'INSERT') {
             setMembers((prev) => [...prev, payload.new as RoomMember])
           } else if (payload.eventType === 'DELETE') {
@@ -440,7 +439,7 @@ export default function RoomPage() {
                     <div key={m.id} className="flex items-center gap-3">
                       <div className="h-10 w-10 rounded-full bg-gradient-to-br from-brand-300 to-coral-300 flex items-center justify-center text-sm font-bold text-white">
                         {m.avatar_url ? (
-                          <img src={m.avatar_url} alt={m.display_name || ''} className="h-full w-full rounded-full object-cover" />
+                          <AppImage src={m.avatar_url} alt={m.display_name || ''} className="h-full w-full rounded-full object-cover" />
                         ) : (
                           (m.display_name || 'U')[0].toUpperCase()
                         )}

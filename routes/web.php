@@ -1,38 +1,37 @@
 <?php
 
-require __DIR__ . '/auth.php';
+require __DIR__.'/auth.php';
 
-use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\Api\CountdownApiController;
-
 use App\Http\Controllers\Api\DailyMessageApiController;
 use App\Http\Controllers\Api\DocApiController;
 use App\Http\Controllers\Api\LoveJournalApiController;
 use App\Http\Controllers\Api\LoveTimelineApiController;
 use App\Http\Controllers\Api\MediaGalleryApiController;
-use App\Http\Controllers\Api\SpaceApiController;
 use App\Http\Controllers\Api\SurpriseNoteApiController;
-use App\Http\Controllers\PublicSurpriseController;
 use App\Http\Controllers\Api\WishlistApiController;
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\ChatController;
 use App\Http\Controllers\DashboardController;
-use App\Http\Controllers\GameSessionController;
-use App\Http\Controllers\GameScoreController;
 use App\Http\Controllers\GamesController;
+use App\Http\Controllers\GameScoreController;
+use App\Http\Controllers\GameSessionController;
 use App\Http\Controllers\LocationController;
+use App\Http\Controllers\MemoryLaneConfigController;
+use App\Http\Controllers\NobarController;
+use App\Http\Controllers\NotificationController;
+use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\PublicFilePreviewController;
+use App\Http\Controllers\PublicSurpriseController;
 use App\Http\Controllers\SpaceController;
 use App\Http\Controllers\SpaceGoalsController;
-use App\Http\Controllers\NobarController;
 use App\Http\Controllers\SpotifyAuthController;
 use App\Http\Controllers\SpotifyController;
-use App\Http\Controllers\MemoryLaneConfigController;
-use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\StoryBookController;
-use App\Services\MemoryLaneContentService;
+use App\Models\Space;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Response;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Validation\Rule;
 use Inertia\Inertia;
@@ -79,12 +78,12 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     Route::post('/tour/complete', function (Request $request) {
         $user = $request->user();
-        \Illuminate\Support\Facades\Log::info('Tour completion requested for user: ' . $user->id);
-        
+        Log::info('Tour completion requested for user: '.$user->id);
+
         $user->tour_completed_at = now();
         $saved = $user->save();
-        
-        \Illuminate\Support\Facades\Log::info('Tour completion saved: ' . ($saved ? 'yes' : 'no'));
+
+        Log::info('Tour completion saved: '.($saved ? 'yes' : 'no'));
 
         return response()->json(['success' => true]);
     })->name('tour.complete');
@@ -110,7 +109,6 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ->name('space.goals.complete');
 
     // Profile Routes
-
 
     // Dashboard & Space selection
     Route::get('/dashboard', [DashboardController::class, 'redirect'])->name('dashboard');
@@ -178,20 +176,20 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('/spaces/{space:slug}/spotify/capsules', [SpotifyController::class, 'storeCapsule'])->name('spotify.capsules.store');
         Route::post('/spaces/{space:slug}/spotify/playback/join', [SpotifyController::class, 'joinPlayback'])->name('spotify.playback.join');
 
-        Route::get('/spaces/{space:slug}/spotify-companion', function (\App\Models\Space $space) {
-        return Inertia::render('Spotify/LongDistanceSpotifyHub', [
-            'space' => [
-                'id' => $space->id,
-                'slug' => $space->slug,
-                'title' => $space->title,
-            ],
-        ]);
-    })->name('spotify.companion');
+        Route::get('/spaces/{space:slug}/spotify-companion', function (Space $space) {
+            return Inertia::render('Spotify/LongDistanceSpotifyHub', [
+                'space' => [
+                    'id' => $space->id,
+                    'slug' => $space->slug,
+                    'title' => $space->title,
+                ],
+            ]);
+        })->name('spotify.companion');
 
-    Route::get('/spaces/{space:slug}/nobar', [NobarController::class, 'show'])->name('space.nobar');
-    Route::post('/spaces/{space:slug}/nobar/schedules', [NobarController::class, 'storeSchedule'])->name('space.nobar.schedules.store');
+        Route::get('/spaces/{space:slug}/nobar', [NobarController::class, 'show'])->name('space.nobar');
+        Route::post('/spaces/{space:slug}/nobar/schedules', [NobarController::class, 'storeSchedule'])->name('space.nobar.schedules.store');
 
-        Route::get('/spaces/{space:slug}/roomjitsi', function (\App\Models\Space $space) {
+        Route::get('/spaces/{space:slug}/roomjitsi', function (Space $space) {
             return Inertia::render('Room/Show', [
                 'spaceId' => $space->id,
                 'user' => Auth::user()?->name ?? 'Guest',
@@ -225,24 +223,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::put('/docs/{id}', [DocApiController::class, 'update'])->name('docs.update');
     Route::delete('/docs/{id}', [DocApiController::class, 'destroy'])->name('docs.destroy');
 
-    Route::get('/preview/{path}', function ($path) {
-        $file = storage_path('app/public/' . $path);
-
-        if (!file_exists($file)) {
-            abort(404);
-        }
-
-        $mime = mime_content_type($file);
-        $content = file_get_contents($file);
-
-        // header inline agar bisa tampil di iframe
-        return Response::make($content, 200, [
-            'Content-Type' => $mime,
-            'Content-Disposition' => 'inline; filename="' . basename($file) . '"',
-        ]);
-    })->where('path', '.*')->name('docs.preview');
-
-
+    Route::get('/preview/{path}', PublicFilePreviewController::class)
+        ->where('path', '.*')
+        ->name('docs.preview');
 
     Route::post('/room/{id}/chat', [ChatController::class, 'send']);
 });

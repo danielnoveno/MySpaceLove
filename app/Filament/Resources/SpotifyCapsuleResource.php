@@ -3,22 +3,21 @@
 namespace App\Filament\Resources;
 
 use App\Filament\Resources\SpotifyCapsuleResource\Pages;
-use App\Filament\Resources\SpotifyCapsuleResource\RelationManagers;
 use App\Models\SpotifyCapsule;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
-use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\SoftDeletingScope;
 
 class SpotifyCapsuleResource extends Resource
 {
     protected static ?string $model = SpotifyCapsule::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-archive-box';
+
     protected static ?string $navigationLabel = 'Memory Capsules';
+
     protected static ?string $navigationGroup = 'Content';
 
     public static function form(Form $form): Form

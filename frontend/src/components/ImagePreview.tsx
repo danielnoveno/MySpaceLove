@@ -2,6 +2,7 @@
 
 import React, { useEffect, useCallback, useState } from 'react';
 import { X, ZoomIn, ZoomOut, RotateCcw, ChevronLeft, ChevronRight } from 'lucide-react';
+import AppImage from '@/components/AppImage';
 
 interface ImagePreviewProps {
   isOpen: boolean;
@@ -72,7 +73,12 @@ export default function ImagePreview({
     if (isOpen) {
       document.addEventListener('keydown', handleKeyDown);
       document.body.style.overflow = 'hidden';
-      resetTransforms();
+      const timeout = setTimeout(resetTransforms, 0);
+      return () => {
+        clearTimeout(timeout);
+        document.removeEventListener('keydown', handleKeyDown);
+        document.body.style.overflow = 'unset';
+      };
     }
     return () => {
       document.removeEventListener('keydown', handleKeyDown);
@@ -127,7 +133,7 @@ export default function ImagePreview({
 
       <div className="relative z-10 flex flex-col items-center max-w-[90vw] max-h-[90vh]">
         <div className="overflow-hidden flex items-center justify-center">
-          <img
+          <AppImage
             src={currentImageUrl}
             alt={alt}
             className="max-w-full max-h-[80vh] object-contain transition-transform duration-200"

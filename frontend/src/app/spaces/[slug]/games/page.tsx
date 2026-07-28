@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { useParams } from 'next/navigation'
 import Link from 'next/link'
 import AuthenticatedLayout from '@/layouts/AuthenticatedLayout'
@@ -78,12 +78,7 @@ export default function GamesPage() {
   const [loading, setLoading] = useState(true)
   const supabase = createClient()
 
-  useEffect(() => {
-    if (!authLoading && !user) return
-    if (user) fetchScores()
-  }, [user, authLoading])
-
-  const fetchScores = async () => {
+  const fetchScores = useCallback(async () => {
     const { data } = await supabase
       .from('game_scores')
       .select('*')
@@ -92,7 +87,15 @@ export default function GamesPage() {
 
     if (data) setScores(data)
     setLoading(false)
-  }
+  }, [supabase])
+
+  useEffect(() => {
+    if (!authLoading && !user) return
+    if (user) {
+      const timeout = setTimeout(fetchScores, 0)
+      return () => clearTimeout(timeout)
+    }
+  }, [user, authLoading, fetchScores])
 
   const getTopScores = (gameSlug: string) => {
     return scores

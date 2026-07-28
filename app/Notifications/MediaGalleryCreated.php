@@ -2,10 +2,9 @@
 
 namespace App\Notifications;
 
-use Illuminate\Bus\Queueable;
-use Illuminate\Contracts\Queue\ShouldQueue;
 use App\Models\MediaGallery;
 use App\Models\User;
+use Illuminate\Bus\Queueable;
 use Illuminate\Notifications\Notification;
 
 class MediaGalleryCreated extends Notification
@@ -44,7 +43,7 @@ class MediaGalleryCreated extends Notification
         if ($this->isSenderNotification) {
             $title = $this->count > 1
                 ? "Berhasil menambahkan {$this->count} media ke galeri!"
-                : "Berhasil menambahkan media ke galeri!";
+                : 'Berhasil menambahkan media ke galeri!';
         } else {
             $title = $this->count > 1
                 ? "{$this->sender->name} menambahkan {$this->count} media baru ke galeri!"

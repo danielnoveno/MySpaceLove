@@ -1,9 +1,10 @@
 'use client'
 
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState, useCallback, useRef } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import AuthenticatedLayout from '@/layouts/AuthenticatedLayout'
+import AppImage from '@/components/AppImage'
 import { useAuth } from '@/contexts/AuthContext'
 import { createClient } from '@/lib/supabase/client'
 import {
@@ -47,28 +48,18 @@ export default function SpotifyCapsulesPage() {
   const [loading, setLoading] = useState(true)
   const [deleting, setDeleting] = useState<string | null>(null)
   const [playingId, setPlayingId] = useState<string | null>(null)
-  const [audioRef, setAudioRef] = useState<HTMLAudioElement | null>(null)
-
-  useEffect(() => {
-    if (!authLoading && !user) {
-      router.push('/auth/login')
-      return
-    }
-    if (user && slug) {
-      fetchCapsules()
-    }
-  }, [user, authLoading, slug, router])
+  const audioRef = useRef<HTMLAudioElement | null>(null)
 
   useEffect(() => {
     return () => {
-      if (audioRef) {
-        audioRef.pause()
-        audioRef.src = ''
+      if (audioRef.current) {
+        audioRef.current.pause()
+        audioRef.current.src = ''
       }
     }
-  }, [audioRef])
+  }, [])
 
-  const fetchCapsules = async () => {
+  const fetchCapsules = useCallback(async () => {
     setLoading(true)
 
     const { data: space } = await supabase
@@ -90,41 +81,52 @@ export default function SpotifyCapsulesPage() {
 
     if (data) {
       const now = new Date()
-      const withUnlockStatus = data.map((c: any) => ({
-        ...c,
-        is_unlocked: new Date(c.unlock_at) <= now,
+      const withUnlockStatus = data.map((capsule) => ({
+        ...capsule,
+        is_unlocked: new Date(capsule.unlock_at) <= now,
       }))
       setCapsules(withUnlockStatus)
     }
 
     setLoading(false)
-  }
+  }, [slug, supabase])
+
+  useEffect(() => {
+    if (!authLoading && !user) {
+      router.push('/auth/login')
+      return
+    }
+    if (user && slug) {
+      const timeout = setTimeout(fetchCapsules, 0)
+      return () => clearTimeout(timeout)
+    }
+  }, [user, authLoading, slug, router, fetchCapsules])
 
   const playPreview = useCallback((capsule: Capsule) => {
     if (!capsule.preview_url) return
 
-    if (playingId === capsule.id && audioRef) {
-      audioRef.pause()
-      audioRef.src = ''
+    if (playingId === capsule.id && audioRef.current) {
+      audioRef.current.pause()
+      audioRef.current.src = ''
       setPlayingId(null)
-      setAudioRef(null)
+      audioRef.current = null
       return
     }
 
-    if (audioRef) {
-      audioRef.pause()
-      audioRef.src = ''
+    if (audioRef.current) {
+      audioRef.current.pause()
+      audioRef.current.src = ''
     }
 
     const audio = new Audio(capsule.preview_url)
     audio.onended = () => {
       setPlayingId(null)
-      setAudioRef(null)
+      audioRef.current = null
     }
     audio.play()
     setPlayingId(capsule.id)
-    setAudioRef(audio)
-  }, [playingId, audioRef])
+    audioRef.current = audio
+  }, [playingId])
 
   const deleteCapsule = useCallback(async (capsule: Capsule) => {
     if (!confirm(`Delete "${capsule.title}"?`)) return
@@ -193,7 +195,7 @@ export default function SpotifyCapsulesPage() {
               {/* Track Image */}
               <div className="relative h-44 bg-gradient-to-br from-brand-100 to-purple-100">
                 {capsule.track_image ? (
-                  <img
+                  <AppImage
                     src={capsule.track_image}
                     alt={capsule.track_album}
                     className={`w-full h-full object-cover ${!capsule.is_unlocked ? 'blur-md scale-110' : ''}`}

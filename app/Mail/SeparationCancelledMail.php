@@ -16,8 +16,7 @@ class SeparationCancelledMail extends Mailable
         public Space $space,
         public User $initiator,
         public User $partner,
-    ) {
-    }
+    ) {}
 
     public function build(): self
     {

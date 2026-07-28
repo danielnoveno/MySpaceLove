@@ -16,10 +16,10 @@ class CreateDailyMessagesTable extends Migration
             $table->text('message');
             $table->enum('generated_by', ['ai', 'manual', 'fallback'])->default('ai');
             $table->timestamps();
-            
+
             // Unique constraint for each user in a space per day
             $table->unique(['space_id', 'user_id', 'date']);
-            
+
             // Performance index for querying all messages in a space by date
             $table->index(['space_id', 'date']);
         });

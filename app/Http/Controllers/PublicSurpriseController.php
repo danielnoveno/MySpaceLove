@@ -10,9 +10,7 @@ use Inertia\Response;
 
 class PublicSurpriseController extends Controller
 {
-    public function __construct(private readonly MemoryLaneContentService $memoryLane)
-    {
-    }
+    public function __construct(private readonly MemoryLaneContentService $memoryLane) {}
 
     public function story(): Response
     {
@@ -41,7 +39,7 @@ class PublicSurpriseController extends Controller
         unset($storyContent['defaults']);
 
         // Check verification for generic (session might use 'default' or similar)
-        $isVerified = session()->get("memory_lane_access_default", false);
+        $isVerified = session()->get('memory_lane_access_default', false);
 
         return Inertia::render('Surprise/StoryBook', [
             'storyBook' => $storyContent,
@@ -60,7 +58,7 @@ class PublicSurpriseController extends Controller
         $storyContent['secretGate']['code'] = $memoryLaneContent['secretGate']['code'] ?? '00000';
 
         $scrapbookMeta = data_get($storyContent, 'scrapbook', []);
-        
+
         $scrapbookPages = $this->memoryLane->flipbookPages($space);
         $coverData = $this->memoryLane->flipbookCoverData($space);
 
@@ -94,7 +92,7 @@ class PublicSurpriseController extends Controller
     {
         $memoryContent = $this->memoryLane->resolve();
         $skipPuzzle = config('app.debug') || $request->boolean('skipPuzzle');
-        $isVerified = session()->get("memory_lane_access_default", false);
+        $isVerified = session()->get('memory_lane_access_default', false);
 
         return Inertia::render('Surprise/MemoryLanePublic', [
             'memoryLane' => $memoryContent,

@@ -15,10 +15,10 @@ class RateLimitMiddleware
     public function handle(Request $request, Closure $next, string $limit = '60'): Response
     {
         $key = $this->resolveRequestSignature($request);
-        
+
         if (RateLimiter::tooManyAttempts($key, $limit)) {
             $seconds = RateLimiter::availableIn($key);
-            
+
             // Log suspicious activity
             \Log::warning('Rate limit exceeded', [
                 'ip' => $request->ip(),
@@ -26,7 +26,7 @@ class RateLimitMiddleware
                 'user_agent' => $request->userAgent(),
                 'user_id' => $request->user()?->id,
             ]);
-            
+
             return response()->json([
                 'message' => 'Too many requests. Please try again later.',
                 'retry_after' => $seconds,
@@ -46,10 +46,10 @@ class RateLimitMiddleware
     protected function resolveRequestSignature(Request $request): string
     {
         if ($user = $request->user()) {
-            return sha1('user:' . $user->id . '|' . $request->route()->getName());
+            return sha1('user:'.$user->id.'|'.$request->route()->getName());
         }
 
-        return sha1('ip:' . $request->ip() . '|' . $request->route()->getName());
+        return sha1('ip:'.$request->ip().'|'.$request->route()->getName());
     }
 
     /**
@@ -59,7 +59,7 @@ class RateLimitMiddleware
     {
         $response->headers->set('X-RateLimit-Limit', $limit);
         $response->headers->set('X-RateLimit-Remaining', max(0, $limit - RateLimiter::attempts($key)));
-        
+
         if (RateLimiter::tooManyAttempts($key, $limit)) {
             $response->headers->set('X-RateLimit-Reset', RateLimiter::availableIn($key));
         }

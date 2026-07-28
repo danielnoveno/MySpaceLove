@@ -118,25 +118,16 @@ export default function Tetris({ onScore }: { onScore: (score: number) => void }
   const gameOverRef = useRef(gameOver)
   const isPausedRef = useRef(isPaused)
 
-  boardRef.current = board
-  currentRef.current = current
-  nextRef.current = nextPiece
-  scoreRef.current = score
-  levelRef.current = level
-  linesRef.current = lines
-  gameOverRef.current = gameOver
-  isPausedRef.current = isPaused
-
-  const spawnNext = useCallback(() => {
-    const next = nextRef.current
-    if (!isValid(boardRef.current, next)) {
-      setGameOver(true)
-      onScore(scoreRef.current)
-      return
-    }
-    setCurrent(next)
-    setNextPiece(randomPiece())
-  }, [onScore])
+  useEffect(() => {
+    boardRef.current = board
+    currentRef.current = current
+    nextRef.current = nextPiece
+    scoreRef.current = score
+    levelRef.current = level
+    linesRef.current = lines
+    gameOverRef.current = gameOver
+    isPausedRef.current = isPaused
+  }, [board, current, gameOver, isPaused, level, lines, nextPiece, score])
 
   const lockPiece = useCallback(() => {
     const b = merge(boardRef.current, currentRef.current, currentRef.current.shape.length)
@@ -317,8 +308,6 @@ export default function Tetris({ onScore }: { onScore: (score: number) => void }
   }
 
   const displayBoard = renderBoard()
-  const ghostY = getGhostY()
-
   return (
     <div className="flex flex-col items-center gap-4">
       {/* Stats bar */}

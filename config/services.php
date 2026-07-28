@@ -1,7 +1,7 @@
 <?php
 
 $appUrl = config('app.url');
-$defaultGoogleRedirect = $appUrl ? rtrim($appUrl, '/') . '/auth/google/callback' : null;
+$defaultGoogleRedirect = $appUrl ? rtrim($appUrl, '/').'/auth/google/callback' : null;
 
 return [
 

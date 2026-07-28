@@ -16,9 +16,7 @@ class MemoryLaneConfigController extends Controller
     public function __construct(
         private readonly MemoryLaneContentService $memoryLaneContentService,
         private readonly UploadedFileProcessor $fileProcessor
-    )
-    {
-    }
+    ) {}
 
     public function edit(Space $space)
     {
@@ -29,12 +27,13 @@ class MemoryLaneConfigController extends Controller
 
         // Process flipbook pages to include full image URLs
         $flipbookPages = $config?->flipbook_pages ?? [];
-        if (!empty($flipbookPages) && is_array($flipbookPages)) {
+        if (! empty($flipbookPages) && is_array($flipbookPages)) {
             $disk = Storage::disk('public');
             $flipbookPages = collect($flipbookPages)->map(function ($page) use ($disk) {
-                if (!empty($page['image']) && $disk->exists($page['image'])) {
+                if (! empty($page['image']) && $disk->exists($page['image'])) {
                     $page['image'] = asset(Storage::url($page['image']));
                 }
+
                 return $page;
             })->all();
         }
@@ -119,7 +118,7 @@ class MemoryLaneConfigController extends Controller
             $imageField = "level_{$levelWord}_image";
             $resetField = "level_{$levelWord}_reset";
             if ($request->hasFile($imageField)) {
-                if (!empty($config->{$imageField})) {
+                if (! empty($config->{$imageField})) {
                     Storage::disk('public')->delete($config->{$imageField});
                 }
                 $stored = $this->fileProcessor->store(
@@ -131,7 +130,7 @@ class MemoryLaneConfigController extends Controller
                 );
                 $config->{$imageField} = $stored['path'];
             } elseif ($request->boolean($resetField)) {
-                if (!empty($config->{$imageField})) {
+                if (! empty($config->{$imageField})) {
                     Storage::disk('public')->delete($config->{$imageField});
                 }
                 $config->{$imageField} = null;
@@ -154,7 +153,7 @@ class MemoryLaneConfigController extends Controller
         }
 
         // Normalize PIN: trim whitespace and convert to lowercase for consistency
-        $normalizedPin = !empty($validated['pin'])
+        $normalizedPin = ! empty($validated['pin'])
             ? strtolower(trim(preg_replace('/\s+/', '', $validated['pin'])))
             : '00000';
         $config->pin = $normalizedPin;
@@ -168,14 +167,14 @@ class MemoryLaneConfigController extends Controller
         // Process flipbook pages with image uploads
         if (isset($validated['flipbook_pages'])) {
             $flipbookPages = [];
-            
+
             foreach ($validated['flipbook_pages'] as $index => $page) {
                 // Extract storage path from full URL if needed
                 $existingImagePath = $page['image'] ?? null;
                 if ($existingImagePath && str_starts_with($existingImagePath, '/storage/')) {
                     $existingImagePath = substr($existingImagePath, 9);
                 } elseif ($existingImagePath && str_starts_with($existingImagePath, 'http')) {
-                    $existingImagePath = null; 
+                    $existingImagePath = null;
                 }
 
                 $processedPage = [
@@ -192,7 +191,7 @@ class MemoryLaneConfigController extends Controller
                 // Handle Standard image file upload
                 $imageFileKey = "flipbook_pages.{$index}.image_file";
                 if ($request->hasFile($imageFileKey)) {
-                    if (!empty($processedPage['image'])) {
+                    if (! empty($processedPage['image'])) {
                         Storage::disk('public')->delete($processedPage['image']);
                     }
                     $stored = $this->fileProcessor->store(
@@ -210,7 +209,7 @@ class MemoryLaneConfigController extends Controller
                     $elements = [];
                     foreach ($page['canvas_elements'] as $elIndex => $element) {
                         $processedElement = $element;
-                        
+
                         // Handle canvas image upload
                         $elFileKey = "flipbook_pages.{$index}.canvas_elements.{$elIndex}.image_file";
                         if ($request->hasFile($elFileKey)) {
@@ -229,7 +228,7 @@ class MemoryLaneConfigController extends Controller
                             );
                             $processedElement['image_url'] = Storage::url($stored['path']);
                         }
-                        
+
                         // Remove File objects before saving to JSON
                         unset($processedElement['image_file']);
                         $elements[] = $processedElement;
@@ -238,12 +237,12 @@ class MemoryLaneConfigController extends Controller
                 }
 
                 // Only add pages that have content
-                if ($processedPage['type'] === 'canvas' 
-                    || !empty($processedPage['title']) 
-                    || !empty($processedPage['body']) 
-                    || !empty($processedPage['image'])
-                    || !empty($processedPage['label'])
-                    || !empty($processedPage['types'])
+                if ($processedPage['type'] === 'canvas'
+                    || ! empty($processedPage['title'])
+                    || ! empty($processedPage['body'])
+                    || ! empty($processedPage['image'])
+                    || ! empty($processedPage['label'])
+                    || ! empty($processedPage['types'])
                 ) {
                     $flipbookPages[] = $processedPage;
                 }
@@ -255,7 +254,7 @@ class MemoryLaneConfigController extends Controller
         // Process flipbook cover image
         if ($request->hasFile('flipbook_cover_image')) {
             // Delete old cover image if exists
-            if (!empty($config->flipbook_cover_image)) {
+            if (! empty($config->flipbook_cover_image)) {
                 Storage::disk('public')->delete($config->flipbook_cover_image);
             }
 
@@ -288,7 +287,7 @@ class MemoryLaneConfigController extends Controller
 
     private function authorizeSpace(Space $space): void
     {
-        if (!$space->hasMember(Auth::id())) {
+        if (! $space->hasMember(Auth::id())) {
             abort(403);
         }
     }
@@ -304,7 +303,7 @@ class MemoryLaneConfigController extends Controller
         // Normalize input PIN to match the normalization used when saving
         $normalizedInputPin = strtolower(trim(preg_replace('/\s+/', '', $validated['pin'])));
 
-        if (!$config || $config->pin !== $normalizedInputPin) {
+        if (! $config || $config->pin !== $normalizedInputPin) {
             return back()->withErrors([
                 'pin' => __('memory_lane.config.access.pin_invalid'),
             ]);

@@ -13,7 +13,7 @@ class Timeline extends Model
         'user_id',
         'content',
         'media',
-        'tag'
+        'tag',
     ];
 
     public function user()

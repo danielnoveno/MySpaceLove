@@ -21,7 +21,7 @@ export default function CreateCountdownPage() {
   const [error, setError] = useState('')
   const supabase = createClient()
 
-  useEffect(() => { if (!authLoading && !user) router.push('/auth/login') }, [user, authLoading])
+  useEffect(() => { if (!authLoading && !user) router.push('/auth/login') }, [user, authLoading, router])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault(); if (!user || !name || !eventDate) return; setSaving(true); setError('')

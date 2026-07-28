@@ -4,23 +4,24 @@ namespace App\Filament\Resources;
 
 use App\Filament\Resources\MediaGalleryResource\Pages;
 use App\Models\MediaGallery;
-use Filament\Forms;
-use Filament\Tables;
-use Filament\Resources\Resource;
-use Filament\Forms\Form;
-use Filament\Tables\Table;
 use Filament\Forms\Components\FileUpload;
-use Filament\Forms\Components\BelongsToSelect;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
+use Filament\Forms\Form;
+use Filament\Resources\Resource;
+use Filament\Tables;
 use Filament\Tables\Columns\ImageColumn;
 use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Table;
 
 class MediaGalleryResource extends Resource
 {
     protected static ?string $model = MediaGallery::class;
+
     protected static ?string $navigationIcon = 'heroicon-o-photo';
+
     protected static ?string $navigationLabel = 'Media Gallery';
+
     protected static ?string $navigationGroup = 'Content';
 
     public static function form(Form $form): Form

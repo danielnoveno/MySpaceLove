@@ -8,6 +8,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Message;
 use App\Models\MessageRead;
 use App\Models\Space;
+use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -54,7 +55,7 @@ class ChatMessageController extends Controller
             return response()->json(['error' => 'Message cannot be empty.'], 422);
         }
 
-        /** @var \App\Models\User $user */
+        /** @var User $user */
         $user = Auth::user();
 
         $message = Message::create([
@@ -108,7 +109,7 @@ class ChatMessageController extends Controller
 
     private function authorizeSpace(Space $space): void
     {
-        if (!$space->hasMember(Auth::id())) {
+        if (! $space->hasMember(Auth::id())) {
             abort(403);
         }
     }

@@ -8,16 +8,14 @@ use App\Models\Space;
 use App\Notifications\JournalCreated;
 use App\Notifications\JournalDeleted;
 use App\Notifications\JournalUpdated;
+use App\Services\ActivityLogger;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use App\Services\ActivityLogger;
 use Inertia\Inertia;
 
 class LoveJournalApiController extends Controller
 {
-    public function __construct(private readonly ActivityLogger $activityLogger)
-    {
-    }
+    public function __construct(private readonly ActivityLogger $activityLogger) {}
 
     public function index(Space $space)
     {
@@ -69,7 +67,6 @@ class LoveJournalApiController extends Controller
             $partner->notify(new JournalCreated($journal, $space, 'created', $senderName));
         }
 
-
         $this->activityLogger->log(
             Auth::user(),
             'journal.created',
@@ -88,7 +85,9 @@ class LoveJournalApiController extends Controller
         $journal = LoveJournal::where('space_id', $space->id)->findOrFail($id);
 
         // only allow author to update their own journal
-        if ($journal->user_id !== Auth::id()) abort(403);
+        if ($journal->user_id !== Auth::id()) {
+            abort(403);
+        }
 
         $data = $r->validate([
             'title' => 'required|string|max:255',
@@ -103,7 +102,6 @@ class LoveJournalApiController extends Controller
             $partner->notify(new JournalUpdated($journal, $space, 'updated', $senderName));
         }
 
-
         return Inertia::location(route('journal.index', ['space' => $space->slug]));
     }
 
@@ -111,7 +109,9 @@ class LoveJournalApiController extends Controller
     {
         $this->authorizeSpace($space);
         $journal = LoveJournal::where('space_id', $space->id)->findOrFail($id);
-        if ($journal->user_id !== Auth::id()) abort(403);
+        if ($journal->user_id !== Auth::id()) {
+            abort(403);
+        }
         $journalId = $journal->id;
         $journal->delete();
 
@@ -120,7 +120,6 @@ class LoveJournalApiController extends Controller
         if ($partner) {
             $partner->notify(new JournalDeleted($journal, $space, 'deleted', $senderName));
         }
-
 
         if ($request->wantsJson()) {
             return response()->json(['message' => 'deleted']);
@@ -134,6 +133,7 @@ class LoveJournalApiController extends Controller
     public function create(Space $space)
     {
         $this->authorizeSpace($space);
+
         return Inertia::render('Journals/Create', [
             'space' => $this->spacePayload($space),
         ]);
@@ -152,7 +152,9 @@ class LoveJournalApiController extends Controller
 
     private function authorizeSpace(Space $space)
     {
-        if (!$space->hasMember(Auth::id())) abort(403);
+        if (! $space->hasMember(Auth::id())) {
+            abort(403);
+        }
     }
 
     private function spacePayload(Space $space): array

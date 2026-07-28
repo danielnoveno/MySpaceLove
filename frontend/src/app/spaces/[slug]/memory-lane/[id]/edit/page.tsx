@@ -1,9 +1,10 @@
 'use client'
 
-import { useEffect, useState, useRef } from 'react'
+import { useCallback, useEffect, useState, useRef } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import AuthenticatedLayout from '@/layouts/AuthenticatedLayout'
+import AppImage from '@/components/AppImage'
 import { useAuth } from '@/contexts/AuthContext'
 import { createClient } from '@/lib/supabase/client'
 import { ArrowLeft, Heart, Calendar, FileText, Upload, X, Loader2, Check, AlertCircle } from 'lucide-react'
@@ -41,19 +42,22 @@ export default function EditMemoryPage() {
   const [uploading, setUploading] = useState(false)
   const [error, setError] = useState('')
 
-  useEffect(() => {
-    if (!authLoading && !user) { router.push('/auth/login'); return }
-    if (user && slug && memoryId) fetchMemory()
-  }, [user, authLoading, slug, memoryId, router])
-
-  const fetchMemory = async () => {
+  const fetchMemory = useCallback(async () => {
     setLoadingData(true)
     const { data, error: fetchError } = await supabase.from('memory_lane').select('*').eq('id', memoryId).single()
     if (fetchError || !data) { router.push(`/spaces/${slug}/memory-lane`); return }
     setMemory(data); setTitle(data.title); setDescription(data.description || '')
     setDate(data.date ? new Date(data.date).toISOString().split('T')[0] : ''); setCategory(data.category || 'other')
     setNotes(data.notes || ''); setExistingImageUrl(data.image_url); setLoadingData(false)
-  }
+  }, [memoryId, router, slug, supabase])
+
+  useEffect(() => {
+    if (!authLoading && !user) { router.push('/auth/login'); return }
+    if (user && slug && memoryId) {
+      const timeout = setTimeout(fetchMemory, 0)
+      return () => clearTimeout(timeout)
+    }
+  }, [user, authLoading, slug, memoryId, router, fetchMemory])
 
   const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]; if (!file) return
@@ -125,7 +129,7 @@ export default function EditMemoryPage() {
             <input ref={fileInputRef} type="file" accept="image/*" onChange={handleImageSelect} className="hidden" />
             {imagePreview || existingImageUrl ? (
               <div className="relative rounded-2xl overflow-hidden">
-                <img src={imagePreview || existingImageUrl!} alt="Preview" className="w-full h-48 object-cover" />
+                <AppImage src={imagePreview || existingImageUrl!} alt="Preview" className="w-full h-48 object-cover" />
                 <button type="button" onClick={removeImage} className="absolute top-2 right-2 bg-coral-500/80 backdrop-blur-sm text-white p-1.5 rounded-full hover:bg-coral-600 transition-colors"><X className="h-4 w-4" /></button>
               </div>
             ) : (

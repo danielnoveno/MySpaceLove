@@ -13,7 +13,7 @@ class EnsureSpaceAccess
     {
         $spaceParam = $request->route('space');
 
-        if (!$spaceParam) {
+        if (! $spaceParam) {
             abort(404);
         }
 
@@ -21,13 +21,13 @@ class EnsureSpaceAccess
             ? $spaceParam
             : Space::where('slug', $spaceParam)->first();
 
-        if (!$space) {
+        if (! $space) {
             abort(404);
         }
 
         $userId = $request->user()?->id;
 
-        if (!$userId || !$space->hasMember($userId)) {
+        if (! $userId || ! $space->hasMember($userId)) {
             abort(403, 'Kamu tidak memiliki akses ke space ini.');
         }
 

@@ -30,7 +30,10 @@ export default function PublicSurpriseStoryPage() {
     setLoading(false)
   }, [slug, searchParams])
 
-  useEffect(() => { loadChapters() }, [loadChapters])
+  useEffect(() => {
+    const timeout = setTimeout(loadChapters, 0)
+    return () => clearTimeout(timeout)
+  }, [loadChapters])
 
   const activeChapter = chapters[activeIndex]
   const totalPages = chapters.length
@@ -104,6 +107,12 @@ export default function PublicSurpriseStoryPage() {
 }
 
 function FloatingHearts() {
-  const hearts = Array.from({ length: 15 }, (_, i) => ({ id: i, left: `${Math.random() * 100}%`, delay: `${Math.random() * 10}s`, duration: `${8 + Math.random() * 7}s`, size: 14 + Math.random() * 20 }))
+  const hearts = Array.from({ length: 15 }, (_, i) => ({
+    id: i,
+    left: `${(i * 37 + 11) % 100}%`,
+    delay: `${(i * 7) % 10}s`,
+    duration: `${8 + (i * 3) % 7}s`,
+    size: 14 + (i * 11) % 20,
+  }))
   return <>{hearts.map((heart) => <div key={heart.id} className="floating-heart" style={{ left: heart.left, animationDelay: heart.delay, animationDuration: heart.duration, fontSize: `${heart.size}px` }}>❤</div>)}</>
 }

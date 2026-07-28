@@ -26,7 +26,7 @@ export default function CreateSurpriseNotePage() {
     if (!authLoading && !user) {
       router.push('/auth/login')
     }
-  }, [user, authLoading])
+  }, [user, authLoading, router])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()

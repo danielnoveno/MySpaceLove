@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Space;
+use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
@@ -14,7 +15,7 @@ class NotificationController extends Controller
 {
     public function index(Request $request, Space $space): Response
     {
-        /** @var \App\Models\User $user */
+        /** @var User $user */
         $user = Auth::user();
         $perPage = 10;
         $page = LengthAwarePaginator::resolveCurrentPage() ?: 1;
@@ -61,7 +62,7 @@ class NotificationController extends Controller
 
     public function recent(Request $request, Space $space)
     {
-        /** @var \App\Models\User $user */
+        /** @var User $user */
         $user = Auth::user();
 
         $notifications = $user->notifications()
@@ -71,6 +72,7 @@ class NotificationController extends Controller
             ->filter(function ($notification) use ($space) {
                 $data = $notification->data;
                 $spaceId = (int) ($data['space_id'] ?? data_get($data, 'meta.space_id'));
+
                 return $spaceId === (int) $space->id;
             })
             ->take(5) // Return only 5 most recent for dropdown
@@ -83,7 +85,7 @@ class NotificationController extends Controller
 
     public function markAsRead(Request $request, Space $space, string $notificationId): RedirectResponse
     {
-        /** @var \App\Models\User $user */
+        /** @var User $user */
         $user = Auth::user();
         $notification = $user->notifications()->find($notificationId);
 
@@ -99,7 +101,7 @@ class NotificationController extends Controller
 
     public function markAllAsRead(Request $request, Space $space): RedirectResponse
     {
-        /** @var \App\Models\User $user */
+        /** @var User $user */
         $user = Auth::user();
         $user->unreadNotifications
             ->filter(fn ($notification) => (int) data_get($notification->data, 'space_id') === (int) $space->id)
@@ -110,7 +112,7 @@ class NotificationController extends Controller
 
     public function destroy(Request $request, Space $space, string $notificationId): RedirectResponse
     {
-        /** @var \App\Models\User $user */
+        /** @var User $user */
         $user = Auth::user();
         $notification = $user->notifications()->find($notificationId);
 
@@ -126,7 +128,7 @@ class NotificationController extends Controller
 
     public function destroyMultiple(Request $request, Space $space): RedirectResponse
     {
-        /** @var \App\Models\User $user */
+        /** @var User $user */
         $user = Auth::user();
         $notificationIds = $request->input('notifications', []);
 

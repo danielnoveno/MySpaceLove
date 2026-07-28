@@ -23,7 +23,6 @@ const GAMES_CONFIG: Record<string, { name: string; icon: React.ReactNode; color:
 
 // Snake Game Component
 function SnakeGame({ onScore }: { onScore: (score: number) => void }) {
-  const [board, setBoard] = useState<number[][]>([])
   const [snake, setSnake] = useState<{ x: number; y: number }[]>([{ x: 10, y: 10 }])
   const [food, setFood] = useState({ x: 5, y: 5 })
   const [direction, setDirection] = useState<'UP' | 'DOWN' | 'LEFT' | 'RIGHT'>('RIGHT')
@@ -32,7 +31,7 @@ function SnakeGame({ onScore }: { onScore: (score: number) => void }) {
   const BOARD_SIZE = 20
 
   const generateFood = useCallback(() => {
-    let pos = { x: Math.floor(Math.random() * BOARD_SIZE), y: Math.floor(Math.random() * BOARD_SIZE) }
+    const pos = { x: Math.floor(Math.random() * BOARD_SIZE), y: Math.floor(Math.random() * BOARD_SIZE) }
     return pos
   }, [])
 
@@ -211,39 +210,42 @@ function TicTacToeGame({ onScore }: { onScore: (score: number) => void }) {
   )
 }
 
+const MEMORY_SYMBOLS = ['❤️', '💕', '🌸', '🦋', '🌙', '⭐', '🎀', '💎']
+
 // Memory Match Component
 function MemoryGame({ onScore }: { onScore: (score: number) => void }) {
-  const symbols = ['❤️', '💕', '🌸', '🦋', '🌙', '⭐', '🎀', '💎']
   const [cards, setCards] = useState<{ id: number; symbol: string; flipped: boolean; matched: boolean }[]>([])
   const [flippedCards, setFlippedCards] = useState<number[]>([])
   const [moves, setMoves] = useState(0)
 
   useEffect(() => {
-    const doubled = [...symbols, ...symbols]
-      .sort(() => Math.random() - 0.5)
-      .map((symbol, idx) => ({ id: idx, symbol, flipped: false, matched: false }))
-    setCards(doubled)
+    const timeout = setTimeout(() => {
+      const doubled = [...MEMORY_SYMBOLS, ...MEMORY_SYMBOLS]
+        .sort(() => Math.random() - 0.5)
+        .map((symbol, idx) => ({ id: idx, symbol, flipped: false, matched: false }))
+      setCards(doubled)
+    }, 0)
+    return () => clearTimeout(timeout)
   }, [])
 
   useEffect(() => {
     if (flippedCards.length === 2) {
       const [first, second] = flippedCards
-      if (cards[first].symbol === cards[second].symbol) {
+      const timeout = setTimeout(() => {
+        const isMatch = cards[first].symbol === cards[second].symbol
         setCards((prev) =>
           prev.map((c) =>
-            c.id === first || c.id === second ? { ...c, matched: true } : c
-          )
-        )
-      }
-      setTimeout(() => {
-        setCards((prev) =>
-          prev.map((c) =>
-            c.id === first || c.id === second && !c.matched ? { ...c, flipped: false } : c
+            c.id === first || c.id === second
+              ? isMatch
+                ? { ...c, matched: true }
+                : { ...c, flipped: false }
+              : c
           )
         )
         setFlippedCards([])
+        setMoves((m) => m + 1)
       }, 800)
-      setMoves((m) => m + 1)
+      return () => clearTimeout(timeout)
     }
   }, [flippedCards, cards])
 
@@ -260,7 +262,7 @@ function MemoryGame({ onScore }: { onScore: (score: number) => void }) {
   }
 
   const reset = () => {
-    const doubled = [...symbols, ...symbols]
+    const doubled = [...MEMORY_SYMBOLS, ...MEMORY_SYMBOLS]
       .sort(() => Math.random() - 0.5)
       .map((symbol, idx) => ({ id: idx, symbol, flipped: false, matched: false }))
     setCards(doubled)
@@ -319,7 +321,7 @@ export default function GamePlayPage() {
   const params = useParams()
   const slug = params.slug as string
   const gameSlug = params.gameSlug as string
-  const { user, loading: authLoading } = useAuth()
+  const { user } = useAuth()
   const [bestScore, setBestScore] = useState(0)
   const supabase = createClient()
 

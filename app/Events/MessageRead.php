@@ -25,7 +25,7 @@ class MessageRead implements ShouldBroadcast
 
     public function broadcastOn(): Channel
     {
-        return new PrivateChannel('spaces.' . $this->read->message->space_id . '.chat');
+        return new PrivateChannel('spaces.'.$this->read->message->space_id.'.chat');
     }
 
     public function broadcastWith(): array

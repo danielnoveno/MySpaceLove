@@ -1,6 +1,6 @@
 import { Transition } from '@headlessui/react';
 import { Link } from '@inertiajs/react';
-import { createContext, useContext, useRef, ReactNode, HTMLAttributes } from 'react';
+import { ComponentProps, createContext, HTMLAttributes, useContext, useRef, ReactNode } from 'react';
 import { useToggle } from '@/hooks/useToggle';
 import { useClickOutside } from '@/hooks/useClickOutside';
 
@@ -57,10 +57,22 @@ interface TriggerProps {
 }
 
 const Trigger = ({ children }: TriggerProps) => {
-    const { toggle } = useDropdownContext();
+    const { open, toggle } = useDropdownContext();
 
     return (
-        <div onClick={toggle} className="cursor-pointer">
+        <div
+            role="button"
+            tabIndex={0}
+            aria-expanded={open}
+            onClick={toggle}
+            onKeyDown={(event) => {
+                if (event.key === 'Enter' || event.key === ' ') {
+                    event.preventDefault();
+                    toggle();
+                }
+            }}
+            className="cursor-pointer"
+        >
             {children}
         </div>
     );
@@ -125,13 +137,9 @@ const Content = ({
 // Link Component (with LoveSpace theme)
 // ============================================
 
-interface DropdownLinkProps extends HTMLAttributes<HTMLAnchorElement> {
-    href: string;
-    className?: string;
+type DropdownLinkProps = Omit<ComponentProps<typeof Link>, 'children'> & {
     children: ReactNode;
-    method?: 'get' | 'post' | 'put' | 'patch' | 'delete';
-    as?: 'a' | 'button';
-}
+};
 
 const DropdownLink = ({ 
     className = '', 

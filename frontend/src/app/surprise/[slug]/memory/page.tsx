@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback } from 'react'
 import { useParams, useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
+import AppImage from '@/components/AppImage'
 import { Heart, Lock, Calendar, MapPin, Star, Gift, Plane, Award, Loader2 } from 'lucide-react'
 
 type Memory = { id: string; space_id: string; user_id: string; title: string; description: string | null; date: string; category: string; image_url: string | null; notes: string | null; created_at: string }
@@ -39,7 +40,10 @@ export default function PublicSurpriseMemoryPage() {
     } catch { setError('Failed to load memory'); setLoading(false) }
   }, [slug, memoryId, supabase])
 
-  useEffect(() => { fetchMemory() }, [fetchMemory])
+  useEffect(() => {
+    const timeout = setTimeout(fetchMemory, 0)
+    return () => clearTimeout(timeout)
+  }, [fetchMemory])
 
   const handlePinSubmit = (e: React.FormEvent) => {
     e.preventDefault(); setUnlocking(true)
@@ -87,7 +91,7 @@ export default function PublicSurpriseMemoryPage() {
         <div className="surprise-card animate-slide-up max-w-2xl mx-auto">
           {memory.image_url && (
             <div className="relative h-64 md:h-80 -mx-6 -mt-6 mb-6 overflow-hidden rounded-t-3xl">
-              <img src={memory.image_url} alt={memory.title} className="w-full h-full object-cover" />
+              <AppImage src={memory.image_url} alt={memory.title} className="w-full h-full object-cover" />
               <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
             </div>
           )}
@@ -122,6 +126,12 @@ export default function PublicSurpriseMemoryPage() {
 }
 
 function FloatingHearts() {
-  const hearts = Array.from({ length: 15 }, (_, i) => ({ id: i, left: `${Math.random() * 100}%`, delay: `${Math.random() * 10}s`, duration: `${8 + Math.random() * 7}s`, size: 14 + Math.random() * 20 }))
+  const hearts = Array.from({ length: 15 }, (_, i) => ({
+    id: i,
+    left: `${(i * 37 + 11) % 100}%`,
+    delay: `${(i * 7) % 10}s`,
+    duration: `${8 + (i * 3) % 7}s`,
+    size: 14 + (i * 11) % 20,
+  }))
   return <>{hearts.map((heart) => <div key={heart.id} className="floating-heart" style={{ left: heart.left, animationDelay: heart.delay, animationDuration: heart.duration, fontSize: `${heart.size}px` }}>❤</div>)}</>
 }

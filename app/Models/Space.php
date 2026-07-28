@@ -2,15 +2,9 @@
 
 namespace App\Models;
 
-use App\Models\MemoryLaneConfig;
-use App\Models\NobarSchedule;
-use App\Models\SpaceInvitation;
-use App\Models\SpaceJoinRequest;
-use App\Models\SpaceSeparationRequest;
-use App\Models\Message;
-use App\Models\MessageRead;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
 
 class Space extends Model
@@ -25,7 +19,7 @@ class Space extends Model
         'invite_code',
         'is_public',
         'theme_id',
-        'bio'
+        'bio',
     ];
 
     protected static function booted(): void
@@ -85,10 +79,12 @@ class Space extends Model
     {
         return $this->belongsTo(User::class, 'user_one_id');
     }
+
     public function userTwo()
     {
         return $this->belongsTo(User::class, 'user_two_id');
     }
+
     public function theme()
     {
         return $this->belongsTo(Theme::class);
@@ -98,30 +94,37 @@ class Space extends Model
     {
         return $this->hasMany(LoveTimeline::class);
     }
+
     public function dailyMessages()
     {
         return $this->hasMany(DailyMessage::class);
     }
+
     public function countdowns()
     {
         return $this->hasMany(Countdown::class);
     }
+
     public function journals()
     {
         return $this->hasMany(LoveJournal::class);
     }
+
     public function surpriseNotes()
     {
         return $this->hasMany(SurpriseNote::class);
     }
+
     public function galleries()
     {
         return $this->hasMany(MediaGallery::class);
     }
+
     public function wishlist()
     {
         return $this->hasMany(WishlistItem::class);
     }
+
     public function docs()
     {
         return $this->hasMany(Doc::class);
@@ -149,7 +152,7 @@ class Space extends Model
 
     public function partner()
     {
-        if ($this->user_one_id === \Illuminate\Support\Facades\Auth::id()) {
+        if ($this->user_one_id === Auth::id()) {
             return $this->userTwo;
         }
 

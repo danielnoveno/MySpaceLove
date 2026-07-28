@@ -11,7 +11,7 @@ use Illuminate\Support\Facades\Notification;
 class ActivityLogger
 {
     /**
-     * @param  \App\Models\User|array<int, \App\Models\User>|\Illuminate\Support\Collection<int, \App\Models\User>  $recipients
+     * @param  User|array<int, User>|Collection<int, User>  $recipients
      */
     public function log($recipients, string $event, string $title, string $body, array $data = [], bool $sendMail = true): void
     {

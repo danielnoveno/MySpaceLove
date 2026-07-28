@@ -43,7 +43,7 @@ class ProfileController extends Controller
             if ($user->profile_image) {
                 Storage::disk('public')->delete($user->profile_image);
             }
-            
+
             // Use UploadedFileProcessor for WebP conversion
             $stored = $this->fileProcessor->store(
                 $request->file('profile_image'),
@@ -52,7 +52,7 @@ class ProfileController extends Controller
                 'errors.upload.file_too_large',
                 'profile_image'
             );
-            
+
             $user->profile_image = $stored['path'];
         }
 

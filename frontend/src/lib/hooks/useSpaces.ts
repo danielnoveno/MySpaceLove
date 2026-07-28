@@ -115,7 +115,8 @@ export function useSpaces(): UseSpacesReturn {
   }, [user, supabase])
 
   useEffect(() => {
-    fetchSpaces()
+    const timeout = setTimeout(fetchSpaces, 0)
+    return () => clearTimeout(timeout)
   }, [fetchSpaces])
 
   const createSpace = useCallback(async (title: string, bio?: string) => {
@@ -252,7 +253,12 @@ export function useSpaces(): UseSpacesReturn {
       .order('created_at', { ascending: false })
 
     if (!error && data) {
-      setJoinRequests(data as JoinRequest[])
+      const joinRequests = data.map(({ invitee, ...request }) => ({
+        ...request,
+        invitee: Array.isArray(invitee) ? invitee[0] : invitee,
+      })) as JoinRequest[]
+
+      setJoinRequests(joinRequests)
     }
   }, [user, supabase])
 

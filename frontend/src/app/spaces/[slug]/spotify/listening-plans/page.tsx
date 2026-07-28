@@ -1,9 +1,10 @@
 'use client'
 
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState, useCallback, useRef } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import AuthenticatedLayout from '@/layouts/AuthenticatedLayout'
+import AppImage from '@/components/AppImage'
 import { useAuth } from '@/contexts/AuthContext'
 import { createClient } from '@/lib/supabase/client'
 import {
@@ -52,28 +53,18 @@ export default function ListeningPlansPage() {
   const [loading, setLoading] = useState(true)
   const [deleting, setDeleting] = useState<string | null>(null)
   const [playingId, setPlayingId] = useState<string | null>(null)
-  const [audioRef, setAudioRef] = useState<HTMLAudioElement | null>(null)
-
-  useEffect(() => {
-    if (!authLoading && !user) {
-      router.push('/auth/login')
-      return
-    }
-    if (user && slug) {
-      fetchPlans()
-    }
-  }, [user, authLoading, slug, router])
+  const audioRef = useRef<HTMLAudioElement | null>(null)
 
   useEffect(() => {
     return () => {
-      if (audioRef) {
-        audioRef.pause()
-        audioRef.src = ''
+      if (audioRef.current) {
+        audioRef.current.pause()
+        audioRef.current.src = ''
       }
     }
-  }, [audioRef])
+  }, [])
 
-  const fetchPlans = async () => {
+  const fetchPlans = useCallback(async () => {
     setLoading(true)
 
     const { data: space } = await supabase
@@ -100,7 +91,7 @@ export default function ListeningPlansPage() {
     }
 
     const plansWithTracks = await Promise.all(
-      plansData.map(async (plan: any) => {
+      plansData.map(async (plan) => {
         const { data: tracks } = await supabase
           .from('spotify_listening_plan_tracks')
           .select('*')
@@ -113,33 +104,44 @@ export default function ListeningPlansPage() {
 
     setPlans(plansWithTracks)
     setLoading(false)
-  }
+  }, [slug, supabase])
+
+  useEffect(() => {
+    if (!authLoading && !user) {
+      router.push('/auth/login')
+      return
+    }
+    if (user && slug) {
+      const timeout = setTimeout(fetchPlans, 0)
+      return () => clearTimeout(timeout)
+    }
+  }, [user, authLoading, slug, router, fetchPlans])
 
   const playPreview = useCallback((track: PlanTrack) => {
     if (!track.preview_url) return
 
-    if (playingId === track.id && audioRef) {
-      audioRef.pause()
-      audioRef.src = ''
+    if (playingId === track.id && audioRef.current) {
+      audioRef.current.pause()
+      audioRef.current.src = ''
       setPlayingId(null)
-      setAudioRef(null)
+      audioRef.current = null
       return
     }
 
-    if (audioRef) {
-      audioRef.pause()
-      audioRef.src = ''
+    if (audioRef.current) {
+      audioRef.current.pause()
+      audioRef.current.src = ''
     }
 
     const audio = new Audio(track.preview_url)
     audio.onended = () => {
       setPlayingId(null)
-      setAudioRef(null)
+      audioRef.current = null
     }
     audio.play()
     setPlayingId(track.id)
-    setAudioRef(audio)
-  }, [playingId, audioRef])
+    audioRef.current = audio
+  }, [playingId])
 
   const deletePlan = useCallback(async (plan: ListeningPlan) => {
     if (!confirm(`Delete "${plan.title}"?`)) return
@@ -258,7 +260,7 @@ export default function ListeningPlansPage() {
                         </span>
 
                         {track.track_image ? (
-                          <img
+                          <AppImage
                             src={track.track_image}
                             alt={track.track_album}
                             className="h-10 w-10 rounded-lg object-cover shrink-0"

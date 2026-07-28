@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { useParams } from 'next/navigation'
 import Link from 'next/link'
 import AuthenticatedLayout from '@/layouts/AuthenticatedLayout'
@@ -36,16 +36,10 @@ export default function SurpriseNotesPage() {
   const { user, loading: authLoading } = useAuth()
   const [notes, setNotes] = useState<SurpriseNote[]>([])
   const [loading, setLoading] = useState(true)
-  const [spaceId, setSpaceId] = useState<number | null>(null)
   const [copiedNoteId, setCopiedNoteId] = useState<number | null>(null)
   const supabase = createClient()
 
-  useEffect(() => {
-    if (!authLoading && !user) return
-    if (user) fetchNotes()
-  }, [user, authLoading])
-
-  const fetchNotes = async () => {
+  const fetchNotes = useCallback(async () => {
     const { data: space } = await supabase
       .from('spaces')
       .select('id')
@@ -57,8 +51,6 @@ export default function SurpriseNotesPage() {
       return
     }
 
-    setSpaceId(space.id)
-
     const { data } = await supabase
       .from('surprise_notes')
       .select('*')
@@ -67,7 +59,15 @@ export default function SurpriseNotesPage() {
 
     if (data) setNotes(data)
     setLoading(false)
-  }
+  }, [slug, supabase])
+
+  useEffect(() => {
+    if (!authLoading && !user) return
+    if (user) {
+      const timeout = setTimeout(fetchNotes, 0)
+      return () => clearTimeout(timeout)
+    }
+  }, [user, authLoading, fetchNotes])
 
   const deleteNote = async (id: number) => {
     if (!confirm('Hapus catatan kejutan ini?')) return

@@ -4,6 +4,7 @@ import { useEffect, useState, useRef } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import AuthenticatedLayout from '@/layouts/AuthenticatedLayout'
+import AppImage from '@/components/AppImage'
 import { useAuth } from '@/contexts/AuthContext'
 import { createClient } from '@/lib/supabase/client'
 import { ArrowLeft, Upload, X, Loader2, Check } from 'lucide-react'
@@ -100,7 +101,7 @@ export default function CreateGalleryPage() {
               <div className="mt-4 grid grid-cols-3 gap-3">
                 {files.map((fp, idx) => (
                   <div key={idx} className="relative group rounded-2xl overflow-hidden aspect-square">
-                    <img src={fp.preview} alt={`Preview ${idx + 1}`} className="w-full h-full object-cover" />
+                    <AppImage src={fp.preview} alt={`Preview ${idx + 1}`} className="w-full h-full object-cover" />
                     <button type="button" onClick={() => removeFile(idx)}
                       className="absolute top-1.5 right-1.5 bg-coral-500/80 backdrop-blur-sm text-white p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity">
                       <X className="h-3.5 w-3.5" />

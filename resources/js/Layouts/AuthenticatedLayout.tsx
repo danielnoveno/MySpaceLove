@@ -6,6 +6,7 @@ import { Bell, Lock, Globe } from "lucide-react";
 import { useTranslation } from "@/hooks/useTranslation";
 import NotificationPopup from "@/Components/NotificationPopup";
 import SplashCursor from "@/Components/SplashCursor";
+import LoveCursorCanvas, { type LoveCursorCanvasProps } from "@/Components/LoveCursorCanvas";
 import { useToast } from "@/Contexts/ToastContext";
 
 export default function AuthenticatedLayout({
@@ -13,10 +14,12 @@ export default function AuthenticatedLayout({
     children,
     showSplashCursor = false,
     dimNav = false,
+    loveCursor,
 }: PropsWithChildren<{
     header?: React.ReactNode;
     showSplashCursor?: boolean;
     dimNav?: boolean;
+    loveCursor?: LoveCursorCanvasProps;
 }>) {
     const { props } = usePage<any>();
     const { spaces, currentSpace, locale, availableLocales, unreadNotificationsCount = 0, flash } = props;
@@ -197,6 +200,7 @@ export default function AuthenticatedLayout({
 
     return (
         <div className="h-screen w-full bg-gradient-to-br from-pink-50 via-white to-purple-50 flex flex-col overflow-hidden relative">
+            {loveCursor && <LoveCursorCanvas {...loveCursor} />}
             {/* Loading Progress Bar */}
             {isNavigating && (
                 <div className="fixed top-0 left-0 right-0 z-[100] h-1 bg-gray-200">

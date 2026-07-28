@@ -18,9 +18,7 @@ class LoveTimelineApiController extends Controller
     public function __construct(
         private readonly UploadedFileProcessor $fileProcessor,
         private readonly ActivityLogger $activityLogger
-    )
-    {
-    }
+    ) {}
 
     public function index(Space $space)
     {
@@ -29,17 +27,17 @@ class LoveTimelineApiController extends Controller
         $timelines = $space->timelines()
             ->orderBy('date')
             ->get()
-            ->map(function (LoveTimeline $timeline) use ($space) {
+            ->map(function (LoveTimeline $timeline) {
                 $mediaPaths = $timeline->media_paths ?? [];
                 $thumbnail = $timeline->thumbnail_path;
 
-                if ($thumbnail && !in_array($thumbnail, $mediaPaths, true)) {
+                if ($thumbnail && ! in_array($thumbnail, $mediaPaths, true)) {
                     $thumbnail = null;
                 }
 
                 $resolvedThumbnail = $thumbnail
-                    ? asset('storage/' . $thumbnail)
-                    : ($mediaPaths ? asset('storage/' . $mediaPaths[0]) : null);
+                    ? asset('storage/'.$thumbnail)
+                    : ($mediaPaths ? asset('storage/'.$mediaPaths[0]) : null);
 
                 return [
                     'uuid' => $timeline->uuid,
@@ -49,7 +47,7 @@ class LoveTimelineApiController extends Controller
                     'media_paths' => $mediaPaths,
                     'thumbnail_path' => $thumbnail,
                     'thumbnail_url' => $resolvedThumbnail,
-                    'media_urls' => collect($mediaPaths)->map(fn ($path) => asset('storage/' . $path))->all(),
+                    'media_urls' => collect($mediaPaths)->map(fn ($path) => asset('storage/'.$path))->all(),
                 ];
             });
 
@@ -83,7 +81,7 @@ class LoveTimelineApiController extends Controller
             ],
         );
 
-        $timeline = new LoveTimeline();
+        $timeline = new LoveTimeline;
         $timeline->space_id = $space->id;
         $timeline->title = $request->title;
         $timeline->description = $request->description;
@@ -204,11 +202,12 @@ class LoveTimelineApiController extends Controller
             if ($existingIndex !== false) {
                 $finalPaths[] = $token;
                 array_splice($remainingExisting, $existingIndex, 1);
+
                 continue;
             }
 
             foreach ($newUploads as $upload) {
-                if (($upload['key'] ?? null) === $token && !in_array($upload['path'], $finalPaths, true)) {
+                if (($upload['key'] ?? null) === $token && ! in_array($upload['path'], $finalPaths, true)) {
                     $finalPaths[] = $upload['path'];
                     break;
                 }
@@ -216,19 +215,19 @@ class LoveTimelineApiController extends Controller
         }
 
         foreach ($remainingExisting as $path) {
-            if (!in_array($path, $finalPaths, true)) {
+            if (! in_array($path, $finalPaths, true)) {
                 $finalPaths[] = $path;
             }
         }
 
         foreach ($newUploads as $upload) {
-            if (!in_array($upload['path'], $finalPaths, true)) {
+            if (! in_array($upload['path'], $finalPaths, true)) {
                 $finalPaths[] = $upload['path'];
             }
         }
 
         $thumbnailPath = $timeline->thumbnail_path;
-        if ($thumbnailPath && !in_array($thumbnailPath, $finalPaths, true)) {
+        if ($thumbnailPath && ! in_array($thumbnailPath, $finalPaths, true)) {
             $thumbnailPath = $finalPaths[0] ?? null;
         }
 
@@ -258,7 +257,7 @@ class LoveTimelineApiController extends Controller
             Storage::disk('public')->delete($path);
         }
 
-        if ($timeline->thumbnail_path && !in_array($timeline->thumbnail_path, $mediaPaths, true)) {
+        if ($timeline->thumbnail_path && ! in_array($timeline->thumbnail_path, $mediaPaths, true)) {
             Storage::disk('public')->delete($timeline->thumbnail_path);
         }
 
@@ -289,7 +288,7 @@ class LoveTimelineApiController extends Controller
         $path = $data['path'] ?? null;
         $media = $timeline->media_paths ?? [];
 
-        if ($path !== null && !in_array($path, $media, true)) {
+        if ($path !== null && ! in_array($path, $media, true)) {
             return response()->json([
                 'message' => 'Thumbnail tidak valid.',
             ], 422);
@@ -302,13 +301,13 @@ class LoveTimelineApiController extends Controller
         return response()->json([
             'message' => 'Thumbnail berhasil diperbarui.',
             'thumbnail_path' => $path,
-            'thumbnail_url' => $path ? asset('storage/' . $path) : null,
+            'thumbnail_url' => $path ? asset('storage/'.$path) : null,
         ]);
     }
 
     private function notifyTimelineEvent(Space $space, LoveTimeline $timeline, string $action): void
     {
-        if (!Schema::hasTable('notifications')) {
+        if (! Schema::hasTable('notifications')) {
             return;
         }
 
@@ -380,7 +379,9 @@ class LoveTimelineApiController extends Controller
 
     private function authorizeSpace(Space $space)
     {
-        if (!$space->hasMember(Auth::id())) abort(403);
+        if (! $space->hasMember(Auth::id())) {
+            abort(403);
+        }
     }
 
     private function spacePayload(Space $space): array

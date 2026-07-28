@@ -17,8 +17,11 @@ class NobarParticipantLeft implements ShouldBroadcast
     use SerializesModels;
 
     public int $participantId;
+
     public int $spaceId;
+
     public int $userId;
+
     public string $reason;
 
     public function __construct(NobarParticipant $participant, string $reason = 'left')
@@ -31,7 +34,7 @@ class NobarParticipantLeft implements ShouldBroadcast
 
     public function broadcastOn(): Channel
     {
-        return new PrivateChannel('spaces.' . $this->spaceId . '.nobar');
+        return new PrivateChannel('spaces.'.$this->spaceId.'.nobar');
     }
 
     public function broadcastWith(): array

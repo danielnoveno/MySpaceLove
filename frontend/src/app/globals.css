@@ -50,9 +50,9 @@
   --color-info: #60a5fa;
 
   /* Typography — uses CSS variables from next/font (layout.tsx) */
-  --font-sans: var(--font-outfit), system-ui, -apple-system, sans-serif;
-  --font-heading: var(--font-outfit), system-ui, -apple-system, sans-serif;
-  --font-mono: var(--font-jetbrains), ui-monospace, SFMono-Regular, monospace;
+  --font-sans: "Trebuchet MS", system-ui, -apple-system, sans-serif;
+  --font-heading: "Trebuchet MS", system-ui, -apple-system, sans-serif;
+  --font-mono: "Cascadia Code", "SFMono-Regular", Consolas, monospace;
 
   /* Spacing */
   --spacing-1: 0.25rem;

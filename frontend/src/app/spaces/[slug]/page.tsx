@@ -1,13 +1,13 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import Link from 'next/link'
 import AuthenticatedLayout from '@/layouts/AuthenticatedLayout'
 import { useAuth } from '@/contexts/AuthContext'
 import { createClient } from '@/lib/supabase/client'
 import { FadeIn, StaggerContainer, StaggerItem } from '@/components/motion'
-import { Clock, Image, MessageCircle, Music, Gamepad2, Heart, FileText, MapPin, Star, Calendar, Sparkles, Users } from 'lucide-react'
+import { Clock, Image as ImageIcon, MessageCircle, Music, Gamepad2, Heart, FileText, MapPin, Star, Calendar } from 'lucide-react'
 import LoadingSpinner from '@/components/LoadingSpinner'
 
 type Space = {
@@ -31,18 +31,7 @@ export default function SpaceDashboardPage() {
   const [stats, setStats] = useState({ events: 0, photos: 0, messages: 0 })
   const [loading, setLoading] = useState(true)
 
-  useEffect(() => {
-    if (!authLoading && !user) {
-      router.push('/auth/login')
-      return
-    }
-
-    if (user && slug) {
-      fetchSpace()
-    }
-  }, [user, authLoading, slug, router])
-
-  const fetchSpace = async () => {
+  const fetchSpace = useCallback(async () => {
     const { data, error } = await supabase
       .from('spaces')
       .select('*')
@@ -74,7 +63,19 @@ export default function SpaceDashboardPage() {
       messages: messagesRes.count ?? 0,
     })
     setLoading(false)
-  }
+  }, [router, slug, supabase, user])
+
+  useEffect(() => {
+    if (!authLoading && !user) {
+      router.push('/auth/login')
+      return
+    }
+
+    if (user && slug) {
+      const timeout = setTimeout(fetchSpace, 0)
+      return () => clearTimeout(timeout)
+    }
+  }, [user, authLoading, slug, router, fetchSpace])
 
   if (authLoading || loading) {
     return (
@@ -90,7 +91,7 @@ export default function SpaceDashboardPage() {
 
   const features = [
     { label: 'Timeline', description: 'Lihat momen Anda', href: `/spaces/${slug}/timeline`, icon: Clock, color: 'bg-brand-50 text-brand-500' },
-    { label: 'Galeri', description: 'Jelajahi foto', href: `/spaces/${slug}/gallery`, icon: Image, color: 'bg-coral-50 text-coral-500' },
+    { label: 'Galeri', description: 'Jelajahi foto', href: `/spaces/${slug}/gallery`, icon: ImageIcon, color: 'bg-coral-50 text-coral-500' },
     { label: 'Pesan', description: 'Chat dengan pasangan', href: `/spaces/${slug}/messages`, icon: MessageCircle, color: 'bg-warm-100 text-warm-500' },
     { label: 'Musik', description: 'Bagikan lagu', href: `/spaces/${slug}/spotify`, icon: Music, color: 'bg-brand-50 text-brand-400' },
     { label: 'Permainan', description: 'Main bersama', href: `/spaces/${slug}/games`, icon: Gamepad2, color: 'bg-coral-50 text-coral-400' },
@@ -170,7 +171,7 @@ export default function SpaceDashboardPage() {
             </div>
             <div className="rounded-2xl bg-white border border-warm-100 p-6 text-center">
               <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-coral-50 text-coral-500 mb-3">
-                <Image className="h-6 w-6" />
+                <ImageIcon className="h-6 w-6" />
               </div>
               <p className="text-3xl font-bold text-warm-900">{stats.photos}</p>
               <p className="text-sm text-warm-500">{stats.photos === 1 ? 'Foto' : 'Foto'}</p>

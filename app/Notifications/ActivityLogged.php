@@ -16,8 +16,7 @@ class ActivityLogged extends Notification
         public readonly string $body,
         public readonly array $data = [],
         public readonly bool $sendMail = false,
-    ) {
-    }
+    ) {}
 
     /**
      * @return array<int, string>
@@ -26,7 +25,7 @@ class ActivityLogged extends Notification
     {
         $channels = ['database'];
 
-        if ($this->sendMail && !empty($notifiable->email)) {
+        if ($this->sendMail && ! empty($notifiable->email)) {
             $channels[] = 'mail';
         }
 
@@ -44,7 +43,7 @@ class ActivityLogged extends Notification
         $actionUrl = $this->data['action_url']
             ?? ($spaceSlug ? route('spaces.notifications.index', ['space' => $spaceSlug]) : route('spaces.index'));
 
-        $mail = (new MailMessage())
+        $mail = (new MailMessage)
             ->subject($this->title)
             ->greeting($greeting)
             ->line($this->body);
@@ -71,7 +70,7 @@ class ActivityLogged extends Notification
             $payload['meta'] = $this->data;
 
             foreach ($this->data as $key => $value) {
-                if (!array_key_exists($key, $payload) && (is_scalar($value) || $value === null)) {
+                if (! array_key_exists($key, $payload) && (is_scalar($value) || $value === null)) {
                     $payload[$key] = $value;
                 }
             }

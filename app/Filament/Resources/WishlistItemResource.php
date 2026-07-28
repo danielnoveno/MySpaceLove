@@ -4,23 +4,24 @@ namespace App\Filament\Resources;
 
 use App\Filament\Resources\WishlistItemResource\Pages;
 use App\Models\WishlistItem;
-use Filament\Forms;
-use Filament\Tables;
-use Filament\Resources\Resource;
-use Filament\Forms\Form;
-use Filament\Tables\Table;
-use Filament\Forms\Components\BelongsToSelect;
-use Filament\Forms\Components\TextInput;
-use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\Select;
+use Filament\Forms\Components\Textarea;
+use Filament\Forms\Components\TextInput;
+use Filament\Forms\Form;
+use Filament\Resources\Resource;
+use Filament\Tables;
 use Filament\Tables\Columns\BadgeColumn;
 use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Table;
 
 class WishlistItemResource extends Resource
 {
     protected static ?string $model = WishlistItem::class;
+
     protected static ?string $navigationIcon = 'heroicon-o-star';
+
     protected static ?string $navigationLabel = 'Wishlist';
+
     protected static ?string $navigationGroup = 'Content';
 
     public static function form(Form $form): Form

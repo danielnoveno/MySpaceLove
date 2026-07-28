@@ -63,7 +63,7 @@ class HandleInertiaRequests extends Middleware
                     $relations[] = 'pendingSeparationRequest';
                 }
 
-                if (!empty($relations)) {
+                if (! empty($relations)) {
                     $spacesQuery->with($relations);
                 }
             }
@@ -104,7 +104,7 @@ class HandleInertiaRequests extends Middleware
                     $relations[] = 'pendingInvitation';
                 }
 
-                if (!empty($relations)) {
+                if (! empty($relations)) {
                     $routeSpace->loadMissing($relations);
                 }
 

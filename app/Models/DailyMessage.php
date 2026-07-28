@@ -8,12 +8,13 @@ use Illuminate\Database\Eloquent\Model;
 class DailyMessage extends Model
 {
     use HasFactory;
+
     protected $fillable = [
         'space_id',
         'user_id',
         'date',
         'message',
-        'generated_by'
+        'generated_by',
     ];
 
     public function space()

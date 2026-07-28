@@ -2,6 +2,7 @@
 
 import React, { useState, useRef, useCallback } from 'react';
 import { Upload, X, FileImage, File } from 'lucide-react';
+import AppImage from '@/components/AppImage';
 
 interface FileUploadProps {
   onFileSelect: (files: File[]) => void;
@@ -15,20 +16,29 @@ interface FileWithPreview extends File {
   preview?: string;
 }
 
+function formatSize(bytes: number): string {
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+}
+
 export default function FileUpload({ onFileSelect, accept = 'image/*', multiple = false, maxSize = 5 * 1024 * 1024, preview = true }: FileUploadProps) {
   const [isDragActive, setIsDragActive] = useState(false);
   const [files, setFiles] = useState<FileWithPreview[]>([]);
   const [error, setError] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  const validateFile = (file: File): boolean => { if (file.size > maxSize) { setError(`File "${file.name}" exceeds ${formatSize(maxSize)} limit`); return false }; return true };
-  const formatSize = (bytes: number): string => { if (bytes < 1024) return `${bytes} B`; if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`; return `${(bytes / (1024 * 1024)).toFixed(1)} MB` };
+  const validateFile = useCallback((file: File): boolean => {
+    if (file.size <= maxSize) return true;
+    setError(`File "${file.name}" exceeds ${formatSize(maxSize)} limit`);
+    return false;
+  }, [maxSize]);
 
   const processFiles = useCallback((fileList: FileList | File[]) => {
     setError(null); const newFiles: FileWithPreview[] = [];
     Array.from(fileList).forEach((file) => { if (validateFile(file)) { const fileWithPreview = file as FileWithPreview; if (preview && file.type.startsWith('image/')) fileWithPreview.preview = URL.createObjectURL(file); newFiles.push(fileWithPreview) } });
     if (newFiles.length > 0) { const updatedFiles = multiple ? [...files, ...newFiles] : newFiles; setFiles(updatedFiles); onFileSelect(updatedFiles) }
-  }, [files, multiple, onFileSelect, preview, maxSize]);
+  }, [files, multiple, onFileSelect, preview, validateFile]);
 
   const handleDragEnter = (e: React.DragEvent) => { e.preventDefault(); e.stopPropagation(); setIsDragActive(true) };
   const handleDragLeave = (e: React.DragEvent) => { e.preventDefault(); e.stopPropagation(); setIsDragActive(false) };
@@ -60,7 +70,7 @@ export default function FileUpload({ onFileSelect, accept = 'image/*', multiple 
         <div className="space-y-2">
           {files.map((file, index) => (
             <div key={`${file.name}-${index}`} className="flex items-center gap-3 p-3 bg-warm-50 rounded-2xl">
-              {preview && file.preview ? <img src={file.preview} alt={file.name} className="w-10 h-10 rounded-lg object-cover" />
+              {preview && file.preview ? <AppImage src={file.preview} alt={file.name} className="w-10 h-10 rounded-lg object-cover" />
                 : file.type.startsWith('image/') ? <div className="w-10 h-10 rounded-lg bg-brand-100 flex items-center justify-center"><FileImage size={18} className="text-brand-500" /></div>
                   : <div className="w-10 h-10 rounded-lg bg-warm-200 flex items-center justify-center"><File size={18} className="text-warm-500" /></div>}
               <div className="flex-1 min-w-0">

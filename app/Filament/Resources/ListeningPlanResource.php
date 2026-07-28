@@ -3,22 +3,21 @@
 namespace App\Filament\Resources;
 
 use App\Filament\Resources\ListeningPlanResource\Pages;
-use App\Filament\Resources\ListeningPlanResource\RelationManagers;
 use App\Models\ListeningPlan;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
-use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\SoftDeletingScope;
 
 class ListeningPlanResource extends Resource
 {
     protected static ?string $model = ListeningPlan::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-calendar';
+
     protected static ?string $navigationLabel = 'Listening Plans';
+
     protected static ?string $navigationGroup = 'Content';
 
     public static function form(Form $form): Form

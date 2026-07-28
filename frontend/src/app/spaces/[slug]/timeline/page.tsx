@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback, useMemo } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import Link from 'next/link'
 import AuthenticatedLayout from '@/layouts/AuthenticatedLayout'
+import AppImage from '@/components/AppImage'
 import { useAuth } from '@/contexts/AuthContext'
 import { createClient } from '@/lib/supabase/client'
 import { useTimeline, TimelineItem } from '@/lib/hooks/useTimeline'
@@ -39,18 +40,7 @@ export default function TimelineIndexPage() {
   const [pendingDelete, setPendingDelete] = useState<TimelineItem | null>(null)
   const [deleting, setDeleting] = useState(false)
 
-  useEffect(() => {
-    if (!authLoading && !user) {
-      router.push('/auth/login')
-      return
-    }
-
-    if (user && slug) {
-      fetchSpace()
-    }
-  }, [user, authLoading, slug, router])
-
-  const fetchSpace = async () => {
+  const fetchSpace = useCallback(async () => {
     const { data, error } = await supabase
       .from('spaces')
       .select('id, title')
@@ -67,7 +57,19 @@ export default function TimelineIndexPage() {
       setSpaceId(data.id)
       fetchTimelines(data.id)
     }
-  }
+  }, [fetchTimelines, router, slug, supabase])
+
+  useEffect(() => {
+    if (!authLoading && !user) {
+      router.push('/auth/login')
+      return
+    }
+
+    if (user && slug) {
+      const timeout = setTimeout(fetchSpace, 0)
+      return () => clearTimeout(timeout)
+    }
+  }, [user, authLoading, slug, router, fetchSpace])
 
   const formatDate = useCallback((value?: string) => {
     if (!value) return ''
@@ -203,7 +205,7 @@ export default function TimelineIndexPage() {
                       <div className="relative mx-auto w-full max-w-sm">
                         <div className="relative overflow-hidden rounded-2xl border border-warm-100 bg-white shadow-lg transition group-hover:shadow-2xl">
                           {item.coverUrl ? (
-                            <img
+                            <AppImage
                               src={item.coverUrl}
                               alt={item.title}
                               className="h-64 w-full object-cover"
@@ -253,7 +255,7 @@ export default function TimelineIndexPage() {
                                     } ${isDisabled ? 'cursor-not-allowed opacity-60' : ''}`}
                                     aria-label="Pilih thumbnail"
                                   >
-                                    <img
+                                    <AppImage
                                       src={option.url}
                                       alt="opsi thumbnail"
                                       className="h-full w-full object-cover"
@@ -365,7 +367,7 @@ export default function TimelineIndexPage() {
                         onClick={() => setPreviewImage(url)}
                         className="overflow-hidden rounded-2xl border border-warm-100 shadow-sm transition-all hover:-translate-y-1 hover:shadow-lg"
                       >
-                        <img
+                        <AppImage
                           src={url}
                           alt={`media-${index}`}
                           className="h-32 w-full object-cover"
@@ -386,7 +388,7 @@ export default function TimelineIndexPage() {
           className="fixed inset-0 z-[70] flex items-center justify-center bg-warm-900/80 backdrop-blur-sm p-4"
           onClick={() => setPreviewImage(null)}
         >
-          <img
+          <AppImage
             src={previewImage}
             alt="pratinjau"
             className="max-h-[90vh] max-w-[90vw] rounded-3xl object-contain shadow-2xl"

@@ -4,14 +4,11 @@ namespace App\Http\Controllers;
 
 use App\Models\Space;
 use App\Services\MemoryLaneContentService;
-use Illuminate\Http\Request;
 use Inertia\Inertia;
 
 class StoryBookController extends Controller
 {
-    public function __construct(private readonly MemoryLaneContentService $memoryLaneContentService)
-    {
-    }
+    public function __construct(private readonly MemoryLaneContentService $memoryLaneContentService) {}
 
     public function show(Space $space)
     {

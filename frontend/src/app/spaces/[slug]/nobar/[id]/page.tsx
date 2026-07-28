@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback, useRef } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import AuthenticatedLayout from '@/layouts/AuthenticatedLayout'
+import AppImage from '@/components/AppImage'
 import { useAuth } from '@/contexts/AuthContext'
 import { createClient } from '@/lib/supabase/client'
 import { ArrowLeft, Loader2, Film, Users, Calendar, Tv, Play, LogIn, LogOut, Send, MessageCircle, Clock } from 'lucide-react'
@@ -48,7 +49,7 @@ export default function NobarSessionDetailPage() {
   }, [user, authLoading, router, slug, sessionId, supabase])
 
   useEffect(() => {
-    const channel = supabase.channel(`nobar-participants-${sessionId}`).on('postgres_changes', { event: '*', schema: 'public', table: 'nobar_participants', filter: `session_id=eq.${sessionId}` }, (payload: any) => {
+    const channel = supabase.channel(`nobar-participants-${sessionId}`).on('postgres_changes', { event: '*', schema: 'public', table: 'nobar_participants', filter: `session_id=eq.${sessionId}` }, (payload) => {
       if (payload.eventType === 'INSERT') setParticipants((prev) => [...prev, payload.new as Participant])
       else if (payload.eventType === 'DELETE') setParticipants((prev) => prev.filter((p) => p.id !== (payload.old as Participant).id))
     }).subscribe()
@@ -56,7 +57,7 @@ export default function NobarSessionDetailPage() {
   }, [sessionId, supabase])
 
   useEffect(() => {
-    const channel = supabase.channel(`nobar-messages-${sessionId}`).on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'nobar_messages', filter: `session_id=eq.${sessionId}` }, (payload: any) => {
+    const channel = supabase.channel(`nobar-messages-${sessionId}`).on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'nobar_messages', filter: `session_id=eq.${sessionId}` }, (payload) => {
       setMessages((prev) => [...prev, payload.new as Message])
     }).subscribe()
     return () => { supabase.removeChannel(channel) }
@@ -176,7 +177,7 @@ export default function NobarSessionDetailPage() {
               {participants.map((p) => (
                 <div key={p.id} className="flex items-center gap-3">
                   <div className="h-10 w-10 rounded-full bg-gradient-to-br from-brand-300 to-purple-300 flex items-center justify-center text-sm font-bold text-white">
-                    {p.avatar_url ? <img src={p.avatar_url} alt={p.display_name || ''} className="h-full w-full rounded-full object-cover" /> : (p.display_name || 'U')[0].toUpperCase()}
+                    {p.avatar_url ? <AppImage src={p.avatar_url} alt={p.display_name || ''} className="h-full w-full rounded-full object-cover" /> : (p.display_name || 'U')[0].toUpperCase()}
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium text-warm-900 truncate">{p.display_name || 'Anonymous'}{p.user_id === user?.id && <span className="text-brand-500 ml-1">(you)</span>}</p>

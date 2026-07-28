@@ -2,10 +2,11 @@
 
 namespace App\Providers;
 
-use Illuminate\Support\ServiceProvider;
+use App\Models\Theme;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\View;
+use Illuminate\Support\ServiceProvider;
 
 class PerformanceServiceProvider extends ServiceProvider
 {
@@ -23,7 +24,7 @@ class PerformanceServiceProvider extends ServiceProvider
     public function boot(): void
     {
         // Only apply optimizations in production
-        if (!app()->environment('production')) {
+        if (! app()->environment('production')) {
             return;
         }
 
@@ -45,9 +46,9 @@ class PerformanceServiceProvider extends ServiceProvider
         // Cache theme configurations for 24 hours
         View::composer('*', function ($view) {
             $themes = Cache::remember('app.themes', 86400, function () {
-                return \App\Models\Theme::all();
+                return Theme::all();
             });
-            
+
             $view->with('cachedThemes', $themes);
         });
     }

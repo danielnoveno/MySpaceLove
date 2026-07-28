@@ -33,6 +33,6 @@ class SpaceGoal extends Model
 
     public function isCompleted(): bool
     {
-        return !$this->is_active || $this->completed_at !== null;
+        return ! $this->is_active || $this->completed_at !== null;
     }
 }

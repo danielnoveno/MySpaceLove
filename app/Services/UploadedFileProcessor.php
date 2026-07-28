@@ -23,8 +23,7 @@ class UploadedFileProcessor
         ?string $sizeErrorKey = null,
         ?string $attribute = null,
         ?string $conversionErrorKey = null
-    ): array
-    {
+    ): array {
         $maxSize = 10 * 1024 * 1024; // 10 MB in bytes
         if ($file->getSize() > $maxSize) {
             throw ValidationException::withMessages([
@@ -52,7 +51,7 @@ class UploadedFileProcessor
 
     private function shouldConvertToWebp(?string $mime): bool
     {
-        if ($mime === null || !str_starts_with($mime, 'image/')) {
+        if ($mime === null || ! str_starts_with($mime, 'image/')) {
             return false;
         }
 
@@ -88,15 +87,15 @@ class UploadedFileProcessor
 
         imagedestroy($image);
 
-        if (!$success || $binary === false) {
+        if (! $success || $binary === false) {
             return null;
         }
 
-        $filename = Str::uuid()->toString() . '.webp';
-        $path = trim($directory, '/') . '/' . $filename;
+        $filename = Str::uuid()->toString().'.webp';
+        $path = trim($directory, '/').'/'.$filename;
 
         $stored = Storage::disk($disk)->put($path, $binary, ['visibility' => 'public']);
-        if (!$stored) {
+        if (! $stored) {
             return null;
         }
 

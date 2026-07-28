@@ -30,7 +30,7 @@ class AppServiceProvider extends ServiceProvider
                 Log::warning('Slow Database Query', [
                     'sql' => $query->sql,
                     'bindings' => $query->bindings,
-                    'time' => $query->time . 'ms',
+                    'time' => $query->time.'ms',
                 ]);
             }
         });
@@ -41,11 +41,10 @@ class AppServiceProvider extends ServiceProvider
                 Log::info('Database Query', [
                     'sql' => $query->sql,
                     'bindings' => $query->bindings,
-                    'time' => $query->time . 'ms',
+                    'time' => $query->time.'ms',
                 ]);
             });
         }
-
 
         // Log committed database transactions
         Event::listen(TransactionCommitted::class, function (TransactionCommitted $event) {

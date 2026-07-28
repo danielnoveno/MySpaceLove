@@ -39,6 +39,7 @@ class JoinRequestReceivedMail extends Mailable
     {
         $spaceTitle = e($this->space->title);
         $requesterName = e($this->requester->name);
+        $ownerName = e($this->space->userOne?->name ?? 'Pemilik Space');
         $slug = e($this->space->slug);
 
         return <<<HTML
@@ -50,7 +51,7 @@ class JoinRequestReceivedMail extends Mailable
                 <h1 style="margin: 0; font-size: 24px;">💌 Permintaan Bergabung</h1>
             </div>
             <div style="padding: 32px; background: #fef2f2; border-radius: 0 0 16px 16px;">
-                <p>Halo <strong>{$this->space->userOne?->name ?? 'Pemilik Space'}</strong>,</p>
+                <p>Halo <strong>{$ownerName}</strong>,</p>
                 <p><strong>{$requesterName}</strong> ingin bergabung ke Space <strong>"{$spaceTitle}"</strong>.</p>
                 <p>Silakan buka aplikasi untuk menyetujui atau menolak permintaan ini.</p>
                 <div style="text-align: center; margin: 32px 0;">

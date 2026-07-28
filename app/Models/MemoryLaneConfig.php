@@ -50,13 +50,13 @@ class MemoryLaneConfig extends Model
                 'level_one_image',
                 'level_two_image',
                 'level_three_image',
-                'flipbook_cover_image'
+                'flipbook_cover_image',
             ];
-            
+
             foreach ($imageFields as $attribute) {
                 $path = $config->getAttribute($attribute);
 
-                if (!empty($path)) {
+                if (! empty($path)) {
                     Storage::disk('public')->delete($path);
                 }
             }

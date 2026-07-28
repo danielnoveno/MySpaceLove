@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import AuthenticatedLayout from '@/layouts/AuthenticatedLayout'
+import AppImage from '@/components/AppImage'
 import { useAuth } from '@/contexts/AuthContext'
 import { createClient } from '@/lib/supabase/client'
 import { FadeIn, StaggerContainer, StaggerItem } from '@/components/motion'
@@ -85,7 +86,7 @@ export default function GalleryPage() {
         }
 
         const collectionsWithPhotos = await Promise.all(
-          collectionsData.map(async (col: any) => {
+          collectionsData.map(async (col) => {
             const { data: photos } = await supabase
               .from('gallery_photos')
               .select('*')
@@ -261,7 +262,7 @@ export default function GalleryPage() {
                         </div>
                       )}
                       {/* Top image */}
-                      <img
+                      <AppImage
                         src={collection.photos[0].url}
                         alt={collection.photos[0].caption || collection.title}
                         className="absolute inset-0 w-full h-full object-cover"
@@ -355,7 +356,7 @@ export default function GalleryPage() {
                       className="relative group/photo rounded-2xl overflow-hidden aspect-square cursor-pointer"
                       onClick={() => openLightbox(idx)}
                     >
-                      <img
+                      <AppImage
                         src={photo.url}
                         alt={photo.caption || `Foto ${idx + 1}`}
                         className="w-full h-full object-cover transition-transform hover:scale-105"
@@ -398,7 +399,7 @@ export default function GalleryPage() {
           )}
 
           <div className="max-w-[90vw] max-h-[85vh] flex items-center justify-center">
-            <img
+            <AppImage
               src={lightboxPhotos[lightboxIndex].url}
               alt={lightboxPhotos[lightboxIndex].caption || `Foto ${lightboxIndex + 1}`}
               className="max-w-full max-h-[85vh] object-contain rounded-lg"

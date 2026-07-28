@@ -10,6 +10,7 @@ use App\Notifications\MediaGalleryCreated;
 use App\Services\ActivityNotifier;
 use App\Services\UploadedFileProcessor;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Schema;
@@ -21,9 +22,7 @@ class MediaGalleryApiController extends Controller
 {
     private ?bool $collectionSupport = null;
 
-    public function __construct(private readonly UploadedFileProcessor $fileProcessor)
-    {
-    }
+    public function __construct(private readonly UploadedFileProcessor $fileProcessor) {}
 
     public function index(Space $space)
     {
@@ -56,11 +55,12 @@ class MediaGalleryApiController extends Controller
                 ->groupBy(fn (MediaGallery $item) => $item->collection_key ?? (string) $item->id)
                 ->sortByDesc(function ($group) {
                     $first = $group->sortBy('collection_index')->first();
+
                     return optional($first?->created_at)->timestamp ?? 0;
                 })
                 ->values()
                 ->map(function ($group) use ($mapItem) {
-                    /** @var \Illuminate\Support\Collection $group */
+                    /** @var Collection $group */
                     $sorted = $group->sortBy('collection_index')->values();
                     /** @var MediaGallery|null $cover */
                     $cover = $sorted->first();
@@ -136,7 +136,6 @@ class MediaGalleryApiController extends Controller
             $nextIndex = MediaGallery::where('collection_key', $collectionKey)->max('collection_index') + 1;
         }
 
-
         try {
             foreach ($files as $index => $file) {
                 $stored = $this->fileProcessor->store($file, "spaces/{$space->slug}/media");
@@ -178,7 +177,7 @@ class MediaGalleryApiController extends Controller
                 ['count' => count($files)]
             );
 
-            /** @var \App\Models\User $sender */
+            /** @var User $sender */
             $sender = Auth::user();
             $partner = $this->resolvePartnerUser($space);
 
@@ -220,11 +219,13 @@ class MediaGalleryApiController extends Controller
         $this->authorizeSpace($space);
 
         $media = MediaGallery::where('space_id', $space->id)->findOrFail($id);
-        if ($media->user_id !== Auth::id()) abort(403);
+        if ($media->user_id !== Auth::id()) {
+            abort(403);
+        }
 
         $data = $r->validate([
             'title' => 'nullable|string|max:255',
-            'file'  => 'nullable|file|mimes:jpg,jpeg,png,gif,mp4,mov|max:15360', // 15 MB
+            'file' => 'nullable|file|mimes:jpg,jpeg,png,gif,mp4,mov|max:15360', // 15 MB
         ]);
 
         $updates = [
@@ -239,6 +240,7 @@ class MediaGalleryApiController extends Controller
         }
 
         $media->update($updates);
+
         return Inertia::location(route('gallery.index', ['space' => $space->slug]));
     }
 
@@ -247,7 +249,9 @@ class MediaGalleryApiController extends Controller
         $this->authorizeSpace($space);
 
         $media = MediaGallery::where('space_id', $space->id)->findOrFail($id);
-        if ($media->user_id !== Auth::id()) abort(403);
+        if ($media->user_id !== Auth::id()) {
+            abort(403);
+        }
 
         $collectionKey = $media->collection_key;
 
@@ -306,7 +310,7 @@ class MediaGalleryApiController extends Controller
         if ($request->wantsJson()) {
             return response()->json([
                 'message' => 'Collection deleted',
-                'deleted_count' => $mediaItems->count()
+                'deleted_count' => $mediaItems->count(),
             ]);
         }
 
@@ -329,7 +333,9 @@ class MediaGalleryApiController extends Controller
 
     private function authorizeSpace(Space $space)
     {
-        if (!$space->hasMember(Auth::id())) abort(403);
+        if (! $space->hasMember(Auth::id())) {
+            abort(403);
+        }
     }
 
     private function spacePayload(Space $space): array

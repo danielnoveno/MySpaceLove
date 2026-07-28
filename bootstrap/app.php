@@ -1,25 +1,29 @@
 <?php
 
-use App\Http\Middleware\EnsureSpaceAccess;
-use App\Http\Middleware\SecurityHeaders;
-use App\Http\Middleware\SanitizeInput;
 use App\Http\Middleware\DetectSuspiciousActivity;
-use App\Http\Middleware\RateLimitMiddleware;
+use App\Http\Middleware\EnsureEmailIsVerified;
+use App\Http\Middleware\EnsureSpaceAccess;
+use App\Http\Middleware\HandleInertiaRequests;
 use App\Http\Middleware\LogAllRequests;
+use App\Http\Middleware\RateLimitMiddleware;
+use App\Http\Middleware\SanitizeInput;
+use App\Http\Middleware\SecurityHeaders;
+use App\Http\Middleware\SetLocale;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
+use Illuminate\Http\Middleware\AddLinkHeadersForPreloadedAssets;
 use Illuminate\Http\Request;
+use Illuminate\Session\TokenMismatchException;
 use Illuminate\Support\Facades\Log;
 use Laravel\Sanctum\Http\Middleware\EnsureFrontendRequestsAreStateful;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
-use Symfony\Component\HttpKernel\Exception\HttpException;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
-        api: __DIR__ . '/../routes/api.php',
-        web: __DIR__ . '/../routes/web.php',
-        commands: __DIR__ . '/../routes/console.php',
+        api: __DIR__.'/../routes/api.php',
+        web: __DIR__.'/../routes/web.php',
+        commands: __DIR__.'/../routes/console.php',
         health: '/up',
     )
     ->withEvents(discover: [
@@ -34,68 +38,45 @@ return Application::configure(basePath: dirname(__DIR__))
 
         // Global middleware - applied to all requests
         $middleware->use([
-            \App\Http\Middleware\LogAllRequests::class, // Log all requests & errors
+            LogAllRequests::class, // Log all requests & errors
         ]);
 
         $middleware->web(append: [
-            \App\Http\Middleware\SecurityHeaders::class,
-            \App\Http\Middleware\SanitizeInput::class,
-            \App\Http\Middleware\DetectSuspiciousActivity::class,
-            \App\Http\Middleware\SetLocale::class,
-            \App\Http\Middleware\HandleInertiaRequests::class,
-            \Illuminate\Http\Middleware\AddLinkHeadersForPreloadedAssets::class,
+            SecurityHeaders::class,
+            SanitizeInput::class,
+            DetectSuspiciousActivity::class,
+            SetLocale::class,
+            HandleInertiaRequests::class,
+            AddLinkHeadersForPreloadedAssets::class,
         ]);
 
         $middleware->api(prepend: [
             EnsureFrontendRequestsAreStateful::class,
-            \App\Http\Middleware\SecurityHeaders::class,
-            \App\Http\Middleware\SanitizeInput::class,
-            \App\Http\Middleware\DetectSuspiciousActivity::class,
+            SecurityHeaders::class,
+            SanitizeInput::class,
+            DetectSuspiciousActivity::class,
         ]);
 
         $middleware->alias([
             'space.access' => EnsureSpaceAccess::class,
-            'verified' => \App\Http\Middleware\EnsureEmailIsVerified::class,
-            'rate.limit' => \App\Http\Middleware\RateLimitMiddleware::class,
+            'verified' => EnsureEmailIsVerified::class,
+            'rate.limit' => RateLimitMiddleware::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
-        // Enhanced exception handling untuk production debugging
-        
-        // Log semua exceptions dengan detail lengkap
-        $exceptions->report(function (Throwable $e) {
-            $context = [
-                'exception' => get_class($e),
-                'message' => $e->getMessage(),
-                'file' => $e->getFile(),
-                'line' => $e->getLine(),
-                'url' => request()->fullUrl(),
-                'method' => request()->method(),
-                'ip' => request()->ip(),
-                'user_id' => auth()->id() ?? 'guest',
-            ];
-
-            // Tambahkan stack trace untuk production debugging
-            if (app()->environment('production')) {
-                $context['trace'] = $e->getTraceAsString();
-            }
-
-            Log::error('Exception occurred', $context);
-        });
-
         // Custom rendering untuk specific exceptions
         $exceptions->render(function (NotFoundHttpException $e, Request $request) {
             if ($request->is('api/*')) {
                 return response()->json([
-                    'message' => 'Resource not found'
+                    'message' => 'Resource not found',
                 ], 404);
             }
         });
 
         // Log CSRF token mismatch dengan detail
-        $exceptions->render(function (\Illuminate\Session\TokenMismatchException $e, Request $request) {
+        $exceptions->render(function (TokenMismatchException $e, Request $request) {
             Log::warning('CSRF Token Mismatch', [
-                'url' => $request->fullUrl(),
+                'url' => $request->url(),
                 'method' => $request->method(),
                 'ip' => $request->ip(),
                 'user_agent' => $request->userAgent(),
@@ -104,7 +85,7 @@ return Application::configure(basePath: dirname(__DIR__))
 
             if ($request->expectsJson()) {
                 return response()->json([
-                    'message' => 'CSRF token mismatch. Please refresh and try again.'
+                    'message' => 'CSRF token mismatch. Please refresh and try again.',
                 ], 419);
             }
         });

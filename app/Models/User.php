@@ -3,19 +3,21 @@
 namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
+use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
+use Illuminate\Notifications\DatabaseNotificationCollection;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Str;
 
 /**
- * @property \Illuminate\Notifications\DatabaseNotificationCollection $notifications
- * @property \Illuminate\Notifications\DatabaseNotificationCollection $unreadNotifications
+ * @property DatabaseNotificationCollection $notifications
+ * @property DatabaseNotificationCollection $unreadNotifications
  */
 class User extends Authenticatable
 {
-    /** @use HasFactory<\Database\Factories\UserFactory> */
+    /** @use HasFactory<UserFactory> */
     use HasFactory, Notifiable;
 
     /**
@@ -84,7 +86,7 @@ class User extends Authenticatable
         $suffix = 1;
 
         while (static::where('username', $username)->exists()) {
-            $username = $base . '_' . $suffix;
+            $username = $base.'_'.$suffix;
             $suffix++;
         }
 

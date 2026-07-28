@@ -8,15 +8,13 @@ use Illuminate\Auth\Events\Registered;
 
 class LogUserRegistered
 {
-    public function __construct(private readonly ActivityLogger $logger)
-    {
-    }
+    public function __construct(private readonly ActivityLogger $logger) {}
 
     public function handle(Registered $event): void
     {
         $user = $event->user;
 
-        if (!$user instanceof User) {
+        if (! $user instanceof User) {
             return;
         }
 

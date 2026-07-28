@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers;
 
-use App\Mail\NobarScheduleReminderMail;
 use App\Models\NobarSchedule;
 use App\Models\Space;
 use App\Models\User;
@@ -13,7 +12,6 @@ use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Mail;
 use Inertia\Inertia;
 use Inertia\Response;
 use Throwable;
@@ -29,7 +27,7 @@ class NobarController extends Controller
             'id' => $space->id,
             'slug' => $space->slug,
             'title' => $space->title,
-            'has_partner' => !empty($space->user_one_id) && !empty($space->user_two_id),
+            'has_partner' => ! empty($space->user_one_id) && ! empty($space->user_two_id),
         ];
 
         if (config('features.nobar_enabled', false)) {
@@ -205,7 +203,7 @@ class NobarController extends Controller
 
     private function authorizeSpace(Space $space): void
     {
-        if (!$space->hasMember(Auth::id())) {
+        if (! $space->hasMember(Auth::id())) {
             abort(403);
         }
     }

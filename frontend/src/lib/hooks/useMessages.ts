@@ -106,7 +106,7 @@ export function useMessages(): UseMessagesReturn {
           table: 'messages',
           filter: `space_id=eq.${spaceId}`,
         },
-        (payload: any) => {
+        (payload) => {
           const newMessage = payload.new as Message
           setMessages((prev) => {
             if (prev.some((m) => m.id === newMessage.id)) return prev

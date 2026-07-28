@@ -60,7 +60,14 @@ export default function RewardsConfig({
                 );
             } else {
                 // Determine current state (true by default) and flip it
-                newCustomRewards = [...customRewards, { id, enabled: false }];
+                const defaultReward = defaultRewards.find(
+                    (reward) => String(reward.id) === String(id),
+                );
+                if (!defaultReward) return;
+                newCustomRewards = [
+                    ...customRewards,
+                    { ...defaultReward, enabled: false },
+                ];
             }
             onChange(newCustomRewards);
         } else {
@@ -78,7 +85,7 @@ export default function RewardsConfig({
          
          const newCustomRewards = [
              // Set state for all default rewards
-             ...defaultRewards.map(r => ({ id: r.id, enabled })),
+             ...defaultRewards.map(r => ({ ...r, enabled })),
              // Set state for all existing custom rewards (preserve their details)
              ...pureCustomRewards.map(r => ({ ...r, enabled }))
          ];
@@ -96,7 +103,8 @@ export default function RewardsConfig({
             description: newReward.description,
             enabled: true,
             category: "custom",
-        } as Reward;
+            color: "#f43f5e",
+        } satisfies Reward;
 
         onChange([...customRewards, rewardToAdd]);
         setNewReward({ icon: "🎁", title: "", description: "" });

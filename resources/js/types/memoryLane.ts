@@ -1,7 +1,7 @@
 // Memory Lane Reward Types
 export interface Reward {
-    id: number;
-    category: "emotional" | "action" | "privilege";
+    id: number | string;
+    category: "emotional" | "action" | "privilege" | "custom";
     title: string;
     description: string;
     icon: string;

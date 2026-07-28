@@ -11,7 +11,7 @@ class SecurityHeaders
     /**
      * Handle an incoming request.
      *
-     * @param  \Closure(\Illuminate\Http\Request): (\Symfony\Component\HttpFoundation\Response)  $next
+     * @param  Closure(Request): (Response)  $next
      */
     public function handle(Request $request, Closure $next): Response
     {
@@ -23,9 +23,6 @@ class SecurityHeaders
         // Prevent MIME type sniffing
         $response->headers->set('X-Content-Type-Options', 'nosniff');
 
-        // Enable XSS protection
-        $response->headers->set('X-XSS-Protection', '1; mode=block');
-
         // Enforce HTTPS (HSTS)
         if (config('app.env') === 'production') {
             $response->headers->set('Strict-Transport-Security', 'max-age=31536000; includeSubDomains; preload');
@@ -36,14 +33,14 @@ class SecurityHeaders
 
         // Permissions Policy (formerly Feature Policy)
         // Allow camera and microphone for Jitsi video calls
-        $response->headers->set('Permissions-Policy', 
-            'geolocation=(self), ' .
-            'microphone=(self "https://8x8.vc" "https://*.jitsi.net" "https://*.jitsi.org"), ' .
-            'camera=(self "https://8x8.vc" "https://*.jitsi.net" "https://*.jitsi.org"), ' .
-            'payment=(), ' .
-            'usb=(), ' .
-            'magnetometer=(), ' .
-            'gyroscope=(), ' .
+        $response->headers->set('Permissions-Policy',
+            'geolocation=(self), '.
+            'microphone=(self "https://8x8.vc" "https://*.jitsi.net" "https://*.jitsi.org"), '.
+            'camera=(self "https://8x8.vc" "https://*.jitsi.net" "https://*.jitsi.org"), '.
+            'payment=(), '.
+            'usb=(), '.
+            'magnetometer=(), '.
+            'gyroscope=(), '.
             'accelerometer=()'
         );
 
@@ -66,25 +63,25 @@ class SecurityHeaders
     private function buildContentSecurityPolicy(): string
     {
         $isLocal = config('app.env') === 'local';
-        
+
         $policies = [
-            "default-src 'self'" . ($isLocal ? " http://localhost:* http://127.0.0.1:*" : ""),
-            "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net https://unpkg.com https://8x8.vc https://*.jitsi.net https://*.jitsi.org" . ($isLocal ? " http://localhost:* http://127.0.0.1:*" : ""),
-            "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://fonts.bunny.net" . ($isLocal ? " http://localhost:* http://127.0.0.1:*" : ""),
+            "default-src 'self'".($isLocal ? ' http://localhost:* http://127.0.0.1:*' : ''),
+            "script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://unpkg.com https://8x8.vc https://*.jitsi.net https://*.jitsi.org".($isLocal ? " 'unsafe-eval' http://localhost:* http://127.0.0.1:*" : ''),
+            "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://fonts.bunny.net".($isLocal ? ' http://localhost:* http://127.0.0.1:*' : ''),
             "font-src 'self' data: https://fonts.gstatic.com https://fonts.bunny.net",
-            "img-src 'self' data: https: blob:" . ($isLocal ? " http://localhost:* http://127.0.0.1:*" : ""),
-            "media-src 'self' blob: https:" . ($isLocal ? " http://localhost:* http://127.0.0.1:*" : ""),
-            "connect-src 'self' https://api.daily.co https://generativelanguage.googleapis.com https://8x8.vc https://*.jitsi.net https://*.jitsi.org https://ipapi.co https://router.project-osrm.org wss: ws: http://localhost:* http://127.0.0.1:* ws://localhost:* ws://127.0.0.1:*",
+            "img-src 'self' data: https: blob:".($isLocal ? ' http://localhost:* http://127.0.0.1:*' : ''),
+            "media-src 'self' blob: https:".($isLocal ? ' http://localhost:* http://127.0.0.1:*' : ''),
+            "connect-src 'self' https://api.daily.co https://generativelanguage.googleapis.com https://8x8.vc https://*.jitsi.net https://*.jitsi.org https://ipapi.co https://router.project-osrm.org wss:".($isLocal ? ' ws: http://localhost:* http://127.0.0.1:* ws://localhost:* ws://127.0.0.1:*' : ''),
             "frame-src 'self' https://www.youtube.com https://player.vimeo.com https://*.daily.co https://8x8.vc https://*.jitsi.net https://*.jitsi.org",
             "object-src 'none'",
             "base-uri 'self'",
             "form-action 'self'",
             "frame-ancestors 'self'",
         ];
-        
+
         // Only add upgrade-insecure-requests in production
-        if (!$isLocal) {
-            $policies[] = "upgrade-insecure-requests";
+        if (! $isLocal) {
+            $policies[] = 'upgrade-insecure-requests';
         }
 
         return implode('; ', $policies);

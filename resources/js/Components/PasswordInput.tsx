@@ -51,12 +51,12 @@ const EyeSlashIcon = (props: React.SVGProps<SVGSVGElement>) => (
     </svg>
 );
 
-export default forwardRef(function PasswordInput(
+export default forwardRef<HTMLInputElement, InputHTMLAttributes<HTMLInputElement> & { isFocused?: boolean }>(function PasswordInput(
     {
         className = '',
         isFocused = false,
         ...props
-    }: InputHTMLAttributes<HTMLInputElement> & { isFocused?: boolean },
+    },
     ref,
 ) {
     const [showPassword, setShowPassword] = useState(false);

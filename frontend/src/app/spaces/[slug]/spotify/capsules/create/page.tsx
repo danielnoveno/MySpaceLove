@@ -1,9 +1,10 @@
 'use client'
 
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState, useCallback, useRef } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import AuthenticatedLayout from '@/layouts/AuthenticatedLayout'
+import AppImage from '@/components/AppImage'
 import { useAuth } from '@/contexts/AuthContext'
 import { createClient } from '@/lib/supabase/client'
 import {
@@ -45,7 +46,7 @@ export default function CreateCapsulePage() {
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState('')
   const [playing, setPlaying] = useState(false)
-  const [audioRef, setAudioRef] = useState<HTMLAudioElement | null>(null)
+  const audioRef = useRef<HTMLAudioElement | null>(null)
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -71,12 +72,12 @@ export default function CreateCapsulePage() {
 
   useEffect(() => {
     return () => {
-      if (audioRef) {
-        audioRef.pause()
-        audioRef.src = ''
+      if (audioRef.current) {
+        audioRef.current.pause()
+        audioRef.current.src = ''
       }
     }
-  }, [audioRef])
+  }, [])
 
   const fetchTrackPreview = useCallback(async () => {
     const spotifyMatch = trackUrl.match(/spotify\.com\/(track|album)\/([a-zA-Z0-9]+)/)
@@ -115,23 +116,23 @@ export default function CreateCapsulePage() {
   const togglePlay = useCallback(() => {
     if (!trackPreview?.preview_url) return
 
-    if (playing && audioRef) {
-      audioRef.pause()
-      audioRef.src = ''
+    if (playing && audioRef.current) {
+      audioRef.current.pause()
+      audioRef.current.src = ''
       setPlaying(false)
-      setAudioRef(null)
+      audioRef.current = null
       return
     }
 
     const audio = new Audio(trackPreview.preview_url)
     audio.onended = () => {
       setPlaying(false)
-      setAudioRef(null)
+      audioRef.current = null
     }
     audio.play()
     setPlaying(true)
-    setAudioRef(audio)
-  }, [playing, audioRef, trackPreview])
+    audioRef.current = audio
+  }, [playing, trackPreview])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -172,9 +173,10 @@ export default function CreateCapsulePage() {
       return
     }
 
-    if (audioRef) {
-      audioRef.pause()
-      audioRef.src = ''
+    if (audioRef.current) {
+      audioRef.current.pause()
+      audioRef.current.src = ''
+      audioRef.current = null
     }
 
     router.push(`/spaces/${slug}/spotify/capsules`)
@@ -252,7 +254,7 @@ export default function CreateCapsulePage() {
               <div className="mt-4 flex items-center gap-4 rounded-2xl bg-brand-50/80 p-4">
                 <div className="relative shrink-0">
                   {trackPreview.image_url ? (
-                    <img
+                    <AppImage
                       src={trackPreview.image_url}
                       alt={trackPreview.album}
                       className="h-20 w-20 rounded-2xl object-cover shadow-md"

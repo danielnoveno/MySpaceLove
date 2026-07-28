@@ -11,15 +11,12 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
-use Illuminate\Support\Facades\Schema;
 use Inertia\Inertia;
 use Inertia\Response;
 
 class LocationController extends Controller
 {
-    public function __construct(private readonly ActivityLogger $activityLogger)
-    {
-    }
+    public function __construct(private readonly ActivityLogger $activityLogger) {}
 
     public function index(Request $request, Space $space): Response
     {
@@ -50,11 +47,11 @@ class LocationController extends Controller
                 'updated_at' => optional($userLocation->updated_at)->toIso8601String(),
             ] : null,
             'partnerLocation' => $partnerLocation ? [
-                    'latitude' => $partnerLocation->latitude,
-                    'longitude' => $partnerLocation->longitude,
-                    'updated_at' => optional($partnerLocation->updated_at)->toIso8601String(),
-                ] : null,
-            'shareBaseUrl' => rtrim(config('app.url'), '/') . '/location/' . $space->slug,
+                'latitude' => $partnerLocation->latitude,
+                'longitude' => $partnerLocation->longitude,
+                'updated_at' => optional($partnerLocation->updated_at)->toIso8601String(),
+            ] : null,
+            'shareBaseUrl' => rtrim(config('app.url'), '/').'/location/'.$space->slug,
             'space' => [
                 'id' => $space->id,
                 'slug' => $space->slug,
@@ -137,7 +134,7 @@ class LocationController extends Controller
     {
         $viewer = $request->user();
 
-        if (!$viewer || !$this->arePartners($viewer, $user)) {
+        if (! $viewer || ! $this->arePartners($viewer, $user)) {
             abort(403, __('app.location.forbidden'));
         }
 
@@ -190,7 +187,7 @@ class LocationController extends Controller
             'longitude' => $data['longitude'],
         ]);
 
-        if (!$partner) {
+        if (! $partner) {
             Log::warning('Location share failed - missing partner', [
                 'space_id' => $space->id,
                 'user_id' => $user?->id,
@@ -263,7 +260,7 @@ class LocationController extends Controller
                 ->orWhere('user_two_id', $user->id);
         })->first();
 
-        if (!$space) {
+        if (! $space) {
             return null;
         }
 
@@ -283,7 +280,6 @@ class LocationController extends Controller
 
     private function logActivity($recipients, string $event, string $title, string $body, array $data = [], bool $sendMail = true): void
     {
-
 
         $this->activityLogger->log($recipients, $event, $title, $body, $data, $sendMail);
     }

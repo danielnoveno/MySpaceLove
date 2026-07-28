@@ -18,14 +18,13 @@ class SeparationRespondedMail extends Mailable
         public User $initiator,
         public string $decision,
         public ?string $reason = null,
-    ) {
-    }
+    ) {}
 
     public function build(): self
     {
         $isApproved = $this->decision === 'approved';
 
-        return $this->subject('Pasanganmu ' . ($isApproved ? 'menyetujui' : 'menolak') . ' pembubaran Space')
+        return $this->subject('Pasanganmu '.($isApproved ? 'menyetujui' : 'menolak').' pembubaran Space')
             ->view('emails.separation_responded')
             ->with([
                 'space' => $this->space,

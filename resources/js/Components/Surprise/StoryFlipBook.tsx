@@ -4,7 +4,7 @@ import {
     useSpring,
     useTransition,
     type SpringValue,
-} from "react-spring";
+} from "@react-spring/web";
 import {
     ArrowLeft,
     ArrowRight,

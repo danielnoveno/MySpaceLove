@@ -136,7 +136,7 @@ export function useNobar(): UseNobarReturn {
     }
   }, [supabase])
 
-  const joinSession = useCallback(async (spaceId: number, sessionId: number) => {
+  const joinSession = useCallback(async (spaceId: number) => {
     try {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) return { error: 'Not authenticated' }
@@ -159,7 +159,7 @@ export function useNobar(): UseNobarReturn {
     }
   }, [supabase])
 
-  const leaveSession = useCallback(async (_spaceId: number, _sessionId: number) => {
+  const leaveSession = useCallback(async () => {
     try {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) return { error: 'Not authenticated' }
@@ -222,7 +222,7 @@ export function useNobar(): UseNobarReturn {
           table: 'nobar_schedules',
           filter: `space_id=eq.${spaceId}`,
         },
-        (payload: any) => {
+        (payload) => {
           if (payload.eventType === 'INSERT') {
             const newSession = payload.new as NobarSession
             setSessions((prev) => {

@@ -1,6 +1,6 @@
 import { useEffect, useRef } from "react";
 
-type LoveCursorCanvasProps = {
+export type LoveCursorCanvasProps = {
     color?: string;
     trailColor?: string;
     heartCount?: number;
@@ -169,5 +169,4 @@ const LoveCursorCanvas = ({
 };
 
 export default LoveCursorCanvas;
-
 

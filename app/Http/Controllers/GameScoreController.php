@@ -15,7 +15,7 @@ class GameScoreController extends Controller
         $user = $request->user();
         $space = $this->resolveSpace($request);
 
-        if (!$user || !$space || !$space->hasMember($user->id)) {
+        if (! $user || ! $space || ! $space->hasMember($user->id)) {
             abort(403);
         }
 
@@ -65,7 +65,7 @@ class GameScoreController extends Controller
     {
         $user = $request->user();
 
-        if (!$user) {
+        if (! $user) {
             return null;
         }
 
@@ -80,7 +80,7 @@ class GameScoreController extends Controller
         if ($spaceSlug) {
             $space = Space::where('slug', $spaceSlug)->first();
 
-            if (!$space || !$space->hasMember($user->id)) {
+            if (! $space || ! $space->hasMember($user->id)) {
                 abort(403);
             }
 

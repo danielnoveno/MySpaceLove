@@ -1,20 +1,19 @@
 <?php
 
-
 namespace App\Http\Controllers\Api;
 
-use Illuminate\Database\QueryException;
-use Illuminate\Support\Carbon;
-use Illuminate\Support\Facades\Log;
 use App\Http\Controllers\Controller;
 use App\Mail\DailyMessageMail;
 use App\Models\DailyMessage;
-use App\Notifications\DailyMessageSent;
 use App\Models\Space;
 use App\Models\User;
+use App\Notifications\DailyMessageSent;
 use App\Services\DailyMessageGenerator;
+use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Inertia\Inertia;
 use Throwable;
@@ -37,8 +36,8 @@ class DailyMessageApiController extends Controller
 
         // Get partner user
         $partner = $this->resolvePartnerUser($space);
-        
-        if (!$partner) {
+
+        if (! $partner) {
             return Inertia::render('DailyMessages/Index', [
                 'messages' => [],
                 'space' => $this->spacePayload($space),
@@ -55,7 +54,7 @@ class DailyMessageApiController extends Controller
             ->with('user');
 
         if ($search) {
-            $query->where('message', 'like', '%' . $search . '%');
+            $query->where('message', 'like', '%'.$search.'%');
         }
 
         if ($date) {
@@ -64,9 +63,9 @@ class DailyMessageApiController extends Controller
 
         $messages = $query->latest()->get();
 
-        if ($messages->isEmpty() && !$search && !$date) {
+        if ($messages->isEmpty() && ! $search && ! $date) {
             $now = $this->currentDailyMessageNow();
-            
+
             // Ensure daily message FOR the partner (so it appears for current user)
             $this->ensureDailyMessageFor($space, $partner, $now);
 
@@ -117,7 +116,7 @@ class DailyMessageApiController extends Controller
             [
                 'space_id' => $space->id,
                 'user_id' => Auth::id(),
-                'date' => $data['date']
+                'date' => $data['date'],
             ],
             ['message' => $data['message'], 'generated_by' => 'manual']
         );
@@ -135,13 +134,13 @@ class DailyMessageApiController extends Controller
 
         $partner = $this->resolvePartnerUser($space);
 
-        if (!$partner || !$this->isFilled($partner->email)) {
+        if (! $partner || ! $this->isFilled($partner->email)) {
             return response()->json([
                 'error' => trans('app.daily_messages.feedback.email_partner_missing'),
             ], 422);
         }
 
-        /** @var \App\Models\User $sender */
+        /** @var User $sender */
         $sender = Auth::user();
 
         try {
@@ -172,9 +171,9 @@ class DailyMessageApiController extends Controller
         $this->authorizeSpace($space);
 
         $partner = $this->resolvePartnerUser($space);
-        
-        if (!$partner) {
-             return response()->json(['message' => null]);
+
+        if (! $partner) {
+            return response()->json(['message' => null]);
         }
 
         // We want the message FROM the partner
@@ -183,6 +182,7 @@ class DailyMessageApiController extends Controller
 
         if ($message) {
             $message->load('user');
+
             return response()->json(['message' => $message]);
         } else {
             return response()->json(['message' => null]);
@@ -200,7 +200,7 @@ class DailyMessageApiController extends Controller
         // Get names for personalization
         [$fromName, $partnerName] = $this->resolveNamePair($space);
 
-        if (!$this->hasUsableNamePair($fromName, $partnerName)) {
+        if (! $this->hasUsableNamePair($fromName, $partnerName)) {
             return response()->json([
                 'error' => 'Cannot regenerate message: incomplete name information.',
             ], 422);
@@ -208,11 +208,11 @@ class DailyMessageApiController extends Controller
 
         // Get recent messages for context
         $recentMessages = $this->recentMessagesForWeek($space, $dailyMessage->date);
-        
+
         // Generate new message
         $text = $this->dailyMessageGenerator->generate(null, $fromName, $partnerName, $recentMessages);
 
-        if (!$text) {
+        if (! $text) {
             return response()->json([
                 'error' => 'Failed to generate new message.',
             ], 500);
@@ -267,7 +267,7 @@ class DailyMessageApiController extends Controller
             return $existing;
         }
 
-        if (!$this->spaceHasCouple($space)) {
+        if (! $this->spaceHasCouple($space)) {
             Log::info('Daily message auto-generation skipped because space has no partner.', [
                 'space_id' => $space->id,
                 'date' => $date,
@@ -276,13 +276,13 @@ class DailyMessageApiController extends Controller
             return null;
         }
 
-        if (!$force && !$this->shouldAutoGenerateMessage($now)) {
+        if (! $force && ! $this->shouldAutoGenerateMessage($now)) {
             return null;
         }
 
         [$fromName, $partnerName] = $this->resolveNamePair($space, $user);
 
-        if (!$this->hasUsableNamePair($fromName, $partnerName)) {
+        if (! $this->hasUsableNamePair($fromName, $partnerName)) {
             Log::info('Daily message auto-generation skipped because name pair is incomplete.', [
                 'space_id' => $space->id,
                 'date' => $date,
@@ -294,7 +294,7 @@ class DailyMessageApiController extends Controller
         $recentMessages = $this->recentMessagesForWeek($space, $date, $user);
         $text = $this->dailyMessageGenerator->generate(null, $fromName, $partnerName, $recentMessages);
 
-        if (!$text) {
+        if (! $text) {
             Log::warning('Daily message auto-generation returned empty result.', [
                 'space_id' => $space->id,
                 'date' => $date,
@@ -341,7 +341,7 @@ class DailyMessageApiController extends Controller
     {
         $time = (string) config('love.daily_message.auto_generate_time', '05:00');
 
-        if (!preg_match('/^(\d{1,2})(?::(\d{1,2}))?$/', $time, $matches)) {
+        if (! preg_match('/^(\d{1,2})(?::(\d{1,2}))?$/', $time, $matches)) {
             return [5, 0];
         }
 
@@ -366,7 +366,9 @@ class DailyMessageApiController extends Controller
 
     private function authorizeSpace(Space $space)
     {
-        if (!$space->hasMember(Auth::id())) abort(403);
+        if (! $space->hasMember(Auth::id())) {
+            abort(403);
+        }
     }
 
     private function resolveNamePair(Space $space, ?User $sender = null): array
@@ -385,11 +387,11 @@ class DailyMessageApiController extends Controller
             }
         }
 
-        if (!$fromName && $space->userOne) {
+        if (! $fromName && $space->userOne) {
             $fromName = $space->userOne->name;
         }
 
-        if (!$partnerName) {
+        if (! $partnerName) {
             if ($space->userOne && $space->userOne->name !== $fromName) {
                 $partnerName = $space->userOne->name;
             } elseif ($space->userTwo && $space->userTwo->name !== $fromName) {
@@ -419,7 +421,7 @@ class DailyMessageApiController extends Controller
 
     private function spaceHasCouple(Space $space): bool
     {
-        return !empty($space->user_one_id) && !empty($space->user_two_id);
+        return ! empty($space->user_one_id) && ! empty($space->user_two_id);
     }
 
     private function hasUsableNamePair(?string $fromName, ?string $partnerName): bool
@@ -449,9 +451,9 @@ class DailyMessageApiController extends Controller
 
         $query = DailyMessage::where('space_id', $space->id)
             ->whereBetween('date', [$start->toDateString(), $end->toDateString()]);
-            
+
         if ($user) {
-             $query->where('user_id', $user->id);
+            $query->where('user_id', $user->id);
         }
 
         return $query->orderByDesc('date')

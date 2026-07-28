@@ -2,11 +2,10 @@
 
 import { useEffect, useState } from 'react'
 import { useParams } from 'next/navigation'
-import Link from 'next/link'
 import AuthenticatedLayout from '@/layouts/AuthenticatedLayout'
 import { useSpaces, useSpaceGoals } from '@/lib/hooks'
 import { FadeIn, StaggerContainer, StaggerItem } from '@/components/motion'
-import { Target, Plus, Trash2, CheckCircle, Loader2, Pencil, ArrowLeft } from 'lucide-react'
+import { Target, Plus, Trash2, CheckCircle, Loader2, Pencil } from 'lucide-react'
 
 export default function GoalsPage() {
   const { slug } = useParams<{ slug: string }>()

@@ -1,22 +1,20 @@
 <?php
 
+use App\Http\Controllers\Api\ChatMessageController;
+use App\Http\Controllers\Api\CountdownApiController;
+use App\Http\Controllers\Api\DailyMessageApiController;
+use App\Http\Controllers\Api\DocApiController;
+use App\Http\Controllers\Api\JaasController;
+use App\Http\Controllers\Api\LoveJournalApiController;
+use App\Http\Controllers\Api\LoveTimelineApiController;
+use App\Http\Controllers\Api\MediaGalleryApiController;
+use App\Http\Controllers\Api\SpaceApiController;
+use App\Http\Controllers\Api\SurpriseNoteApiController;
+use App\Http\Controllers\Api\ThemeController;
+use App\Http\Controllers\Api\WishlistApiController;
+use App\Http\Controllers\LocationController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\Api\{
-    SpaceApiController,
-    LoveTimelineApiController,
-    DailyMessageApiController,
-    CountdownApiController,
-    LoveJournalApiController,
-    SurpriseNoteApiController,
-    MediaGalleryApiController,
-    WishlistApiController,
-    DocApiController,
-    ThemeController,
-    ChatMessageController,
-    JaasController
-};
-use App\Http\Controllers\LocationController;
 
 Route::middleware('auth:sanctum')->group(function () {
     Route::apiResource('spaces', SpaceApiController::class)
@@ -44,10 +42,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('spaces/{space}/chat/messages/read', [ChatMessageController::class, 'markRead'])
         ->name('api.spaces.chat.messages.read');
 
-
-
     // Nobar signaling (REMOVED - Migrated to Agora)
-
 
     Route::apiResource('spaces.countdowns', CountdownApiController::class)->except(['create', 'edit', 'show'])->scoped([
         'space' => 'slug',
@@ -77,14 +72,12 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('spaces/{space}/separation/request', [SpaceApiController::class, 'requestSeparation'])->name('api.spaces.separation.request');
     Route::post('spaces/{space}/separation/respond', [SpaceApiController::class, 'respondSeparation'])->name('api.spaces.separation.respond');
     Route::post('spaces/{space}/separation/cancel', [SpaceApiController::class, 'cancelSeparation'])->name('api.spaces.separation.cancel');
-    
+
     // JaaS Token
     Route::get('spaces/{space}/jaas/token', [JaasController::class, 'generateToken'])->name('api.spaces.jaas.token');
 
     Route::get('themes', [ThemeController::class, 'index']);
     Route::get('themes/{id}', [ThemeController::class, 'show']);
-
-
 
     Route::post('location/update', [LocationController::class, 'update']);
     Route::get('location/{user}', [LocationController::class, 'show']);

@@ -4,22 +4,23 @@ namespace App\Filament\Resources;
 
 use App\Filament\Resources\LoveJournalResource\Pages;
 use App\Models\LoveJournal;
-use Filament\Forms;
-use Filament\Tables;
-use Filament\Resources\Resource;
-use Filament\Forms\Form;
-use Filament\Tables\Table;
-use Filament\Forms\Components\BelongsToSelect;
-use Filament\Forms\Components\TextInput;
-use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\Select;
+use Filament\Forms\Components\Textarea;
+use Filament\Forms\Components\TextInput;
+use Filament\Forms\Form;
+use Filament\Resources\Resource;
+use Filament\Tables;
 use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Table;
 
 class LoveJournalResource extends Resource
 {
     protected static ?string $model = LoveJournal::class;
+
     protected static ?string $navigationIcon = 'heroicon-o-pencil';
+
     protected static ?string $navigationLabel = 'Journals';
+
     protected static ?string $navigationGroup = 'Content';
 
     public static function form(Form $form): Form
@@ -33,7 +34,7 @@ class LoveJournalResource extends Resource
                 'happy' => 'Happy',
                 'sad' => 'Sad',
                 'miss' => 'Miss',
-                'excited' => 'Excited'
+                'excited' => 'Excited',
             ])->nullable(),
         ]);
     }

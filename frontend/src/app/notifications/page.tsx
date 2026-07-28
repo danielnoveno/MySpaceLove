@@ -35,7 +35,7 @@ function NotificationsContent() {
   useEffect(() => {
     if (!authLoading && !user) { router.push('/auth/login'); return }
     if (user) fetchNotifications(user.id, spaceId)
-  }, [user, authLoading, spaceId, fetchNotifications])
+  }, [user, authLoading, spaceId, fetchNotifications, router])
 
   const handleMarkAllRead = useCallback(async () => { if (!user) return; await markAllAsRead(user.id, spaceId); if (spaceId) await fetchNotifications(user.id, spaceId) }, [user, spaceId, markAllAsRead, fetchNotifications])
   const handleMarkAsRead = useCallback(async (id: string) => { await markAsRead(id) }, [markAsRead])

@@ -135,7 +135,6 @@ function isComplete(board: Board, solution: number[][]): boolean {
 
 export default function Sudoku({ onScore }: { onScore: (score: number) => void }) {
   const [difficulty, setDifficulty] = useState<Difficulty>('medium')
-  const [puzzle, setPuzzle] = useState<Board>([])
   const [solution, setSolution] = useState<number[][]>([])
   const [board, setBoard] = useState<Board>([])
   const [locked, setLocked] = useState<Set<string>>(new Set())
@@ -156,7 +155,6 @@ export default function Sudoku({ onScore }: { onScore: (score: number) => void }
         return cell
       })
     )
-    setPuzzle(p)
     setSolution(s)
     setBoard(b)
     setLocked(lockedCells)
@@ -170,8 +168,9 @@ export default function Sudoku({ onScore }: { onScore: (score: number) => void }
   }, [])
 
   useEffect(() => {
-    initGame('medium')
+    const timeout = setTimeout(() => initGame('medium'), 0)
     return () => {
+      clearTimeout(timeout)
       if (timerRef.current) clearInterval(timerRef.current)
     }
   }, [initGame])
@@ -189,14 +188,17 @@ export default function Sudoku({ onScore }: { onScore: (score: number) => void }
   // Check for conflicts whenever board changes
   useEffect(() => {
     if (board.length === 0) return
-    const c = getConflicts(board)
-    setConflicts(c)
-    if (isComplete(board, solution)) {
-      setIsRunning(false)
-      setGameOver(true)
-      const score = Math.max(0, 1000 - errors * 50 - Math.floor(timer / 10) * 5)
-      onScore(score)
-    }
+    const timeout = setTimeout(() => {
+      const c = getConflicts(board)
+      setConflicts(c)
+      if (isComplete(board, solution)) {
+        setIsRunning(false)
+        setGameOver(true)
+        const score = Math.max(0, 1000 - errors * 50 - Math.floor(timer / 10) * 5)
+        onScore(score)
+      }
+    }, 0)
+    return () => clearTimeout(timeout)
   }, [board, solution, errors, timer, onScore])
 
   const handleCellClick = (r: number, c: number) => {

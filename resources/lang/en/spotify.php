@@ -5,26 +5,26 @@ return [
         'title' => 'Spotify Companion Kit',
         'page_title' => 'Spotify Companion Kit',
     ],
-    
+
     'header' => [
         'title' => 'Spotify Companion Kit',
         'subtitle' => 'Space :space: sync music, moods, and moments to stay close despite the distance.',
     ],
-    
+
     'tabs' => [
         'home' => 'Home',
         'search' => 'Search',
         'playlist' => 'Playlist',
         'stats' => 'Stats',
     ],
-    
+
     'auth' => [
         'connect' => 'Login with Spotify',
         'connecting' => 'Connecting…',
         'description' => 'Sync both Spotify Premium accounts to share a private player, curate playlists, and celebrate every vibe together.',
         'requirements' => 'Spotify Premium is required for both partners to access the full experience.',
     ],
-    
+
     'connection' => [
         'title' => 'Spotify Connection Status',
         'description' => 'Each account needs to be connected for playlist sync, mood tracking, and surprises to work optimally.',
@@ -37,7 +37,7 @@ return [
         'connect_title' => 'Connect Spotify',
         'connect_description' => 'Connect your Spotify accounts to enable playlist sync, mood check-ins, and song surprises.',
     ],
-    
+
     'player' => [
         'now_playing' => 'Currently Playing',
         'not_playing' => 'Nothing is playing right now.',
@@ -47,7 +47,7 @@ return [
         'previous' => 'Previous',
         'device_picker' => 'Choose device',
     ],
-    
+
     'search' => [
         'placeholder' => 'Search songs, artists, or albums',
         'results_title' => 'Search results',
@@ -55,7 +55,7 @@ return [
         'play' => 'Play preview',
         'add' => 'Add to playlist',
     ],
-    
+
     'playlist' => [
         'title' => 'Synced Playlist',
         'description' => 'Playlist automatically updates whenever you add your favorite songs this week.',
@@ -75,7 +75,7 @@ return [
         'preview_unavailable' => 'Preview unavailable, open in Spotify to play full track.',
         'audio_unsupported' => 'Your browser does not support HTML5 audio.',
     ],
-    
+
     'mood' => [
         'title' => 'Mood Check-In',
         'description' => 'Share what you\'re listening to and how you\'re feeling right now.',
@@ -87,7 +87,7 @@ return [
         'energy' => 'Energy',
         'affection' => 'Affection',
     ],
-    
+
     'listening' => [
         'title' => 'Live Listening',
         'description' => 'See what your partner is playing right now and join the session.',
@@ -97,7 +97,7 @@ return [
         'started_at' => 'Started :date',
         'listeners' => ':count listeners',
     ],
-    
+
     'surprise' => [
         'title' => 'Surprise Drops',
         'description' => 'Schedule surprise songs for your partner to discover at the perfect moment.',
@@ -114,7 +114,7 @@ return [
         'scheduled_for' => 'Scheduled for :date',
         'curator' => 'By :name',
     ],
-    
+
     'capsule' => [
         'title' => 'Memory Capsules',
         'description' => 'Save songs tied to special moments and memories you\'ve shared together.',
@@ -133,19 +133,19 @@ return [
         'saved_at' => 'Saved :date',
         'play_preview' => 'Play preview',
     ],
-    
+
     'stats' => [
         'top_tracks' => 'Our Top Songs',
         'top_artists' => 'Our Top Artists',
         'compatibility' => 'Music compatibility',
         'compatibility_empty' => 'Connect both partners to compare your top vibes.',
     ],
-    
+
     'loading' => [
         'dashboard' => 'Loading Spotify data...',
         'retry' => 'Try Reload',
     ],
-    
+
     'messages' => [
         'success' => [
             'surprise_scheduled' => 'Surprise song successfully scheduled!',
@@ -162,7 +162,7 @@ return [
             'join_retry' => 'Failed to join playback. Try again in a moment.',
         ],
     ],
-    
+
     'errors' => [
         'general' => 'Something went wrong with the Spotify connection.',
         'token_missing' => 'Connect Spotify first to unlock this feature.',

@@ -1,14 +1,6 @@
 import { useState } from "react";
 import { Gift, Sparkles } from "lucide-react";
-
-export interface Reward {
-    id: number;
-    category: "emotional" | "action" | "privilege";
-    title: string;
-    description: string;
-    icon: string;
-    color: string;
-}
+import type { Reward } from "@/types/memoryLane";
 
 interface LuckyBoxGachaProps {
     rewards: Reward[];

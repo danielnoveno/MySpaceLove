@@ -15,12 +15,11 @@ class PartnerConnectedMail extends Mailable
     public function __construct(
         public Space $space,
         public User $partner,
-    ) {
-    }
+    ) {}
 
     public function build(): self
     {
-        return $this->subject($this->partner->name . ' telah bergabung di Space kamu')
+        return $this->subject($this->partner->name.' telah bergabung di Space kamu')
             ->view('emails.partner_connected')
             ->with([
                 'space' => $this->space,

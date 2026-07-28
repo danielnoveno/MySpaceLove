@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { useParams } from 'next/navigation'
 import Link from 'next/link'
 import AuthenticatedLayout from '@/layouts/AuthenticatedLayout'
@@ -15,7 +15,6 @@ import {
   Trash2,
   ArrowLeft,
   Plus,
-  File,
 } from 'lucide-react'
 
 type Document = {
@@ -35,15 +34,9 @@ export default function DocsPage() {
   const { user, loading: authLoading } = useAuth()
   const [documents, setDocuments] = useState<Document[]>([])
   const [loading, setLoading] = useState(true)
-  const [spaceId, setSpaceId] = useState<number | null>(null)
   const supabase = createClient()
 
-  useEffect(() => {
-    if (!authLoading && !user) return
-    if (user) fetchDocuments()
-  }, [user, authLoading])
-
-  const fetchDocuments = async () => {
+  const fetchDocuments = useCallback(async () => {
     const { data: space } = await supabase
       .from('spaces')
       .select('id')
@@ -55,8 +48,6 @@ export default function DocsPage() {
       return
     }
 
-    setSpaceId(space.id)
-
     const { data } = await supabase
       .from('documents')
       .select('*')
@@ -65,7 +56,15 @@ export default function DocsPage() {
 
     if (data) setDocuments(data)
     setLoading(false)
-  }
+  }, [slug, supabase])
+
+  useEffect(() => {
+    if (!authLoading && !user) return
+    if (user) {
+      const timeout = setTimeout(fetchDocuments, 0)
+      return () => clearTimeout(timeout)
+    }
+  }, [user, authLoading, fetchDocuments])
 
   const deleteDocument = async (doc: Document) => {
     if (!confirm('Hapus dokumen ini?')) return

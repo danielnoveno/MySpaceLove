@@ -35,6 +35,7 @@ class SecureFileUploadService
      * Maximum file sizes (in bytes)
      */
     protected int $maxImageSize = 10 * 1024 * 1024; // 10MB
+
     protected int $maxVideoSize = 50 * 1024 * 1024; // 50MB
 
     /**
@@ -64,7 +65,7 @@ class SecureFileUploadService
     protected function validateFile(UploadedFile $file, string $type): void
     {
         // Check if file is valid
-        if (!$file->isValid()) {
+        if (! $file->isValid()) {
             throw new \InvalidArgumentException('Invalid file upload');
         }
 
@@ -76,17 +77,17 @@ class SecureFileUploadService
 
         // Check MIME type
         $allowedMimes = $type === 'image' ? $this->allowedImageMimes : $this->allowedVideoMimes;
-        if (!in_array($file->getMimeType(), $allowedMimes)) {
+        if (! in_array($file->getMimeType(), $allowedMimes)) {
             throw new \InvalidArgumentException('Invalid file type');
         }
 
         // Check file extension
         $extension = strtolower($file->getClientOriginalExtension());
-        $allowedExtensions = $type === 'image' 
+        $allowedExtensions = $type === 'image'
             ? ['jpg', 'jpeg', 'png', 'gif', 'webp']
             : ['mp4', 'mpeg', 'mov', 'avi', 'webm'];
-        
-        if (!in_array($extension, $allowedExtensions)) {
+
+        if (! in_array($extension, $allowedExtensions)) {
             throw new \InvalidArgumentException('Invalid file extension');
         }
 
@@ -104,14 +105,14 @@ class SecureFileUploadService
         finfo_close($finfo);
 
         $allowedMimes = $type === 'image' ? $this->allowedImageMimes : $this->allowedVideoMimes;
-        
-        if (!in_array($mimeType, $allowedMimes)) {
+
+        if (! in_array($mimeType, $allowedMimes)) {
             Log::warning('File content mismatch', [
                 'declared_mime' => $file->getMimeType(),
                 'actual_mime' => $mimeType,
                 'filename' => $file->getClientOriginalName(),
             ]);
-            
+
             throw new \InvalidArgumentException('File content does not match extension');
         }
     }
@@ -145,7 +146,7 @@ class SecureFileUploadService
                     'ip' => request()->ip(),
                     'user_id' => auth()->id(),
                 ]);
-                
+
                 throw new \InvalidArgumentException('Malicious content detected');
             }
         }
@@ -178,20 +179,20 @@ class SecureFileUploadService
 
             // Generate secure filename
             $filename = $this->generateSecureFilename('webp');
-            $path = 'uploads/images/' . date('Y/m');
+            $path = 'uploads/images/'.date('Y/m');
 
             // Convert to WebP for better compression
             $image->encode('webp', 85);
 
             // Save to storage
             Storage::disk('public')->put(
-                $path . '/' . $filename,
+                $path.'/'.$filename,
                 $image->stream()->__toString()
             );
 
             return [
-                'path' => $path . '/' . $filename,
-                'url' => Storage::disk('public')->url($path . '/' . $filename),
+                'path' => $path.'/'.$filename,
+                'url' => Storage::disk('public')->url($path.'/'.$filename),
                 'size' => $image->filesize(),
                 'width' => $image->width(),
                 'height' => $image->height(),
@@ -201,7 +202,7 @@ class SecureFileUploadService
                 'error' => $e->getMessage(),
                 'filename' => $file->getClientOriginalName(),
             ]);
-            
+
             throw new \InvalidArgumentException('Failed to process image');
         }
     }
@@ -213,7 +214,7 @@ class SecureFileUploadService
     {
         // Generate secure filename
         $filename = $this->generateSecureFilename($file->getClientOriginalExtension());
-        $path = 'uploads/videos/' . date('Y/m');
+        $path = 'uploads/videos/'.date('Y/m');
 
         // Store video
         $storedPath = $file->storeAs($path, $filename, 'public');
@@ -230,7 +231,7 @@ class SecureFileUploadService
      */
     protected function generateSecureFilename(string $extension): string
     {
-        return bin2hex(random_bytes(16)) . '_' . time() . '.' . $extension;
+        return bin2hex(random_bytes(16)).'_'.time().'.'.$extension;
     }
 
     /**
@@ -238,8 +239,8 @@ class SecureFileUploadService
      */
     protected function isClamAvAvailable(): bool
     {
-        return function_exists('exec') && 
-               !in_array('exec', explode(',', ini_get('disable_functions'))) &&
+        return function_exists('exec') &&
+               ! in_array('exec', explode(',', ini_get('disable_functions'))) &&
                shell_exec('which clamscan') !== null;
     }
 
@@ -248,8 +249,8 @@ class SecureFileUploadService
      */
     protected function scanWithClamAv(UploadedFile $file): void
     {
-        $output = shell_exec('clamscan ' . escapeshellarg($file->getRealPath()));
-        
+        $output = shell_exec('clamscan '.escapeshellarg($file->getRealPath()));
+
         if (str_contains($output, 'FOUND')) {
             Log::critical('Virus detected by ClamAV', [
                 'filename' => $file->getClientOriginalName(),
@@ -257,7 +258,7 @@ class SecureFileUploadService
                 'ip' => request()->ip(),
                 'user_id' => auth()->id(),
             ]);
-            
+
             throw new \InvalidArgumentException('Virus detected in file');
         }
     }
@@ -270,7 +271,7 @@ class SecureFileUploadService
         if (Storage::disk('public')->exists($path)) {
             return Storage::disk('public')->delete($path);
         }
-        
+
         return false;
     }
 }

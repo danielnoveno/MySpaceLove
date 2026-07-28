@@ -2,8 +2,7 @@
 
 namespace App\Http\Controllers\Api;
 
-
-//tes
+// tes
 use App\Http\Controllers\Controller;
 use App\Models\Countdown;
 use App\Models\Space;
@@ -21,9 +20,7 @@ class CountdownApiController extends Controller
     public function __construct(
         private readonly ActivityLogger $activityLogger,
         private readonly UploadedFileProcessor $fileProcessor
-    )
-    {
-    }
+    ) {}
 
     public function index(Space $space)
     {
@@ -100,12 +97,13 @@ class CountdownApiController extends Controller
         }
 
         $count->update($data);
+
         return Inertia::location(route('countdown.index', ['space' => $space->slug]));
     }
 
     private function notifyCountdownCreated(Space $space, Countdown $countdown, ?User $actor): void
     {
-        if (!Schema::hasTable('notifications')) {
+        if (! Schema::hasTable('notifications')) {
             return;
         }
 
@@ -174,7 +172,9 @@ class CountdownApiController extends Controller
 
     private function authorizeSpace(Space $space)
     {
-        if (!$space->hasMember(Auth::id())) abort(403);
+        if (! $space->hasMember(Auth::id())) {
+            abort(403);
+        }
     }
 
     private function spacePayload(Space $space): array

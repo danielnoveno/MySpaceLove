@@ -4,6 +4,7 @@ import { useEffect, useState, useRef } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import AuthenticatedLayout from '@/layouts/AuthenticatedLayout'
+import AppImage from '@/components/AppImage'
 import { useAuth } from '@/contexts/AuthContext'
 import { createClient } from '@/lib/supabase/client'
 import { ArrowLeft, Heart, Calendar, FileText, Upload, X, Loader2, Check, AlertCircle } from 'lucide-react'
@@ -113,7 +114,7 @@ export default function CreateMemoryPage() {
             <input ref={fileInputRef} type="file" accept="image/*" onChange={handleImageSelect} className="hidden" />
             {imagePreview ? (
               <div className="relative rounded-2xl overflow-hidden">
-                <img src={imagePreview} alt="Preview" className="w-full h-48 object-cover" />
+                <AppImage src={imagePreview} alt="Preview" className="w-full h-48 object-cover" />
                 <button type="button" onClick={removeImage} className="absolute top-2 right-2 bg-coral-500/80 backdrop-blur-sm text-white p-1.5 rounded-full hover:bg-coral-600 transition-colors"><X className="h-4 w-4" /></button>
               </div>
             ) : (

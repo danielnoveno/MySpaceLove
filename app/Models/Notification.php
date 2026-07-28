@@ -31,7 +31,7 @@ class Notification extends BaseDatabaseNotification
             if (
                 empty($notification->user_id)
                 && is_a($notification->notifiable_type, User::class, true)
-                && !empty($notification->notifiable_id)
+                && ! empty($notification->notifiable_id)
             ) {
                 $notification->user_id = (int) $notification->notifiable_id;
             }

@@ -2,9 +2,9 @@
 
 namespace App\Models;
 
-use Illuminate\Support\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Carbon;
 
 class SpaceInvitation extends Model
 {
@@ -22,6 +22,7 @@ class SpaceInvitation extends Model
     ];
 
     const SOURCE_EMAIL = 'email';
+
     const SOURCE_JOIN_REQUEST = 'join_request';
 
     protected $casts = [
@@ -65,7 +66,7 @@ class SpaceInvitation extends Model
 
     public static function formatTimestamp(?Carbon $timestamp): ?string
     {
-        if (!$timestamp) {
+        if (! $timestamp) {
             return null;
         }
 

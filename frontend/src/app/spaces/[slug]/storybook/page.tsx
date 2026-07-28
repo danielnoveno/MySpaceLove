@@ -1,10 +1,10 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useCallback } from 'react'
 import { useParams } from 'next/navigation'
 import AuthenticatedLayout from '@/layouts/AuthenticatedLayout'
 import { FadeIn, StaggerContainer, StaggerItem } from '@/components/motion'
-import { BookOpen, Plus, Edit3, Trash2, Heart, ChevronDown, ChevronUp, X, Loader2 } from 'lucide-react'
+import { BookOpen, Plus, Edit3, Trash2, Heart, ChevronDown, ChevronUp, Loader2 } from 'lucide-react'
 
 type Chapter = {
   id: string
@@ -22,7 +22,15 @@ export default function StorybookPage() {
   const slug = params.slug as string
   const storageKey = `storybook_${slug}`
 
-  const [chapters, setChapters] = useState<Chapter[]>([])
+  const [chapters, setChapters] = useState<Chapter[]>(() => {
+    if (typeof window === 'undefined') return []
+    try {
+      const stored = localStorage.getItem(storageKey)
+      return stored ? JSON.parse(stored) : []
+    } catch {
+      return []
+    }
+  })
   const [view, setView] = useState<ViewMode>('timeline')
   const [activeChapter, setActiveChapter] = useState<Chapter | null>(null)
   const [deleting, setDeleting] = useState<string | null>(null)
@@ -31,13 +39,6 @@ export default function StorybookPage() {
   const [formContent, setFormContent] = useState('')
   const [formAuthor, setFormAuthor] = useState('Partner A')
   const [editingId, setEditingId] = useState<string | null>(null)
-
-  useEffect(() => {
-    try {
-      const stored = localStorage.getItem(storageKey)
-      if (stored) setChapters(JSON.parse(stored))
-    } catch { /* ignore */ }
-  }, [storageKey])
 
   const saveChapters = useCallback((updated: Chapter[]) => {
     setChapters(updated)

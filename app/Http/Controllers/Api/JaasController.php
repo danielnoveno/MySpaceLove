@@ -3,8 +3,8 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
 use Firebase\JWT\JWT;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
 class JaasController extends Controller
@@ -12,13 +12,13 @@ class JaasController extends Controller
     public function generateToken(Request $request, $slug)
     {
         $user = Auth::user();
-        
+
         // Load configuration
         $appId = config('services.jaas.app_id'); // e.g., "vpaas-magic-cookie-..."
         $apiKey = config('services.jaas.api_key');
         $privateKey = config('services.jaas.private_key'); // Must include -----BEGIN PRIVATE KEY----- headers
 
-        if (!$appId || !$apiKey || !$privateKey) {
+        if (! $appId || ! $apiKey || ! $privateKey) {
             return response()->json(['message' => 'Server misconfiguration: Missing JaaS credentials.'], 500);
         }
 
@@ -34,9 +34,9 @@ class JaasController extends Controller
         $privateKey = trim($privateKey, '"\'');
         // 3. Ensure correctness of PEM structure
         if (strpos($privateKey, '-----BEGIN PRIVATE KEY-----') === false) {
-             // Maybe user just pasted the body? reconstruct.
-             // But usually it's safer to ask user to fix it. 
-             // Let's assume user pasted valid key but maybe formatting issues.
+            // Maybe user just pasted the body? reconstruct.
+            // But usually it's safer to ask user to fix it.
+            // Let's assume user pasted valid key but maybe formatting issues.
         }
 
         $now = time();
@@ -44,7 +44,7 @@ class JaasController extends Controller
         $nbf = $now - 10;
 
         $roomName = "LoveSpace-{$slug}";
-        
+
         $payload = [
             'aud' => 'jitsi',
             'iss' => 'chat',
@@ -58,22 +58,22 @@ class JaasController extends Controller
                     'id' => (string) $user->id,
                     'name' => $user->name,
                     'email' => $user->email,
-                    'avatar' => "https://ui-avatars.com/api/?name=" . urlencode($user->name),
-                    'moderator' => true 
+                    'avatar' => 'https://ui-avatars.com/api/?name='.urlencode($user->name),
+                    'moderator' => true,
                 ],
                 'features' => [
                     'livestreaming' => false,
                     'recording' => false,
                     'transcription' => false,
-                    'outbound-call' => false
-                ]
-            ]
+                    'outbound-call' => false,
+                ],
+            ],
         ];
 
         // Header with kid
         $headers = [
             'kid' => $apiKey,
-            'typ' => 'JWT'
+            'typ' => 'JWT',
         ];
 
         try {
@@ -81,16 +81,16 @@ class JaasController extends Controller
             // firebase/php-jwt 6.x: encode(payload, key, alg, keyId, head)
             // But wait, the standard signature is encode($payload, $key, $alg, $keyId = null, $head = null)
             // Actually recent versions: public static function encode(array $payload, $key, string $alg, ?string $keyId = null, ?array $head = null): string
-            
+
             $token = JWT::encode($payload, $privateKey, 'RS256', $apiKey);
-            
+
             return response()->json([
                 'token' => $token,
                 'roomName' => $roomName,
-                'appId' => $appId
+                'appId' => $appId,
             ]);
         } catch (\Exception $e) {
-            return response()->json(['message' => 'Failed to generate token: ' . $e->getMessage()], 500);
+            return response()->json(['message' => 'Failed to generate token: '.$e->getMessage()], 500);
         }
     }
 }

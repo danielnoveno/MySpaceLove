@@ -16,9 +16,10 @@ class DailyMessageController extends Controller
     {
         $data = $request->validate([
             'message' => 'required|string',
-            'is_ai_generated' => 'boolean'
+            'is_ai_generated' => 'boolean',
         ]);
         $data['user_id'] = auth()->id();
+
         return DailyMessage::create($data);
     }
 
@@ -27,9 +28,10 @@ class DailyMessageController extends Controller
         abort_if($dailyMessage->user_id !== auth()->id(), 403);
         $data = $request->validate([
             'message' => 'required|string',
-            'is_ai_generated' => 'boolean'
+            'is_ai_generated' => 'boolean',
         ]);
         $dailyMessage->update($data);
+
         return $dailyMessage;
     }
 
@@ -37,6 +39,7 @@ class DailyMessageController extends Controller
     {
         abort_if($dailyMessage->user_id !== auth()->id(), 403);
         $dailyMessage->delete();
+
         return response()->noContent();
     }
 }

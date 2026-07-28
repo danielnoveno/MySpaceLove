@@ -42,11 +42,9 @@ export async function updateSession(request: NextRequest) {
 
   // Protected routes that require authentication
   const protectedRoutes = ['/dashboard', '/profile', '/spaces', '/timeline', '/journals', '/countdowns', '/wishlist', '/media', '/docs', '/games', '/messages', '/notifications', '/settings']
-  const isProtectedRoute = protectedRoutes.some(route => request.nextUrl.pathname.startsWith(route))
-
-  // Public routes that don't require authentication
-  const publicRoutes = ['/', '/auth/login', '/auth/register', '/auth/forgot-password', '/auth/reset-password', '/about']
-  const isPublicRoute = publicRoutes.some(route => request.nextUrl.pathname === route)
+  const isProtectedRoute = protectedRoutes.some(
+    route => request.nextUrl.pathname === route || request.nextUrl.pathname.startsWith(`${route}/`)
+  )
 
   // If user is not logged in and trying to access protected route
   if (!user && isProtectedRoute) {

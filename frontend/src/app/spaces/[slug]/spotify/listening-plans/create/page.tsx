@@ -1,9 +1,10 @@
 'use client'
 
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState, useCallback, useRef } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import AuthenticatedLayout from '@/layouts/AuthenticatedLayout'
+import AppImage from '@/components/AppImage'
 import { useAuth } from '@/contexts/AuthContext'
 import { createClient } from '@/lib/supabase/client'
 import {
@@ -47,7 +48,7 @@ export default function CreateListeningPlanPage() {
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState('')
   const [playingIdx, setPlayingIdx] = useState<number | null>(null)
-  const [audioRef, setAudioRef] = useState<HTMLAudioElement | null>(null)
+  const audioRef = useRef<HTMLAudioElement | null>(null)
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -73,12 +74,12 @@ export default function CreateListeningPlanPage() {
 
   useEffect(() => {
     return () => {
-      if (audioRef) {
-        audioRef.pause()
-        audioRef.src = ''
+      if (audioRef.current) {
+        audioRef.current.pause()
+        audioRef.current.src = ''
       }
     }
-  }, [audioRef])
+  }, [])
 
   const addTrack = useCallback(async () => {
     const spotifyMatch = trackUrl.match(/spotify\.com\/(track|album)\/([a-zA-Z0-9]+)/)
@@ -124,28 +125,28 @@ export default function CreateListeningPlanPage() {
   const togglePlay = useCallback((track: TrackInput, idx: number) => {
     if (!track.preview_url) return
 
-    if (playingIdx === idx && audioRef) {
-      audioRef.pause()
-      audioRef.src = ''
+    if (playingIdx === idx && audioRef.current) {
+      audioRef.current.pause()
+      audioRef.current.src = ''
       setPlayingIdx(null)
-      setAudioRef(null)
+      audioRef.current = null
       return
     }
 
-    if (audioRef) {
-      audioRef.pause()
-      audioRef.src = ''
+    if (audioRef.current) {
+      audioRef.current.pause()
+      audioRef.current.src = ''
     }
 
     const audio = new Audio(track.preview_url)
     audio.onended = () => {
       setPlayingIdx(null)
-      setAudioRef(null)
+      audioRef.current = null
     }
     audio.play()
     setPlayingIdx(idx)
-    setAudioRef(audio)
-  }, [playingIdx, audioRef])
+    audioRef.current = audio
+  }, [playingIdx])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -201,9 +202,10 @@ export default function CreateListeningPlanPage() {
       return
     }
 
-    if (audioRef) {
-      audioRef.pause()
-      audioRef.src = ''
+    if (audioRef.current) {
+      audioRef.current.pause()
+      audioRef.current.src = ''
+      audioRef.current = null
     }
 
     router.push(`/spaces/${slug}/spotify/listening-plans`)
@@ -343,7 +345,7 @@ export default function CreateListeningPlanPage() {
                     <span className="text-xs text-warm-400 w-5 text-center shrink-0">{idx + 1}</span>
 
                     {track.track_image ? (
-                      <img
+                      <AppImage
                         src={track.track_image}
                         alt={track.track_album}
                         className="h-10 w-10 rounded-lg object-cover shrink-0"

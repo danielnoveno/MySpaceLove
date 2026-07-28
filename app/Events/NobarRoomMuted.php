@@ -16,6 +16,7 @@ class NobarRoomMuted implements ShouldBroadcast
     use SerializesModels;
 
     public int $spaceId;
+
     public bool $muteAll;
 
     public function __construct(int $spaceId, bool $muteAll = true)
@@ -26,7 +27,7 @@ class NobarRoomMuted implements ShouldBroadcast
 
     public function broadcastOn(): Channel
     {
-        return new PrivateChannel('spaces.' . $this->spaceId . '.nobar');
+        return new PrivateChannel('spaces.'.$this->spaceId.'.nobar');
     }
 
     public function broadcastWith(): array

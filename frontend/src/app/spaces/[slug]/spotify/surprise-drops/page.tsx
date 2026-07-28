@@ -1,9 +1,10 @@
 'use client'
 
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState, useCallback, useRef } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import AuthenticatedLayout from '@/layouts/AuthenticatedLayout'
+import AppImage from '@/components/AppImage'
 import { useAuth } from '@/contexts/AuthContext'
 import { createClient } from '@/lib/supabase/client'
 import {
@@ -47,28 +48,18 @@ export default function SurpriseDropsPage() {
   const [loading, setLoading] = useState(true)
   const [deleting, setDeleting] = useState<string | null>(null)
   const [playingId, setPlayingId] = useState<string | null>(null)
-  const [audioRef, setAudioRef] = useState<HTMLAudioElement | null>(null)
-
-  useEffect(() => {
-    if (!authLoading && !user) {
-      router.push('/auth/login')
-      return
-    }
-    if (user && slug) {
-      fetchDrops()
-    }
-  }, [user, authLoading, slug, router])
+  const audioRef = useRef<HTMLAudioElement | null>(null)
 
   useEffect(() => {
     return () => {
-      if (audioRef) {
-        audioRef.pause()
-        audioRef.src = ''
+      if (audioRef.current) {
+        audioRef.current.pause()
+        audioRef.current.src = ''
       }
     }
-  }, [audioRef])
+  }, [])
 
-  const fetchDrops = async () => {
+  const fetchDrops = useCallback(async () => {
     setLoading(true)
 
     const { data: space } = await supabase
@@ -90,33 +81,44 @@ export default function SurpriseDropsPage() {
 
     setDrops(data || [])
     setLoading(false)
-  }
+  }, [slug, supabase])
+
+  useEffect(() => {
+    if (!authLoading && !user) {
+      router.push('/auth/login')
+      return
+    }
+    if (user && slug) {
+      const timeout = setTimeout(fetchDrops, 0)
+      return () => clearTimeout(timeout)
+    }
+  }, [user, authLoading, slug, router, fetchDrops])
 
   const playPreview = useCallback((drop: SurpriseDrop) => {
     if (!drop.preview_url) return
 
-    if (playingId === drop.id && audioRef) {
-      audioRef.pause()
-      audioRef.src = ''
+    if (playingId === drop.id && audioRef.current) {
+      audioRef.current.pause()
+      audioRef.current.src = ''
       setPlayingId(null)
-      setAudioRef(null)
+      audioRef.current = null
       return
     }
 
-    if (audioRef) {
-      audioRef.pause()
-      audioRef.src = ''
+    if (audioRef.current) {
+      audioRef.current.pause()
+      audioRef.current.src = ''
     }
 
     const audio = new Audio(drop.preview_url)
     audio.onended = () => {
       setPlayingId(null)
-      setAudioRef(null)
+      audioRef.current = null
     }
     audio.play()
     setPlayingId(drop.id)
-    setAudioRef(audio)
-  }, [playingId, audioRef])
+    audioRef.current = audio
+  }, [playingId])
 
   const deleteDrop = useCallback(async (drop: SurpriseDrop) => {
     if (!confirm(`Delete this surprise drop?`)) return
@@ -202,7 +204,7 @@ export default function SurpriseDropsPage() {
               {/* Track Image */}
               <div className="relative h-44 bg-gradient-to-br from-yellow-100 to-orange-100">
                 {drop.track_image ? (
-                  <img
+                  <AppImage
                     src={drop.track_image}
                     alt={drop.track_album}
                     className="w-full h-full object-cover"

@@ -2,15 +2,15 @@
 
 namespace App\Http\Controllers;
 
-use Inertia\Inertia;
-use App\Models\LoveTimeline;
-use App\Models\MediaGallery;
 use App\Models\Countdown;
 use App\Models\DailyMessage;
+use App\Models\LoveTimeline;
+use App\Models\MediaGallery;
 use App\Models\Space;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
-use Illuminate\Http\RedirectResponse;
+use Inertia\Inertia;
 use Inertia\Response;
 
 class DashboardController extends Controller
@@ -18,19 +18,19 @@ class DashboardController extends Controller
     public function redirect(): RedirectResponse
     {
         $userId = Auth::id();
-        
+
         // Cache user's first space for 10 minutes
         $space = Cache::remember("user.{$userId}.first_space", 600, function () use ($userId) {
             return Space::where(function ($query) use ($userId) {
                 $query->where('user_one_id', $userId)
                     ->orWhere('user_two_id', $userId);
             })
-            ->select(['id', 'slug'])
-            ->oldest()
-            ->first();
+                ->select(['id', 'slug'])
+                ->oldest()
+                ->first();
         });
 
-        if (!$space) {
+        if (! $space) {
             return redirect()->route('spaces.index');
         }
 
@@ -76,7 +76,7 @@ class DashboardController extends Controller
 
     private function authorizeSpace(Space $space): void
     {
-        if (!$space->hasMember(Auth::id())) {
+        if (! $space->hasMember(Auth::id())) {
             abort(403);
         }
     }

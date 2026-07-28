@@ -9,7 +9,6 @@ use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Redirect;
-use Illuminate\Support\Str;
 
 class SpotifyAuthController extends Controller
 {
@@ -40,18 +39,18 @@ class SpotifyAuthController extends Controller
             'show_dialog' => $request->boolean('force', false) ? 'true' : 'false',
         ], '', '&', PHP_QUERY_RFC3986);
 
-        return Redirect::away('https://accounts.spotify.com/authorize?' . $query);
+        return Redirect::away('https://accounts.spotify.com/authorize?'.$query);
     }
 
     public function callback(Request $request, SpotifyService $spotifyService)
     {
         $state = $request->input('state');
-        if (!$state) {
+        if (! $state) {
             abort(400, 'State tidak ditemukan.');
         }
 
         $payload = json_decode(base64_decode($state), true);
-        if (!is_array($payload)) {
+        if (! is_array($payload)) {
             abort(400, 'State tidak valid.');
         }
 
@@ -59,18 +58,18 @@ class SpotifyAuthController extends Controller
         $redirectUrl = Arr::get($payload, 'redirect', route('spotify.companion', ['space' => $space->slug]));
 
         $user = $request->user();
-        if (!$user || $user->id !== Arr::get($payload, 'user_id')) {
+        if (! $user || $user->id !== Arr::get($payload, 'user_id')) {
             Auth::logout();
 
             return redirect()->to($redirectUrl)->with('error', 'Sesi tidak valid. Silakan login ulang.');
         }
 
         if ($request->filled('error')) {
-            return redirect()->to($redirectUrl)->with('error', 'Spotify: ' . $request->input('error'));
+            return redirect()->to($redirectUrl)->with('error', 'Spotify: '.$request->input('error'));
         }
 
         $code = $request->input('code');
-        if (!$code) {
+        if (! $code) {
             return redirect()->to($redirectUrl)->with('error', 'Kode otorisasi Spotify tidak ditemukan.');
         }
 
@@ -88,7 +87,7 @@ class SpotifyAuthController extends Controller
             ]);
 
         if ($response->failed()) {
-            return redirect()->to($redirectUrl)->with('error', 'Gagal menukar kode Spotify: ' . $response->body());
+            return redirect()->to($redirectUrl)->with('error', 'Gagal menukar kode Spotify: '.$response->body());
         }
 
         $spotifyService->storeToken($user, $space, $response->json());

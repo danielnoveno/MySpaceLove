@@ -22,20 +22,20 @@ class DetectSuspiciousActivity
         '/(\bDROP\b\s+\bTABLE\b)/i',
         '/(\bDROP\b\s+\bDATABASE\b)/i',
         '/;\s*(DROP|DELETE|UPDATE|INSERT)\s+/i',
-        
+
         // XSS patterns - more specific
         '/<script[^>]*>.*?<\/script>/is',
         '/<iframe[^>]*>/i',
         '/javascript:\s*(?:alert|confirm|prompt)/i',
         '/on(load|error|click|mouseover)\s*=\s*["\']?[^"\'>\s]+/i',
-        
+
         // Path traversal - actual dangerous patterns
         '/\.\.[\\/\\\\]+\.\.[\\/\\\\]/i', // Multiple directory traversals
         '/\.\.[\\/\\\\]+(etc|proc|var|usr|bin)/i',
         '/\/etc\/passwd/i',
         '/\/proc\/self/i',
         '/\/windows\/system32/i',
-        
+
         // Command injection - only in suspicious contexts
         '/;\s*(rm|wget|curl|nc|bash|sh|cmd|powershell)\s+/i',
         '/\|\s*(rm|wget|curl|nc|bash|sh|cmd|powershell)\s+/i',
@@ -51,7 +51,7 @@ class DetectSuspiciousActivity
         // Check for suspicious patterns in request
         if ($this->detectSuspiciousPatterns($request)) {
             $this->logSuspiciousActivity($request, 'Suspicious pattern detected');
-            
+
             // Block the request
             return response()->json([
                 'message' => 'Forbidden. Suspicious activity detected.',
@@ -81,8 +81,8 @@ class DetectSuspiciousActivity
         $userAgent = $request->userAgent() ?? '';
 
         foreach ($this->suspiciousPatterns as $pattern) {
-            if (preg_match($pattern, $input) || 
-                preg_match($pattern, $url) || 
+            if (preg_match($pattern, $input) ||
+                preg_match($pattern, $url) ||
                 preg_match($pattern, $userAgent)) {
                 return true;
             }
@@ -97,9 +97,9 @@ class DetectSuspiciousActivity
     protected function isUnusualRequestSize(Request $request): bool
     {
         $contentLength = $request->header('Content-Length', 0);
-        
+
         // Flag requests larger than 10MB (excluding file uploads)
-        if (!$request->hasFile('file') && $contentLength > 10 * 1024 * 1024) {
+        if (! $request->hasFile('file') && $contentLength > 10 * 1024 * 1024) {
             return true;
         }
 
@@ -112,7 +112,7 @@ class DetectSuspiciousActivity
     protected function isSuspiciousUserAgent(Request $request): bool
     {
         $userAgent = strtolower($request->userAgent() ?? '');
-        
+
         $suspiciousAgents = [
             'sqlmap',
             'nikto',
@@ -143,11 +143,11 @@ class DetectSuspiciousActivity
         Log::warning('Suspicious activity detected', [
             'reason' => $reason,
             'ip' => $request->ip(),
-            'url' => $request->fullUrl(),
+            'url' => $request->url(),
             'method' => $request->method(),
             'user_agent' => $request->userAgent(),
             'user_id' => $request->user()?->id,
-            'input' => $request->except(['password', 'password_confirmation']),
+            'input_fields' => array_keys($request->all()),
             'timestamp' => now()->toDateTimeString(),
         ]);
 

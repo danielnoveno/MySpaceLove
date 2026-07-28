@@ -8,7 +8,7 @@ export async function createClient() {
   const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
   
   if (!url || !key) {
-    return null as any
+    return null
   }
 
   return createServerClient(

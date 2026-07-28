@@ -28,7 +28,7 @@ class CacheService
     public static function clearSpaceCache(int $spaceId): void
     {
         self::clearDashboardCache($spaceId);
-        
+
         // Clear other space-related caches
         Cache::forget("space.{$spaceId}.stats");
         Cache::forget("space.{$spaceId}.timeline");

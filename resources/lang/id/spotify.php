@@ -5,26 +5,26 @@ return [
         'title' => 'Spotify Companion Kit',
         'page_title' => 'Spotify Companion Kit',
     ],
-    
+
     'header' => [
         'title' => 'Spotify Companion Kit',
         'subtitle' => 'Ruang :space: sinkronkan musik, mood, dan momen kalian biar tetap dekat walau terpisah jarak.',
     ],
-    
+
     'tabs' => [
         'home' => 'Beranda',
         'search' => 'Cari',
         'playlist' => 'Playlist',
         'stats' => 'Statistik',
     ],
-    
+
     'auth' => [
         'connect' => 'Login dengan Spotify',
         'connecting' => 'Menghubungkan…',
         'description' => 'Sinkronkan akun Spotify Premium kalian untuk memutar musik bersama, kurasi playlist, dan rayakan setiap suasana.',
         'requirements' => 'Spotify Premium wajib dimiliki keduanya agar pengalaman berjalan penuh.',
     ],
-    
+
     'connection' => [
         'title' => 'Status Koneksi Spotify',
         'description' => 'Setiap akun perlu tersambung supaya playlist sinkron, mood tracking, dan kejutan berjalan optimal.',
@@ -37,7 +37,7 @@ return [
         'connect_title' => 'Hubungkan Spotify',
         'connect_description' => 'Sambungkan akun Spotify kalian untuk menyalakan playlist sinkron, mood check-in, dan kejutan lagu.',
     ],
-    
+
     'player' => [
         'now_playing' => 'Sedang diputar',
         'not_playing' => 'Tidak ada lagu yang diputar saat ini.',
@@ -47,7 +47,7 @@ return [
         'previous' => 'Sebelumnya',
         'device_picker' => 'Pilih perangkat',
     ],
-    
+
     'search' => [
         'placeholder' => 'Cari lagu, artis, atau album',
         'results_title' => 'Hasil pencarian',
@@ -55,7 +55,7 @@ return [
         'play' => 'Putar pratinjau',
         'add' => 'Tambahkan ke playlist',
     ],
-    
+
     'playlist' => [
         'title' => 'Playlist Sinkron',
         'description' => 'Playlist otomatis update tiap kalian tambah lagu favorit minggu ini.',
@@ -75,7 +75,7 @@ return [
         'preview_unavailable' => 'Preview tidak tersedia, buka di Spotify untuk memutar penuh.',
         'audio_unsupported' => 'Browser kamu tidak mendukung audio HTML5.',
     ],
-    
+
     'mood' => [
         'title' => 'Mood Check-In',
         'description' => 'Bagikan lagu yang sedang kamu dengarkan dan perasaanmu saat ini.',
@@ -87,7 +87,7 @@ return [
         'energy' => 'Energi',
         'affection' => 'Kasih sayang',
     ],
-    
+
     'listening' => [
         'title' => 'Live Listening',
         'description' => 'Lihat lagu yang sedang diputar pasanganmu dan ikuti sesinya.',
@@ -97,7 +97,7 @@ return [
         'started_at' => 'Dimulai :date',
         'listeners' => ':count pendengar',
     ],
-    
+
     'surprise' => [
         'title' => 'Surprise Drops',
         'description' => 'Jadwalkan lagu kejutan untuk pasanganmu temukan di momen yang tepat.',
@@ -114,7 +114,7 @@ return [
         'scheduled_for' => 'Dijadwalkan untuk :date',
         'curator' => 'Oleh :name',
     ],
-    
+
     'capsule' => [
         'title' => 'Kapsul Memori',
         'description' => 'Simpan lagu yang terikat dengan momen spesial dan kenangan yang kalian bagikan bersama.',
@@ -133,19 +133,19 @@ return [
         'saved_at' => 'Disimpan :date',
         'play_preview' => 'Putar preview',
     ],
-    
+
     'stats' => [
         'top_tracks' => 'Lagu Favorit Kita',
         'top_artists' => 'Artis Favorit Kita',
         'compatibility' => 'Kecocokan musik',
         'compatibility_empty' => 'Hubungkan kedua pasangan untuk membandingkan selera musik.',
     ],
-    
+
     'loading' => [
         'dashboard' => 'Memuat data Spotify...',
         'retry' => 'Coba Muat Ulang',
     ],
-    
+
     'messages' => [
         'success' => [
             'surprise_scheduled' => 'Lagu kejutan berhasil dijadwalkan!',
@@ -162,7 +162,7 @@ return [
             'join_retry' => 'Gagal gabung playback. Coba ulang sebentar lagi.',
         ],
     ],
-    
+
     'errors' => [
         'general' => 'Terjadi kesalahan pada koneksi Spotify.',
         'token_missing' => 'Hubungkan Spotify terlebih dahulu untuk membuka fitur ini.',

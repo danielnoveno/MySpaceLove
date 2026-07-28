@@ -23,7 +23,7 @@ export default function UploadDocumentPage() {
   const fileInputRef = useRef<HTMLInputElement>(null)
   const supabase = createClient()
 
-  useEffect(() => { if (!authLoading && !user) router.push('/auth/login') }, [user, authLoading])
+  useEffect(() => { if (!authLoading && !user) router.push('/auth/login') }, [user, authLoading, router])
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => { const selectedFile = e.target.files?.[0]; if (selectedFile) { setFile(selectedFile); if (!title) setTitle(selectedFile.name.replace(/\.[^/.]+$/, '')) } }
   const handleDrop = (e: React.DragEvent) => { e.preventDefault(); setDragOver(false); const droppedFile = e.dataTransfer.files[0]; if (droppedFile) { setFile(droppedFile); if (!title) setTitle(droppedFile.name.replace(/\.[^/.]+$/, '')) } }

@@ -23,7 +23,7 @@ class JoinRequestAcceptedMail extends Mailable
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: "Permintaan Bergabung Diterima! 🎉",
+            subject: 'Permintaan Bergabung Diterima! 🎉',
         );
     }
 

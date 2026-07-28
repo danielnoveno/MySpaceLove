@@ -17,7 +17,7 @@ class ActivityNotificationController extends Controller
 
         abort_unless($user, 403);
 
-        if (!Schema::hasTable('notifications')) {
+        if (! Schema::hasTable('notifications')) {
             return Inertia::render('Notifications/Index', [
                 'notifications' => [
                     'data' => [],
@@ -85,7 +85,7 @@ class ActivityNotificationController extends Controller
 
         abort_unless($user, 403);
 
-        if (!Schema::hasTable('notifications')) {
+        if (! Schema::hasTable('notifications')) {
             return back();
         }
 

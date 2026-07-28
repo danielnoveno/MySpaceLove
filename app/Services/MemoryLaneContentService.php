@@ -16,7 +16,7 @@ class MemoryLaneContentService
         $grid = data_get($memoryBase, 'puzzle.grid', ['rows' => 4, 'cols' => 4]);
         $defaultSpaceTitle = data_get($memoryBase, 'defaults.spaceTitle', 'us');
         $spaceTitle = $space?->title ?? $defaultSpaceTitle;
-        
+
         // Get config to check for custom PIN, otherwise use default
         $config = $this->fetchConfig($space);
         $pin = $config?->pin ?? '00000';
@@ -26,7 +26,7 @@ class MemoryLaneContentService
             'rows' => $grid['rows'] ?? 4,
             'cols' => $grid['cols'] ?? 4,
         ]);
-        
+
         // Override the secret code with actual PIN (custom or default)
         $content['secretGate']['code'] = $pin;
 
@@ -38,12 +38,13 @@ class MemoryLaneContentService
 
         // Ensure we don't return more levels than active, and handle 0 case
         if ($activeCount === 0) {
-             $content['puzzle']['levels'] = [];
-             $content['rewards'] = [];
-             $content['flipbook'] = [];
-             return $content;
+            $content['puzzle']['levels'] = [];
+            $content['rewards'] = [];
+            $content['flipbook'] = [];
+
+            return $content;
         }
-        
+
         // Take only the active number of levels from the base definition
         $levels = $levels->slice(0, $activeCount);
 
@@ -58,18 +59,17 @@ class MemoryLaneContentService
                 if ($mapping === null) {
                     return $level;
                 }
-                
-                // ... 
+
+                // ...
                 if ($mapping['image'] && $disk->exists($mapping['image'])) {
-                     $level['image'] = Storage::url($mapping['image']);
+                    $level['image'] = Storage::url($mapping['image']);
                 }
 
-                if (!empty($mapping['title'])) {
+                if (! empty($mapping['title'])) {
                     $level['summaryTitle'] = $mapping['title'];
                 }
 
-
-                if (!empty($mapping['body'])) {
+                if (! empty($mapping['body'])) {
                     $level['summaryBody'] = $mapping['body'];
                 }
 
@@ -87,7 +87,7 @@ class MemoryLaneContentService
         }
 
         $content['puzzle']['levels'] = $levels->values()->all();
-        
+
         // Add global rewards and flipbook for backward compatibility
         $content['rewards'] = $config ? $this->getRewards($config) : [];
         $content['flipbook'] = $config ? $this->getFlipbookPages($config) : [];
@@ -135,7 +135,7 @@ class MemoryLaneContentService
 
                 return [
                     'key' => "level_{$levelWord}",
-                    'label' => $level['label'] ?? "Level " . ($index + 1),
+                    'label' => $level['label'] ?? 'Level '.($index + 1),
                     'image' => $imageUrl,
                     'image_path' => $storedPath,
                     'default_image' => $defaultLevel['image'] ?? $level['image'] ?? null,
@@ -152,9 +152,9 @@ class MemoryLaneContentService
         return Collection::make($this->resolveLevels($space))
             ->map(function (array $level, int $index) {
                 return [
-                    'id' => $level['id'] ?? "scrapbook-level-" . ($index + 1),
-                    'label' => $level['label'] ?? "Level " . ($index + 1),
-                    'title' => $level['summaryTitle'] ?? $level['label'] ?? "Level " . ($index + 1),
+                    'id' => $level['id'] ?? 'scrapbook-level-'.($index + 1),
+                    'label' => $level['label'] ?? 'Level '.($index + 1),
+                    'title' => $level['summaryTitle'] ?? $level['label'] ?? 'Level '.($index + 1),
                     'body' => $level['summaryBody'] ?? '',
                     'image' => $level['image'] ?? $level['default_image'] ?? null,
                 ];
@@ -169,8 +169,8 @@ class MemoryLaneContentService
     public function flipbookPages(?Space $space = null): array
     {
         $config = $this->fetchConfig($space);
-        
-        if (!$config) {
+
+        if (! $config) {
             return [];
         }
 
@@ -180,8 +180,8 @@ class MemoryLaneContentService
     public function flipbookCoverData(?Space $space = null): array
     {
         $config = $this->fetchConfig($space);
-        
-        if (!$config) {
+
+        if (! $config) {
             return [
                 'image' => null,
                 'title' => 'Our Story',
@@ -191,7 +191,7 @@ class MemoryLaneContentService
         $disk = Storage::disk('public');
         $coverImage = null;
 
-        if (!empty($config->flipbook_cover_image) && $disk->exists($config->flipbook_cover_image)) {
+        if (! empty($config->flipbook_cover_image) && $disk->exists($config->flipbook_cover_image)) {
             $coverImage = asset(Storage::url($config->flipbook_cover_image));
         }
 
@@ -200,7 +200,6 @@ class MemoryLaneContentService
             'title' => $config->flipbook_cover_title ?? 'Our Story',
         ];
     }
-
 
     public function isContentSet(MemoryLaneConfig $config): bool
     {
@@ -217,7 +216,7 @@ class MemoryLaneContentService
 
     private function fetchConfig(?Space $space): ?MemoryLaneConfig
     {
-        if (!$space || !Schema::hasTable('memory_lane_configs')) {
+        if (! $space || ! Schema::hasTable('memory_lane_configs')) {
             return null;
         }
 
@@ -253,7 +252,7 @@ class MemoryLaneContentService
         $defaults = config('memory_lane_rewards.default_rewards', []);
         $customs = $config->custom_rewards ?? [];
 
-        if (empty($customs) || !is_array($customs)) {
+        if (empty($customs) || ! is_array($customs)) {
             return $defaults;
         }
 
@@ -265,7 +264,7 @@ class MemoryLaneContentService
         foreach ($defaults as $default) {
             // Use loose comparison to handle string vs int IDs
             $override = $customCollection->first(function ($item) use ($default) {
-                return (string)($item['id'] ?? '') === (string)$default['id'];
+                return (string) ($item['id'] ?? '') === (string) $default['id'];
             });
 
             if ($override) {
@@ -279,14 +278,15 @@ class MemoryLaneContentService
 
         // 2. Add pure custom rewards
         $pureCustoms = $customCollection->filter(function ($item) use ($defaultIds) {
-            $itemId = (string)($item['id'] ?? '');
+            $itemId = (string) ($item['id'] ?? '');
             $stringDefaultIds = array_map('strval', $defaultIds);
-            return !empty($itemId) && !in_array($itemId, $stringDefaultIds);
+
+            return ! empty($itemId) && ! in_array($itemId, $stringDefaultIds);
         });
 
         foreach ($pureCustoms as $custom) {
             // Ensure pure custom rewards have necessary fields
-            if (!empty($custom['title'])) {
+            if (! empty($custom['title'])) {
                 $merged[] = array_merge([
                     'category' => 'custom',
                     'enabled' => true,
@@ -304,7 +304,7 @@ class MemoryLaneContentService
 
     private function getFlipbookPages(MemoryLaneConfig $config): array
     {
-        if (empty($config->flipbook_pages) || !is_array($config->flipbook_pages)) {
+        if (empty($config->flipbook_pages) || ! is_array($config->flipbook_pages)) {
             return [];
         }
 
@@ -314,7 +314,7 @@ class MemoryLaneContentService
         return collect($config->flipbook_pages)
             ->map(function ($page) use ($disk) {
                 // Handle standard image
-                if (!empty($page['image']) && $disk->exists($page['image'])) {
+                if (! empty($page['image']) && $disk->exists($page['image'])) {
                     $page['image'] = asset(Storage::url($page['image']));
                 }
 
@@ -322,7 +322,7 @@ class MemoryLaneContentService
                 if (($page['type'] ?? 'standard') === 'canvas' && isset($page['canvas_elements'])) {
                     $elements = $page['canvas_elements'];
                     foreach ($elements as $key => $el) {
-                        if ($el['type'] === 'image' && !empty($el['image_url'])) {
+                        if ($el['type'] === 'image' && ! empty($el['image_url'])) {
                             // Convert relative /storage/ path to asset URL if needed
                             if (str_starts_with($el['image_url'], '/storage/')) {
                                 $el['image_url'] = asset($el['image_url']);
@@ -332,12 +332,12 @@ class MemoryLaneContentService
                     }
                     $page['canvas_elements'] = $elements;
                 }
-                
+
                 return $page;
             })
             ->filter(function ($page) {
                 // Only include pages that have content or are canvas type
-                return ($page['type'] ?? 'standard') === 'canvas' || !empty($page['title']) || !empty($page['body']) || !empty($page['image']);
+                return ($page['type'] ?? 'standard') === 'canvas' || ! empty($page['title']) || ! empty($page['body']) || ! empty($page['image']);
             })
             ->values()
             ->all();

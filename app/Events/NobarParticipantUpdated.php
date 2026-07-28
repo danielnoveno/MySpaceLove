@@ -25,7 +25,7 @@ class NobarParticipantUpdated implements ShouldBroadcast
 
     public function broadcastOn(): Channel
     {
-        return new PrivateChannel('spaces.' . $this->participant->space_id . '.nobar');
+        return new PrivateChannel('spaces.'.$this->participant->space_id.'.nobar');
     }
 
     public function broadcastWith(): array

@@ -3,9 +3,9 @@
 namespace App\Exceptions;
 
 use Illuminate\Foundation\Exceptions\Handler as ExceptionHandler;
-use Throwable;
-use Symfony\Component\ErrorHandler\Error\FatalError;
 use Illuminate\Http\Response;
+use Symfony\Component\ErrorHandler\Error\FatalError;
+use Throwable;
 
 class Handler extends ExceptionHandler
 {
@@ -33,7 +33,7 @@ class Handler extends ExceptionHandler
             if (str_contains($e->getMessage(), 'Maximum execution time of') && $request->expectsJson()) {
                 return response()->json([
                     'message' => 'Server is taking too long to respond. Please try again later.',
-                    'error_code' => 'MAX_EXECUTION_TIME_EXCEEDED'
+                    'error_code' => 'MAX_EXECUTION_TIME_EXCEEDED',
                 ], Response::HTTP_REQUEST_TIMEOUT);
             }
 
