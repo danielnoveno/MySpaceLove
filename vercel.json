@@ -1,11 +1,15 @@
 {
   "version": 2,
   "installCommand": "npm install && composer install --no-dev --optimize-autoloader",
-  "buildCommand": "npm run build && php artisan config:cache && php artisan route:cache && php artisan view:cache",
+  "buildCommand": "npm run build",
+  "outputDirectory": "public",
   "builds": [
     {
       "src": "api/index.php",
-      "use": "vercel-php@0.6.2"
+      "use": "vercel-php@0.6.2",
+      "config": {
+        "maxDuration": 30
+      }
     },
     {
       "src": "public/**",
@@ -61,11 +65,5 @@
     "QUEUE_CONNECTION": "database",
     "FILESYSTEM_DISK": "s3",
     "VIEW_COMPILED_PATH": "/tmp/views"
-  },
-  "functions": {
-    "api/index.php": {
-      "memory": 3008,
-      "maxDuration": 30
-    }
   }
 }
