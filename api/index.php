@@ -5,6 +5,60 @@
  * This file routes all requests through Laravel's public/index.php
  */
 
+$appPath = __DIR__ . '/..';
+
+// Serve built/static assets from the PHP lambda. The Vercel PHP builder does
+// not reliably expose Vite's public/build output as static files, but the files
+// are present in the function bundle after the build scripts run.
+$requestPath = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH) ?: '/';
+$staticPrefixes = ['/build/', '/css/', '/js/', '/images/', '/fonts/', '/storage/'];
+$staticFiles = ['/favicon.ico', '/favicon.svg', '/robots.txt'];
+
+$isStaticRequest = in_array($requestPath, $staticFiles, true);
+
+foreach ($staticPrefixes as $prefix) {
+    if (str_starts_with($requestPath, $prefix)) {
+        $isStaticRequest = true;
+        break;
+    }
+}
+
+if ($isStaticRequest) {
+    $publicPath = realpath($appPath . '/public');
+    $filePath = realpath($appPath . '/public' . $requestPath);
+
+    if ($publicPath && $filePath && str_starts_with($filePath, $publicPath) && is_file($filePath)) {
+        $extension = strtolower(pathinfo($filePath, PATHINFO_EXTENSION));
+        $mimeTypes = [
+            'css' => 'text/css; charset=UTF-8',
+            'js' => 'application/javascript; charset=UTF-8',
+            'mjs' => 'application/javascript; charset=UTF-8',
+            'json' => 'application/json; charset=UTF-8',
+            'svg' => 'image/svg+xml',
+            'ico' => 'image/x-icon',
+            'png' => 'image/png',
+            'jpg' => 'image/jpeg',
+            'jpeg' => 'image/jpeg',
+            'gif' => 'image/gif',
+            'webp' => 'image/webp',
+            'woff' => 'font/woff',
+            'woff2' => 'font/woff2',
+            'ttf' => 'font/ttf',
+            'txt' => 'text/plain; charset=UTF-8',
+        ];
+
+        header('Content-Type: ' . ($mimeTypes[$extension] ?? 'application/octet-stream'));
+        header('Cache-Control: public, max-age=31536000, immutable');
+        header('Content-Length: ' . filesize($filePath));
+        readfile($filePath);
+        exit;
+    }
+
+    http_response_code(404);
+    echo 'Not Found';
+    exit;
+}
+
 /**
  * Vercel serverless functions run from a read-only deployment filesystem.
  * Laravel writes runtime files for logs, sessions, cache and compiled Blade
@@ -63,9 +117,6 @@ if (getenv('VERCEL') || getenv('NOW_REGION')) {
     $forceEnv('CACHE_STORE', 'array');
     $forceEnv('SESSION_DRIVER', 'cookie');
 }
-
-// Laravel application path
-$appPath = __DIR__ . '/..';
 
 // Require Laravel's entry point
 try {
