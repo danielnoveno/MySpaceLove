@@ -1,11 +1,12 @@
 {
   "version": 2,
-  "builds": [
-    {
-      "src": "api/index.php",
-      "use": "vercel-php@0.6.2"
+  "functions": {
+    "api/index.php": {
+      "runtime": "vercel-php@0.9.0",
+      "memory": 3008,
+      "maxDuration": 30
     }
-  ],
+  },
   "routes": [
     {
       "src": "/build/(.*)",
