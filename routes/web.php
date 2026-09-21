@@ -20,12 +20,16 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\GameSessionController;
 use App\Http\Controllers\GameScoreController;
 use App\Http\Controllers\GamesController;
+use App\Http\Controllers\KlipyGifController;
 use App\Http\Controllers\LocationController;
+use App\Http\Controllers\MessageController;
+use App\Http\Controllers\SharedLocationController;
 use App\Http\Controllers\SpaceController;
 use App\Http\Controllers\SpaceGoalsController;
 use App\Http\Controllers\NobarController;
 use App\Http\Controllers\SpotifyAuthController;
 use App\Http\Controllers\SpotifyController;
+use App\Http\Controllers\SpotifyPageController;
 use App\Http\Controllers\MemoryLaneConfigController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\StoryBookController;
@@ -116,6 +120,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'redirect'])->name('dashboard');
     Route::get('/spaces', [SpaceController::class, 'index'])->name('spaces.index');
     Route::post('/spaces', [SpaceController::class, 'store'])->name('spaces.store');
+    Route::get('/notifications/unread-count', [NotificationController::class, 'unreadCount'])->name('notifications.unread-count');
+    Route::get('/klipy/gifs/search', [KlipyGifController::class, 'search'])->name('klipy.gifs.search');
 
     Route::middleware('space.access')->group(function () {
         Route::get('/spaces/{space:slug}/notifications', [NotificationController::class, 'index'])->name('spaces.notifications.index');
@@ -126,8 +132,20 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('/spaces/{space:slug}/notifications/destroy-multiple', [NotificationController::class, 'destroyMultiple'])->name('spaces.notifications.destroyMultiple');
 
         Route::get('/spaces/{space:slug}/dashboard', [DashboardController::class, 'show'])->name('spaces.dashboard');
+        Route::get('/spaces/{space:slug}', [DashboardController::class, 'show'])->name('spaces.show');
+        Route::get('/spaces/{space:slug}/messages', [MessageController::class, 'index'])->name('spaces.messages.index');
+        Route::get('/spaces/{space:slug}/separation', [SpaceController::class, 'separation'])->name('spaces.separation');
+
+        Route::get('/spaces/{space:slug}/settings', [SpaceController::class, 'settings'])->name('spaces.settings');
+        Route::put('/spaces/{space:slug}/settings', [SpaceController::class, 'update'])->name('spaces.settings.update');
 
         Route::get('/spaces/{space:slug}/location', [LocationController::class, 'index'])->name('location.map');
+        Route::get('/spaces/{space:slug}/locations', [SharedLocationController::class, 'index'])->name('locations.index');
+        Route::get('/spaces/{space:slug}/locations/create', [SharedLocationController::class, 'create'])->name('locations.create');
+        Route::post('/spaces/{space:slug}/locations', [SharedLocationController::class, 'store'])->name('locations.store');
+        Route::get('/spaces/{space:slug}/locations/{location}/edit', [SharedLocationController::class, 'edit'])->name('locations.edit');
+        Route::put('/spaces/{space:slug}/locations/{location}', [SharedLocationController::class, 'update'])->name('locations.update');
+        Route::delete('/spaces/{space:slug}/locations/{location}', [SharedLocationController::class, 'destroy'])->name('locations.destroy');
 
         Route::get('/spaces/{space:slug}/timeline', [LoveTimelineApiController::class, 'index'])->name('timeline.index');
         Route::get('/spaces/{space:slug}/timeline/create', [LoveTimelineApiController::class, 'create'])->name('timeline.create');
@@ -173,6 +191,16 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::delete('/spaces/{space:slug}/gallery/collection/{collection_key}', [MediaGalleryApiController::class, 'destroyCollection'])->name('gallery.destroyCollection');
 
         Route::get('/spaces/{space:slug}/spotify/authorize', [SpotifyAuthController::class, 'redirect'])->name('spotify.authorize');
+        Route::get('/spaces/{space:slug}/spotify', [SpotifyPageController::class, 'index'])->name('spotify.index');
+        Route::get('/spaces/{space:slug}/spotify/capsules', [SpotifyPageController::class, 'capsules'])->name('spotify.capsules.index');
+        Route::get('/spaces/{space:slug}/spotify/capsules/create', [SpotifyPageController::class, 'createCapsule'])->name('spotify.capsules.create');
+        Route::post('/spaces/{space:slug}/spotify/capsules/create', [SpotifyPageController::class, 'storeCapsule'])->name('spotify.capsules.create.store');
+        Route::get('/spaces/{space:slug}/spotify/listening-plans', [SpotifyPageController::class, 'listeningPlans'])->name('spotify.listening-plans.index');
+        Route::get('/spaces/{space:slug}/spotify/listening-plans/create', [SpotifyPageController::class, 'createListeningPlan'])->name('spotify.listening-plans.create');
+        Route::post('/spaces/{space:slug}/spotify/listening-plans/create', [SpotifyPageController::class, 'storeListeningPlan'])->name('spotify.listening-plans.store');
+        Route::get('/spaces/{space:slug}/spotify/surprise-drops', [SpotifyPageController::class, 'surpriseDrops'])->name('spotify.surprise-drops.index');
+        Route::get('/spaces/{space:slug}/spotify/surprise-drops/create', [SpotifyPageController::class, 'createSurpriseDrop'])->name('spotify.surprise-drops.create');
+        Route::post('/spaces/{space:slug}/spotify/surprise-drops/create', [SpotifyPageController::class, 'storeSurpriseDrop'])->name('spotify.surprise-drops.store');
         Route::get('/spaces/{space:slug}/spotify/dashboard-data', [SpotifyController::class, 'dashboard'])->name('spotify.dashboard');
         Route::post('/spaces/{space:slug}/spotify/surprises', [SpotifyController::class, 'storeSurprise'])->name('spotify.surprises.store');
         Route::post('/spaces/{space:slug}/spotify/capsules', [SpotifyController::class, 'storeCapsule'])->name('spotify.capsules.store');

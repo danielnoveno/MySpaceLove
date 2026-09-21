@@ -52,6 +52,18 @@ class GameSeeder extends Seeder
                 'description' => 'Ask, answer, and see how well you know each other.',
                 'supports_multiplayer' => true,
             ],
+            [
+                'slug' => '2048',
+                'name' => '2048 Hearts',
+                'description' => 'Slide tiles, merge matching hearts, and reach the highest score together.',
+                'supports_multiplayer' => false,
+            ],
+            [
+                'slug' => 'sudoku',
+                'name' => 'Sudoku Date',
+                'description' => 'Solve a cozy number puzzle and save your completion score.',
+                'supports_multiplayer' => false,
+            ],
         ];
 
         foreach ($games as $game) {

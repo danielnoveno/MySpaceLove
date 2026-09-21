@@ -107,14 +107,24 @@ export default function AuthenticatedLayout({
                 href: route("daily.index", { space: activeSpace.slug }),
             });
             baseItems.push({
+                id: "messages-menu",
+                label: "Messages",
+                href: route("spaces.messages.index", { space: activeSpace.slug }),
+            });
+            baseItems.push({
                 id: "gallery-menu",
                 label: "Gallery",
                 href: route("gallery.index", { space: activeSpace.slug }),
             });
+            baseItems.push({
+                id: "locations-menu",
+                label: "Locations",
+                href: route("locations.index", { space: activeSpace.slug }),
+            });
              baseItems.push({
                 id: "spotify-menu",
                 label: "Spotify",
-                href: route("spotify.companion", { space: activeSpace.slug }),
+                href: route("spotify.index", { space: activeSpace.slug }),
             });
              baseItems.push({
                 id: "games-menu",
@@ -156,6 +166,14 @@ export default function AuthenticatedLayout({
                     >
                         Profile
                     </Link>
+                    {activeSpace && (
+                        <Link
+                            href={route('spaces.settings', { space: activeSpace.slug })}
+                            className="block px-4 py-2 text-sm text-gray-700 hover:bg-pink-50 hover:text-pink-600 transition-colors"
+                        >
+                            Space Settings
+                        </Link>
+                    )}
                     <Link
                         href={route('logout')}
                         method="post"

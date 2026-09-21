@@ -16,6 +16,7 @@ class SpaceInvitation extends Model
         'invitee_id',
         'invitee_email',
         'token',
+        'kind',
         'status',
         'accepted_at',
     ];

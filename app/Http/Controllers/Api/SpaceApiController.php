@@ -58,8 +58,9 @@ class SpaceApiController extends Controller
         $space = Space::create([
             'title' => $data['title'],
             'slug'  => $slug,
+            'invite_code' => $this->makeUniqueInviteCode(),
             'user_one_id' => Auth::id(),
-            'bio' => $data['bio'] ?? null
+            'bio' => $data['bio'] ?? null,
         ]);
 
         // invite flow could be added: send email with token
@@ -422,42 +423,28 @@ class SpaceApiController extends Controller
 
         $data = $request->validate(
             [
-                'partner_code' => ['required', 'string', 'max:16'],
+                'invite_code' => ['required', 'string', 'max:16'],
             ],
             [
-                'partner_code.required' => 'Kode pasangan wajib diisi.',
-                'partner_code.string' => 'Kode pasangan tidak valid.',
-                'partner_code.max' => 'Kode pasangan maksimal 16 karakter.',
+                'invite_code.required' => 'Invite code wajib diisi.',
+                'invite_code.string' => 'Invite code tidak valid.',
+                'invite_code.max' => 'Invite code maksimal 16 karakter.',
             ]
         );
 
-        $partnerCode = strtoupper($data['partner_code']);
+        $inviteCode = strtoupper($data['invite_code']);
 
-        $owner = User::where('partner_code', $partnerCode)->first();
-
-        if (!$owner) {
-            return response()->json([
-                'message' => 'Kode pasangan tidak ditemukan. Pastikan kode yang diberikan pasangan sudah benar.',
-            ], 422);
-        }
-
-        if ($owner->id === $user->id) {
-            return response()->json([
-                'message' => 'Tidak dapat bergabung menggunakan kode milik sendiri.',
-            ], 422);
-        }
-
-        $space = Space::where('user_one_id', $owner->id)->first();
+        $space = Space::where('invite_code', $inviteCode)->first();
 
         if (!$space) {
             return response()->json([
-                'message' => 'Pasangan belum memiliki Space yang aktif.',
+                'message' => 'Invite code tidak ditemukan. Pastikan kode Space sudah benar.',
             ], 422);
         }
 
-        if ($space->user_two_id && $space->user_two_id !== $user->id) {
+        if ($space->user_one_id === $user->id) {
             return response()->json([
-                'message' => 'Space tersebut sudah memiliki pasangan.',
+                'message' => 'Tidak dapat bergabung menggunakan Space milik sendiri.',
             ], 422);
         }
 
@@ -472,53 +459,122 @@ class SpaceApiController extends Controller
             ]);
         }
 
-        $invitation = null;
-
-        if (Schema::hasTable('space_invitations')) {
-            $invitation = SpaceInvitation::updateOrCreate(
-                [
-                    'space_id' => $space->id,
-                    'invitee_id' => $user->id,
-                ],
-                [
-                    'inviter_id' => $owner->id,
-                    'invitee_email' => $user->email,
-                    'token' => (string) Str::uuid(),
-                    'status' => 'pending',
-                ]
-            );
+        if ($space->user_two_id && $space->user_two_id !== $user->id) {
+            return response()->json([
+                'message' => 'Space tersebut sudah memiliki pasangan.',
+            ], 422);
         }
 
-        $space->loadMissing('userOne');
-
-        $space->user_two_id = $user->id;
-
-        if ($space->userOne) {
-            $space->title = "{$space->userOne->name} & {$user->name}";
+        if (!Schema::hasTable('space_invitations')) {
+            return response()->json([
+                'message' => 'Fitur join request belum siap. Jalankan migrasi untuk mengaktifkannya.',
+            ], 503);
         }
 
-        $space->save();
+        $existingRequest = SpaceInvitation::where('space_id', $space->id)
+            ->where('invitee_id', $user->id)
+            ->where('kind', 'join_request')
+            ->where('status', 'pending')
+            ->exists();
 
-        if ($invitation) {
-            $invitation->update([
-                'status' => 'accepted',
-                'accepted_at' => now(),
-            ]);
+        if ($existingRequest) {
+            return response()->json([
+                'message' => 'Join request sudah dikirim. Tunggu pemilik Space menyetujui.',
+            ], 422);
         }
+
+        $owner = $space->userOne;
+
+        SpaceInvitation::create([
+            'space_id' => $space->id,
+            'inviter_id' => $owner->id,
+            'invitee_id' => $user->id,
+            'invitee_email' => $user->email,
+            'token' => (string) Str::uuid(),
+            'kind' => 'join_request',
+            'status' => 'pending',
+        ]);
 
         $this->sendMailSilently(
-            $space->userOne,
+            $owner,
             new PartnerConnectedMail($space, $user)
         );
 
         return response()->json([
-            'message' => 'Berhasil bergabung dengan Space pasanganmu.',
+            'message' => 'Join request terkirim. Tunggu pemilik Space menyetujui permintaanmu.',
             'space' => [
                 'id' => $space->id,
                 'slug' => $space->slug,
                 'title' => $space->title,
             ],
         ]);
+    }
+
+    public function approveJoinRequest(Request $request, Space $space, SpaceInvitation $invitation)
+    {
+        $user = $request->user();
+
+        if ($space->user_one_id !== $user->id) {
+            return response()->json(['message' => 'Hanya owner Space yang dapat menyetujui request.'], 403);
+        }
+
+        if ($invitation->space_id !== $space->id || $invitation->kind !== 'join_request' || $invitation->status !== 'pending') {
+            return response()->json(['message' => 'Join request tidak ditemukan atau sudah diproses.'], 404);
+        }
+
+        if ($space->user_two_id) {
+            return response()->json(['message' => 'Space sudah memiliki partner.'], 422);
+        }
+
+        $joiner = $invitation->invitee;
+
+        if (!$joiner) {
+            return response()->json(['message' => 'Akun pemohon tidak ditemukan.'], 404);
+        }
+
+        $hasOtherSpace = Space::where(function ($query) use ($joiner): void {
+            $query->where('user_one_id', $joiner->id)->orWhere('user_two_id', $joiner->id);
+        })->where('id', '!=', $space->id)->exists();
+
+        if ($hasOtherSpace) {
+            return response()->json(['message' => 'Pemohon sudah tergabung di Space lain.'], 422);
+        }
+
+        $space->loadMissing('userOne');
+        $space->user_two_id = $joiner->id;
+        if ($space->userOne) {
+            $space->title = "{$space->userOne->name} & {$joiner->name}";
+        }
+        $space->save();
+
+        $invitation->update([
+            'status' => 'accepted',
+            'accepted_at' => now(),
+        ]);
+
+        $this->sendMailSilently($space->userOne, new PartnerConnectedMail($space, $joiner));
+
+        return response()->json([
+            'message' => 'Join request disetujui.',
+            'space' => ['id' => $space->id, 'slug' => $space->slug, 'title' => $space->title],
+        ]);
+    }
+
+    public function rejectJoinRequest(Request $request, Space $space, SpaceInvitation $invitation)
+    {
+        $user = $request->user();
+
+        if ($space->user_one_id !== $user->id) {
+            return response()->json(['message' => 'Hanya owner Space yang dapat menolak request.'], 403);
+        }
+
+        if ($invitation->space_id !== $space->id || $invitation->kind !== 'join_request' || $invitation->status !== 'pending') {
+            return response()->json(['message' => 'Join request tidak ditemukan atau sudah diproses.'], 404);
+        }
+
+        $invitation->update(['status' => 'declined']);
+
+        return response()->json(['message' => 'Join request ditolak.']);
     }
 
     public function requestSeparation(Request $request, Space $space)
@@ -774,5 +830,14 @@ class SpaceApiController extends Controller
         if (!$space->hasMember(Auth::id())) {
             abort(403);
         }
+    }
+
+    private function makeUniqueInviteCode(): string
+    {
+        do {
+            $code = Str::upper(Str::random(8));
+        } while (Space::where('invite_code', $code)->exists());
+
+        return $code;
     }
 }

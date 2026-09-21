@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Space;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
@@ -12,6 +13,16 @@ use Inertia\Response;
 
 class NotificationController extends Controller
 {
+    public function unreadCount(Request $request): JsonResponse
+    {
+        /** @var \App\Models\User $user */
+        $user = $request->user();
+
+        return response()->json([
+            'count' => $user?->unreadNotifications()->count() ?? 0,
+        ]);
+    }
+
     public function index(Request $request, Space $space): Response
     {
         /** @var \App\Models\User $user */

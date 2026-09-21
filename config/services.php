@@ -64,4 +64,9 @@ return [
         'refresh_margin' => (int) env('SPOTIFY_REFRESH_MARGIN', 300),
     ],
 
+    'klipy' => [
+        'key' => env('KLIPY_API_KEY'),
+        'base_url' => env('KLIPY_BASE_URL', 'https://api.klipy.com/api/v1'),
+    ],
+
 ];

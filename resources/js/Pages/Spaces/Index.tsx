@@ -33,6 +33,7 @@ type UserProfile = {
 type SpaceListItem = {
     id: number;
     slug: string;
+    invite_code: string | null;
     title: string;
     has_partner: boolean;
     users: (UserProfile | null)[];
@@ -44,6 +45,12 @@ type SpaceListItem = {
         sent_at: string | null;
     } | null;
     invitations: SpaceInvitationHistory[];
+    join_requests: {
+        id: number;
+        name: string;
+        email: string;
+        created_at: string | null;
+    }[];
     pending_separation: {
         id: number;
         status: "pending" | "approved" | "rejected" | "cancelled";
@@ -372,7 +379,7 @@ export default function SpacesIndex({
         const sanitizedCode = joinCode.trim().toUpperCase();
 
         if (!sanitizedCode) {
-            setJoinCodeError("Partner code is required.");
+            setJoinCodeError("Invite code is required.");
             return;
         }
 
@@ -382,7 +389,7 @@ export default function SpacesIndex({
             const response = await axios.post(
                 route("api.spaces.request-join"),
                 {
-                    partner_code: sanitizedCode,
+                    invite_code: sanitizedCode,
                 }
             );
 
@@ -390,22 +397,12 @@ export default function SpacesIndex({
                 type: "success",
                 message:
                     (response.data?.message as string | undefined) ??
-                    "Successfully joined your partner's Space.",
+                    "Join request sent. Waiting for Space owner to approve.",
             });
 
             setJoinCode("");
 
-            const targetSlug: string | undefined = response.data?.space?.slug;
-
-            if (targetSlug) {
-                setTimeout(() => {
-                    router.visit(
-                        route("spaces.dashboard", { space: targetSlug })
-                    );
-                }, 200);
-            } else {
-                router.reload();
-            }
+            router.reload();
         } catch (error) {
             if (axios.isAxiosError(error)) {
                 const data = error.response?.data as
@@ -892,16 +889,17 @@ export default function SpacesIndex({
                 Gabung ke Space Pasangan
             </h3>
             <p className="mt-1 text-sm text-gray-500">
-                Masukkan kode pasangan (Partner Code) yang dibagikan pasanganmu
-                untuk langsung bergabung.
+                Masukkan invite code yang dibagikan pasanganmu untuk mengirim
+                permintaan bergabung. Pemilik Space akan menyetujui atau menolak
+                permintaanmu.
             </p>
 
             <form onSubmit={handleJoinSpace} className="mt-6 space-y-4">
                 <div>
-                    <InputLabel htmlFor="partner_code" value="Kode Pasangan" />
+                    <InputLabel htmlFor="invite_code" value="Invite Code" />
                     <TextInput
-                        id="partner_code"
-                        name="partner_code"
+                        id="invite_code"
+                        name="invite_code"
                         value={joinCode}
                         className="mt-1 block w-full uppercase tracking-widest"
                         onChange={(event) =>
@@ -920,7 +918,7 @@ export default function SpacesIndex({
                     className="w-full justify-center"
                     disabled={joining}
                 >
-                    {joining ? "Menghubungkan..." : "Gabung ke Space"}
+                    {joining ? "Mengirim Request..." : "Kirim Join Request"}
                 </PrimaryButton>
             </form>
         </div>
@@ -1042,6 +1040,86 @@ export default function SpacesIndex({
                                             : pendingSeparation.requires_your_confirmation
                                             ? "Dissolution request awaiting your decision."
                                             : "Dissolution request is being processed."}
+                                    </div>
+                                )}
+
+                                {!space.has_partner && space.invite_code && (
+                                    <div className="mt-3 rounded-lg border border-blue-100 bg-blue-50 p-4">
+                                        <p className="text-xs font-semibold uppercase tracking-wide text-blue-600">
+                                            Invite Code
+                                        </p>
+                                        <p className="mt-1 text-2xl font-bold tracking-widest text-blue-800 select-all">
+                                            {space.invite_code}
+                                        </p>
+                                        <p className="mt-1 text-xs text-blue-500">
+                                            Bagikan kode ini ke pasanganmu agar bisa bergabung.
+                                        </p>
+                                    </div>
+                                )}
+
+                                {!space.has_partner && (space.join_requests?.length ?? 0) > 0 && (
+                                    <div className="mt-3 space-y-2">
+                                        <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">
+                                            Join Requests Menunggu Persetujuan
+                                        </p>
+                                        {space.join_requests!.map((req) => (
+                                            <div
+                                                key={req.id}
+                                                className="flex flex-col gap-2 rounded-lg border border-amber-200 bg-amber-50 p-3 sm:flex-row sm:items-center sm:justify-between"
+                                            >
+                                                <div>
+                                                    <p className="text-sm font-medium text-gray-900">
+                                                        {req.name}
+                                                    </p>
+                                                    <p className="text-xs text-gray-500">
+                                                        {req.email}
+                                                    </p>
+                                                    <p className="text-xs text-gray-400">
+                                                        {req.created_at ? `Dikirim ${req.created_at}` : ""}
+                                                    </p>
+                                                </div>
+                                                <div className="flex gap-2">
+                                                    <button
+                                                        type="button"
+                                                        onClick={async () => {
+                                                            try {
+                                                                await axios.post(
+                                                                    route("api.spaces.join-requests.approve", {
+                                                                        space: space.slug,
+                                                                        invitation: req.id,
+                                                                    })
+                                                                );
+                                                                router.reload();
+                                                            } catch {
+                                                                alert("Gagal menyetujui join request.");
+                                                            }
+                                                        }}
+                                                        className="inline-flex items-center justify-center rounded-full bg-green-600 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-green-700"
+                                                    >
+                                                        Setujui
+                                                    </button>
+                                                    <button
+                                                        type="button"
+                                                        onClick={async () => {
+                                                            try {
+                                                                await axios.post(
+                                                                    route("api.spaces.join-requests.reject", {
+                                                                        space: space.slug,
+                                                                        invitation: req.id,
+                                                                    })
+                                                                );
+                                                                router.reload();
+                                                            } catch {
+                                                                alert("Gagal menolak join request.");
+                                                            }
+                                                        }}
+                                                        className="inline-flex items-center justify-center rounded-full border border-red-200 px-3 py-1.5 text-xs font-semibold text-red-600 transition hover:bg-red-50"
+                                                    >
+                                                        Tolak
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        ))}
                                     </div>
                                 )}
 

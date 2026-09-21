@@ -1,0 +1,71 @@
+{
+  "version": 2,
+  "installCommand": "npm install && composer install --no-dev --optimize-autoloader",
+  "buildCommand": "npm run build && php artisan config:cache && php artisan route:cache && php artisan view:cache",
+  "builds": [
+    {
+      "src": "api/index.php",
+      "use": "vercel-php@0.6.2"
+    },
+    {
+      "src": "public/**",
+      "use": "@vercel/static"
+    }
+  ],
+  "routes": [
+    {
+      "src": "/build/(.*)",
+      "dest": "/public/build/$1"
+    },
+    {
+      "src": "/css/(.*)",
+      "dest": "/public/css/$1"
+    },
+    {
+      "src": "/js/(.*)",
+      "dest": "/public/js/$1"
+    },
+    {
+      "src": "/images/(.*)",
+      "dest": "/public/images/$1"
+    },
+    {
+      "src": "/fonts/(.*)",
+      "dest": "/public/fonts/$1"
+    },
+    {
+      "src": "/storage/(.*)",
+      "dest": "/public/storage/$1"
+    },
+    {
+      "src": "/favicon.ico",
+      "dest": "/public/favicon.ico"
+    },
+    {
+      "src": "/robots.txt",
+      "dest": "/public/robots.txt"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/api/index.php"
+    }
+  ],
+  "env": {
+    "APP_NAME": "LoveSpace",
+    "APP_ENV": "production",
+    "APP_DEBUG": "false",
+    "LOG_CHANNEL": "stderr",
+    "LOG_LEVEL": "error",
+    "CACHE_DRIVER": "database",
+    "SESSION_DRIVER": "database",
+    "QUEUE_CONNECTION": "database",
+    "FILESYSTEM_DISK": "s3",
+    "VIEW_COMPILED_PATH": "/tmp/views"
+  },
+  "functions": {
+    "api/index.php": {
+      "memory": 3008,
+      "maxDuration": 30
+    }
+  }
+}

@@ -1,0 +1,70 @@
+# Dependencies
+/node_modules/
+/frontend/node_modules/
+
+# Build artifacts
+/public/build/
+/public/hot
+
+# Environment files
+.env
+.env.backup
+.env.local
+.env.production
+
+# Logs
+*.log
+*.bak
+npm-debug.log
+yarn-error.log
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Tests
+/tests/
+/phpunit.xml
+/phpunit.xml.bak
+
+# Documentation
+/docs/
+*.md
+
+# Scripts (not needed in production)
+/deploy.sh
+/pre-deployment.sh
+/post-deployment.sh
+/server-setup.sh
+/security-scan.sh
+
+# Git
+/.git/
+/.github/
+
+# Config files (not needed in production)
+/.editorconfig
+/.styleci.yml
+/.gitattributes
+/.gitignore
+/phpstan.neon
+/pint.json
+
+# Temporary files
+/temp*
+/check_tour.php
+/public_html.*
+/ReconLedger/
+/react-page-flip/
+
+# OpenCode
+/.opencode/
+/.agent/
+/.docs/

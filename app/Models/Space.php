@@ -17,6 +17,7 @@ class Space extends Model
 
     protected $fillable = [
         'slug',
+        'invite_code',
         'title',
         'user_one_id',
         'user_two_id',
@@ -37,7 +38,12 @@ class Space extends Model
 
     public function pendingInvitation()
     {
-        return $this->hasOne(SpaceInvitation::class)->where('status', 'pending');
+        return $this->hasOne(SpaceInvitation::class)->where('status', 'pending')->where('kind', 'email_invite');
+    }
+
+    public function pendingJoinRequests()
+    {
+        return $this->hasMany(SpaceInvitation::class)->where('status', 'pending')->where('kind', 'join_request');
     }
 
     public function separationRequests()

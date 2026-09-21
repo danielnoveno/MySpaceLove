@@ -35,6 +35,7 @@ class SpaceController extends Controller
                 $query->orderByDesc('created_at');
             },
             'pendingInvitation',
+            'pendingJoinRequests.invitee:id,name,email',
             'pendingSeparationRequest',
         ];
 
@@ -47,7 +48,7 @@ class SpaceController extends Controller
 
         $spaceModels = $spacesQuery
             ->orderByDesc('created_at')
-            ->get(['id', 'slug', 'title', 'user_one_id', 'user_two_id']);
+            ->get(['id', 'slug', 'invite_code', 'title', 'user_one_id', 'user_two_id']);
 
         $spaces = $spaceModels
             ->map(fn (Space $space): array => [
@@ -96,6 +97,15 @@ class SpaceController extends Controller
                         'sent_at' => SpaceInvitation::formatTimestamp($invitation->created_at),
                         'responded_at' => SpaceInvitation::formatTimestamp($invitation->accepted_at),
                         'cancelled_at' => SpaceInvitation::formatTimestamp($invitation->cancelled_at),
+                    ])
+                    ->values()
+                    ->all() : [],
+                'join_requests' => ($space->relationLoaded('pendingJoinRequests')) ? $space->pendingJoinRequests
+                    ->map(fn (SpaceInvitation $request): array => [
+                        'id' => $request->id,
+                        'name' => $request->invitee?->name ?? $request->invitee_email,
+                        'email' => $request->invitee_email,
+                        'created_at' => $request->created_at?->toIso8601String(),
                     ])
                     ->values()
                     ->all() : [],
@@ -216,6 +226,7 @@ class SpaceController extends Controller
         $space = Space::create([
             'title' => $data['title'],
             'slug' => $slug,
+            'invite_code' => $this->makeUniqueInviteCode(),
             'user_one_id' => $user->id,
             'bio' => $data['bio'] ?? null,
         ]);
@@ -225,6 +236,61 @@ class SpaceController extends Controller
         return redirect()
             ->route('spaces.dashboard', ['space' => $space->slug])
             ->with('status', __('app.spaces.flash.created'));
+    }
+
+    public function separation(Space $space): Response
+    {
+        $user = Auth::user();
+
+        abort_unless($user && $space->hasMember($user->id), 403);
+
+        $space->loadMissing([
+            'userOne:id,name,email,profile_image',
+            'userTwo:id,name,email,profile_image',
+            'pendingSeparationRequest.initiator:id,name,email',
+            'pendingSeparationRequest.partner:id,name,email',
+        ]);
+
+        $pending = $space->pendingSeparationRequest;
+        $partner = $space->user_one_id === $user->id ? $space->userTwo : $space->userOne;
+
+        return Inertia::render('Spaces/Separation', [
+            'space' => [
+                'id' => $space->id,
+                'slug' => $space->slug,
+                'invite_code' => $space->invite_code,
+                'title' => $space->title,
+                'has_partner' => $space->user_two_id !== null,
+                'partner' => $partner ? [
+                    'id' => $partner->id,
+                    'name' => $partner->name,
+                    'email' => $partner->email,
+                    'profile_photo_url' => $partner->profile_photo_url,
+                ] : null,
+            ],
+            'pendingSeparation' => $pending ? [
+                'id' => $pending->id,
+                'status' => $pending->status,
+                'initiated_by_you' => $pending->initiator_id === $user->id,
+                'requires_your_confirmation' => $pending->status === SpaceSeparationRequest::STATUS_PENDING
+                    && $pending->partner_id === $user->id
+                    && $pending->partner_confirmed_at === null,
+                'created_at' => $pending->created_at?->toIso8601String(),
+                'initiator' => $pending->initiator ? [
+                    'id' => $pending->initiator->id,
+                    'name' => $pending->initiator->name,
+                ] : null,
+                'partner' => $pending->partner ? [
+                    'id' => $pending->partner->id,
+                    'name' => $pending->partner->name,
+                ] : null,
+                'reason' => [
+                    'initiator' => $pending->initiator_reason,
+                    'partner' => $pending->partner_reason,
+                ],
+            ] : null,
+            'separationConfirmationPhrase' => SpaceSeparationRequest::CONFIRMATION_PHRASE,
+        ]);
     }
 
     /**
@@ -241,5 +307,50 @@ class SpaceController extends Controller
         }
 
         return $slug;
+    }
+
+    private function makeUniqueInviteCode(): string
+    {
+        do {
+            $code = Str::upper(Str::random(8));
+        } while (Space::where('invite_code', $code)->exists());
+
+        return $code;
+    }
+
+    public function settings(Space $space): Response
+    {
+        $user = Auth::user();
+
+        abort_unless($user && $space->hasMember($user->id), 403);
+
+        return Inertia::render('Spaces/Settings', [
+            'space' => [
+                'id' => $space->id,
+                'slug' => $space->slug,
+                'title' => $space->title,
+                'bio' => $space->bio,
+                'is_public' => $space->is_public,
+            ],
+        ]);
+    }
+
+    public function update(Request $request, Space $space): RedirectResponse
+    {
+        $user = $request->user();
+
+        abort_unless($user && $space->user_one_id === $user->id, 403);
+
+        $data = $request->validate([
+            'title' => ['required', 'string', 'max:255'],
+            'bio' => ['nullable', 'string', 'max:1000'],
+            'is_public' => ['boolean'],
+        ]);
+
+        $space->update($data);
+
+        return redirect()
+            ->route('spaces.settings', ['space' => $space->slug])
+            ->with('status', 'Settings updated successfully.');
     }
 }

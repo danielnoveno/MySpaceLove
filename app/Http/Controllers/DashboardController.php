@@ -50,8 +50,12 @@ class DashboardController extends Controller
                 'upcomingEvents' => Countdown::where('space_id', $space->id)
                     ->where('event_date', '>=', now())
                     ->orderBy('event_date')
-                    ->selectRaw('id, event_name, event_date, description, DATEDIFF(event_date, CURDATE()) as days_left')
-                    ->get(),
+                    ->select('id', 'event_name', 'event_date', 'description')
+                    ->get()
+                    ->map(function ($event) {
+                        $event->days_left = \Carbon\Carbon::now()->diffInDays($event->event_date, false);
+                        return $event;
+                    }),
                 'recentMessages' => DailyMessage::where('space_id', $space->id)
                     ->with('user:id,name')
                     ->orderBy('date', 'desc')

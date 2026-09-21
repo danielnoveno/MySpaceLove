@@ -8,6 +8,8 @@ import ConnectFourGame from "@/Pages/Games/components/ConnectFourGame";
 import MemoryMatchGame from "@/Pages/Games/components/MemoryMatchGame";
 import MazeEscapeGame from "@/Pages/Games/components/MazeEscapeGame";
 import CoupleQuizGame from "@/Pages/Games/components/CoupleQuizGame";
+import Game2048 from "@/Pages/Games/components/Game2048";
+import SudokuGame from "@/Pages/Games/components/SudokuGame";
 
 interface GameInfo {
     id: number;
@@ -142,6 +144,10 @@ export default function GamesShow({
                         sessionMoveRoute={sessionMoveRoute}
                     />
                 );
+            case "2048":
+                return <Game2048 onGameOver={submitScore} />;
+            case "sudoku":
+                return <SudokuGame onGameOver={submitScore} />;
             default:
                 return (
                     <div className="rounded-3xl border border-dashed border-purple-200 bg-white/70 p-8 text-center text-sm text-gray-500">

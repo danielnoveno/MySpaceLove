@@ -72,6 +72,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('spaces/{space}/confirm-partner', [SpaceApiController::class, 'confirmPartner'])->name('api.spaces.confirm-partner');
     Route::delete('spaces/{space}/invitations/{invitation}', [SpaceApiController::class, 'cancelInvitation'])->name('api.spaces.invitations.cancel');
     Route::post('spaces/join-by-code', [SpaceApiController::class, 'requestJoin'])->name('api.spaces.request-join');
+    Route::post('spaces/{space}/join-requests/{invitation}/approve', [SpaceApiController::class, 'approveJoinRequest'])->name('api.spaces.join-requests.approve');
+    Route::post('spaces/{space}/join-requests/{invitation}/reject', [SpaceApiController::class, 'rejectJoinRequest'])->name('api.spaces.join-requests.reject');
     Route::post('spaces/{space}/separation/request', [SpaceApiController::class, 'requestSeparation'])->name('api.spaces.separation.request');
     Route::post('spaces/{space}/separation/respond', [SpaceApiController::class, 'respondSeparation'])->name('api.spaces.separation.respond');
     Route::post('spaces/{space}/separation/cancel', [SpaceApiController::class, 'cancelSeparation'])->name('api.spaces.separation.cancel');

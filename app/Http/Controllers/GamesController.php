@@ -29,6 +29,8 @@ class GamesController extends Controller
             'memory-match',
             'maze-escape',
             'couple-quiz',
+            '2048',
+            'sudoku',
             'tetris',
             'slither',
         ];

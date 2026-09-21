@@ -4,5 +4,15 @@
   "plugin": ["./.opencode/plugins/ponytail.mjs"],
   "skills": {
     "paths": [".opencode/skills"]
+  },
+  "mcp": {
+    "jev-mcp": {
+      "type": "local",
+      "command": ["jev-mcp"],
+      "enabled": true,
+      "environment": {
+        "TYPESAFE_API_KEY": "{env:TYPESAFE_API_KEY}"
+      }
+    }
   }
 }
