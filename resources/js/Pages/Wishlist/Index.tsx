@@ -12,7 +12,7 @@ export default function WishlistIndex({ items }: { items: any[] }) {
         >
             <Head title="Wishlist" />
 
-            <div className="p-6 space-y-6 max-w-6xl mx-auto">
+            <div className="w-full max-w-none p-6 space-y-6">
                 <div className="flex justify-between items-center">
                     <h3 className="text-lg font-bold text-yellow-700">
                         Wishlist Berdua ⭐

@@ -264,7 +264,7 @@ export default function NotificationsIndex() {
         >
             <Head title={pageTitle} />
 
-            <section className="mx-auto flex w-full max-w-5xl flex-col gap-6 px-4 sm:px-6 lg:px-8">
+            <section className="flex w-full max-w-none flex-col gap-6 px-0 sm:px-6 lg:px-8">
                 {flashStatus && (
                     <div className="rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700 shadow-sm">
                         {flashStatus}

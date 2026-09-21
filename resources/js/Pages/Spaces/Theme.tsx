@@ -29,7 +29,7 @@ export default function SpaceTheme({
         >
             <Head title="Pilih Tema" />
 
-            <div className="p-6 space-y-6 max-w-6xl mx-auto">
+            <div className="w-full max-w-none p-6 space-y-6">
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                     {themes.map((theme) => (
                         <div

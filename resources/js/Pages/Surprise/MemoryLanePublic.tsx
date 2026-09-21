@@ -115,7 +115,7 @@ export default function MemoryLanePublic({
     }, [completedLevels, allLevelsFinished, levels]);
 
     const mainContent = (
-        <div className="relative mx-auto flex min-h-screen w-full max-w-6xl flex-col px-4 py-16 sm:px-8 md:px-12">
+        <div className="relative flex min-h-screen w-full max-w-none flex-col px-4 py-16 sm:px-8 md:px-12">
             {levels.length > 0 && !allLevelsFinished && (
                 <div className="mb-8 flex flex-wrap justify-center gap-3 text-[0.65rem] font-semibold uppercase tracking-[0.32em]">
                     {levels.map((level, index) => {

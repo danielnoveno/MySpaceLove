@@ -236,7 +236,7 @@ export default function CountdownCreate() {
             <div className="relative min-h-screen overflow-hidden bg-gradient-to-br from-violet-50 via-white to-fuchsia-50 py-10 px-4 sm:px-6 lg:px-8">
                 <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,_#ede9fe_0,_transparent_45%)] opacity-50" />
 
-                <div className="relative mx-auto w-full max-w-4xl">
+                <div className="relative w-full max-w-none">
                     <form
                         onSubmit={handleSubmit}
                         className="relative z-10 space-y-10 rounded-[30px] border border-violet-100 bg-white/85 p-8 shadow-xl backdrop-blur-sm md:p-10"

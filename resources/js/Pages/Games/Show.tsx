@@ -154,7 +154,7 @@ export default function GamesShow({
     return (
         <AuthenticatedLayout>
             <Head title={game.name} />
-            <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="w-full max-w-none px-0 sm:px-6 lg:px-8">
                 <div className="mb-8 flex flex-wrap items-center justify-between gap-4">
                     <div>
                         <Link

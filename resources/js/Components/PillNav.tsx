@@ -296,9 +296,9 @@ const PillNav: React.FC<PillNavProps> = ({
   } as React.CSSProperties;
 
   return (
-    <div className={`fixed top-4 z-[1000] w-full left-0 px-4 md:px-0 md:w-auto md:left-1/2 md:-translate-x-1/2 ${dimmed ? 'opacity-20 hover:opacity-100 transition-all duration-500 hover:grayscale-0' : ''}`}>
+    <div className={`pointer-events-none fixed top-4 z-[1000] w-full left-0 overflow-visible px-4 md:px-0 md:w-auto md:left-1/2 md:-translate-x-1/2 ${dimmed ? 'opacity-20 hover:opacity-100 transition-all duration-500 hover:grayscale-0' : ''}`}>
       <nav
-        className={`w-full md:w-max flex items-center justify-between md:justify-start box-border ${className}`}
+        className={`pointer-events-none w-full overflow-visible bg-transparent md:w-max flex items-center justify-between md:justify-start box-border ${className}`}
         aria-label="Primary"
         style={cssVars}
       >
@@ -311,11 +311,10 @@ const PillNav: React.FC<PillNavProps> = ({
             ref={(el: HTMLAnchorElement | null) => {
                 if (el) logoRef.current = el;
             }}
-            className="rounded-full p-2 inline-flex items-center justify-center overflow-hidden mr-2 shadow-lg"
+            className="pointer-events-auto rounded-full p-2 inline-flex items-center justify-center overflow-hidden mr-2 border border-white/60 bg-white/45 shadow-[0_10px_30px_rgba(236,72,153,0.16)] backdrop-blur-xl"
             style={{
               width: 'var(--nav-h)',
-              height: 'var(--nav-h)',
-              background: 'var(--base, #000)'
+              height: 'var(--nav-h)'
             }}
           >
             {typeof logo === 'string' ? (
@@ -334,11 +333,10 @@ const PillNav: React.FC<PillNavProps> = ({
             ref={el => {
                 if (el) logoRef.current = el;
             }}
-            className="rounded-full p-2 inline-flex items-center justify-center overflow-hidden mr-2 shadow-lg"
+            className="pointer-events-auto rounded-full p-2 inline-flex items-center justify-center overflow-hidden mr-2 border border-white/60 bg-white/45 shadow-[0_10px_30px_rgba(236,72,153,0.16)] backdrop-blur-xl"
             style={{
               width: 'var(--nav-h)',
-              height: 'var(--nav-h)',
-              background: 'var(--base, #000)'
+              height: 'var(--nav-h)'
             }}
           >
             {typeof logo === 'string' ? (
@@ -353,25 +351,29 @@ const PillNav: React.FC<PillNavProps> = ({
 
         <div
           ref={navItemsRef}
-          className="relative items-center rounded-full hidden md:flex shadow-lg"
+          className="pointer-events-auto relative items-center rounded-full hidden overflow-visible bg-transparent md:flex"
           style={{
             height: 'var(--nav-h)',
-            background: 'var(--base, #000)'
+            background: 'transparent'
           }}
         >
           <ul
             role="menubar"
-            className="list-none flex items-stretch m-0 p-[4px] h-full"
+            className="list-none flex items-stretch m-0 p-0 h-full"
             style={{ gap: 'var(--pill-gap)' }}
           >
             {items.map((item, i) => {
               const isActive = activeHref === item.href;
 
               const pillStyle: React.CSSProperties = {
-                background: 'var(--pill-bg, #fff)',
+                background: 'rgba(253, 242, 248, 0.64)',
                 color: 'var(--pill-text, var(--base, #000))',
                 paddingLeft: 'var(--pill-pad-x)',
-                paddingRight: 'var(--pill-pad-x)'
+                paddingRight: 'var(--pill-pad-x)',
+                border: '1px solid rgba(255,255,255,0.58)',
+                backdropFilter: 'blur(18px) saturate(1.35)',
+                WebkitBackdropFilter: 'blur(18px) saturate(1.35)',
+                boxShadow: '0 10px 30px rgba(236,72,153,0.12), inset 0 1px 0 rgba(255,255,255,0.55)'
               };
 
               // Reusable Content inside the Link/A
@@ -483,7 +485,7 @@ const PillNav: React.FC<PillNavProps> = ({
         </div>
 
         {rightContent && (
-            <div ref={rightContentRef} className="hidden md:block ml-2 rounded-full shadow-lg bg-white overflow-hidden" style={{ height: 'var(--nav-h)' }}>
+            <div ref={rightContentRef} className="pointer-events-auto hidden md:block ml-2 rounded-full border border-white/60 bg-white/45 shadow-[0_10px_30px_rgba(236,72,153,0.16)] backdrop-blur-xl overflow-hidden" style={{ height: 'var(--nav-h)' }}>
                 {rightContent}
             </div>
         )}
@@ -493,11 +495,10 @@ const PillNav: React.FC<PillNavProps> = ({
           onClick={toggleMobileMenu}
           aria-label="Toggle menu"
           aria-expanded={isMobileMenuOpen}
-          className="md:hidden rounded-full border-0 flex flex-col items-center justify-center gap-1 cursor-pointer p-0 relative shadow-lg"
+          className="pointer-events-auto md:hidden rounded-full border border-white/60 flex flex-col items-center justify-center gap-1 cursor-pointer p-0 relative bg-white/45 shadow-[0_10px_30px_rgba(236,72,153,0.16)] backdrop-blur-xl"
           style={{
             width: 'var(--nav-h)',
-            height: 'var(--nav-h)',
-            background: 'var(--base, #000)'
+            height: 'var(--nav-h)'
           }}
         >
           <span
@@ -513,7 +514,7 @@ const PillNav: React.FC<PillNavProps> = ({
 
       <div
         ref={mobileMenuRef}
-        className="md:hidden absolute top-[calc(var(--nav-h)+1em)] left-0 right-0 mx-4 rounded-[27px] shadow-[0_8px_32px_rgba(0,0,0,0.12)] z-[998] origin-top"
+        className="pointer-events-auto md:hidden absolute top-[calc(var(--nav-h)+1em)] left-0 right-0 mx-4 rounded-[27px] shadow-[0_8px_32px_rgba(0,0,0,0.12)] z-[998] origin-top"
         style={{
           ...cssVars,
           background: 'var(--base, #f0f0f0)'

@@ -197,7 +197,7 @@ export default function TimelineCreate() {
             <Head title={headTitle} />
 
             <div className="relative min-h-screen overflow-hidden bg-gradient-to-br from-pink-50 via-white to-rose-50 py-10 px-4 sm:px-6 lg:px-8">
-                <div className="relative mx-auto max-w-4xl">
+                <div className="relative w-full max-w-none">
                     <form
                         onSubmit={handleSubmit}
                         className="relative z-10 rounded-3xl border border-gray-100 bg-white/80 p-8 shadow-lg backdrop-blur-sm md:p-10"

@@ -30,7 +30,7 @@ export default function SpaceSettings({ space }: { space: Space }) {
         >
             <Head title="Space Settings" />
 
-            <div className="p-6 max-w-xl mx-auto bg-white shadow-md rounded-xl space-y-6">
+            <div className="w-full max-w-none p-6 bg-white shadow-md rounded-xl space-y-6">
                 <form onSubmit={submit}>
                     <div>
                         <label className="block text-gray-700 font-medium">

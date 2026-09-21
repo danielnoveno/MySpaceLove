@@ -215,24 +215,16 @@ export default function AuthenticatedLayout({
                 pillColor="#fdf2f8" // pink-50
                 pillTextColor="#db2777" // pink-600
                 hoveredPillTextColor="#be185d" // pink-700
-                className="shadow-sm z-50"
+                className="z-50"
                 rightContent={languageSelector}
                 dimmed={dimNav}
             />
 
             {/* Content Area - Flex column to push footer down */}
-            <div className="flex-1 flex flex-col overflow-hidden w-full pt-28">
+            <div className="flex-1 flex flex-col overflow-hidden w-full pt-0">
                 {/* Scrollable Container */}
                 <div className="flex-1 overflow-y-auto overflow-x-hidden scroll-smooth custom-scrollbar">
-                    {header && (
-                        <header className="bg-white/60 backdrop-blur-md shadow-sm sticky top-0 z-30 transition-all duration-300">
-                            <div className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
-                                {header}
-                            </div>
-                        </header>
-                    )}
-
-                    <main className="py-8 px-4 sm:px-6 lg:px-8 min-h-[calc(100vh-12rem)]">
+                    <main className="w-full max-w-none pt-20 pb-2 px-4 sm:px-6 lg:px-8 2xl:px-12 min-h-[calc(100vh-12rem)]">
                         {children}
                     </main>
                 </div>

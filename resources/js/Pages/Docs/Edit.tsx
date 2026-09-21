@@ -135,7 +135,7 @@ export default function DocsEdit() {
             <Head title="Edit Document" />
 
             <div className="min-h-screen bg-gradient-to-br from-orange-50 via-white to-amber-50 py-10 px-6">
-                <div className="max-w-4xl mx-auto bg-white/80 backdrop-blur-sm rounded-3xl shadow-lg border border-gray-100 p-8 md:p-10 space-y-8">
+                <div className="w-full max-w-none bg-white/80 backdrop-blur-sm rounded-3xl shadow-lg border border-gray-100 p-8 md:p-10 space-y-8">
                     <form onSubmit={handleSubmit} className="space-y-8">
                         <div>
                             <label className="block font-semibold text-gray-800 mb-2">

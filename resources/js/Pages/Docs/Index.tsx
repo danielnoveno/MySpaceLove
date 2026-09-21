@@ -157,7 +157,7 @@ export default function DocsIndex({ docs }: Props) {
                     </div>
                 ))}
 
-                <div className="relative z-10 max-w-6xl mx-auto grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div className="relative z-10 grid w-full max-w-none grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                     {docs.length === 0 ? (
                         <div className="text-center col-span-full py-20">
                             <FileText className="w-16 h-16 text-gray-300 mx-auto mb-4" />

@@ -71,7 +71,7 @@ export default function JournalEdit({ journal, space }: Props) {
             <div className="relative min-h-screen overflow-hidden bg-gradient-to-br from-rose-50 via-white to-pink-50 px-4 py-10 sm:px-6 lg:px-8">
                 <div className="absolute inset-x-8 top-24 hidden h-56 rounded-full bg-rose-200/35 blur-3xl md:block" aria-hidden="true" />
 
-                <div className="relative mx-auto max-w-3xl">
+                <div className="relative w-full max-w-none">
                     <form
                         onSubmit={handleSubmit}
                         className="relative z-10 space-y-8 rounded-3xl border border-white/60 bg-white/85 p-8 shadow-xl backdrop-blur md:p-10"

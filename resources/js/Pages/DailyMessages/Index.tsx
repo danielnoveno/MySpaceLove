@@ -292,7 +292,7 @@ export default function DailyMessageIndex({
         >
             <Head title={dailyStrings.meta?.title ?? "Daily Messages"} />
 
-            <div className="p-6 space-y-6 max-w-8xl mx-auto">
+            <div className="w-full max-w-none space-y-6 p-0 sm:p-6">
                 <div className="p-4 flex justify-between items-center">
                     <h3 className="text-lg font-bold text-pink-700">
                         {dailyStrings.title ?? "Pesan Harian Kita 💌"}

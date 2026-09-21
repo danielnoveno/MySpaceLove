@@ -33,7 +33,7 @@ export default function ProductTour({
     const dashboardSteps: DriveStep[] = [
         // 1. Welcome
         {
-            element: '#space-title',
+            element: '#stats-section',
             popover: {
                 title: t('tour.welcome.title', 'Welcome to LoveSpace! 💕'),
                 description: t('tour.welcome.description', 'Let\'s take a quick tour to help you get started with all the amazing features!') + 

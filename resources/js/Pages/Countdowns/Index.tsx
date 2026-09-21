@@ -337,7 +337,7 @@ export default function CountdownIndex({ items }: Props) {
         >
             <Head title={`Upcoming Events - ${spaceTitle}`} />
 
-            <div className="relative mx-auto max-w-6xl space-y-10 px-6 pb-16">
+            <div className="relative w-full max-w-none space-y-10 px-0 pb-16">
                 <section className="rounded-[28px] border border-violet-100/80 bg-white/85 p-8 shadow-sm backdrop-blur">
                     <div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
                         <div>
@@ -505,7 +505,6 @@ export default function CountdownIndex({ items }: Props) {
         </AuthenticatedLayout>
     );
 }
-
 
 
 

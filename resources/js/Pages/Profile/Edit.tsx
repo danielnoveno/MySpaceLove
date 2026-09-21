@@ -47,7 +47,7 @@ export default function Edit({
             <Head title="Profile" />
 
             <div className="py-12 sm:py-16">
-                <div className="mx-auto flex max-w-5xl flex-col gap-8 px-4 sm:px-6 lg:px-0">
+                <div className="flex w-full max-w-none flex-col gap-8 px-0 sm:px-6 lg:px-0">
                     <UpdateProfileInformationForm
                         mustVerifyEmail={mustVerifyEmail}
                         status={status}

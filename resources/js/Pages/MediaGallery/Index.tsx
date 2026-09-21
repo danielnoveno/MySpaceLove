@@ -193,7 +193,7 @@ export default function GalleryIndex({
         >
             <Head title={`Gallery - ${spaceTitle}`} />
 
-            <div className="relative mx-auto max-w-6xl space-y-10 px-4 pb-20 sm:px-6 lg:px-8">
+            <div className="relative w-full max-w-none space-y-10 px-0 pb-20 sm:px-6 lg:px-8">
                 <section className="rounded-[32px] border border-emerald-100/80 bg-white/90 p-8 shadow-sm backdrop-blur">
                     <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
                         <div>
@@ -486,5 +486,4 @@ export default function GalleryIndex({
         </AuthenticatedLayout>
     );
 }
-
 

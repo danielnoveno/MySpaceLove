@@ -98,7 +98,7 @@ export default function Share({ latitude, longitude }: Props) {
     return (
         <div className="min-h-screen bg-gradient-to-br from-pink-100 via-white to-purple-100 flex flex-col items-center justify-center px-4 py-12">
             <Head title="Lokasi Cinta" />
-            <div className="w-full max-w-3xl rounded-3xl bg-white/80 backdrop-blur p-8 shadow-xl border border-pink-100">
+            <div className="w-full max-w-none rounded-3xl bg-white/80 backdrop-blur p-8 shadow-xl border border-pink-100">
                 <div className="text-center mb-6">
                     <h1 className="text-3xl font-bold text-pink-600">
                         Lokasi Spesial ??

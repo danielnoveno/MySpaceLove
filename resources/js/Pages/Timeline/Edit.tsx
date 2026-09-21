@@ -347,7 +347,7 @@ export default function TimelineEdit({ item }: { item: TimelineItem }) {
                     className="absolute inset-0 w-full h-full pointer-events-none"
                 />
 
-                <div className="relative max-w-4xl mx-auto">
+                <div className="relative w-full max-w-none">
                     <form
                         onSubmit={handleSubmit}
                         className="bg-white/80 backdrop-blur-sm rounded-3xl shadow-lg border border-gray-100 p-8 md:p-10 relative z-10 space-y-8"

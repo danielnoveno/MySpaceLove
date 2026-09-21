@@ -92,7 +92,7 @@ export default function JournalIndex({ items, space }: Props) {
         >
             <Head title={`Journal - ${spaceTitle}`} />
 
-            <div className="relative mx-auto max-w-6xl space-y-10 px-6 pb-16">
+            <div className="relative w-full max-w-none space-y-10 px-0 pb-16">
                 <section className="relative overflow-hidden rounded-[28px] border border-amber-100/80 bg-gradient-to-r from-amber-50/70 via-white to-amber-50/70 p-8 shadow-sm backdrop-blur">
                     <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top,#fbbf24_0,transparent_60%)] opacity-40" />
                     <div className="relative flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -218,5 +218,4 @@ export default function JournalIndex({ items, space }: Props) {
         </AuthenticatedLayout>
     );
 }
-
 

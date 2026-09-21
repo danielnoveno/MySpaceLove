@@ -1584,7 +1584,7 @@ export default function SpacesIndex({
             <Head title="Spaces" />
 
             <div className="py-12">
-                <div className="mx-auto max-w-7xl sm:px-6 lg:px-8">
+                <div className="w-full max-w-none sm:px-6 lg:px-8">
                     <div className="flex flex-col gap-6 lg:flex-row lg:gap-8">
                         <div className="flex-1 space-y-6">
                             {hasSpaces && renderSpacesList()}

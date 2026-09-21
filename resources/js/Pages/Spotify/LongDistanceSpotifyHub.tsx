@@ -570,7 +570,7 @@ export default function LongDistanceSpotifyHub({ space }: Props) {
         >
             <Head title={header.page_title ?? "Spotify Companion Kit"} />
 
-            <div className="mx-auto flex w-full max-w-6xl flex-col gap-10 px-4 sm:px-6">
+            <div className="flex w-full max-w-none flex-col gap-10 px-0 sm:px-6">
                 {actionMessage && (
                     <div
                         className={`rounded-3xl border p-4 text-sm ${

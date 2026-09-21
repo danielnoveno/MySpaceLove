@@ -98,7 +98,7 @@ export default function StoryBook({
                     </div>
 
                     {/* Main content */}
-                    <div className="relative z-10 max-w-2xl w-full text-center space-y-8">
+                    <div className="relative z-10 w-full max-w-none text-center space-y-8 px-6 lg:px-12">
                         {/* Title section */}
                         <div className="space-y-4">
                             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/10 backdrop-blur-md border border-white/20">

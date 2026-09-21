@@ -179,7 +179,7 @@ export default function TimelineIndex({ timelines }: Props) {
         >
         <Head title={`Timeline - ${spaceTitle}`} />
 
-            <div className="relative mx-auto max-w-6xl space-y-10 px-6 pb-16">
+            <div className="relative w-full max-w-none space-y-10 px-0 pb-16">
                 <section className="rounded-[28px] border border-pink-100/80 bg-white/90 p-8 shadow-sm backdrop-blur">
                     <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                         <div>

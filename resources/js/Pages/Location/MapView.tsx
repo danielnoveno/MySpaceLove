@@ -852,7 +852,7 @@ export default function MapView({
         >
             <Head title="Berbagi Lokasi" />
 
-            <div className="max-w-6xl mx-auto px-4 py-8 space-y-6">
+            <div className="w-full max-w-none px-0 py-8 space-y-6">
                 <div className="grid gap-4 md:grid-cols-2">
                     <div className="rounded-2xl bg-white p-4 shadow-sm border border-pink-100">
                         <h3 className="mb-1 flex items-center gap-2 font-semibold text-gray-800">
@@ -1227,4 +1227,3 @@ export default function MapView({
         </AuthenticatedLayout>
     );
 }
-

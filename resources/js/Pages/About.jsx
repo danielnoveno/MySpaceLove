@@ -29,7 +29,7 @@ export default function About() {
         <>
             <Head title="About LoveSpace" />
             <div className="min-h-screen bg-gradient-to-b from-rose-100 via-white to-rose-50 dark:from-gray-950 dark:via-gray-900 dark:to-gray-950">
-                <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+                <div className="w-full max-w-none px-4 sm:px-6 lg:px-8 2xl:px-12 py-16">
                     <div className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm border border-rose-100/60 dark:border-gray-700 rounded-3xl shadow-xl overflow-hidden">
                         <div className="grid grid-cols-1 lg:grid-cols-5">
                             <div className="lg:col-span-3 p-8 sm:p-12 space-y-6">

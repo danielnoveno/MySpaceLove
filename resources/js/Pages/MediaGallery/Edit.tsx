@@ -244,7 +244,7 @@ export default function GalleryEdit({ item }: { item: MediaGalleryItem }) {
                     💚 💚 💚
                 </div>
 
-                <div className="relative max-w-3xl mx-auto">
+                <div className="relative w-full max-w-none">
                     <form
                         onSubmit={submit}
                         className="bg-white/80 backdrop-blur-sm rounded-3xl shadow-lg border border-gray-100 p-8 md:p-10 relative z-10 space-y-8"

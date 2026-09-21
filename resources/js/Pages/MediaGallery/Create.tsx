@@ -260,7 +260,7 @@ export default function GalleryCreate() {
 
             <div className="relative min-h-screen overflow-hidden bg-gradient-to-br from-emerald-50 via-white to-green-50 py-10 px-4 sm:px-6 lg:px-8">
 
-                <div className="relative mx-auto max-w-3xl">
+                <div className="relative w-full max-w-none">
                     <form
                         onSubmit={handleSubmit}
                         className="relative z-10 space-y-8 rounded-3xl border border-emerald-100 bg-white/85 p-8 shadow-lg backdrop-blur-sm md:p-10"

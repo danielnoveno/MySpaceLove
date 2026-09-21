@@ -298,7 +298,7 @@ export default function MemoryLaneConfig({ space, levels, pin, contentSet, activ
         >
             <Head title={`${pageTitle} - ${space.title}`} />
 
-            <div className="relative mx-auto max-w-5xl space-y-8 px-4 pb-16 sm:px-6 lg:px-8">
+            <div className="relative w-full max-w-none space-y-8 px-0 pb-16 sm:px-6 lg:px-8">
                 {flash?.success && (
                     <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700 shadow">
                         {flash.success}

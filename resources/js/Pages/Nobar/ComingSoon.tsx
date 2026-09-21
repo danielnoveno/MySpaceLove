@@ -77,7 +77,7 @@ export default function ComingSoon({ space }: Props) {
             </Head>
 
             <div
-                className="mx-auto w-full max-w-6xl space-y-6 px-4 pb-10 pt-2 sm:px-0"
+                className="w-full max-w-none space-y-6 px-0 pb-10 pt-2"
                 style={{ fontFamily: '"Space Grotesk", "Manrope", sans-serif' }}
             >
                 <style>{`

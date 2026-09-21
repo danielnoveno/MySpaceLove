@@ -125,7 +125,7 @@ export default function StoryBookPage({ space, pages }: StoryBookPageProps) {
         >
             <Head title={headTitle} />
             <div className="relative min-h-screen bg-gradient-to-br from-[#f5f1e6] via-white to-[#d5ede9] pb-16">
-                <div className="mx-auto flex max-w-6xl flex-col gap-10 px-4 pt-10 sm:px-6 lg:px-8">
+                <div className="flex w-full max-w-none flex-col gap-10 px-4 pt-10 sm:px-6 lg:px-8">
                     {!isViewing && (
                         <div className="relative overflow-hidden rounded-[40px] border border-[#c9dcd9] bg-white/90 p-8 shadow-xl">
                             <div className="absolute inset-0 bg-gradient-to-br from-[#498386]/10 via-transparent to-[#cfcab5]/30" />
@@ -169,7 +169,7 @@ export default function StoryBookPage({ space, pages }: StoryBookPageProps) {
                     )}
 
                     {isViewing && hasPages && (
-                        <div className="mx-auto flex w-full max-w-5xl flex-col items-center gap-6">
+                        <div className="flex w-full max-w-none flex-col items-center gap-6">
                             <div className="relative w-full overflow-hidden rounded-[42px] border border-[#d7e5e2] bg-white/90 p-6 shadow-2xl">
                                 <HTMLFlipBook
                                     width={Math.min(MAX_CANVAS_WIDTH, 400)}

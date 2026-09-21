@@ -166,7 +166,7 @@ export default function GamesIndex({
                 spinDuration={2}
                 parallaxOn={true}
             />
-            <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="w-full max-w-none px-0 sm:px-6 lg:px-8">
                 <div className="mb-8">
                     <h1 className="text-3xl font-semibold text-gray-900">
                         Games Hub
