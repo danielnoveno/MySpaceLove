@@ -59,4 +59,17 @@ if (getenv('VERCEL') || getenv('NOW_REGION')) {
 $appPath = __DIR__ . '/..';
 
 // Require Laravel's entry point
-require $appPath . '/public/index.php';
+try {
+    require $appPath . '/public/index.php';
+} catch (Throwable $e) {
+    file_put_contents('php://stderr', sprintf(
+        "Laravel bootstrap failed: %s in %s:%d\n%s\n",
+        $e->getMessage(),
+        $e->getFile(),
+        $e->getLine(),
+        $e->getTraceAsString()
+    ));
+
+    http_response_code(500);
+    exit;
+}
