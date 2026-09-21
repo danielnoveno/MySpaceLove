@@ -48,6 +48,7 @@ if (getenv('VERCEL') || getenv('NOW_REGION')) {
     };
 
     $setDefaultEnv('LARAVEL_STORAGE_PATH', $tmpStoragePath);
+    $setDefaultEnv('APP_DEBUG', 'false');
     $setDefaultEnv('VIEW_COMPILED_PATH', $tmpStoragePath . '/framework/views');
     $setDefaultEnv('LOG_CHANNEL', 'stderr');
     $setDefaultEnv('CACHE_STORE', 'array');
