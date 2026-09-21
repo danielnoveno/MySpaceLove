@@ -47,12 +47,18 @@ if (getenv('VERCEL') || getenv('NOW_REGION')) {
         }
     };
 
+    $forceEnv = static function (string $key, string $value): void {
+        putenv($key . '=' . $value);
+        $_ENV[$key] = $value;
+        $_SERVER[$key] = $value;
+    };
+
     $setDefaultEnv('LARAVEL_STORAGE_PATH', $tmpStoragePath);
     $setDefaultEnv('APP_DEBUG', 'false');
     $setDefaultEnv('VIEW_COMPILED_PATH', $tmpStoragePath . '/framework/views');
-    $setDefaultEnv('LOG_CHANNEL', 'stderr');
-    $setDefaultEnv('CACHE_STORE', 'array');
-    $setDefaultEnv('SESSION_DRIVER', 'cookie');
+    $forceEnv('LOG_CHANNEL', 'stderr');
+    $forceEnv('CACHE_STORE', 'array');
+    $forceEnv('SESSION_DRIVER', 'cookie');
 }
 
 // Laravel application path

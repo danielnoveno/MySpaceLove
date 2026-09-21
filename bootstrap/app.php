@@ -110,6 +110,14 @@ return Application::configure(basePath: dirname(__DIR__))
                 $context['trace'] = $e->getTraceAsString();
             }
 
+            file_put_contents('php://stderr', sprintf(
+                "Laravel reported exception: %s in %s:%d\n%s\n",
+                $e->getMessage(),
+                $e->getFile(),
+                $e->getLine(),
+                $e->getTraceAsString()
+            ));
+
             try {
                 Log::error('Exception occurred', $context);
             } catch (Throwable $logException) {
