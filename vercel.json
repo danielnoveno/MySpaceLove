@@ -1,19 +1,13 @@
 {
   "version": 2,
   "installCommand": "npm install && composer install --no-dev --optimize-autoloader",
-  "buildCommand": "npm run build",
+  "buildCommand": "npm run build && php artisan config:cache && php artisan route:cache && php artisan view:cache",
   "outputDirectory": "public",
+  "framework": null,
   "builds": [
     {
       "src": "api/index.php",
-      "use": "vercel-php@0.6.2",
-      "config": {
-        "maxDuration": 30
-      }
-    },
-    {
-      "src": "public/**",
-      "use": "@vercel/static"
+      "use": "vercel-php@0.6.2"
     }
   ],
   "routes": [
