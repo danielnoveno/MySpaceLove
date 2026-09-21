@@ -56,6 +56,9 @@ if (getenv('VERCEL') || getenv('NOW_REGION')) {
     $setDefaultEnv('LARAVEL_STORAGE_PATH', $tmpStoragePath);
     $setDefaultEnv('APP_DEBUG', 'false');
     $setDefaultEnv('VIEW_COMPILED_PATH', $tmpStoragePath . '/framework/views');
+    if (! empty($_SERVER['HTTP_HOST'])) {
+        $forceEnv('APP_URL', 'https://' . $_SERVER['HTTP_HOST']);
+    }
     $forceEnv('LOG_CHANNEL', 'stderr');
     $forceEnv('CACHE_STORE', 'array');
     $forceEnv('SESSION_DRIVER', 'cookie');
