@@ -1,9 +1,12 @@
 {
   "version": 2,
-  "installCommand": "npm install && composer install --no-dev --optimize-autoloader",
-  "buildCommand": "npm run build",
-  "outputDirectory": "public",
-  "framework": null,
+  "installCommand": "npm install && npm run build && composer install --no-dev --optimize-autoloader",
+  "builds": [
+    {
+      "src": "api/index.php",
+      "use": "vercel-php@0.6.2"
+    }
+  ],
   "routes": [
     {
       "src": "/build/(.*)",
