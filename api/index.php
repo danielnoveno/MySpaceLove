@@ -11,6 +11,13 @@
  * views, so point those paths at /tmp before the framework boots.
  */
 if (getenv('VERCEL') || getenv('NOW_REGION')) {
+    // Do not print PHP notices/deprecations into HTTP responses in production.
+    // PHP 8.5 emits deprecations for some legacy PDO constants used by Laravel's
+    // default config, and displaying them breaks the rendered page.
+    ini_set('display_errors', '0');
+    ini_set('display_startup_errors', '0');
+    error_reporting(E_ALL & ~E_DEPRECATED & ~E_USER_DEPRECATED);
+
     $tmpStoragePath = '/tmp/storage';
 
     $directories = [
