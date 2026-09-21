@@ -12,6 +12,7 @@ use Illuminate\Foundation\Configuration\Middleware;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Laravel\Sanctum\Http\Middleware\EnsureFrontendRequestsAreStateful;
+use Symfony\Component\HttpKernel\Exception\HttpExceptionInterface;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 
@@ -77,16 +78,27 @@ return Application::configure(basePath: dirname(__DIR__))
         // not exist", hiding the original error. Return a plain response in
         // that case and write the real exception to stderr for Vercel logs.
         $exceptions->render(function (Throwable $e, Request $request) {
-            if (! app()->bound('view')) {
+            if (getenv('VERCEL') || getenv('NOW_REGION') || ! app()->bound('view') || ! app()->bound('translator')) {
                 file_put_contents('php://stderr', sprintf(
-                    "Laravel early exception: %s in %s:%d\n%s\n",
+                    "Laravel rendered exception: %s in %s:%d\n%s\n",
                     $e->getMessage(),
                     $e->getFile(),
                     $e->getLine(),
                     $e->getTraceAsString()
                 ));
 
-                return new \Symfony\Component\HttpFoundation\Response('Internal Server Error', 500);
+                $status = $e instanceof HttpExceptionInterface ? $e->getStatusCode() : 500;
+
+                if ($request->expectsJson() || $request->is('api/*')) {
+                    return new \Symfony\Component\HttpFoundation\JsonResponse([
+                        'message' => $status === 404 ? 'Not Found' : 'Internal Server Error',
+                    ], $status);
+                }
+
+                return new \Symfony\Component\HttpFoundation\Response(
+                    $status === 404 ? 'Not Found' : 'Internal Server Error',
+                    $status
+                );
             }
         });
 
