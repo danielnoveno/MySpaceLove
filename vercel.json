@@ -1,12 +1,9 @@
 {
   "version": 2,
-  "installCommand": "npm install && composer install --no-dev --optimize-autoloader && npm run build",
-  "builds": [
-    {
-      "src": "api/index.php",
-      "use": "vercel-php@0.6.2"
-    }
-  ],
+  "installCommand": "npm install && composer install --no-dev --optimize-autoloader",
+  "buildCommand": "npm run build",
+  "outputDirectory": "public",
+  "framework": null,
   "routes": [
     {
       "src": "/build/(.*)",
@@ -44,17 +41,5 @@
       "src": "/(.*)",
       "dest": "/api/index.php"
     }
-  ],
-  "env": {
-    "APP_NAME": "LoveSpace",
-    "APP_ENV": "production",
-    "APP_DEBUG": "false",
-    "LOG_CHANNEL": "stderr",
-    "LOG_LEVEL": "error",
-    "CACHE_DRIVER": "database",
-    "SESSION_DRIVER": "database",
-    "QUEUE_CONNECTION": "database",
-    "FILESYSTEM_DISK": "s3",
-    "VIEW_COMPILED_PATH": "/tmp/views"
-  }
+  ]
 }
