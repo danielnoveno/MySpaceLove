@@ -71,6 +71,25 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
+        // In serverless cold starts, exceptions can happen before every Laravel
+        // service (including `view`) is fully bound. Rendering Laravel's default
+        // error pages then causes a second exception: "Target class [view] does
+        // not exist", hiding the original error. Return a plain response in
+        // that case and write the real exception to stderr for Vercel logs.
+        $exceptions->render(function (Throwable $e, Request $request) {
+            if (! app()->bound('view')) {
+                file_put_contents('php://stderr', sprintf(
+                    "Laravel early exception: %s in %s:%d\n%s\n",
+                    $e->getMessage(),
+                    $e->getFile(),
+                    $e->getLine(),
+                    $e->getTraceAsString()
+                ));
+
+                return new \Symfony\Component\HttpFoundation\Response('Internal Server Error', 500);
+            }
+        });
+
         // Enhanced exception handling untuk production debugging
         
         // Log semua exceptions dengan detail lengkap
@@ -91,7 +110,17 @@ return Application::configure(basePath: dirname(__DIR__))
                 $context['trace'] = $e->getTraceAsString();
             }
 
-            Log::error('Exception occurred', $context);
+            try {
+                Log::error('Exception occurred', $context);
+            } catch (Throwable $logException) {
+                file_put_contents('php://stderr', sprintf(
+                    "Laravel exception: %s in %s:%d\n%s\n",
+                    $e->getMessage(),
+                    $e->getFile(),
+                    $e->getLine(),
+                    $e->getTraceAsString()
+                ));
+            }
         });
 
         // Custom rendering untuk specific exceptions
