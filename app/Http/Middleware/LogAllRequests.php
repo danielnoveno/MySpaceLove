@@ -34,7 +34,7 @@ class LogAllRequests
                     'duration_ms' => round($duration * 1000, 2),
                     'ip' => $request->ip(),
                     'user_agent' => $request->userAgent(),
-                    'user_id' => auth()->id() ?? 'guest',
+                    'user_id' => function_exists('safe_auth_id') ? safe_auth_id() : 'guest',
                     'referer' => $request->header('referer'),
                 ];
                 
@@ -73,7 +73,7 @@ class LogAllRequests
                 'file' => $e->getFile(),
                 'line' => $e->getLine(),
                 'ip' => $request->ip(),
-                'user_id' => auth()->id() ?? 'guest',
+                'user_id' => function_exists('safe_auth_id') ? safe_auth_id() : 'guest',
                 'trace' => $e->getTraceAsString(),
             ]);
             

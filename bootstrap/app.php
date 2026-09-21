@@ -15,6 +15,17 @@ use Laravel\Sanctum\Http\Middleware\EnsureFrontendRequestsAreStateful;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 
+if (! function_exists('safe_auth_id')) {
+    function safe_auth_id(): mixed
+    {
+        try {
+            return app()->bound('auth') ? (auth()->id() ?? 'guest') : 'guest';
+        } catch (Throwable $e) {
+            return 'guest';
+        }
+    }
+}
+
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
         api: __DIR__ . '/../routes/api.php',
@@ -72,7 +83,7 @@ return Application::configure(basePath: dirname(__DIR__))
                 'url' => request()->fullUrl(),
                 'method' => request()->method(),
                 'ip' => request()->ip(),
-                'user_id' => auth()->id() ?? 'guest',
+                'user_id' => safe_auth_id(),
             ];
 
             // Tambahkan stack trace untuk production debugging

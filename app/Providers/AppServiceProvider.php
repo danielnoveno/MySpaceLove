@@ -61,7 +61,7 @@ class AppServiceProvider extends ServiceProvider
             Log::warning('Database transaction rolled back', [
                 'connection' => $event->connectionName,
                 'url' => request()->fullUrl(),
-                'user_id' => auth()->id() ?? 'guest',
+                'user_id' => function_exists('safe_auth_id') ? safe_auth_id() : 'guest',
             ]);
         });
     }
