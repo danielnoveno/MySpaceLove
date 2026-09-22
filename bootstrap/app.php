@@ -87,7 +87,21 @@ return Application::configure(basePath: dirname(__DIR__))
         // error pages then causes a second exception: "Target class [view] does
         // not exist", hiding the original error. Return a plain response in
         // that case and write the real exception to stderr for Vercel logs.
+        //
+        // IMPORTANT: We must NOT intercept ValidationException, TokenMismatchException,
+        // or Inertia exceptions — Laravel/Inertia needs to handle those normally so
+        // form errors, CSRF issues, and redirects work correctly.
         $exceptions->render(function (Throwable $e, Request $request) {
+            // Let Laravel handle these natively — they have special rendering logic
+            if (
+                $e instanceof \Illuminate\Validation\ValidationException
+                || $e instanceof \Illuminate\Session\TokenMismatchException
+                || $e instanceof \Illuminate\Auth\AuthenticationException
+                || $e instanceof \Inertia\Exception\InvalidInertiaComponent
+            ) {
+                return null; // Fall through to Laravel default handler
+            }
+
             if (getenv('VERCEL') || getenv('NOW_REGION') || ! app()->bound('view') || ! app()->bound('translator')) {
                 file_put_contents('php://stderr', sprintf(
                     "Laravel rendered exception summary: %s | %s:%d\n",
@@ -96,14 +110,11 @@ return Application::configure(basePath: dirname(__DIR__))
                     $e->getLine()
                 ));
 
-                $status = $e instanceof AuthenticationException
-                    ? 401
-                    : ($e instanceof HttpExceptionInterface ? $e->getStatusCode() : 500);
+                $status = $e instanceof HttpExceptionInterface ? $e->getStatusCode() : 500;
 
                 if ($request->expectsJson() || $request->is('api/*')) {
                     return new \Symfony\Component\HttpFoundation\JsonResponse([
                         'message' => match ($status) {
-                            401 => 'Unauthenticated.',
                             404 => 'Not Found',
                             default => 'Internal Server Error',
                         },
