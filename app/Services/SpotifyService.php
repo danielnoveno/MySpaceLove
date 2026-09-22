@@ -8,6 +8,7 @@ use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Http\Client\PendingRequest;
 use Illuminate\Support\Arr;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use RuntimeException;
 
@@ -102,22 +103,49 @@ class SpotifyService
             throw new RuntimeException('Token Spotify tidak ditemukan.');
         }
 
-        $clientId = config('services.spotify.client_id');
-        $clientSecret = config('services.spotify.client_secret');
+        $lockKey = "spotify_token_refresh:{$this->token->id}";
+        $maxRetries = 3;
 
-        $response = Http::asForm()
-            ->withBasicAuth($clientId, $clientSecret)
-            ->post('https://accounts.spotify.com/api/token', [
-                'grant_type' => 'refresh_token',
-                'refresh_token' => $this->token->refresh_token,
-            ])->throw()->json();
+        // Use cache lock to prevent multiple simultaneous refreshes
+        Cache::lock($lockKey, 15)->block(10, function () use ($maxRetries) {
+            // Re-read token from DB in case another request already refreshed it
+            $this->token = $this->token->fresh();
+            $margin = config('services.spotify.refresh_margin', 300);
+            if (Carbon::now()->addSeconds($margin)->lt($this->token->expires_at)) {
+                return; // Already refreshed by another request
+            }
 
-        $expiresIn = Arr::get($response, 'expires_in', $this->token->expires_in);
-        $this->token->update([
-            'access_token' => Arr::get($response, 'access_token', $this->token->access_token),
-            'expires_in' => (int) $expiresIn,
-            'expires_at' => now()->addSeconds((int) $expiresIn),
-        ]);
+            $clientId = config('services.spotify.client_id');
+            $clientSecret = config('services.spotify.client_secret');
+
+            $lastException = null;
+            for ($attempt = 1; $attempt <= $maxRetries; $attempt++) {
+                try {
+                    $response = Http::asForm()
+                        ->withBasicAuth($clientId, $clientSecret)
+                        ->timeout(10)
+                        ->post('https://accounts.spotify.com/api/token', [
+                            'grant_type' => 'refresh_token',
+                            'refresh_token' => $this->token->refresh_token,
+                        ])->throw()->json();
+
+                    $expiresIn = Arr::get($response, 'expires_in', $this->token->expires_in);
+                    $this->token->update([
+                        'access_token' => Arr::get($response, 'access_token', $this->token->access_token),
+                        'expires_in' => (int) $expiresIn,
+                        'expires_at' => now()->addSeconds((int) $expiresIn),
+                    ]);
+                    return;
+                } catch (\Throwable $e) {
+                    $lastException = $e;
+                    if ($attempt < $maxRetries) {
+                        sleep(1);
+                    }
+                }
+            }
+
+            throw $lastException;
+        });
     }
 
     protected function http(): PendingRequest

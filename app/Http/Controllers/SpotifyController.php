@@ -11,6 +11,7 @@ use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
+use Illuminate\Support\Facades\Cache;
 use RuntimeException;
 use Throwable;
 
@@ -19,6 +20,13 @@ class SpotifyController extends Controller
     public function dashboard(Request $request, Space $space, SpotifyService $spotifyService): JsonResponse
     {
         $user = $request->user();
+
+        // Cache dashboard data for 30s per user+space to avoid repeated slow Spotify API calls
+        $cacheKey = "spotify_dashboard:{$space->id}:{$user->id}";
+        $cached = Cache::get($cacheKey);
+        if ($cached !== null) {
+            return response()->json($cached);
+        }
 
         $space->loadMissing(['userOne', 'userTwo']);
 
@@ -147,7 +155,7 @@ class SpotifyController extends Controller
                 'preview_url' => $capsule->preview_url,
             ])->values()->all();
 
-        return response()->json([
+        $data = [
             'connected' => $connected,
             'message' => $connected ? null : $message,
             'connections' => $connections->all(),
@@ -156,7 +164,11 @@ class SpotifyController extends Controller
             'listening' => $listening,
             'surpriseDrops' => $surpriseDrops,
             'memoryCapsules' => $capsules,
-        ]);
+        ];
+
+        Cache::put($cacheKey, $data, 30);
+
+        return response()->json($data);
     }
 
     public function storeSurprise(Request $request, Space $space, SpotifyService $spotifyService): JsonResponse

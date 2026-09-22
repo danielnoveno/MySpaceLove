@@ -4,8 +4,9 @@ import './bootstrap';
 import { createInertiaApp } from '@inertiajs/react';
 import { resolvePageComponent } from 'laravel-vite-plugin/inertia-helpers';
 import { createRoot } from 'react-dom/client';
-import { lazy, Suspense } from 'react';
+import { Suspense } from 'react';
 import { ToastProvider } from '@/Contexts/ToastContext';
+import ProgressBar from '@/Components/ProgressBar';
 
 const appName = import.meta.env.VITE_APP_NAME || 'Laravel';
 
@@ -37,17 +38,15 @@ createInertiaApp({
     setup({ el, App, props }) {
         const root = createRoot(el);
 
-        // Wrap App with ToastProvider and Suspense
+        // Wrap App with ToastProvider, Suspense, and global ProgressBar
         root.render(
             <ToastProvider>
+                <ProgressBar />
                 <Suspense fallback={<PageLoader />}>
                     <App {...props} />
                 </Suspense>
             </ToastProvider>
         );
     },
-    progress: {
-        color: '#ec4899',
-        showSpinner: true,
-    },
+    progress: false,
 });

@@ -1,5 +1,5 @@
 import { PropsWithChildren, useMemo, useState, useEffect } from "react";
-import { Link, usePage, router } from "@inertiajs/react";
+import { Link, usePage } from "@inertiajs/react";
 import ApplicationLogo from "@/Components/ApplicationLogo";
 import PillNav, { PillNavItem } from "@/Components/PillNav";
 import { Bell, Lock, Globe } from "lucide-react";
@@ -36,10 +36,6 @@ export default function AuthenticatedLayout({
     const targetLabel = languageOptions[targetLocaleCode] ?? targetLocaleCode.toUpperCase();
 
     const [isLangHovered, setIsLangHovered] = useState(false);
-    
-    // Add loading state for navigation
-    const [isNavigating, setIsNavigating] = useState(false);
-    const [loadingProgress, setLoadingProgress] = useState(0);
 
     // Listen for flash messages from backend
     useEffect(() => {
@@ -53,39 +49,6 @@ export default function AuthenticatedLayout({
             showInfo(flash.info);
         }
     }, [flash, showSuccess, showError, showInfo]);
-
-    useEffect(() => {
-        let progressInterval: NodeJS.Timeout;
-
-        const handleStart = () => {
-            setIsNavigating(true);
-            setLoadingProgress(0);
-            
-            // Simulate progress
-            progressInterval = setInterval(() => {
-                setLoadingProgress((prev) => {
-                    if (prev >= 90) return 90; // Don't go to 100 until finish
-                    return prev + Math.random() * 10;
-                });
-            }, 200);
-        };
-
-        const handleFinish = () => {
-            setLoadingProgress(100);
-            setTimeout(() => {
-                setIsNavigating(false);
-                setLoadingProgress(0);
-            }, 200);
-            if (progressInterval) clearInterval(progressInterval);
-        };
-
-        router.on('start', handleStart);
-        router.on('finish', handleFinish);
-
-        return () => {
-            if (progressInterval) clearInterval(progressInterval);
-        };
-    }, []);
 
     const items: PillNavItem[] = useMemo(() => {
         const baseItems: PillNavItem[] = [];
@@ -215,16 +178,6 @@ export default function AuthenticatedLayout({
 
     return (
         <div className="h-screen w-full bg-gradient-to-br from-pink-50 via-white to-purple-50 flex flex-col overflow-hidden relative">
-            {/* Loading Progress Bar */}
-            {isNavigating && (
-                <div className="fixed top-0 left-0 right-0 z-[100] h-1 bg-gray-200">
-                    <div
-                        className="h-full bg-gradient-to-r from-pink-500 via-purple-500 to-pink-600 transition-all duration-300 ease-out"
-                        style={{ width: `${loadingProgress}%` }}
-                    />
-                </div>
-            )}
-            
             <PillNav
                 logo={<ApplicationLogo className="w-3/4 h-3/4 text-pink-500 fill-current" />}
                 items={items}
