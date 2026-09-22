@@ -455,15 +455,28 @@ export default function MapView({
         [fetchPartnerLocation, showNotification]
     );
 
+    const lastIpFallbackAt = useRef<number>(0);
+    const IP_FALLBACK_COOLDOWN = 300_000; // 5 minutes
+
     const fallbackToIp = useCallback(
         async (silent: boolean) => {
+            const now = Date.now();
+            if (now - lastIpFallbackAt.current < IP_FALLBACK_COOLDOWN) {
+                // Skip — too soon since last IP geolocation attempt
+                if (!silent) {
+                    setIsUpdating(false);
+                }
+                return;
+            }
+            lastIpFallbackAt.current = now;
+
             try {
-                const response = await fetch("https://ipapi.co/json/");
+                const response = await fetch("https://ip-api.com/json/?fields=lat,lon");
                 const data = await response.json();
-                if (data?.latitude && data?.longitude) {
+                if (data?.lat && data?.lon) {
                     await persistLocation(
-                        Number(data.latitude),
-                        Number(data.longitude),
+                        Number(data.lat),
+                        Number(data.lon),
                         silent
                     );
                     if (!silent) {
@@ -484,8 +497,6 @@ export default function MapView({
                         "Tidak dapat mengambil lokasi otomatis.",
                         "error"
                     );
-                }
-                if (!silent) {
                     setIsUpdating(false);
                 }
             }
