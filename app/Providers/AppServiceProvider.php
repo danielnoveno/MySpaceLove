@@ -7,6 +7,7 @@ use Illuminate\Database\Events\TransactionRolledBack;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\URL;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -24,6 +25,14 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        if (app()->environment('production')) {
+            URL::forceScheme('https');
+
+            if ($host = request()->getHost()) {
+                URL::forceRootUrl('https://' . $host);
+            }
+        }
+
         // Log slow database queries (lebih dari 1 detik)
         DB::listen(function ($query) {
             if ($query->time > 1000) {

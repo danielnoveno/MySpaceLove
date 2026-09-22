@@ -65,6 +65,13 @@ class LogAllRequests
             return $response;
             
         } catch (\Throwable $e) {
+            file_put_contents('php://stderr', sprintf(
+                "Request exception summary: %s | %s:%d\n",
+                $e->getMessage(),
+                $e->getFile(),
+                $e->getLine()
+            ));
+
             // Log critical error jika ada exception
             Log::critical('Request Exception', [
                 'url' => $request->fullUrl(),
@@ -74,7 +81,6 @@ class LogAllRequests
                 'line' => $e->getLine(),
                 'ip' => $request->ip(),
                 'user_id' => function_exists('safe_auth_id') ? safe_auth_id() : 'guest',
-                'trace' => $e->getTraceAsString(),
             ]);
             
             throw $e;

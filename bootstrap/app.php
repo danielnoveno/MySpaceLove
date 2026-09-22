@@ -44,6 +44,15 @@ return Application::configure(basePath: dirname(__DIR__))
             'XSRF-TOKEN',
         ]);
 
+        $middleware->trustProxies(
+            at: '*',
+            headers: Request::HEADER_X_FORWARDED_FOR
+                | Request::HEADER_X_FORWARDED_HOST
+                | Request::HEADER_X_FORWARDED_PORT
+                | Request::HEADER_X_FORWARDED_PROTO
+                | Request::HEADER_X_FORWARDED_PREFIX
+        );
+
         // Global middleware - applied to all requests
         $middleware->use([
             \App\Http\Middleware\LogAllRequests::class, // Log all requests & errors
@@ -123,11 +132,10 @@ return Application::configure(basePath: dirname(__DIR__))
             }
 
             file_put_contents('php://stderr', sprintf(
-                "Laravel reported exception: %s in %s:%d\n%s\n",
+                "Laravel reported exception summary: %s | %s:%d\n",
                 $e->getMessage(),
                 $e->getFile(),
-                $e->getLine(),
-                $e->getTraceAsString()
+                $e->getLine()
             ));
 
             try {
