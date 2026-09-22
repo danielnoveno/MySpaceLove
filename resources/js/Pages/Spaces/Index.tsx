@@ -863,7 +863,7 @@ export default function SpacesIndex({
                     </div>
 
                     <PrimaryButton
-                        className="w-full justify-center"
+                        className="w-full justify-center bg-gradient-to-r from-pink-500 to-rose-500 hover:from-pink-600 hover:to-rose-600 shadow-lg"
                         disabled={processing}
                     >
                         {processing ? "Membuat..." : "Buat Space"}
@@ -880,11 +880,11 @@ export default function SpacesIndex({
             return block;
         }
 
-        return <div className="bg-white shadow-sm rounded-xl p-6">{block}</div>;
+        return <div className="rounded-3xl border border-white/60 bg-white/80 p-6 shadow-xl backdrop-blur">{block}</div>;
     };
 
     const renderJoinSpaceBlock = () => (
-        <div className="bg-white shadow-sm rounded-xl p-6">
+        <div className="rounded-3xl border border-white/60 bg-white/80 p-6 shadow-xl backdrop-blur">
             <h3 className="text-lg font-semibold text-gray-900">
                 Gabung ke Space Pasangan
             </h3>
@@ -915,7 +915,7 @@ export default function SpacesIndex({
 
                 <PrimaryButton
                     type="submit"
-                    className="w-full justify-center"
+                    className="w-full justify-center bg-gradient-to-r from-pink-500 to-rose-500 hover:from-pink-600 hover:to-rose-600 shadow-lg"
                     disabled={joining}
                 >
                     {joining ? "Mengirim Request..." : "Kirim Join Request"}
@@ -926,7 +926,7 @@ export default function SpacesIndex({
 
     const renderSpacesList = () => (
         <div className="space-y-6">
-            <div className="bg-white shadow-sm rounded-xl p-6 space-y-5">
+            <div className="rounded-3xl border border-white/60 bg-white/80 p-6 shadow-xl backdrop-blur space-y-5">
                 <h3 className="text-lg font-semibold text-gray-900">
                     You already have a Space
                 </h3>
@@ -936,7 +936,7 @@ export default function SpacesIndex({
                 </p>
             </div>
 
-            <div className="bg-white shadow-sm rounded-xl p-6 space-y-4">
+            <div className="rounded-3xl border border-white/60 bg-white/80 p-6 shadow-xl backdrop-blur space-y-4">
                 <div>
                     <h3 className="text-lg font-semibold text-gray-900">
                         Your Spaces
@@ -956,10 +956,10 @@ export default function SpacesIndex({
                         const pendingSeparation = space.pending_separation;
                         const pendingInvitation = space.pending_invitation;
 
-                        return (
+                            return (
                             <div
                                 key={space.id}
-                                className="rounded-lg border border-gray-100 bg-white p-4 shadow-sm"
+                                className="rounded-2xl border border-pink-100/70 bg-gradient-to-br from-white via-pink-50/30 to-rose-50/30 p-5 shadow-sm"
                             >
                                 <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                                     <div>
@@ -1010,9 +1010,12 @@ export default function SpacesIndex({
                                                 ))}
                                         </div>
                                         {pendingInvitation && (
-                                            <p className="mt-1 text-xs text-gray-400">
-                                                {pendingInvitation.status_label}{" "}
-                                                <span className="font-semibold">
+                                            <p className="mt-2 text-xs">
+                                                <span className="inline-flex items-center rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-amber-700">
+                                                    {pendingInvitation.status_label}
+                                                </span>
+                                                {" "}
+                                                <span className="font-semibold text-pink-600">
                                                     {pendingInvitation.email}
                                                 </span>
                                                 {pendingInvitation.sent_at
@@ -1026,7 +1029,7 @@ export default function SpacesIndex({
                                             href={route("spaces.dashboard", {
                                                 space: space.slug,
                                             })}
-                                            className="inline-flex items-center justify-center rounded-full bg-pink-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-pink-700"
+                                            className="inline-flex items-center justify-center gap-2 rounded-full bg-gradient-to-r from-pink-500 to-rose-500 px-5 py-2 text-sm font-semibold text-white shadow-lg transition hover:shadow-xl hover:from-pink-600 hover:to-rose-600"
                                         >
                                             Masuk Space
                                         </Link>
@@ -1044,28 +1047,40 @@ export default function SpacesIndex({
                                 )}
 
                                 {!space.has_partner && space.invite_code && (
-                                    <div className="mt-3 rounded-lg border border-blue-100 bg-blue-50 p-4">
-                                        <p className="text-xs font-semibold uppercase tracking-wide text-blue-600">
-                                            Invite Code
-                                        </p>
-                                        <p className="mt-1 text-2xl font-bold tracking-widest text-blue-800 select-all">
+                                    <div className="mt-4 rounded-2xl border border-pink-100 bg-gradient-to-r from-pink-50/80 to-rose-50/80 p-5 shadow-inner">
+                                        <div className="flex items-center gap-3 mb-3">
+                                            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-pink-400 to-rose-500 shadow-md">
+                                                <svg className="h-5 w-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                                    <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 5.25a3 3 0 013 3m3 0a6 6 0 01-7.029 5.912c-.563-.097-1.159.026-1.563.43L10.5 17.25H8.25v2.25H6v2.25H2.25v-2.818c0-.597.237-1.17.659-1.591l6.499-6.499c.404-.404.527-1 .43-1.563A6 6 0 1121.75 8.25z" />
+                                                </svg>
+                                            </div>
+                                            <div>
+                                                <p className="text-xs font-bold uppercase tracking-widest text-pink-600">
+                                                    Kode Undangan
+                                                </p>
+                                                <p className="text-xs text-pink-400">
+                                                    Bagikan ke pasanganmu
+                                                </p>
+                                            </div>
+                                        </div>
+                                        <p className="text-3xl font-black tracking-[0.2em] text-transparent bg-clip-text bg-gradient-to-r from-pink-600 to-rose-600 select-all text-center py-2">
                                             {space.invite_code}
                                         </p>
-                                        <p className="mt-1 text-xs text-blue-500">
-                                            Bagikan kode ini ke pasanganmu agar bisa bergabung.
+                                        <p className="text-xs text-pink-400 text-center mt-2">
+                                            Pasanganmu bisa bergabung dengan kode ini atau melalui email undangan.
                                         </p>
                                     </div>
                                 )}
 
                                 {!space.has_partner && (space.join_requests?.length ?? 0) > 0 && (
                                     <div className="mt-3 space-y-2">
-                                        <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">
+                                        <p className="text-xs font-bold uppercase tracking-widest text-amber-500">
                                             Join Requests Menunggu Persetujuan
                                         </p>
                                         {space.join_requests!.map((req) => (
                                             <div
                                                 key={req.id}
-                                                className="flex flex-col gap-2 rounded-lg border border-amber-200 bg-amber-50 p-3 sm:flex-row sm:items-center sm:justify-between"
+                                                className="flex flex-col gap-2 rounded-xl border border-amber-200 bg-gradient-to-r from-amber-50 to-orange-50 p-4 sm:flex-row sm:items-center sm:justify-between shadow-sm"
                                             >
                                                 <div>
                                                     <p className="text-sm font-medium text-gray-900">
@@ -1094,7 +1109,7 @@ export default function SpacesIndex({
                                                                 alert("Gagal menyetujui join request.");
                                                             }
                                                         }}
-                                                        className="inline-flex items-center justify-center rounded-full bg-green-600 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-green-700"
+                                                        className="inline-flex items-center justify-center rounded-full bg-gradient-to-r from-green-500 to-emerald-500 px-4 py-1.5 text-xs font-semibold text-white shadow-md transition hover:shadow-lg hover:from-green-600 hover:to-emerald-600"
                                                     >
                                                         Setujui
                                                     </button>
@@ -1136,19 +1151,30 @@ export default function SpacesIndex({
                                         )}
 
                                         {pendingInvitation ? (
-                                            <div className="rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800">
-                                                <p>
-                                                    Undangan sedang menunggu
-                                                    konfirmasi dari{" "}
-                                                    <span className="font-semibold">
-                                                        {
-                                                            pendingInvitation.email
-                                                        }
-                                                    </span>
-                                                    . Batalkan undangan ini jika
-                                                    ingin mengundang akun lain.
-                                                </p>
-                                                <div className="mt-3 flex flex-wrap gap-2">
+                                            <div className="rounded-2xl border border-amber-200 bg-gradient-to-r from-amber-50 to-orange-50 p-5 text-sm text-amber-800 shadow-sm">
+                                                <div className="flex items-start gap-3">
+                                                    <div className="flex h-9 w-9 items-center justify-center rounded-full bg-amber-100 flex-shrink-0 mt-0.5">
+                                                        <svg className="h-5 w-5 text-amber-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                                            <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                                        </svg>
+                                                    </div>
+                                                    <div className="flex-1">
+                                                        <p className="font-semibold text-amber-900">Menunggu Konfirmasi</p>
+                                                        <p className="mt-1">
+                                                            Undangan sedang menunggu
+                                                            konfirmasi dari{" "}
+                                                            <span className="font-bold text-amber-900">
+                                                                {pendingInvitation.email}
+                                                            </span>.
+                                                        </p>
+                                                        {pendingInvitation.sent_at && (
+                                                            <p className="mt-1 text-xs text-amber-600">
+                                                                Dikirim {pendingInvitation.sent_at}
+                                                            </p>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                                <div className="mt-4 flex flex-wrap gap-2">
                                                     <PrimaryButton
                                                         type="button"
                                                         disabled={
@@ -1161,7 +1187,7 @@ export default function SpacesIndex({
                                                                 pendingInvitation.id
                                                             )
                                                         }
-                                                        className="bg-amber-500 hover:bg-amber-600 disabled:opacity-70"
+                                                        className="bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 shadow-md disabled:opacity-70"
                                                     >
                                                         {cancelInvitationLoadingId ===
                                                         pendingInvitation.id
@@ -1179,16 +1205,19 @@ export default function SpacesIndex({
                                                             space.id
                                                         )
                                                     }
-                                                    className="inline-flex items-center justify-center rounded-full border border-pink-200 px-4 py-2 text-sm font-semibold text-pink-600 transition hover:bg-pink-50"
+                                                    className="inline-flex items-center justify-center gap-2 rounded-full bg-gradient-to-r from-pink-500 to-rose-500 px-5 py-2.5 text-sm font-semibold text-white shadow-lg transition hover:shadow-xl hover:from-pink-600 hover:to-rose-600"
                                                 >
+                                                    <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                                        <path strokeLinecap="round" strokeLinejoin="round" d="M19 7.5v3m0 0v3m0-3h3m-3 0h-3m-2.25-4.125a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zM4 19.235v-.11a6.375 6.375 0 0112.75 0v.109A12.318 12.318 0 0110.374 21c-2.331 0-4.512-.645-6.374-1.766z" />
+                                                    </svg>
                                                     {isInviteOpen
-                                                        ? "Tutup Form Tambah Pasangan"
-                                                        : "Tambahkan Pasangan"}
+                                                        ? "Tutup Form Undangan"
+                                                        : "Undang Pasangan"}
                                                 </button>
 
                                                 {isInviteOpen && (
                                                     <form
-                                                        className="space-y-4 rounded-lg border border-pink-100 bg-pink-50 p-4"
+                                                        className="space-y-4 rounded-2xl border border-pink-100 bg-gradient-to-br from-pink-50/80 to-rose-50/80 p-5 shadow-inner"
                                                         onSubmit={(event) => {
                                                             event.preventDefault();
                                                             void handleInviteSubmit(
@@ -1196,6 +1225,13 @@ export default function SpacesIndex({
                                                             );
                                                         }}
                                                     >
+                                                        <div className="flex items-center gap-2 mb-1">
+                                                            <svg className="h-5 w-5 text-pink-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                                                <path strokeLinecap="round" strokeLinejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75" />
+                                                            </svg>
+                                                            <p className="text-sm font-semibold text-pink-700">Kirim Undangan via Email</p>
+                                                        </div>
+
                                                         <div>
                                                             <InputLabel
                                                                 htmlFor={`partner_name_${space.id}`}
@@ -1206,7 +1242,7 @@ export default function SpacesIndex({
                                                                 value={
                                                                     inviteForm.name
                                                                 }
-                                                                className="mt-1 block w-full"
+                                                                className="mt-1 block w-full rounded-2xl border-pink-200 focus:border-pink-400 focus:ring-pink-300"
                                                                 onChange={(
                                                                     event
                                                                 ) =>
@@ -1240,7 +1276,7 @@ export default function SpacesIndex({
                                                                 value={
                                                                     inviteForm.email
                                                                 }
-                                                                className="mt-1 block w-full"
+                                                                className="mt-1 block w-full rounded-2xl border-pink-200 focus:border-pink-400 focus:ring-pink-300"
                                                                 onChange={(
                                                                     event
                                                                 ) =>
@@ -1265,7 +1301,7 @@ export default function SpacesIndex({
 
                                                         <PrimaryButton
                                                             type="submit"
-                                                            className="w-full justify-center"
+                                                            className="w-full justify-center bg-gradient-to-r from-pink-500 to-rose-500 hover:from-pink-600 hover:to-rose-600 shadow-lg"
                                                             disabled={
                                                                 inviteLoadingId ===
                                                                 space.id
@@ -1277,13 +1313,11 @@ export default function SpacesIndex({
                                                                 : "Kirim Undangan"}
                                                         </PrimaryButton>
 
-                                                        <p className="text-xs text-pink-600">
-                                                            Your partner will
-                                                            see this invitation
-                                                            when they log in
-                                                            using the email
-                                                            above.
-                                                        </p>
+                                                        <div className="rounded-xl border border-pink-100 bg-white/60 p-3">
+                                                            <p className="text-xs text-pink-600 text-center">
+                                                                Pasangan akan menerima email undangan dan bisa langsung bergabung ke Space-mu.
+                                                            </p>
+                                                        </div>
                                                     </form>
                                                 )}
                                             </>
@@ -1293,7 +1327,7 @@ export default function SpacesIndex({
 
                                 {space.invitations.length > 0 && (
                                     <div className="mt-4 space-y-2">
-                                        <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">
+                                        <p className="text-xs font-bold uppercase tracking-widest text-pink-500">
                                             Riwayat undangan
                                         </p>
                                         <div className="space-y-2">
@@ -1301,7 +1335,7 @@ export default function SpacesIndex({
                                                 (invitation) => (
                                                     <div
                                                         key={invitation.id}
-                                                        className="rounded-lg border border-gray-100 bg-gray-50 p-3"
+                                                        className="rounded-xl border border-pink-100/70 bg-white/60 p-3 shadow-sm"
                                                     >
                                                         <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                                                             <div>
@@ -1372,10 +1406,10 @@ export default function SpacesIndex({
                 <div
                     key={`separation-${space.id}`}
                     id={`space-separation-${space.id}`}
-                    className="bg-white shadow-sm rounded-xl p-6 space-y-5"
+                    className="rounded-3xl border border-white/60 bg-white/80 p-6 shadow-xl backdrop-blur space-y-5"
                 >
                     <div className="flex items-start gap-3">
-                        <span className="flex h-12 w-12 items-center justify-center rounded-full bg-red-100">
+                        <span className="flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-br from-red-100 to-orange-100">
                             <AlertTriangle className="h-6 w-6 text-red-500" />
                         </span>
                         <div>
@@ -1525,7 +1559,7 @@ export default function SpacesIndex({
             <div
                 key={`separation-${space.id}`}
                 id={`space-separation-${space.id}`}
-                className="bg-white shadow-sm rounded-xl p-6 space-y-5"
+                className="rounded-3xl border border-white/60 bg-white/80 p-6 shadow-xl backdrop-blur space-y-5"
             >
                 <div className="space-y-2">
                     <h3 className="text-lg font-semibold text-gray-900">
@@ -1661,7 +1695,7 @@ export default function SpacesIndex({
         >
             <Head title="Spaces" />
 
-            <div className="py-12">
+            <div className="min-h-screen bg-gradient-to-br from-pink-50 via-white to-rose-50 py-12">
                 <div className="w-full max-w-none sm:px-6 lg:px-8">
                     <div className="flex flex-col gap-6 lg:flex-row lg:gap-8">
                         <div className="flex-1 space-y-6">
@@ -1681,28 +1715,34 @@ export default function SpacesIndex({
                         <div className="lg:w-80 space-y-6">
                             {!hasSpaces && canCreate && renderJoinSpaceBlock()}
                             {hasPendingInvitations && (
-                                <div className="bg-white shadow-sm rounded-xl p-6 space-y-4">
-                                    <h3 className="text-lg font-semibold text-gray-900">
-                                        Undangan Menunggu
-                                    </h3>
+                                <div className="rounded-3xl border border-pink-100 bg-gradient-to-br from-white via-pink-50/30 to-rose-50/30 p-6 shadow-xl backdrop-blur space-y-4">
+                                    <div className="flex items-center gap-2">
+                                        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-pink-400 to-rose-500">
+                                            <svg className="h-4 w-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                                <path strokeLinecap="round" strokeLinejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75" />
+                                            </svg>
+                                        </div>
+                                        <h3 className="text-lg font-semibold text-gray-900">
+                                            Undangan Masuk
+                                        </h3>
+                                    </div>
                                     <p className="text-sm text-gray-500">
-                                        You received an invitation to join
-                                        ke Space berikut.
+                                        Kamu menerima undangan untuk bergabung ke Space berikut.
                                     </p>
                                     <div className="space-y-3">
                                         {pendingInvitations.map(
                                             (invitation) => (
                                                 <div
                                                     key={invitation.id}
-                                                    className="rounded-lg border border-pink-100 bg-pink-50 p-3"
+                                                    className="rounded-xl border border-pink-100 bg-gradient-to-br from-pink-50 to-rose-50 p-4 shadow-sm"
                                                 >
-                                                    <p className="text-sm font-medium text-gray-900">
+                                                    <p className="text-sm font-semibold text-gray-900">
                                                         {invitation.space.title}
                                                     </p>
-                                                    <p className="text-xs text-gray-500">
+                                                    <p className="text-xs text-gray-500 mt-0.5">
                                                         Dari: {invitation.email}
                                                     </p>
-                                                    <div className="mt-2 flex gap-2">
+                                                    <div className="mt-3 flex gap-2">
                                                         <PrimaryButton
                                                             type="button"
                                                             onClick={() =>
@@ -1714,7 +1754,7 @@ export default function SpacesIndex({
                                                                 acceptingInvitationId ===
                                                                 invitation.id
                                                             }
-                                                            className="flex-1 justify-center bg-pink-600 hover:bg-pink-700"
+                                                            className="flex-1 justify-center bg-gradient-to-r from-pink-500 to-rose-500 hover:from-pink-600 hover:to-rose-600 shadow-md"
                                                         >
                                                             {acceptingInvitationId ===
                                                             invitation.id
@@ -1735,10 +1775,15 @@ export default function SpacesIndex({
                             )}
 
                             {awaitingYourDecision.length > 0 && (
-                                <div className="bg-white shadow-sm rounded-xl p-6 space-y-4">
-                                    <h3 className="text-lg font-semibold text-gray-900">
-                                        Tunggu Keputusanmu
-                                    </h3>
+                                <div className="rounded-3xl border border-red-100 bg-gradient-to-br from-white via-red-50/30 to-orange-50/30 p-6 shadow-xl backdrop-blur space-y-4">
+                                    <div className="flex items-center gap-2">
+                                        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-red-400 to-orange-500">
+                                            <AlertTriangle className="h-4 w-4 text-white" />
+                                        </div>
+                                        <h3 className="text-lg font-semibold text-gray-900">
+                                            Tunggu Keputusanmu
+                                        </h3>
+                                    </div>
                                     <p className="text-sm text-gray-500">
                                         Ada permintaan pembubaran Space yang
                                         membutuhkan persetujuanmu.
