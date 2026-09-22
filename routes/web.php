@@ -206,16 +206,6 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('/spaces/{space:slug}/spotify/capsules', [SpotifyController::class, 'storeCapsule'])->name('spotify.capsules.store');
         Route::post('/spaces/{space:slug}/spotify/playback/join', [SpotifyController::class, 'joinPlayback'])->name('spotify.playback.join');
 
-        Route::get('/spaces/{space:slug}/spotify-companion', function (\App\Models\Space $space) {
-        return Inertia::render('Spotify/LongDistanceSpotifyHub', [
-            'space' => [
-                'id' => $space->id,
-                'slug' => $space->slug,
-                'title' => $space->title,
-            ],
-        ]);
-    })->name('spotify.companion');
-
     Route::get('/spaces/{space:slug}/nobar', [NobarController::class, 'show'])->name('space.nobar');
     Route::post('/spaces/{space:slug}/nobar/schedules', [NobarController::class, 'storeSchedule'])->name('space.nobar.schedules.store');
 

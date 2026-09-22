@@ -17,14 +17,8 @@ class SpotifyPageController extends Controller
     {
         $this->authorizeSpace($request, $space);
 
-        return Inertia::render('Spotify/Index', [
+        return Inertia::render('Spotify/LongDistanceSpotifyHub', [
             'space' => $this->space($space),
-            'counts' => [
-                'capsules' => SpotifyCapsule::where('space_id', $space->id)->count(),
-                'listeningPlans' => ListeningPlan::where('space_id', $space->id)->count(),
-                'surpriseDrops' => SpotifySurpriseDrop::where('space_id', $space->id)->count(),
-            ],
-            'companionRoute' => route('spotify.companion', ['space' => $space->slug]),
         ]);
     }
 

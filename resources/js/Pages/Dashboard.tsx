@@ -382,11 +382,11 @@ export default function Dashboard({ dashboardData, spaceContext }: Props) {
                 id: "spotify-action",
                 icon: Music,
                 label:
-                    quickActionStrings?.spotify?.label ?? "Spotify Companion",
+                    quickActionStrings?.spotify?.label ?? "Spotify",
                 description:
                     quickActionStrings?.spotify?.description ??
                     "Sync music and moods remotely",
-                href: route("spotify.companion", { space: spaceSlug }),
+                href: route("spotify.index", { space: spaceSlug }),
                 color: "from-emerald-500 to-teal-500",
                 requiresPartner: true,
             },

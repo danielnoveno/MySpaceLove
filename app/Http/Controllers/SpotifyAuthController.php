@@ -26,7 +26,7 @@ class SpotifyAuthController extends Controller
             'space_id' => $space->id,
             'space_slug' => $space->slug,
             'user_id' => $user?->id,
-            'redirect' => $request->query('redirect', route('spotify.companion', ['space' => $space->slug])),
+            'redirect' => $request->query('redirect', route('spotify.index', ['space' => $space->slug])),
         ];
 
         $state = base64_encode(json_encode($statePayload));
@@ -56,7 +56,7 @@ class SpotifyAuthController extends Controller
         }
 
         $space = Space::findOrFail(Arr::get($payload, 'space_id'));
-        $redirectUrl = Arr::get($payload, 'redirect', route('spotify.companion', ['space' => $space->slug]));
+        $redirectUrl = Arr::get($payload, 'redirect', route('spotify.index', ['space' => $space->slug]));
 
         $user = $request->user();
         if (!$user || $user->id !== Arr::get($payload, 'user_id')) {
