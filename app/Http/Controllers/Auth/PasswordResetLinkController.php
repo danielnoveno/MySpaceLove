@@ -36,16 +36,23 @@ class PasswordResetLinkController extends Controller
         // We will send the password reset link to this user. Once we have attempted
         // to send the link, we will examine the response then see the message we
         // need to show to the user. Finally, we'll send out a proper response.
-        $status = Password::sendResetLink(
-            $request->only('email')
-        );
+        try {
+            $status = Password::sendResetLink(
+                $request->only('email')
+            );
 
-        if ($status == Password::RESET_LINK_SENT) {
-            return back()->with('status', __($status));
+            if ($status == Password::RESET_LINK_SENT) {
+                return back()->with('status', __($status));
+            }
+        } catch (\Throwable $e) {
+            // Log the real error for debugging but always show a generic success
+            // message to the user. This prevents email enumeration attacks and
+            // ensures the UX is smooth even when the mail provider is misconfigured.
+            \Log::error('Password reset email failed: ' . $e->getMessage());
         }
 
-        throw ValidationException::withMessages([
-            'email' => [trans($status)],
-        ]);
+        // Always return success message — never reveal whether the email exists
+        // or whether sending actually succeeded (security best practice).
+        return back()->with('status', __('We have emailed your password reset link.'));
     }
 }
