@@ -81,6 +81,9 @@ class KlipyGifController extends Controller
                 }
 
                 $url = $this->firstString([
+                    data_get($item, 'file.hd.gif.url'),
+                    data_get($item, 'file.md.gif.url'),
+                    data_get($item, 'file.sm.gif.url'),
                     data_get($item, 'images.original.url'),
                     data_get($item, 'images.fixed_height.url'),
                     data_get($item, 'media.0.gif.url'),
@@ -90,6 +93,8 @@ class KlipyGifController extends Controller
                 ]);
 
                 $preview = $this->firstString([
+                    data_get($item, 'file.sm.webp.url'),
+                    data_get($item, 'file.sm.gif.url'),
                     data_get($item, 'images.fixed_width_small.url'),
                     data_get($item, 'images.preview_gif.url'),
                     data_get($item, 'preview.url'),

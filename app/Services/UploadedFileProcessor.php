@@ -42,9 +42,19 @@ class UploadedFileProcessor
                 return $converted;
             }
 
-            throw ValidationException::withMessages([
-                $attribute ?? 'file' => __($conversionErrorKey ?? 'errors.upload.image_not_convertible'),
-            ]);
+            // GD/Imagick not available or conversion failed on this runtime
+            // (e.g. Vercel serverless). Fall through and store the original
+            // file instead of blocking the entire upload.
+            if (! function_exists('imagecreatefromstring') && ! class_exists('Imagick')) {
+                report(sprintf(
+                    'WebP conversion skipped on %s – GD and Imagick are unavailable. Storing original file.',
+                    PHP_OS,
+                ));
+            } else {
+                throw ValidationException::withMessages([
+                    $attribute ?? 'file' => __($conversionErrorKey ?? 'errors.upload.image_not_convertible'),
+                ]);
+            }
         }
 
         return $this->storeOriginal($file, $directory, $disk, $mime);

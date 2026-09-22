@@ -40,7 +40,7 @@ return [
 
         'public' => [
             'driver' => env('AWS_ACCESS_KEY_ID') ? 's3' : 'local',
-            'root' => storage_path('app/public'),
+            'root' => env('AWS_ACCESS_KEY_ID') ? '' : storage_path('app/public'),
             'url' => env('AWS_ACCESS_KEY_ID')
                 ? 'https://' . env('AWS_BUCKET') . '.supabase.co/storage/v1/object/public/uploads'
                 : env('APP_URL').'/storage',

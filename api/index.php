@@ -135,6 +135,16 @@ if (getenv('VERCEL') || getenv('NOW_REGION')) {
     $forceEnv('LOG_CHANNEL', 'stderr');
     $forceEnv('CACHE_STORE', 'array');
     $forceEnv('SESSION_DRIVER', 'cookie');
+
+    // Increase PHP upload limits for file uploads (photos, media).
+    ini_set('upload_max_filesize', '32M');
+    ini_set('post_max_size', '64M');
+    ini_set('max_file_uploads', '10');
+    ini_set('memory_limit', '256M');
+
+    // Ensure storage path points to /tmp for any local disk fallback.
+    putenv('LARAVEL_STORAGE_PATH=' . $tmpStoragePath);
+    $_ENV['LARAVEL_STORAGE_PATH'] = $tmpStoragePath;
 }
 
 // Require Laravel's entry point

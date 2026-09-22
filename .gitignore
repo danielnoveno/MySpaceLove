@@ -40,3 +40,5 @@ pnpm-debug.log
 *.swp
 *.swo
 *~
+.vercel
+.env*
