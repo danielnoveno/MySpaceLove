@@ -19,6 +19,9 @@ use App\Http\Controllers\Api\{
 use App\Http\Controllers\LocationController;
 
 Route::middleware('auth:sanctum')->group(function () {
+    // Join-by-code MUST be before apiResource to avoid {space} slug capture
+    Route::post('spaces/join-by-code', [SpaceApiController::class, 'requestJoin'])->name('api.spaces.request-join');
+
     Route::apiResource('spaces', SpaceApiController::class)
         ->names('api.spaces')
         ->scoped([
@@ -71,7 +74,6 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('spaces/{space}/connect-partner', [SpaceApiController::class, 'connectPartner'])->name('api.spaces.connect-partner');
     Route::post('spaces/{space}/confirm-partner', [SpaceApiController::class, 'confirmPartner'])->name('api.spaces.confirm-partner');
     Route::delete('spaces/{space}/invitations/{invitation}', [SpaceApiController::class, 'cancelInvitation'])->name('api.spaces.invitations.cancel');
-    Route::post('spaces/join-by-code', [SpaceApiController::class, 'requestJoin'])->name('api.spaces.request-join');
     Route::post('spaces/{space}/join-requests/{invitation}/approve', [SpaceApiController::class, 'approveJoinRequest'])->name('api.spaces.join-requests.approve');
     Route::post('spaces/{space}/join-requests/{invitation}/reject', [SpaceApiController::class, 'rejectJoinRequest'])->name('api.spaces.join-requests.reject');
     Route::post('spaces/{space}/separation/request', [SpaceApiController::class, 'requestSeparation'])->name('api.spaces.separation.request');

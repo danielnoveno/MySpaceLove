@@ -5,16 +5,13 @@ namespace App\Mail;
 use App\Models\DailyMessage;
 use App\Models\Space;
 use App\Models\User;
-use Illuminate\Bus\Queueable;
 use Illuminate\Mail\Mailable;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Carbon;
 
-use Illuminate\Contracts\Queue\ShouldQueue;
-
-class DailyMessageMail extends Mailable implements ShouldQueue
+class DailyMessageMail extends Mailable
 {
-    use Queueable, SerializesModels;
+    use SerializesModels;
 
     public function __construct(
         public Space $space,

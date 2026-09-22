@@ -4,15 +4,12 @@ namespace App\Mail;
 
 use App\Models\Space;
 use App\Models\User;
-use Illuminate\Bus\Queueable;
 use Illuminate\Mail\Mailable;
 use Illuminate\Queue\SerializesModels;
 
-use Illuminate\Contracts\Queue\ShouldQueue;
-
-class SpaceActivityMail extends Mailable implements ShouldQueue
+class SpaceActivityMail extends Mailable
 {
-    use Queueable, SerializesModels;
+    use SerializesModels;
 
     public function __construct(
         public ?Space $space,

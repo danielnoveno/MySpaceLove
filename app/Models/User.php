@@ -3,6 +3,7 @@
 namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
+use App\Notifications\ResetPasswordMail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
@@ -113,6 +114,14 @@ class User extends Authenticatable
     public function unreadNotifications()
     {
         return $this->notifications()->unread();
+    }
+
+    /**
+     * Send the password reset notification using our styled email template.
+     */
+    public function sendPasswordResetNotification($token)
+    {
+        $this->notify(new ResetPasswordMail($token));
     }
 
     public function messages()

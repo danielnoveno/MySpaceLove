@@ -5,15 +5,12 @@ namespace App\Mail;
 use App\Models\Space;
 use App\Models\SpaceInvitation;
 use App\Models\User;
-use Illuminate\Bus\Queueable;
 use Illuminate\Mail\Mailable;
 use Illuminate\Queue\SerializesModels;
 
-use Illuminate\Contracts\Queue\ShouldQueue;
-
-class SpaceInvitationMail extends Mailable implements ShouldQueue
+class SpaceInvitationMail extends Mailable
 {
-    use Queueable, SerializesModels;
+    use SerializesModels;
 
     public function __construct(
         public Space $space,
