@@ -9,6 +9,7 @@ use App\Http\Middleware\LogAllRequests;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
+use Illuminate\Auth\AuthenticationException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Laravel\Sanctum\Http\Middleware\EnsureFrontendRequestsAreStateful;
@@ -95,11 +96,17 @@ return Application::configure(basePath: dirname(__DIR__))
                     $e->getLine()
                 ));
 
-                $status = $e instanceof HttpExceptionInterface ? $e->getStatusCode() : 500;
+                $status = $e instanceof AuthenticationException
+                    ? 401
+                    : ($e instanceof HttpExceptionInterface ? $e->getStatusCode() : 500);
 
                 if ($request->expectsJson() || $request->is('api/*')) {
                     return new \Symfony\Component\HttpFoundation\JsonResponse([
-                        'message' => $status === 404 ? 'Not Found' : 'Internal Server Error',
+                        'message' => match ($status) {
+                            401 => 'Unauthenticated.',
+                            404 => 'Not Found',
+                            default => 'Internal Server Error',
+                        },
                     ], $status);
                 }
 

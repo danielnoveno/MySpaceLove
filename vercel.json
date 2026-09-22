@@ -10,35 +10,35 @@
   "routes": [
     {
       "src": "/build/(.*)",
-      "dest": "/api/index.php"
+      "dest": "/api/index.php?__path=build/$1"
     },
     {
       "src": "/css/(.*)",
-      "dest": "/api/index.php"
+      "dest": "/api/index.php?__path=css/$1"
     },
     {
       "src": "/js/(.*)",
-      "dest": "/api/index.php"
+      "dest": "/api/index.php?__path=js/$1"
     },
     {
       "src": "/images/(.*)",
-      "dest": "/api/index.php"
+      "dest": "/api/index.php?__path=images/$1"
     },
     {
       "src": "/fonts/(.*)",
-      "dest": "/api/index.php"
+      "dest": "/api/index.php?__path=fonts/$1"
     },
     {
       "src": "/storage/(.*)",
-      "dest": "/api/index.php"
+      "dest": "/api/index.php?__path=storage/$1"
     },
     {
       "src": "/favicon.ico",
-      "dest": "/api/index.php"
+      "dest": "/api/index.php?__path=favicon.ico"
     },
     {
       "src": "/favicon.svg",
-      "dest": "/api/index.php"
+      "dest": "/api/index.php?__path=favicon.svg"
     },
     {
       "src": "/robots.txt",
@@ -46,7 +46,7 @@
     },
     {
       "src": "/(.*)",
-      "dest": "/api/index.php"
+      "dest": "/api/index.php?__path=$1"
     }
   ]
 }

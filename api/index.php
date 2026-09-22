@@ -10,6 +10,25 @@ $appPath = __DIR__ . '/..';
 // Serve built/static assets from the PHP lambda. The Vercel PHP builder does
 // not reliably expose Vite's public/build output as static files, but the files
 // are present in the function bundle after the build scripts run.
+// Vercel's PHP runtime invokes this file under /api and can otherwise expose
+// rewritten requests to Laravel with the leading path segment stripped (for
+// example /api/spaces/... becomes /spaces/...). Preserve the original public URL
+// path via vercel.json's __path query parameter before Laravel captures the
+// request.
+if (isset($_GET['__path'])) {
+    $originalPath = '/' . ltrim((string) $_GET['__path'], '/');
+    $queryParams = $_GET;
+    unset($queryParams['__path']);
+
+    $queryString = http_build_query($queryParams);
+    $_SERVER['REQUEST_URI'] = $originalPath . ($queryString !== '' ? '?' . $queryString : '');
+    $_SERVER['QUERY_STRING'] = $queryString;
+    $_SERVER['SCRIPT_NAME'] = '/index.php';
+    $_SERVER['PHP_SELF'] = '/index.php';
+    $_SERVER['SCRIPT_FILENAME'] = $appPath . '/public/index.php';
+    unset($_GET['__path']);
+}
+
 $requestPath = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH) ?: '/';
 $staticPrefixes = ['/build/', '/css/', '/js/', '/images/', '/fonts/', '/storage/'];
 $staticFiles = ['/favicon.ico', '/favicon.svg', '/robots.txt'];
