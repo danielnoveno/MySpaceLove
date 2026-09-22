@@ -82,6 +82,7 @@
         "ralouphie/getallheaders": "3.0.3",
         "ramsey/collection": "2.1.1",
         "ramsey/uuid": "4.9.1",
+        "resend/resend-php": "*",
         "ryangjchandler/blade-capture-directive": "v1.1.0",
         "spatie/color": "1.8.0",
         "spatie/invade": "2.1.0",
