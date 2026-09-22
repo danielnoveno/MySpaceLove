@@ -184,6 +184,7 @@
             "@php artisan vendor:publish --tag=laravel-assets --ansi --force"
         ],
         "vercel": [
+            "php artisan migrate --force",
             "npm install",
             "npm run build"
         ]

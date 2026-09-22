@@ -89,11 +89,10 @@ return Application::configure(basePath: dirname(__DIR__))
         $exceptions->render(function (Throwable $e, Request $request) {
             if (getenv('VERCEL') || getenv('NOW_REGION') || ! app()->bound('view') || ! app()->bound('translator')) {
                 file_put_contents('php://stderr', sprintf(
-                    "Laravel rendered exception: %s in %s:%d\n%s\n",
+                    "Laravel rendered exception summary: %s | %s:%d\n",
                     $e->getMessage(),
                     $e->getFile(),
-                    $e->getLine(),
-                    $e->getTraceAsString()
+                    $e->getLine()
                 ));
 
                 $status = $e instanceof HttpExceptionInterface ? $e->getStatusCode() : 500;
@@ -125,11 +124,6 @@ return Application::configure(basePath: dirname(__DIR__))
                 'ip' => request()->ip(),
                 'user_id' => safe_auth_id(),
             ];
-
-            // Tambahkan stack trace untuk production debugging
-            if (app()->environment('production')) {
-                $context['trace'] = $e->getTraceAsString();
-            }
 
             file_put_contents('php://stderr', sprintf(
                 "Laravel reported exception summary: %s | %s:%d\n",

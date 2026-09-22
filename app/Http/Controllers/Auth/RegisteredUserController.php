@@ -42,15 +42,23 @@ class RegisteredUserController extends Controller
                 'password' => ['required', 'confirmed', Rules\Password::defaults()],
             ]);
 
-            $user = User::create([
+            $userData = [
                 'name' => $request->name,
                 'email' => $request->email,
                 'password' => Hash::make($request->password),
-                'username' => User::generateUniqueUsername(
+            ];
+
+            if (Schema::hasColumn('users', 'username')) {
+                $userData['username'] = User::generateUniqueUsername(
                     $request->name ?: Str::before($request->email, '@')
-                ),
-                'partner_code' => User::generatePartnerCode(),
-            ]);
+                );
+            }
+
+            if (Schema::hasColumn('users', 'partner_code')) {
+                $userData['partner_code'] = User::generatePartnerCode();
+            }
+
+            $user = User::create($userData);
 
             event(new Registered($user));
 
